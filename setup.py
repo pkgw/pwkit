@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Copyright 2014 Peter Williams <peter@newton.cx>
+# Copyright 2014 Peter Williams <peter@newton.cx> and collaborators.
 # Licensed under the MIT License.
 
 # I don't use the ez_setup module because it causes us to automatically build

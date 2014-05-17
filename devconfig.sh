@@ -1,5 +1,5 @@
 #! /bin/sh
-# Copyright 2014 Peter Williams <peter@newton.cx>
+# Copyright 2014 Peter Williams <peter@newton.cx> and collaborators.
 # Licensed under the MIT License.
 #
 # I'm kind of annoyed by the setuptools, so I have a quick system to smooth
