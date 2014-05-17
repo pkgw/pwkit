@@ -22,3 +22,8 @@ dist:
 
 Makefile: Makefile.in
 	./config.status
+
+
+.PHONY: default install clean pristine dist
+.SECONDARY: # no deleting intermediate targets
+.SUFFIXES: # no implicit rules
