@@ -11,6 +11,7 @@ Modules:
 
   (this one)       - Exceptions, Holder class, Python 3 compat help.
   cli              - Utilities for command-line programs.
+  ellipses         - Computations with ellipses in several parametrizations.
   inifile          - Simple ini-format file parser.
   io               - Utilities for input and output.
   kwargv           - Keyword-style argument parsing.
