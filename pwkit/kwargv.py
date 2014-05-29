@@ -333,5 +333,14 @@ class ParseKeywords (Holder):
         return self # convenience
 
 
+    def parse_or_die (self, args=None):
+        from .cli import die
+
+        try:
+            return self.parse (args)
+        except KwargvError as e:
+            die (e)
+
+
 if __name__ == '__main__':
     print (basic ())
