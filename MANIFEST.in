@@ -1,1 +1,1 @@
-include Makefile.in devconfig.sh
+include Makefile.in devconfig.sh devnotes.rst

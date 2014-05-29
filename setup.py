@@ -9,7 +9,7 @@ from setuptools import setup
 
 setup (
     name = 'pwkit',
-    version = '0.1',
+    version = '0.1.1',
 
     zip_safe = True,
     packages = ['pwkit'],
