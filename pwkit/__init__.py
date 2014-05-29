@@ -11,7 +11,7 @@ Peter Williams' toolkit for science and astronomy.
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = ('PKError binary_type text_type unicode_to_str').split ()
+__all__ = ('Holder PKError binary_type text_type unicode_to_str').split ()
 
 
 # Lightly-exercised simultaneous Python 2 and 3 compat.
@@ -40,3 +40,40 @@ class PKError (Exception):
 
     def __repr__ (self):
         return 'PKError(' + repr (self.args[0]) + ')'
+
+
+class Holder (object):
+    def __init__ (self, **kwargs):
+        self.set (**kwargs)
+
+    def __unicode__ (self):
+        d = self.__dict__
+        s = sorted (d.iterkeys ())
+        return '{' + ', '.join ('%s=%s' % (k, d[k]) for k in s) + '}'
+
+    __str__ = unicode_to_str
+
+    def __repr__ (self):
+        d = self.__dict__
+        s = sorted (d.iterkeys ())
+        return b'%s(%s)' % (self.__class__.__name__,
+                            b', '.join (b'%s=%r' % (k, d[k]) for k in s))
+
+    def set (self, **kwargs):
+        self.__dict__.update (kwargs)
+        return self
+
+    def get (self, name, defval=None):
+        return self.__dict__.get (name, defval)
+
+    def setone (self, name, value):
+        self.__dict__[name] = value
+        return self
+
+    def has (self, name):
+        return name in self.__dict__
+
+    def copy (self):
+        new = self.__class__ ()
+        new.__dict__ = dict (self.__dict__)
+        return new
