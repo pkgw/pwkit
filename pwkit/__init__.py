@@ -11,7 +11,8 @@ Peter Williams' toolkit for science and astronomy.
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = ('Holder PKError binary_type text_type unicode_to_str').split ()
+__all__ = ('Holder PKError binary_type reraise_context text_type '
+           'unicode_to_str').split ()
 
 
 # Lightly-exercised simultaneous Python 2 and 3 compat.
@@ -40,6 +41,23 @@ class PKError (Exception):
 
     def __repr__ (self):
         return 'PKError(' + repr (self.args[0]) + ')'
+
+
+def reraise_context (fmt, *args):
+    """Reraise an exception with its message modified to specify additional
+    context.
+
+    """
+    if len (args):
+        cstr = fmt % args
+    else:
+        cstr = text_type (fmt)
+
+    ex = sys.exc_info ()[1]
+    if len (ex.args):
+        cstr = '%s: %s' % (cstr, ex.args[0])
+    ex.args = (cstr, ) + ex.args[1:]
+    raise
 
 
 class Holder (object):
