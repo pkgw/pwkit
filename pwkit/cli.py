@@ -6,7 +6,7 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = 'checkusage die showusage warn wrongusage'.split ()
+__all__ = 'check_usage die pop_option show_usage warn wrong_usage'.split ()
 
 import sys
 from . import text_type
@@ -43,19 +43,46 @@ def warn (fmt, *args):
     print ('warning:', s, file=sys.stderr)
 
 
-def showusage (docstring, short, stream, exitcode):
+# Simple-minded argument handling -- see also kwargv.
+
+def pop_option (ident, argv=None):
+    """A lame routine for grabbing command-line arguments. Returns a boolean
+    indicating whether the option was present. If it was, it's removed from
+    the argument string. Because of the lame behavior, options can't be
+    combined, and non-boolean options aren't supported. Operates on sys.argv
+    by default.
+
+    Note that this will proceed merrily if argv[0] matches your option.
+
+    """
+    if argv is None:
+        from sys import argv
+
+    if len (ident) == 1:
+        ident = '-' + ident
+    else:
+        ident = '--' + ident
+
+    found = ident in argv
+    if found:
+        argv.remove (ident)
+
+    return found
+
+
+def show_usage (docstring, short, stream, exitcode):
     """Print program usage information and exit.
 
     :arg str docstring: the program help text
 
     This function just prints *docstring* and exits. In most cases, the
-    function :func:`checkusage` should be used: it automatically checks
+    function :func:`check_usage` should be used: it automatically checks
     :data:`sys.argv` for a sole "-h" or "--help" argument and invokes this
     function.
 
     This function is provided in case there are instances where the user
-    should get a friendly usage message that :func:`checkusage` doesn't catch.
-    It can be contrasted with :func:`wrongusage`, which prints a terser usage
+    should get a friendly usage message that :func:`check_usage` doesn't catch.
+    It can be contrasted with :func:`wrong_usage`, which prints a terser usage
     message and exits with an error code.
 
     """
@@ -81,7 +108,7 @@ def showusage (docstring, short, stream, exitcode):
     raise SystemExit (exitcode)
 
 
-def checkusage (docstring, argv=None, usageifnoargs=False):
+def check_usage (docstring, argv=None, usageifnoargs=False):
     """Check if the program has been run with a --help argument; if so,
     print usage information and exit.
 
@@ -100,25 +127,25 @@ def checkusage (docstring, argv=None, usageifnoargs=False):
         \"\"\"myprogram - this is all the usage help you get\"\"\"
         import sys
         ... # other setup
-        checkusage (__doc__)
+        check_usage (__doc__)
         ... # go on with business
 
     If it is determined that usage information should be shown,
-    :func:`showusage` is called and the program exits.
+    :func:`show_usage` is called and the program exits.
 
-    See also :func:`wrongusage`.
+    See also :func:`wrong_usage`.
 
     """
     if argv is None:
         from sys import argv
 
     if len (argv) == 1 and usageifnoargs:
-        showusage (docstring, True, None, 0)
+        show_usage (docstring, True, None, 0)
     if len (argv) == 2 and argv[1] in ('-h', '--help'):
-        showusage (docstring, False, None, 0)
+        show_usage (docstring, False, None, 0)
 
 
-def wrongusage (docstring, *rest):
+def wrong_usage (docstring, *rest):
     """Print a message indicating invalid command-line arguments and exit with an
     error code.
 
@@ -137,11 +164,11 @@ def wrongusage (docstring, *rest):
         ...
         import sys
         ... # other setup
-        checkusage (__doc__)
+        check_usage (__doc__)
         ... # more setup
         if len (sys.argv) != 3:
-           wrongusage (__doc__, "expect exactly 2 arguments, not %d",
-                       len (sys.argv))
+           wrong_usage (__doc__, "expect exactly 2 arguments, not %d",
+                        len (sys.argv))
 
     When called, an error message is printed along with the *first stanza* of
     *docstring*. The program then exits with an error code and a suggestion to
@@ -155,7 +182,7 @@ def wrongusage (docstring, *rest):
     than one item, the first item is treated as a format string, and it is
     percent-formatted with the remaining values. See the above example.
 
-    See also :func:`checkusage` and :func:`showusage`.
+    See also :func:`check_usage` and :func:`show_usage`.
 
     """
     intext = False
@@ -168,4 +195,4 @@ def wrongusage (docstring, *rest):
         detail = rest[0] % tuple (rest[1:])
 
     print ('error:', detail, '\n', file=sys.stderr) # extra NL
-    showusage (docstring, True, sys.stderr, 1)
+    show_usage (docstring, True, sys.stderr, 1)
