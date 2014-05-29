@@ -7,6 +7,15 @@ Peter Williams' toolkit for science and astronomy.
 
 >>> import pwkit as pk
 
+Modules:
+
+  (this one)       - Exceptions, Holder class, Python 3 compat help.
+  cli              - Utilities for command-line programs.
+  inifile          - Simple ini-format file parser.
+  io               - Utilities for input and output.
+  kwargv           - Keyword-style argument parsing.
+  unicode_to_latex - Rendering Unicode to LaTeX.
+
 """
 
 from __future__ import absolute_import, division, print_function, unicode_literals
