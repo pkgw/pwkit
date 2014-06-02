@@ -3,11 +3,10 @@ Making releases
 ===============
 
 1. Update version in ``setup.py``.
-2. Register new version: ``python setup.py register``.
-3. Upload files: ``python setup.py sdist bdist upload``.
-4. Update ``meta.yaml`` in ``conda`` recipe.
-5. Build for ``conda``: ``conda build .``.
-6. Upload to ``binstar``: execute line at end of the ``conda build`` output.
+2. Build, register, upload: ``python setup.py sdist bdist register upload``.
+3. Update ``meta.yaml`` in ``conda`` recipe.
+4. Build for ``conda``: ``conda build .``.
+5. Upload to ``binstar``: execute line at end of the ``conda build`` output.
 
 
 =======================
