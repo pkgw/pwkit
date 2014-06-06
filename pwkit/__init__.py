@@ -12,6 +12,7 @@ Modules:
   (this one)       - Exceptions, Holder class, Python 3 compat help.
   astimage         - Generic I/O interface for astronomical images (FITS, CASA, MIRIAD).
   astutil          - Miscellaneous astronomy-related constants and functions.
+  bblocks          - Bayesian Blocks analysis for binning time-tagged events.
   casautil         - Helpers for saner usage of CASA in Python.
   cgs              - Physical constants in CGS.
   cli              - Utilities for command-line programs.
