@@ -13,6 +13,7 @@ Modules:
   astimage         - Generic I/O interface for astronomical images (FITS, CASA, MIRIAD).
   astutil          - Miscellaneous astronomy-related constants and functions.
   casautil         - Helpers for saner usage of CASA in Python.
+  cgs              - Physical constants in CGS.
   cli              - Utilities for command-line programs.
   ellipses         - Computations with ellipses in several parametrizations.
   inifile          - Simple ini-format file parser.
