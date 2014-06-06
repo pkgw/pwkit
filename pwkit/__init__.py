@@ -15,6 +15,7 @@ Modules:
   inifile          - Simple ini-format file parser.
   io               - Utilities for input and output.
   kwargv           - Keyword-style argument parsing.
+  pdm              - Finding periods in data with Phase Dispersion Minimization.
   unicode_to_latex - Rendering Unicode to LaTeX.
 
 """
