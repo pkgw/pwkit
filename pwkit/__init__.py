@@ -18,6 +18,7 @@ Modules:
   cli              - Utilities for command-line programs.
   colormaps        - Mapping scalars into a color palette for visualization.
   contours         - Tracing contours in functions and data.
+  data_gui_helpers - Helpers for GUIs for investigating data arrays.
   ellipses         - Computations with ellipses in several parametrizations.
   inifile          - Simple ini-format file parser.
   io               - Utilities for input and output.
