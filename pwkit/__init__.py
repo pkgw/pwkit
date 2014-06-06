@@ -18,6 +18,7 @@ Modules:
   ellipses         - Computations with ellipses in several parametrizations.
   inifile          - Simple ini-format file parser.
   io               - Utilities for input and output.
+  kbn_conf         - Calculate Poisson-like confidence intervals assuming a background.
   kwargv           - Keyword-style argument parsing.
   pdm              - Finding periods in data with Phase Dispersion Minimization.
   unicode_to_latex - Rendering Unicode to LaTeX.
