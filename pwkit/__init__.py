@@ -17,6 +17,7 @@ Modules:
   cgs              - Physical constants in CGS.
   cli              - Utilities for command-line programs.
   colormaps        - Mapping scalars into a color palette for visualization.
+  contours         - Tracing contours in functions and data.
   ellipses         - Computations with ellipses in several parametrizations.
   inifile          - Simple ini-format file parser.
   io               - Utilities for input and output.
