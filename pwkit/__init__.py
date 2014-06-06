@@ -10,6 +10,7 @@ Peter Williams' toolkit for science and astronomy.
 Modules:
 
   (this one)       - Exceptions, Holder class, Python 3 compat help.
+  astimage         - Generic I/O interface for astronomical images (FITS, CASA, MIRIAD).
   astutil          - Miscellaneous astronomy-related constants and functions.
   casautil         - Helpers for saner usage of CASA in Python.
   cli              - Utilities for command-line programs.
