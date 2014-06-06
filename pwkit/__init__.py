@@ -11,6 +11,7 @@ Modules:
 
   (this one)       - Exceptions, Holder class, Python 3 compat help.
   astutil          - Miscellaneous astronomy-related constants and functions.
+  casautil         - Helpers for saner usage of CASA in Python.
   cli              - Utilities for command-line programs.
   ellipses         - Computations with ellipses in several parametrizations.
   inifile          - Simple ini-format file parser.
