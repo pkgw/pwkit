@@ -174,9 +174,9 @@ class _ModelBase (object):
 
 
 class Model (_ModelBase):
-    def __init__ (self, func, data, invsigma=None, args=()):
-        if func is not None:
-            self.set_func (func, args)
+    def __init__ (self, simple_func, data, invsigma=None, args=()):
+        if simple_func is not None:
+            self.set_simple_func (simple_func, args)
         if data is not None:
             self.set_data (data, invsigma)
 
@@ -186,10 +186,11 @@ class Model (_ModelBase):
         it before calling solve(), if so desired.
 
         """
-        import lmmin
+        from .lmmin import Problem
+
         self.func = func
         self._args = args
-        self.lm_prob = lmmin.Problem (npar)
+        self.lm_prob = Problem (npar)
         self.paramnames = parnames
         return self
 
@@ -212,9 +213,9 @@ class Model (_ModelBase):
         def lmfunc (params, vec):
             vec[:] = f (params, *args).flatten ()
 
-        self.lm_prob.setResidualFunc (self.data.flatten (),
-                                      self.invsigma.flatten (),
-                                      lmfunc, None)
+        self.lm_prob.set_residual_func (self.data.flatten (),
+                                        self.invsigma.flatten (),
+                                        lmfunc, None)
         self.lm_soln = soln = self.lm_prob.solve (guess)
 
         self.params = soln.params
@@ -365,14 +366,14 @@ class ComposedModel (_ModelBase):
     def _component_setvalue (self, cidx, val, fixed=False):
         if cidx < 0 or cidx >= self.component.npar:
             raise ValueError ('cidx %d, npar %d' % (cidx, self.component.npar))
-        self.lm_prob.pValue (cidx, val, fixed=fixed)
+        self.lm_prob.p_value (cidx, val, fixed=fixed)
         self.force_guess[cidx] = val
 
 
     def _component_setlimit (self, cidx, lower=-np.inf, upper=np.inf):
         if cidx < 0 or cidx >= self.component.npar:
             raise ValueError ('cidx %d, npar %d' % (cidx, self.component.npar))
-        self.lm_prob.pLimit (cidx, lower, upper)
+        self.lm_prob.p_limit (cidx, lower, upper)
 
 
     def set_component (self, component):
@@ -383,8 +384,8 @@ class ComposedModel (_ModelBase):
         component.setlimit = self._component_setlimit
         component.finalize_setup ()
 
-        import lmmin
-        self.lm_prob = lmmin.Problem (component.npar)
+        from .lmmin import Problem
+        self.lm_prob = Problem (component.npar)
         self.force_guess = np.empty (component.npar)
         self.force_guess.fill (np.nan)
         self.paramnames = list (component._param_names ())
@@ -408,8 +409,8 @@ class ComposedModel (_ModelBase):
 
         self.lm_model = model
         self.lm_deriv = self.component.deriv
-        self.lm_prob.setResidualFunc (self.data, self.invsigma, model,
-                                      self.component.deriv)
+        self.lm_prob.set_residual_func (self.data, self.invsigma, model,
+                                        self.component.deriv)
         self.lm_soln = soln = self.lm_prob.solve (guess)
 
         self.params = soln.params
@@ -434,9 +435,9 @@ class ComposedModel (_ModelBase):
 
     def debug_derivative (self, guess):
         """returns (explicit, auto)"""
-        import lmmin
-        return lmmin.checkDerivative (self.component.npar, self.data.size,
-                                      self.lm_model, self.lm_deriv, guess)
+        from .lmmin import check_derivative
+        return check_derivative (self.component.npar, self.data.size,
+                                 self.lm_model, self.lm_deriv, guess)
 
 
 # Now specific components useful in the above framework. The general strategy

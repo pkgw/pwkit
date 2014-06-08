@@ -24,6 +24,7 @@ Modules:
   io               - Utilities for input and output.
   kbn_conf         - Calculate Poisson-like confidence intervals assuming a background.
   kwargv           - Keyword-style argument parsing.
+  lmmin            - Levenberg-Marquardt least-squares function minimizer.
   lsqmdl           - Model data with least-squares fitting.
   ndshow_gtk2      - Visualize data arrays as interactive images, using Gtk+2.
   pdm              - Finding periods in data with Phase Dispersion Minimization.
