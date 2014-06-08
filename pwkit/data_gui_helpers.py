@@ -2,8 +2,14 @@
 # Copyright 2012-2014 Peter Williams <peter@newton.cx> and collaborators
 # Licensed under the MIT License.
 
-"""pwkit.data_gui_helpers - helpers for GUIs looking at data arrays"""
+"""pwkit.data_gui_helpers - helpers for GUIs looking at data arrays
 
+Classes:
+
+Clipper      - Map data into [0,1]
+ColorMapper  - Map data onto RGB colorrs using `pwkit.colormaps`
+
+"""
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 __all__ = ('Clipper ColorMapper LazyComputer').split ()
@@ -47,7 +53,7 @@ class LazyComputer (object):
         ts = self.tilesize
         buf = self.buffer
         valid = self.valid
-        func = self._makeFunc (np.ma.is_masked (data))
+        func = self._make_func (np.ma.is_masked (data))
 
         tilej = xoffset // ts
         tilei = yoffset // ts
