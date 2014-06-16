@@ -11,7 +11,7 @@ ones.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = ('analytic_2d').split ()
+__all__ = (b'analytic_2d').split ()
 
 
 import numpy as np

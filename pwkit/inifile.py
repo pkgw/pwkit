@@ -7,8 +7,8 @@ ConfigParser/configparser."""
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = ('FileChunk Holder InifileError read_stream read '
-           'mutate_stream mutate mutate_in_place').split ()
+__all__ = (b'FileChunk Holder InifileError read_stream read '
+           b'mutate_stream mutate mutate_in_place').split ()
 
 import io, os, re
 from . import Holder, PKError

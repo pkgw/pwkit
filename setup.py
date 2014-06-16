@@ -12,7 +12,10 @@ setup (
     version = '0.1.1',
 
     zip_safe = True,
-    packages = ['pwkit'],
+    packages = [
+        'pwkit',
+        'pwkit.cli',
+    ],
 
     # install_requires = ['docutils >= 0.3'],
 

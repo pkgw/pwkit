@@ -71,7 +71,7 @@ TODO: positive, nonzero options for easy bounds-checking of numerics
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = 'Custom KwargvError ParseError ParseKeywords basic'.split ()
+__all__ = (b'Custom KwargvError ParseError ParseKeywords basic').split ()
 
 from . import Holder, PKError
 

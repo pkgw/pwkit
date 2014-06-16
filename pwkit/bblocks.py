@@ -22,7 +22,7 @@ bs_tt_bblock - Like `tt_bblock` with bootstrap-based uncertainty assessment.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = ('nlogn bin_bblock tt_bblock bs_tt_bblock').split ()
+__all__ = (b'nlogn bin_bblock tt_bblock bs_tt_bblock').split ()
 
 
 import numpy as np

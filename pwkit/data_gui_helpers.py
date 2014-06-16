@@ -12,7 +12,7 @@ ColorMapper  - Map data onto RGB colorrs using `pwkit.colormaps`
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = ('Clipper ColorMapper LazyComputer').split ()
+__all__ = (b'Clipper ColorMapper LazyComputer').split ()
 
 import numpy as np
 

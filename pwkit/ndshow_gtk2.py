@@ -45,7 +45,7 @@ Added by cycler:
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = ('Cycler Viewer Viewport cycle view').split ()
+__all__ = (b'Cycler Viewer Viewport cycle view').split ()
 
 import cairo, glib, gtk, numpy as np, sys, time
 

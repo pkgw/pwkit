@@ -6,8 +6,8 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = ('djoin ensure_dir make_path_func rellink pathlines pathwords '
-           'try_open words').split ()
+__all__ = (b'djoin ensure_dir make_path_func rellink pathlines pathwords '
+           b'try_open words').split ()
 
 import io, os
 

@@ -42,7 +42,7 @@ If you have zero uncertainty on a measurement, too bad.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = ('Model PolynomialModel ScaleModel').split ()
+__all__ = (b'Model PolynomialModel ScaleModel').split ()
 
 import numpy as np
 try:

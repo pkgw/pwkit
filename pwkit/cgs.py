@@ -60,7 +60,7 @@ magnetic field have g^(1/2) cm^(-1/2) s^-1. [esu * field] = dyne.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = '''
+__all__ = b'''
 a0
 alpha
 arad

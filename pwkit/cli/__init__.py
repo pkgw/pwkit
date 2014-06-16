@@ -2,15 +2,15 @@
 # Copyright 2012-2014 Peter Williams <peter@newton.cx> and collaborators.
 # Licensed under the MIT License.
 
-"""Miscellaneous utilities for command-line programs."""
+"""pwkit.cli - miscellaneous utilities for command-line programs."""
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = ('check_usage die pop_option show_usage unicode_stdio warn '
-           'wrong_usage').split ()
+__all__ = (b'check_usage die pop_option show_usage unicode_stdio warn '
+           b'wrong_usage').split ()
 
 import codecs, sys
-from . import text_type
+from .. import text_type
 
 
 def unicode_stdio ():

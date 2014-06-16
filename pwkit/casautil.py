@@ -23,8 +23,8 @@ forkandlog    - Run a function in a subprocess, returning the text it outputs
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = ('INVERSE_C_SM INVERSE_C_NSM pol_names pol_to_miriad msselect_keys '
-           'datadir logger forkandlog tools').split ()
+__all__ = (b'INVERSE_C_SM INVERSE_C_NSM pol_names pol_to_miriad msselect_keys '
+           b'datadir logger forkandlog tools').split ()
 
 
 # Some constants that can be useful.

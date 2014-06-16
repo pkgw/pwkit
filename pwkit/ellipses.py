@@ -26,10 +26,10 @@ providing useful debug output. np.vectorize() might save the day here.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = ('F2S S2F sigmascale clscale '
-           'bivell bivnorm bivabc databiv bivrandom bivplot '
-           'ellnorm ellpoint elld2 ellbiv ellabc ellplot '
-           'abcell abcd2 abcplot').split ()
+__all__ = (b'F2S S2F sigmascale clscale '
+           b'bivell bivnorm bivabc databiv bivrandom bivplot '
+           b'ellnorm ellpoint elld2 ellbiv ellabc ellplot '
+           b'abcell abcd2 abcplot').split ()
 
 import numpy as np
 

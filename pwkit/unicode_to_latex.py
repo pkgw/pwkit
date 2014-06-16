@@ -15,7 +15,7 @@ That is,
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = 'unicode_to_latex unicode_to_latex_string'.split ()
+__all__ = (b'unicode_to_latex unicode_to_latex_string').split ()
 
 from . import text_type
 

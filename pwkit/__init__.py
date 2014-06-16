@@ -35,8 +35,8 @@ Modules:
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = ('Holder PKError binary_type reraise_context text_type '
-           'unicode_to_str').split ()
+__all__ = (b'Holder PKError binary_type reraise_context text_type '
+           b'unicode_to_str').split ()
 
 
 # Lightly-exercised simultaneous Python 2 and 3 compat.
