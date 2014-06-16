@@ -338,7 +338,7 @@ def commandline (argv=None):
     if argv is None:
         argv = sys.argv
 
-    check_usage (usagestr, argv, usageifnoargs=True)
+    check_usage (usagestr, argv, usageifnoargs='long')
 
     if len (argv) < 2:
         wrong_usage (usagestr, 'need to specify a command')

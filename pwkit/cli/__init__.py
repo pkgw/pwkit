@@ -150,7 +150,7 @@ def check_usage (docstring, argv=None, usageifnoargs=False):
         ``argv[0]`` should be the program name and not the first option.)
     :arg bool usageifnoargs: if :const:`True`, usage information will be
         printed and the program will exit if no command-line arguments are
-        passed. Default is :const:`False`.
+        passed. If "long", print long usasge. Default is :const:`False`.
 
     This function is intended for small programs launched from the command
     line. The intention is for the program help information to be written in
@@ -172,7 +172,7 @@ def check_usage (docstring, argv=None, usageifnoargs=False):
         from sys import argv
 
     if len (argv) == 1 and usageifnoargs:
-        show_usage (docstring, True, None, 0)
+        show_usage (docstring, (usageifnoargs != 'long'), None, 0)
     if len (argv) == 2 and argv[1] in ('-h', '--help'):
         show_usage (docstring, False, None, 0)
 

@@ -186,7 +186,7 @@ def commandline (argv):
     from . import cli
 
     cli.unicode_stdio ()
-    cli.check_usage (__doc__, argv, usageifnoargs=True)
+    cli.check_usage (__doc__, argv, usageifnoargs='long')
     flux_mode = cli.pop_option ('f', argv)
     source = argv[1]
 
