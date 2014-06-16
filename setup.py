@@ -19,9 +19,9 @@ setup (
 
     # install_requires = ['docutils >= 0.3'],
 
-    # entry_points = {
-    #     'console_scripts': ['bib = bibtools.cli:driver'],
-    # },
+    entry_points = {
+        'console_scripts': ['astrotool = pwkit.cli.astrotool:commandline'],
+    },
 
     author = 'Peter Williams',
     author_email = 'peter@newton.cx',
