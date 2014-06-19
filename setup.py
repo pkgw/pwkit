@@ -20,7 +20,10 @@ setup (
     # install_requires = ['docutils >= 0.3'],
 
     entry_points = {
-        'console_scripts': ['astrotool = pwkit.cli.astrotool:commandline'],
+        'console_scripts': [
+            'astrotool = pwkit.cli.astrotool:commandline',
+            'wrapout = pwkit.cli.wrapout:commandline',
+        ],
     },
 
     author = 'Peter Williams',
