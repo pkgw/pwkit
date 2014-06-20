@@ -13,7 +13,7 @@ import sys, subprocess, threading, time, Queue
 from . import die
 
 
-usage = """usage: wrapout [-c] [-a name] <command> [command args...]
+usage = """usage: wrapout [-c] [-e] [-a name] <command> [command args...]
 
 Runs *command*, merging its standard output ("stdout") and standard error
 ("stderr") into a single stream that is printed to this program's stdout.
@@ -24,6 +24,8 @@ Options:
 
 -c      -- always colorize output, even if not connected to a TTY
 -a name -- use *name* as the argv[0] for *command*
+-e      -- echo the subcommand's standard error to our own
+           (helpful when logging output to a file).
 
 Examples:
 
@@ -60,6 +62,7 @@ class Wrapper (object):
     # I like !! for errors and ** for info, but those are nigh-un-grep-able.
     markers = [' -- ', ' EE ', ' II ']
     use_colors = False
+    echo_stderr = False
     poll_timeout = 0.2
 
     _red = ''
@@ -141,9 +144,23 @@ class Wrapper (object):
                 break
 
             try:
-                self.output (*self._lines.get (timeout=self.poll_timeout))
+                kind, line = self._lines.get (timeout=self.poll_timeout)
             except Queue.Empty:
-                pass
+                continue
+
+            self.output (kind, line)
+
+            if self.echo_stderr and kind == OUTKIND_STDERR:
+                # We use a different format since the intended usage is that
+                # the main output is being logged elsewhere; this should be
+                # terser and distinguishable from the stdout output.
+                print (self._red,
+                       't=%07d' % (time.time () - self._t0),
+                       self._reset,
+                       ' ',
+                       line,
+                       sep='', end='', file=sys.stderr)
+                sys.stderr.flush ()
 
         self.outpar ('finish_time', time.strftime (rfc3339_fmt))
         self.outpar ('elapsed_seconds', int (round (time.time () - self._t0)))
@@ -161,11 +178,15 @@ def commandline (argv=None):
 
     args = list (argv[1:])
     use_colors = None
+    echo_stderr = False
     argv0 = None
 
     while len (args):
         if args[0] == '-c':
             use_colors = True
+            args = args[1:]
+        elif args[0] == '-e':
+            echo_stderr = True
             args = args[1:]
         elif args[0] == '-a':
             if len (args) < 2:
@@ -195,6 +216,7 @@ def commandline (argv=None):
 
     wrapper = Wrapper ()
     wrapper.use_colors = use_colors
+    wrapper.echo_stderr = echo_stderr
     wrapper.launch (subcommand, subargv)
 
 
