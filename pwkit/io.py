@@ -6,8 +6,8 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'djoin ensure_dir make_path_func rellink pathlines pathwords '
-           b'try_open words').split ()
+__all__ = (b'djoin ensure_dir ensure_symlink make_path_func rellink pathlines '
+           b'pathwords try_open words').split ()
 
 import io, os
 
@@ -115,6 +115,20 @@ def ensure_dir (path, parents=False):
 
     try:
         os.mkdir (path)
+    except OSError, e:
+        if e.errno == 17: # EEXIST
+            return True
+        raise
+    return False
+
+
+def ensure_symlink (src, dst):
+    """Ensure the existence of a symbolic link pointing to src named dst. Returns
+    a boolean indicating whether the symlink already existed.
+
+    """
+    try:
+        os.symlink (src, dst)
     except OSError, e:
         if e.errno == 17: # EEXIST
             return True

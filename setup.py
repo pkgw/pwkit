@@ -22,6 +22,7 @@ setup (
     entry_points = {
         'console_scripts': [
             'astrotool = pwkit.cli.astrotool:commandline',
+            'latexdriver = pwkit.cli.latexdriver:commandline',
             'wrapout = pwkit.cli.wrapout:commandline',
         ],
     },
