@@ -13,9 +13,14 @@ __all__ = [b'commandline']
 
 import numpy as np, sys
 
+from .. import PKError
 from . import *
 from .. import astimage
 from .. import ndshow_gtk2 as ndshow # one day: flexible backend
+
+
+class UsageError (PKError):
+    pass
 
 
 # The commands.
@@ -90,6 +95,23 @@ def cmd_blink (args):
     ndshow.cycle (images, args, toworlds=toworlds, yflip=True)
 cmd_blink.argspec = '<images...>'
 cmd_blink.summary = 'Blink zero or more images.'
+
+
+def cmd_fitsrc (args):
+    from ..immodel import fit_one_source
+    forcepoint = pop_option ('p', args)
+
+    if len (args) != 3:
+        raise UsageError ('expect exactly three arguments')
+
+    im = astimage.open (args[0], 'r').simple ()
+    x = int (args[1])
+    y = int (args[2])
+
+    fit_one_source (im, x, y, forcepoint=forcepoint)
+cmd_fitsrc.argspec = '[-p] <image> <x(pixels)> <y(pixels)>'
+cmd_fitsrc.summary = 'Fit a compact-source model to a location in an image.'
+cmd_fitsrc.moredocs = """-p  - Force use of a point-source model."""
 
 
 def cmd_show (args):
@@ -173,4 +195,8 @@ def commandline (argv=None):
             print (func.moredocs)
         return
 
-    func (args)
+    try:
+        func (args)
+    except UsageError as e:
+        print ('error:', e, '\n\nusage: imtool', cmdname, func.argspec,
+               file=sys.stderr)
