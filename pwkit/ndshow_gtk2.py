@@ -644,7 +644,7 @@ class Cycler (Viewer):
 
     def _get_shape (self):
         if self.i is None:
-            self.setCurrent (0)
+            self.set_current (0)
         return self.getshapei (self.i)
 
 
@@ -664,7 +664,7 @@ class Cycler (Viewer):
 
     def _set_tuning (self, tunerx, tunery):
         if self.i is None:
-            self.setCurrent (0)
+            self.set_current (0)
         self.settuningi (self.i, tunerx, tunery)
         self.needtune.fill (True)
         self.needtune[self.i] = False
@@ -680,7 +680,7 @@ class Cycler (Viewer):
 
     def _get_surface (self, xoffset, yoffset, width, height):
         if self.i is None:
-            self.setCurrent (0)
+            self.set_current (0)
         return self.getsurfacei (self.i, xoffset, yoffset, width, height)
 
 
