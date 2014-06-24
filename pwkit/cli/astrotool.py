@@ -357,6 +357,7 @@ usagestr = _fullusage ()
 def commandline (argv=None):
     if argv is None:
         argv = sys.argv
+        unicode_stdio ()
 
     check_usage (usagestr, argv, usageifnoargs='long')
 
@@ -384,7 +385,3 @@ def commandline (argv=None):
     except UsageError as e:
         print ('error:', e, '\n\nusage: astrotool', cmdname, func.argspec,
                file=sys.stderr)
-
-
-if __name__ == '__main__':
-    commandline ()
