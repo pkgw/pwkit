@@ -139,6 +139,87 @@ cmd_hackdata.argspec = '<inpath> <outpath>'
 cmd_hackdata.summary = 'Blindly copy pixel data from one image to another.'
 
 
+def _info_print (path):
+    from ..astutil import fmtradec, R2A, R2D
+
+    try:
+        im = astimage.open (path, 'r')
+    except Exception as e:
+        die ('can\'t open "%s": %s', path, e)
+
+    print ('kind     =', im.__class__.__name__)
+
+    latcell = loncell = None
+
+    if im.toworld is not None:
+        latax, lonax = im._latax, im._lonax
+        delta = 1e-6
+        p = 0.5 * (np.asfarray (im.shape) - 1)
+        w1 = im.toworld (p)
+        p[latax] += delta
+        w2 = im.toworld (p)
+        latcell = (w2[latax] - w1[latax]) / delta
+        p[latax] -= delta
+        p[lonax] += delta
+        w2 = im.toworld (p)
+        loncell = (w2[lonax] - w1[lonax]) / delta * np.cos (w2[latax])
+
+    if im.pclat is not None:
+        print ('center   =', fmtradec (im.pclon, im.pclat), '# pointing')
+    elif im.toworld is not None:
+        w = im.toworld (0.5 * (np.asfarray (im.shape) - 1))
+        print ('center   =', fmtradec (w[lonax], w[latax]), '# lattice')
+
+    if im.shape is not None:
+        print ('shape    =', ' '.join (str (x) for x in im.shape))
+        npix = 1
+        for x in im.shape:
+            npix *= x
+        print ('npix     =', npix)
+
+    if im.axdescs is not None:
+        print ('axdescs  =', ' '.join (x for x in im.axdescs))
+
+    if im.charfreq is not None:
+        print ('charfreq = %f GHz' % im.charfreq)
+
+    if im.mjd is not None:
+        from time import gmtime, strftime
+        posix = 86400. * (im.mjd - 40587.)
+        ts = strftime ('%Y-%m-%dT%H-%M-%SZ', gmtime (posix))
+        print ('mjd      = %f # %s' % (im.mjd, ts))
+
+    if latcell is not None:
+        print ('ctrcell  = %fʺ × %fʺ # lat, lon' % (latcell * R2A,
+                                                    loncell * R2A))
+
+    if im.bmaj is not None:
+        print ('beam     = %fʺ × %fʺ @ %f°' % (im.bmaj * R2A,
+                                               im.bmin * R2A,
+                                               im.bpa * R2D))
+
+        if latcell is not None:
+            bmrad2 = 2 * np.pi * im.bmaj * im.bmin / (8 * np.log (2))
+            cellrad2 = latcell * loncell
+            print ('ctrbmvol = %f px' % np.abs (bmrad2 / cellrad2))
+
+    if im.units is not None:
+        print ('units    =', im.units)
+
+
+def cmd_info (args):
+    if len (args) == 1:
+        _info_print (args[0])
+    else:
+        for i, path in enumerate (args):
+            if i > 0:
+                print ()
+            print ('path     =', path)
+            _info_print (path)
+cmd_info.argspec = '<images...>'
+cmd_info.summary = 'Print properties of the image.'
+
+
 def cmd_show (args):
     anyfailures = False
 
