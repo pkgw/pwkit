@@ -114,6 +114,31 @@ cmd_fitsrc.summary = 'Fit a compact-source model to a location in an image.'
 cmd_fitsrc.moredocs = """-p  - Force use of a point-source model."""
 
 
+def cmd_hackdata (args):
+    if len (args) != 2:
+        raise UsageError ('expect exactly two arguments')
+
+    inpath, outpath = args
+
+    try:
+        with astimage.open (inpath, 'r') as imin:
+            indata = imin.read ()
+    except Exception as e:
+        die ('cannot open input "%s": %s', inpath, e)
+
+    try:
+        with astimage.open (outpath, 'rw') as imout:
+            if imout.size != indata.size:
+                die ('cannot import data: input has %d pixels; output has %d',
+                     indata.size, imout.size)
+
+            imout.write (indata)
+    except Exception as e:
+        die ('cannot write to output "%s": %s', outpath, e)
+cmd_hackdata.argspec = '<inpath> <outpath>'
+cmd_hackdata.summary = 'Blindly copy pixel data from one image to another.'
+
+
 def cmd_show (args):
     anyfailures = False
 
