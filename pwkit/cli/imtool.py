@@ -220,6 +220,32 @@ cmd_info.argspec = '<images...>'
 cmd_info.summary = 'Print properties of the image.'
 
 
+def cmd_setrect (args):
+    if len (args) != 5:
+        raise UsageError ('expected exactly 5 arguments')
+
+    path = args[0]
+
+    try:
+        x = int (args[1])
+        y = int (args[2])
+        halfwidth = int (args[3])
+        value = float (args[4])
+    except ValueError:
+        raise UsageError ('could not parse one of the numeric arguments')
+
+    try:
+        img = astimage.open (path, 'rw')
+    except Exception as e:
+        die ('can\'t open path “%s”: %s', path, e)
+
+    data = img.read ()
+    data[...,y-halfwidth:y+halfwidth,x-halfwidth:x+halfwidth] = value
+    img.write (data)
+cmd_setrect.argspec = '<image> <x> <y> <halfwidth> <value>'
+cmd_setrect.summary = 'Set a rectangle in an image to a constant.'
+
+
 def cmd_show (args):
     anyfailures = False
 
