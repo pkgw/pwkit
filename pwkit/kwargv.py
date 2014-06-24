@@ -73,7 +73,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 __all__ = (b'Custom KwargvError ParseError ParseKeywords basic').split ()
 
-from . import Holder, PKError
+from . import Holder, PKError, text_type
 
 
 class KwargvError (PKError):
@@ -153,7 +153,7 @@ def _parse_bool (s):
 def _val_to_parser (v):
     if isinstance (v, bool):
         return _parse_bool
-    if isinstance (v, (int, float, str)):
+    if isinstance (v, (int, float, text_type)):
         return v.__class__
     raise ValueError ('can\'t figure out how to parse %r' % v)
 
@@ -169,7 +169,7 @@ def _val_or_func_to_parser (v):
 def _val_or_func_to_default (v):
     if callable (v):
         return None
-    if isinstance (v, (int, float, bool, str)):
+    if isinstance (v, (int, float, bool, text_type)):
         return v
     raise ValueError ('can\'t figure out a default for %r' % v)
 
