@@ -250,6 +250,58 @@ cmd_show.argspec = '<image> [images...]'
 cmd_show.summary = 'Show images interactively.'
 
 
+def _stats_print (path):
+    try:
+        img = astimage.open (path, 'r')
+    except Exception as e:
+        die ('error: can\'t open "%s": %s', path, e)
+
+    try:
+        img = img.simple ()
+    except Exception, e:
+        print ('imstats: can\'t convert “%s” to simple 2D sky image; '
+               'taking first plane' % path, file=sys.stderr)
+        data = img.read ()[tuple (np.zeros (img.shape.size - 2))]
+    else:
+        data = img.read ()
+
+    h, w = data.shape
+    patchhalfsize = 32
+
+    p = data[h//2 - patchhalfsize:h//2 + patchhalfsize,
+             w//2 - patchhalfsize:w//2 + patchhalfsize]
+
+    mx = p.max ()
+    mn = p.min ()
+    med = np.median (p)
+    rms = np.sqrt ((p**2).mean ())
+
+    sc = max (abs (mx), abs (mn))
+    if sc <= 0:
+        expt = 0
+    else:
+        expt = 3 * (int (np.floor (np.log10 (sc))) // 3)
+    f = 10**-expt
+
+    print ('min  = %.2f * 10^%d' % (f * mn, expt))
+    print ('max  = %.2f * 10^%d' % (f * mx, expt))
+    print ('med  = %.2f * 10^%d' % (f * med, expt))
+    print ('rms  = %.2f * 10^%d' % (f * rms, expt))
+
+
+def cmd_stats (args):
+    if len (args) == 1:
+        _stats_print (args[0])
+    else:
+        for i, path in enumerate (args):
+            if i > 0:
+                print ()
+            print ('path =', path)
+            _stats_print (path)
+cmd_stats.argspec = '<images...>'
+cmd_stats.summary = 'Compute and print statistics of a 64×64 patch at image center.'
+
+
 # The driver.
 
 def _fullusage ():
