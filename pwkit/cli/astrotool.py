@@ -217,6 +217,25 @@ cmd_m2c.argspec = '<MJD>'
 cmd_m2c.summary = 'Convert MJD[TAI] to a calendar date.'
 
 
+def cmd_sastrom (args):
+    verbose = pop_option ('v', args)
+
+    if len (args) != 2:
+        raise UsageError ('simbadastrom expected 2 arguments')
+
+    ident = args[0]
+    mjd = float (args[1])
+
+    info = AstrometryInfo ()
+    info.fill_from_simbad (ident, debug=verbose)
+    p = info.predict (mjd)
+    print ('%s at %.3f:' % (ident, mjd))
+    print ()
+    info.print_prediction (p)
+cmd_sastrom.argspec = '[-v] <source name> <MJD>'
+cmd_sastrom.summary = 'Compute source location using Simbad data.'
+
+
 def cmd_sesame (args):
     if not len (args):
         raise UsageError ('sesame expected an argument')
@@ -266,6 +285,7 @@ def cmd_sh2d (args):
 cmd_sh2d.argspec = '<sexagesimal hours>'
 cmd_sh2d.summary = 'Convert sexagesimal hours to decimal degrees.'
 cmd_sh2d.moredocs = """The argument should look like "12:20:14.6"."""
+
 
 def cmd_sl2d (args):
     if len (args) != 1:
