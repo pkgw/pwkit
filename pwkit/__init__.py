@@ -27,13 +27,13 @@ Modules:
   kwargv           - Keyword-style argument parsing.
   lmmin            - Levenberg-Marquardt least-squares function minimizer.
   lsqmdl           - Model data with least-squares fitting.
+  msmt             - Framework for working with uncertain measurements.
   ndshow_gtk2      - Visualize data arrays as interactive images, using Gtk+2.
   pdm              - Finding periods in data with Phase Dispersion Minimization.
   radio_cal_models - Models of radio-wavelength calibrator flux densities.
   unicode_to_latex - Rendering Unicode to LaTeX.
 
 """
-
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 __all__ = (b'Holder PKError binary_type reraise_context text_type '
