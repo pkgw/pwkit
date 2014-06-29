@@ -452,7 +452,7 @@ class Uval (object):
 
     def __invert__ (self):
         self.d = ~self.d
-        return self.d
+        return self
 
     def __complex__ (self):
         # TODO: allow if we're actually a precise scalar, and suggest
