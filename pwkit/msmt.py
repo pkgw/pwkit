@@ -1509,6 +1509,59 @@ class Textual (object):
             return r'\multicolumn{3}{c}{$%s$--$%s$}' % self.data
 
 
+    # Unary math -- we do the same thing as _make_textual_unary_math_generic()
+    # below. Unlike Uval and Lval, algebra on Textuals is emphatically not
+    # closed -- the result is always a non-Textual.
+
+    def __neg__ (self):
+        return _dispatch_unary_math ('negative', False, self.unwrap ())
+
+    def __abs__ (self):
+        return _dispatch_unary_math ('absolute', False, self.unwrap ())
+
+    # Binary math -- we delegate to the functions that are defined below.
+
+    def __add__ (self, other):
+        return add (self, other)
+
+    def __sub__ (self, other):
+        return subtract (self, other)
+
+    def __mul__ (self, other):
+        return multiply (self, other)
+
+    def __div__ (self, other):
+        return divide (self, other)
+
+    def __truediv__ (self, other):
+        return true_divide (self, other)
+
+    def __pow__ (self, other, module=None):
+        if modulo is not None:
+            raise ValueError ('powmod behavior forbidden with Textuals')
+        return power (self, other)
+
+    def __radd__ (self, other):
+        return add (other, self)
+
+    def __rsub__ (self, other):
+        return subtract (other, self)
+
+    def __rmul__ (self, other):
+        return multiply (other, self)
+
+    def __rdiv__ (self, other):
+        return divide (other, self)
+
+    def __rtruediv__ (self, other):
+        return true_divide (other, self)
+
+    def __rpow__ (self, other, module=None):
+        if modulo is not None:
+            raise ValueError ('powmod behavior forbidden with Textuals')
+        return power (other, self)
+
+
 def _dispatch_unary_math (name, check_textual, value):
     if np.isscalar (value):
         table = scalar_unary_math
