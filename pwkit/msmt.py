@@ -7,21 +7,83 @@ pwkit.msmt - Working with uncertain measurements.
 
 Classes:
 
-Uval    - An empirical uncertain value represented by numerical samples.
-Lval    - Container for either precise values or upper/lower limits.
-Textual - A measurement recorded in textual form.
+Uval       - An empirical uncertain value represented by numerical samples.
+LimitError - Raised on illegal operations on upper/lower limits.
+Lval       - Container for either precise values or upper/lower limits.
+Textual    - A measurement recorded in textual form.
+
+Generic unary functions on measurements:
+
+absolute   - abs(x)
+arccos     - As named.
+arcsin     - As named.
+arctan     - As named.
+cos        - As named.
+errinfo    - Get (limtype, repval, plus_1_sigma, minus_1_sigma)
+expm1      - exp(x) - 1
+exp        - As named.
+isfinite   - True if the value is well-defined and finite.
+liminfo    - Get (limtype, repval)
+limtype    - -1 if the datum is an upper limit; 1 if lower; 0 otherwise.
+log10      - As named.
+log1p      - log (1+x)
+log2       - As named.
+log        - As named.
+negative   - -x
+reciprocal - 1/x
+repval     - Get a "representative" value if x (in case it is uncertain).
+sin        - As named.
+sqrt       - As named.
+square     - x**2
+tan        - As named.
+unwrap     - Get a version of x on which algebra can be performed.
+
+Generic binary mathematical-ish functions:
+
+add         - x + y
+divide      - x / y; floor-integer division should be respected but usually isn't.
+multiply    - x * y
+power       - x ** y
+subtract    - x - y
+true_divide - x / y, never with floor-integer division
+typealign   - Return (x*, y*) cast to same algebra-friendly type: float, Uval, or Lval.
 
 Miscellaneous functions:
 
 find_gamma_params    - Compute reasonable Γ distribution parameters given mode/stddev.
 pk_scoreatpercentile - Simplified version of scipy.stats.scoreatpercentile.
+sample_double_norm   - Sample from a quasi-normal distribution with asymmetric variances.
 sample_gamma         - Sample from a Γ distribution with α/β parametrization.
+
+Variables:
+
+lval_unary_math            - Dict of unary math functions operating on Lvals.
+scalar_unary_math          - Dict of unary math functions operating on scalars.
+textual_unary_math         - Dict of unary math functions operating on Textuals.
+UQUANT_UNCERT              - Scale of uncertainty assumed for in cases where it's unquantified.
+uval_default_repval_method - Default method for computing Uval representative values.
+uval_dtype                 - The Numpy dtype of Uval data (often ignored!)
+uval_nsamples              - Number of samples used when constructing Uvals
+uval_unary_math            - Dict of unary math functions operating on Uvals.
 
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'LimitError Lval Textual Uval find_gamma_params pk_scoreatpercentile '
-           b'sample_double_norm sample_gamma uval_dtype uval_nsamples').split ()
+__all__ = (
+    # Classes:
+    b'LimitError Lval Textual Uval '
+    # Unary math:
+    b'absolute arccos arcsin arctan cos errinfo expm1 exp isfinite liminfo '
+    b'limtype log10 log1p log2 log negative reciprocal repval sin sqrt square '
+    b'tan unwrap '
+    # Binary math:
+    b'add divide multiply power subtract true_divide typealign '
+    # Misc. funcs:
+    b'find_gamma_params pk_scoreatpercentile sample_double_norm sample_gamma '
+    # Variables:
+    b'lval_unary_math scalar_unary_math textual_unary_math UQUANT_UNCERT '
+    b'uval_default_repval_method uval_dtype uval_nsamples uval_unary_math '
+).split ()
 
 import operator
 
@@ -63,7 +125,7 @@ def pk_scoreatpercentile (a, per):
 # are mathematically purer but turn out to be just obnoxiously hard to work with.
 # Double-normals are ad-hoc but also much more tractable.
 
-def sample_double_norm (mean, var_upper, var_lower, size):
+def sample_double_norm (mean, std_upper, std_lower, size):
     """Note that this function requires Scipy."""
     from scipy.special import erfinv
 
@@ -81,15 +143,15 @@ def sample_double_norm (mean, var_upper, var_lower, size):
 
     samples = np.empty (size)
     percentiles = np.random.uniform (0., 1., size)
-    cutoff = var_lower / (var_lower + var_upper)
+    cutoff = std_lower / (std_lower + std_upper)
 
     w = (percentiles < cutoff)
     percentiles[w] *= 0.5 / cutoff
-    samples[w] = mean + np.sqrt (2) * var_lower * erfinv (2 * percentiles[w] - 1)
+    samples[w] = mean + np.sqrt (2) * std_lower * erfinv (2 * percentiles[w] - 1)
 
     w = ~w
     percentiles[w] = 1 - (1 - percentiles[w]) * 0.5 / (1 - cutoff)
-    samples[w] = mean + np.sqrt (2) * var_upper * erfinv (2 * percentiles[w] - 1)
+    samples[w] = mean + np.sqrt (2) * std_upper * erfinv (2 * percentiles[w] - 1)
 
     return samples
 
@@ -220,6 +282,30 @@ def _make_uval_inpl_operator (opfunc):
 
 
 class Uval (object):
+    """An empirical uncertain value, represented by samples.
+
+    Constructors:
+
+    Uval.from_other (object)
+    Uval.from_fixed (v)
+    Uval.from_norm (mean, std)
+    Uval.from_unif (lower_incl, upper_excl)
+    Uval.from_double_norm (mean, std_upper, std_lower)
+    Uval.from_gamma (alpha, beta)
+    Uval.from_pcount (nevents)
+
+    Methods:
+
+    repvals (method)                          - Return (best, best+1σ, best-1σ).
+                                                `method` is 'pct' or 'gauss'.
+    text_pieces (method, uplaces=2)           - Helper for stringification.
+    format (method, parenexp=True, uplaces=2) - Stringify.
+    debug_distribution ()                     - Returns an omegaplot Painter.
+
+    Supported operations: unicode() str() repr() [latexification]
+    + -(sub) * // / % ** += -= *= //= %= /= **= -(neg) ~ abs()
+
+    """
     __slots__ = ('d', )
 
     # Initialization.
@@ -240,10 +326,10 @@ class Uval (object):
         return Uval (np.zeros (uval_nsamples, dtype=uval_dtype) + v)
 
     @staticmethod
-    def from_norm (val, uncert):
-        if uncert < 0:
-            raise ValueError ('uncert must be positive')
-        return Uval (np.random.normal (val, uncert, uval_nsamples))
+    def from_norm (mean, std):
+        if std < 0:
+            raise ValueError ('std must be positive')
+        return Uval (np.random.normal (mean, std, uval_nsamples))
 
     @staticmethod
     def from_unif (lower_incl, upper_excl):
@@ -724,6 +810,17 @@ def _lval_add_towards_polarity (x, polarity):
 
 
 class Lval (object):
+    """A container for either precise values or upper/lower limits.
+
+    Lval (kind, value)  - where `kind` is 'exact', 'uncertain', 'toinf',
+                          'tozero', 'pastzero', or 'undef'. Most easily
+                          constructed via Textual.parse().
+    Lval.from_other (o)
+
+    Supported operations: unicode() str() repr() -(neg) abs() + -
+    * / ** += -= *= /= **=
+
+    """
     __slots__ = ('kind', 'value')
 
     def __init__ (self, kind, value):
@@ -1171,6 +1268,26 @@ def _split_decimal_col (floattext):
 
 
 class Textual (object):
+    """A measurement recorded in textual form.
+
+    Textual.from_exact (text, tkind='none') - `text` is passed to float()
+    Textual.parse (text, tkind='none')      - `text` as described below.
+
+    Transformation kinds are 'none', 'log10', or 'positive'. Expressions for
+    values take the form '1.234', '<2', '>3', '~7', '6to8', '7pm0.1', or
+    '12p1m0.3'.
+
+    Methods:
+
+    unparse()              - Return parsed text (but not tkind!)
+    unwrap()               - Express as float/Uval/Lval as appropriate.
+    repval(limitsok=False) - Get single scalar "representative" value.
+    limtype()              - -1 if upper limit; +1 if lower; 0 otherwise.
+
+    Supported operations: unicode() str() repr() [latexification] -(neg) abs()
+    + - * / **
+
+    """
     __slots__ = ('tkind', 'dkind', 'data')
 
     def __init__ (self, tkind, dkind, data):
