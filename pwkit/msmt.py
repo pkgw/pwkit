@@ -142,6 +142,17 @@ def find_gamma_params (mode, std):
 
 
 # Scalar math.
+#
+# What's going on here is that we want to provide a library of standard math
+# functions that can operate on any kind of measurement. Rather than writing
+# several large and complicated handle-anything functions, we implement them
+# independently for each data type. At the bottom of this module we then have
+# some generic code the uses the type of its argument to determine which
+# function to invoke. This declutters things and also lets the implementations
+# of math operators take advantage of the unary functions, as is done
+# extensively in the Lval implementation.
+#
+# For scalars, we just delegate to Numpy.
 
 scalar_unary_math = {
     'absolute': np.absolute,
@@ -166,6 +177,9 @@ scalar_unary_math = {
 
 
 # The fundamental "Uval" class.
+#
+# These have a more extensive math/operator library than Lval and Textual
+# since it's so easy to implement things.
 
 def _to_uval_info (value):
     if isinstance (value, Uval):
@@ -264,6 +278,7 @@ class Uval (object):
         if nevents < 0:
             raise ValueError ('Poisson parameter `nevents` must be nonnegative')
         return Uval (np.random.gamma (nevents + 1, size=uval_nsamples))
+
 
     # Interrogation. Would be nice to have a way to estimate the
     # distribution's mode -- when a scientist writes V = X +- Y, I think they
@@ -606,13 +621,13 @@ uval_unary_math = {
 # Uvals, but not the other way around.
 #
 # It turns out that we have to take a somewhat complicated approach here. Say
-# X is a limiting value: X < 4. If X is really any number < 4, 1/X is
+# X is a limiting value: X < 4. If X is really any real number < 4, 1/X is
 # undefined because we pass through zero and could be anywhere between
 # positive and negative infinity. On the other hand, if we really mean 0 < X <
 # 4, 1/X should work out to >0.25.
 #
 # Practical math with limits requires both possibilities. In particular, we
-# sometimes want to take reciprocals of logs of numbers known to be positive,
+# sometimes want to take reciprocals or logs of numbers known to be positive,
 # and sometimes we'll want to exponentiate numbers that are known to be logs.
 # After several false starts, the system I've devised below seems to allow
 # sane operation in the majority of cases.
@@ -741,7 +756,7 @@ class Lval (object):
     def __repr__ (self):
         return 'Lval(%r, %r)' % (self.kind, self.value)
 
-    # math -- http://docs.python.org/2/reference/datamodel.html#emulating-numeric-types
+    # Math. We start with addition. It gets complicated!
 
     def __neg__ (self):
         return _lval_unary_negative (self)
@@ -774,7 +789,6 @@ class Lval (object):
             return +1
         return -2
 
-    # Addition: it gets complicated!
 
     def __add__ (self, other):
         v1 = self
@@ -1176,6 +1190,7 @@ class Textual (object):
     def parse (text, tkind='none'):
         # freestanding float() calls below are used to check
         # float-parseability of strings.
+        # XXX: we do not check sanity when tkind is 'positive'!
 
         if text[0] == '~':
             dkind = 'uncertain'
@@ -1239,7 +1254,7 @@ class Textual (object):
 
 
     # Textualization -- keep this up here since this is so closely tied to
-    # construction via parse().
+    # construction via parse(). Note that unparse() loses the `tkind` info.
 
     def unparse (self):
         if self.dkind == 'exact':
@@ -1665,7 +1680,8 @@ def errinfo (msmt):
 # Unary numerical functions.
 #
 # Here we just have to look up the appropriate table of unary math operations
-# and delegate.
+# and delegate. The implemented functions are those in the scalar_unary_math
+# dict.
 #
 # Potentially useful Numpy functions that I've skipped:
 #
