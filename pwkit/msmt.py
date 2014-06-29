@@ -32,6 +32,7 @@ from . import PKError, unicode_to_str
 
 uval_nsamples = 1024
 uval_dtype = np.double
+uval_default_repval_method = 'pct'
 
 
 # This is a copy of scipy.stats' scoreatpercentile() function with simplified
@@ -420,7 +421,7 @@ class Uval (object):
 
     def __unicode__ (self):
         try:
-            return self.format ('pct')
+            return self.format (uval_default_repval_method)
         except ValueError:
             return '{bad samples}'
 
@@ -428,13 +429,15 @@ class Uval (object):
 
 
     def __repr__ (self):
-        formatted = self.format ('pct')
+        formatted = self.format (uval_default_repval_method)
         v = pk_scoreatpercentile (self.d, [0, 2.5, 50, 97.5, 100])
         return '<Uval %s [min=%g l95=%g med=%g u95=%g max=%g]>' % \
             ((formatted, ) + tuple (v))
 
 
-    def __pk_latex__ (self, method='pct', uplaces=1):
+    def __pk_latex__ (self, method=None, uplaces=1):
+        if method is None:
+            method = uval_default_repval_method
         main, dh, dl, exp = self.text_pieces (method, uplaces=uplaces)
 
         if dh is None:
@@ -451,7 +454,9 @@ class Uval (object):
         return r'$(%s %s) \times 10^{%s}$' % (main, pmterm, exp)
 
 
-    def __pk_ulatex3col__ (self, method='pct', uplaces=1):
+    def __pk_ulatex3col__ (self, method=None, uplaces=1):
+        if method is None:
+            method = uval_default_repval_method
         main, dh, dl, exp = self.text_pieces (method, uplaces=uplaces)
 
         if dh is None:
@@ -735,7 +740,7 @@ class Lval (object):
             from copy import copy
             return Lval (o.kind, copy (o.value))
         if isinstance (o, Uval):
-            return Lval ('uncertain', o.repvals ('pct')[0])
+            return Lval ('uncertain', o.repvals (uval_default_repval_method)[0])
         if np.isscalar (o):
             return Lval ('exact', float (o))
         raise ValueError ('cannot convert %r to an Lval' % o)
@@ -1664,7 +1669,7 @@ def repval (msmt, limitsok=False):
     if np.isscalar (msmt):
         return float (msmt)
     if isinstance (msmt, Uval):
-        return msmt.repvals ('pct')[0]
+        return msmt.repvals (uval_default_repval_method)[0]
     if isinstance (msmt, Lval):
         if not limitsok and msmt.kind in ('tozero', 'toinf', 'pastzero'):
             raise LimitError ()
@@ -1721,7 +1726,7 @@ def errinfo (msmt):
         return 0, msmt, msmt, msmt
 
     if isinstance (msmt, Uval):
-        rep, plus1, minus1 = msmt.repvals ('pct')
+        rep, plus1, minus1 = msmt.repvals (uval_default_repval_method)
         return 0, rep, plus1, minus1
 
     if isinstance (msmt, Lval):
