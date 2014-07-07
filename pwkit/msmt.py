@@ -22,6 +22,7 @@ cos        - As named.
 errinfo    - Get (limtype, repval, plus_1_sigma, minus_1_sigma)
 expm1      - exp(x) - 1
 exp        - As named.
+fmtinfo    - Get (typetag, text, is_imprecise) for textual round-tripping.
 isfinite   - True if the value is well-defined and finite.
 liminfo    - Get (limtype, repval)
 limtype    - -1 if the datum is an upper limit; 1 if lower; 0 otherwise.
@@ -58,6 +59,7 @@ sample_gamma         - Sample from a Γ distribution with α/β parametrization.
 Variables:
 
 lval_unary_math            - Dict of unary math functions operating on Lvals.
+parsers                    - Dict of type tag to parsing functions.
 scalar_unary_math          - Dict of unary math functions operating on scalars.
 textual_unary_math         - Dict of unary math functions operating on Textuals.
 UQUANT_UNCERT              - Scale of uncertainty assumed for in cases where it's unquantified.
@@ -72,24 +74,25 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 __all__ = (
     # Classes:
     b'LimitError Lval Textual Uval '
-    # Unary math:
-    b'absolute arccos arcsin arctan cos errinfo expm1 exp isfinite liminfo '
-    b'limtype log10 log1p log2 log negative reciprocal repval sin sqrt square '
-    b'tan unwrap '
-    # Binary math:
+    # Unary operations on measurements:
+    b'absolute arccos arcsin arctan cos errinfo expm1 exp fmtinfo isfinite '
+    b'liminfo limtype log10 log1p log2 log negative reciprocal repval sin sqrt '
+    b'square tan unwrap '
+    # Binary operations on measurements:
     b'add divide multiply power subtract true_divide typealign '
     # Misc. funcs:
     b'find_gamma_params pk_scoreatpercentile sample_double_norm sample_gamma '
     # Variables:
-    b'lval_unary_math scalar_unary_math textual_unary_math UQUANT_UNCERT '
-    b'uval_default_repval_method uval_dtype uval_nsamples uval_unary_math '
+    b'lval_unary_math parsers scalar_unary_math textual_unary_math '
+    b'UQUANT_UNCERT uval_default_repval_method uval_dtype uval_nsamples '
+    b'uval_unary_math'
 ).split ()
 
 import operator
 
 import numpy as np
 
-from . import PKError, unicode_to_str
+from . import PKError, text_type, unicode_to_str
 
 
 uval_nsamples = 1024
@@ -521,6 +524,10 @@ class Uval (object):
             ((formatted, ) + tuple (v))
 
 
+    def __pk_fmtinfo__ (self):
+        return 'u', self.format ('pct', parenexp=False), True
+
+
     def __pk_latex__ (self, method=None, uplaces=1):
         if method is None:
             method = uval_default_repval_method
@@ -857,6 +864,26 @@ class Lval (object):
 
     def __repr__ (self):
         return 'Lval(%r, %r)' % (self.kind, self.value)
+
+    def __pk_fmtinfo__ (self):
+        # Only certain kinds of Lval can successfully be roundtripped through
+        # text. Positive 'tozero' values need the 'P' flag; negative tozeros
+        # are inexpressible.
+        if self.kind == 'undef' or (self.kind == 'tozero' and self.value < 0):
+            raise ValueError ('no fmtinfo textualization of %r is possible' % self)
+
+        if self.kind == 'tozero':
+            return 'Pu', '<%g' % self.value, True
+
+        s = _lval_pos_sigils[self.kind][0] # note: truncating << pastzero mode.
+        if self.value < 0:
+            if s == '>': # toinf, but we're negative.
+                s = '<'
+            else: # tozero disallowed, so we must be pastzero
+                s = '>'
+
+        return 'u', '%s%g' % (s, self.value), True
+
 
     # Math. We start with addition. It gets complicated!
 
@@ -1413,6 +1440,23 @@ class Textual (object):
 
     __str__ = unicode_to_str
 
+    def __pk_fmtinfo__ (self):
+        t = self.unparse ()
+
+        if self.tkind == 'log10':
+            ttag = 'L'
+        elif self.tkind == 'positive':
+            ttag = 'P'
+        else:
+            ttag = ''
+
+        if self.dkind == 'exact':
+            dtag = 'f'
+        else:
+            dtag = 'u'
+
+        return ttag + dtag, t, False
+
 
     # "Unwrapping" -- conversion into either a scalar, Uval, or Lval. The
     # ability to apply various data transforms complicates this process.
@@ -1918,3 +1962,79 @@ multiply = _make_wrapped_binary_math (operator.mul)
 power = _make_wrapped_binary_math (operator.pow)
 subtract = _make_wrapped_binary_math (operator.sub)
 true_divide = _make_wrapped_binary_math (operator.truediv)
+
+
+# Parsing and formatting of measurements and other quantities.
+
+def _parse_bool (text):
+    if not len (text):
+        return False
+    if text == 'y':
+        return True
+    raise ValueError ('illegal bool textualization: expect empty or "y"; '
+                      'got "%s"' % text)
+
+
+def _maybe (subparse):
+    def parser (text):
+        if not len (text):
+            return None
+        return subparse (text)
+    return parser
+
+
+_ttkinds = {'': 'none', 'L': 'log10', 'P': 'positive'}
+
+def _maybe_parse_exact (text, tkind):
+    if not len (text):
+        return None
+    return Textual.from_exact (text, _ttkinds[tkind])
+
+
+def _maybe_parse_uncert (text, tkind):
+    if not len (text):
+        return None
+    return Textual.parse (text, _ttkinds[tkind])
+
+
+parsers = {
+    # maps 'type tag string' to 'parsing function'.
+    'x': None,
+    'b': _parse_bool,
+    'i': _maybe (int),
+    's': _maybe (text_type),
+    'f': lambda t: _maybe_parse_exact (t, ''),
+    'Lf': lambda t: _maybe_parse_exact (t, 'L'),
+    'Pf': lambda t: _maybe_parse_exact (t, 'P'),
+    'u': lambda t: _maybe_parse_uncert (t, ''),
+    'Lu': lambda t: _maybe_parse_uncert (t, 'L'),
+    'Pu': lambda t: _maybe_parse_uncert (t, 'P'),
+}
+
+def fmtinfo (value):
+    """Returns (typetag, text, is_imprecise). Unlike other functions that operate
+    on measurements, this also operates on bools, ints, and strings.
+
+    """
+    if value is None:
+        raise ValueError ('cannot format None!')
+
+    if isinstance (value, text_type):
+        return '', value, False
+
+    if isinstance (value, bool):
+        # Note: isinstance (True, int) = True, so this must come before the next case.
+        if value:
+            return 'b', 'y', False
+        return 'b', '', False
+
+    if isinstance (value, (int, long)):
+        return 'i', text_type (value), False
+
+    if isinstance (value, float):
+        return 'f', text_type (value), True
+
+    if hasattr (value, '__pk_fmtinfo__'):
+        return value.__pk_fmtinfo__ ()
+
+    raise ValueError ('don\'t know how to format %r as a measurement' % value)
