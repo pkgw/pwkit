@@ -3,12 +3,24 @@
 # Licensed under the MIT License.
 
 """A simple parser for ini-style files that's better than Python's
-ConfigParser/configparser."""
+ConfigParser/configparser.
+
+Functions:
+
+read            - Generate a stream of `pwkit.Holder`s from an ini-format file.
+mutate          - Rewrite an ini file chunk by chunk.
+write           - Write a stream of `pwkit.Holder`s to an ini-format file.
+mutate_stream   - Lower-level version; only operates on streams, not path names.
+read_stream     - Lower-level version; only operates on streams, not path names.
+write_stream    - Lower-level version; only operates on streams, not path names.
+mutate_in_place - Rewrite an ini file specififed by its path name, in place.
+
+"""
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'FileChunk Holder InifileError read_stream read '
-           b'mutate_stream mutate mutate_in_place').split ()
+__all__ = (b'FileChunk InifileError mutate_in_place mutate_stream '
+           b'mutate read_stream read write_stream write').split ()
 
 import io, os, re
 from . import Holder, PKError
@@ -93,6 +105,65 @@ def read (stream_or_path):
     if isinstance (stream_or_path, basestring):
         return read_stream (io.open (stream_or_path, 'rb'))
     return read_stream (stream_or_path)
+
+
+# Writing
+
+def write_stream (stream, holders, defaultsection=None):
+    """Very simple writing in ini format. The simple stringification of each value
+    in each Holder is printed, and no escaping is performed. (This is most
+    relevant for multiline values or ones containing pound signs.) `None`s are
+    skipped.
+
+    Arguments:
+
+    stream              - A text stream to write to.
+    holders             - An iterable of objects to write. Their fields will be
+                          written as sections.
+    defaultsection=None - Section name to use if a holder doesn't contain a
+                          `section` field.
+
+    """
+    anybefore = False
+
+    for h in holders:
+        if anybefore:
+            print ('', file=stream)
+
+        s = h.get ('section', defaultsection)
+        if s is None:
+            raise ValueError ('cannot determine section name for item <%s>' % h)
+        print ('[%s]' % s, file=stream)
+
+        for k in sorted (x for x in h.__dict__.iterkeys () if x != 'section'):
+            v = h.get (k)
+            if v is None:
+                continue
+
+            print ('%s = %s' % (k, v), file=stream)
+
+        anybefore = True
+
+
+def write (stream_or_path, holders, **kwargs):
+    """Very simple writing in ini format. The simple stringification of each value
+    in each Holder is printed, and no escaping is performed. (This is most
+    relevant for multiline values or ones containing pound signs.) `None`s are
+    skipped.
+
+    Arguments:
+
+    stream              - A text stream to write to.
+    holders             - An iterable of objects to write. Their fields will be
+                          written as sections.
+    defaultsection=None - Section name to use if a holder doesn't contain a
+                          `section` field.
+
+    """
+    if isinstance (stream_or_path, basestring):
+        return write_stream (io.open (stream_or_path, 'wt'), holders, **kwargs)
+    else:
+        return write_stream (stream_or_path, holders, **kwargs)
 
 
 # Parsing plus inline modification, preserving the file as much as possible.
