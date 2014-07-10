@@ -31,6 +31,7 @@ Modules:
   ndshow_gtk2      - Visualize data arrays as interactive images, using Gtk+2.
   pdm              - Finding periods in data with Phase Dispersion Minimization.
   radio_cal_models - Models of radio-wavelength calibrator flux densities.
+  tabfile          - I/O on typed tabular files containing uncertain measurements.
   tinifile         - I/O on typed ini-format files containing uncertain measurements.
   unicode_to_latex - Rendering Unicode to LaTeX.
 
