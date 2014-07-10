@@ -1915,7 +1915,7 @@ def errinfo (msmt):
 def _make_wrapped_unary_math (name):
     def unary_mathfunc (val):
         rv = _dispatch_unary_math (name, True, val)
-        if not isfinite (rv):
+        if not _dispatch_unary_math ('isfinite', True, rv):
             raise ValueError ('out-of-bounds input %r to %s' % (val, name))
         return rv
     return unary_mathfunc
