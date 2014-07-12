@@ -4,6 +4,17 @@
 
 """numutil - NumPy and generic numerical utilities.
 
+Functions:
+
+make_tophat_ee - Return a tophat function operating on an exclusive/exclusive range.
+make_tophat_ei - Return a tophat function operating on an exclusive/inclusive range.
+make_tophat_ie - Return a tophat function operating on an inclusive/exclusive range.
+make_tophat_ii - Return a tophat function operating on an inclusive/inclusive range.
+unit_tophat_ee - Tophat function on (0,1).
+unit_tophat_ei - Tophat function on (0,1].
+unit_tophat_ie - Tophat function on [0,1).
+unit_tophat_ii - Tophat function on [0,1].
+
 Decorators:
 
 broadcastize - Make a Python function automatically broadcast arguments.
@@ -11,7 +22,9 @@ broadcastize - Make a Python function automatically broadcast arguments.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'broadcastize').split ()
+__all__ = (b'broadcastize make_tophat_ee make_tophat_ei make_tophat_ie '
+           b'make_tophat_ii unit_tophat_ee unit_tophat_ei unit_tophat_ie '
+           b'unit_tophat_ii').split ()
 
 import functools
 import numpy as np
@@ -39,7 +52,7 @@ class _Broadcaster (object):
         rest = args[self._n_arr:]
         result = self._subfunc (*(bc_1d + rest), **kwargs)
 
-        if not len (bc_raw[0].shape):
+        if bc_raw[0].ndim == 0:
             return np.asscalar (result)
         return result
 
@@ -80,3 +93,159 @@ class _BroadcasterDecorator (object):
 
 
 broadcastize = _BroadcasterDecorator
+
+
+# Tophat functions -- numpy doesn't have anything built-in (that I know of)
+# that does this in a convenient way that I'd like. These are useful for
+# defining functions in a piecewise-ish way, although also pay attention to
+# the existence of np.piecewise!
+#
+# We're careful with inclusivity/exclusivity of the bounds since that can be
+# important.
+
+def unit_tophat_ee (x):
+    """Tophat function on the unit circle, left-exclusive and right-exclusive.
+    Returns 1 if 0 < x < 1, 0 otherwise.
+
+    """
+    x = np.asarray (x)
+    x1 = np.atleast_1d (x)
+    r = ((0 < x1) & (x1 < 1)).astype (x.dtype)
+    if x.ndim == 0:
+        return np.asscalar (r)
+    return r
+
+
+def unit_tophat_ei (x):
+    """Tophat function on the unit circle, left-exclusive and right-inclusive.
+    Returns 1 if 0 < x <= 1, 0 otherwise.
+
+    """
+    x = np.asarray (x)
+    x1 = np.atleast_1d (x)
+    r = ((0 < x1) & (x1 <= 1)).astype (x.dtype)
+    if x.ndim == 0:
+        return np.asscalar (r)
+    return r
+
+
+def unit_tophat_ie (x):
+    """Tophat function on the unit circle, left-inclusive and right-exclusive.
+    Returns 1 if 0 <= x < 1, 0 otherwise.
+
+    """
+    x = np.asarray (x)
+    x1 = np.atleast_1d (x)
+    r = ((0 <= x1) & (x1 < 1)).astype (x.dtype)
+    if x.ndim == 0:
+        return np.asscalar (r)
+    return r
+
+
+def unit_tophat_ii (x):
+    """Tophat function on the unit circle, left-inclusive and right-inclusive.
+    Returns 1 if 0 <= x <= 1, 0 otherwise.
+
+    """
+    x = np.asarray (x)
+    x1 = np.atleast_1d (x)
+    r = ((0 <= x1) & (x1 <= 1)).astype (x.dtype)
+    if x.ndim == 0:
+        return np.asscalar (r)
+    return r
+
+
+def make_tophat_ee (lower, upper):
+    """Return a ufunc-like tophat function on the defined range, left-exclusive
+    and right-exclusive. Returns 1 if lower < x < upper, 0 otherwise.
+
+    """
+    if not np.isfinite (lower):
+        raise ValueError ('"lower" argument must be finite number; got %r' % lower)
+    if not np.isfinite (upper):
+        raise ValueError ('"upper" argument must be finite number; got %r' % upper)
+
+    def range_tophat_ee (x):
+        x = np.asarray (x)
+        x1 = np.atleast_1d (x)
+        r = ((lower < x1) & (x1 < upper)).astype (x.dtype)
+        if x.ndim == 0:
+            return np.asscalar (r)
+        return r
+
+    range_tophat_ee.__doc__ = ('Ranged tophat function, left-exclusive and '
+                               'right-exclusive. Returns 1 if %g < x < %g, '
+                               '0 otherwise.') % (lower, upper)
+    return range_tophat_ee
+
+
+def make_tophat_ei (lower, upper):
+    """Return a ufunc-like tophat function on the defined range, left-exclusive
+    and right-inclusive. Returns 1 if lower < x <= upper, 0 otherwise.
+
+    """
+    if not np.isfinite (lower):
+        raise ValueError ('"lower" argument must be finite number; got %r' % lower)
+    if not np.isfinite (upper):
+        raise ValueError ('"upper" argument must be finite number; got %r' % upper)
+
+    def range_tophat_ei (x):
+        x = np.asarray (x)
+        x1 = np.atleast_1d (x)
+        r = ((lower < x1) & (x1 <= upper)).astype (x.dtype)
+        if x.ndim == 0:
+            return np.asscalar (r)
+        return r
+
+    range_tophat_ei.__doc__ = ('Ranged tophat function, left-exclusive and '
+                               'right-inclusive. Returns 1 if %g < x <= %g, '
+                               '0 otherwise.') % (lower, upper)
+    return range_tophat_ei
+
+
+def make_tophat_ie (lower, upper):
+    """Return a ufunc-like tophat function on the defined range, left-inclusive
+    and right-exclusive. Returns 1 if lower <= x < upper, 0 otherwise.
+
+    """
+    if not np.isfinite (lower):
+        raise ValueError ('"lower" argument must be finite number; got %r' % lower)
+    if not np.isfinite (upper):
+        raise ValueError ('"upper" argument must be finite number; got %r' % upper)
+
+    def range_tophat_ie (x):
+        x = np.asarray (x)
+        x1 = np.atleast_1d (x)
+        r = ((lower <= x1) & (x1 < upper)).astype (x.dtype)
+        if x.ndim == 0:
+            return np.asscalar (r)
+        return r
+
+    range_tophat_ie.__doc__ = ('Ranged tophat function, left-inclusive and '
+                               'right-exclusive. Returns 1 if %g <= x < %g, '
+                               '0 otherwise.') % (lower, upper)
+    return range_tophat_ie
+
+
+def make_tophat_ii (lower, upper):
+    """Return a ufunc-like tophat function on the defined range, left-inclusive
+    and right-inclusive. Returns 1 if lower < x < upper, 0 otherwise.
+
+    """
+    if not np.isfinite (lower):
+        raise ValueError ('"lower" argument must be finite number; got %r' % lower)
+    if not np.isfinite (upper):
+        raise ValueError ('"upper" argument must be finite number; got %r' % upper)
+
+    def range_tophat_ii (x):
+        x = np.asarray (x)
+        x1 = np.atleast_1d (x)
+        r = ((lower <= x1) & (x1 <= upper)).astype (x.dtype)
+        if x.ndim == 0:
+            return np.asscalar (r)
+        return r
+
+    range_tophat_ii.__doc__ = ('Ranged tophat function, left-inclusive and '
+                               'right-inclusive. Returns 1 if %g <= x <= %g, '
+                               '0 otherwise.') % (lower, upper)
+    return range_tophat_ii
