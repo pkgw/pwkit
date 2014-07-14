@@ -2,8 +2,19 @@
 # Copyright 2012-2014 Peter Williams <peter@newton.cx> and collaborators.
 # Licensed under the MIT License.
 
-"""pwkit.cli - miscellaneous utilities for command-line programs."""
+"""pwkit.cli - miscellaneous utilities for command-line programs.
 
+Functions:
+
+check_usage   - Print usage and exit if --help is in argv.
+die           - Print an error and exit.
+pop_option    - Check for a single command-line option.
+show_usage    - Print a usage message.
+unicode_stdio - Ensure that sys.std{in,out,err} accept unicode strings.
+warn          - Print a warning.
+wrong_usage   - Print an error about wrong usage and the usage help.
+
+"""
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 __all__ = (b'check_usage die pop_option show_usage unicode_stdio warn '
