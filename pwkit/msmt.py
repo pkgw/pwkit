@@ -528,7 +528,7 @@ class Uval (object):
         return 'u', self.format ('pct', parenexp=False), True
 
 
-    def __pk_latex__ (self, method=None, uplaces=1):
+    def __pk_latex__ (self, method=None, uplaces=1, **kwargs):
         if method is None:
             method = uval_default_repval_method
         main, dh, dl, exp = self.text_pieces (method, uplaces=uplaces)
@@ -547,7 +547,16 @@ class Uval (object):
         return r'$(%s %s) \times 10^{%s}$' % (main, pmterm, exp)
 
 
-    def __pk_ulatex3col__ (self, method=None, uplaces=1):
+    def __pk_latex_l3col__ (self, method=None, **kwargs):
+        if method is None:
+            method = uval_default_repval_method
+        v = self.repvals (method)[0]
+
+        from .latex import latexify_n2col
+        return b'$\\sim$ & ' + latexify_n2col (v, **kwargs)
+
+
+    def __pk_latex_u3col__ (self, method=None, uplaces=1, **kwargs):
         if method is None:
             method = uval_default_repval_method
         main, dh, dl, exp = self.text_pieces (method, uplaces=uplaces)
@@ -883,6 +892,56 @@ class Lval (object):
                 s = '>'
 
         return 'u', '%s%g' % (s, self.value), True
+
+
+    def __pk_latex__ (self, undefok=False, **kwargs):
+        from .latex import latexify
+        base = latexify (self.value, **kwargs)
+
+        if self.kind == 'undef':
+            if undefok:
+                return b''
+            raise ValueError ('tried to LaTeXify undefined Lval')
+
+        if self.kind == 'exact':
+            return b'' + base
+
+        if self.kind == 'uncertain':
+            return b'$\\sim$' + base
+
+        s = _lval_pos_sigils[self.kind][0] # note: truncating << pastzero mode.
+        if self.value < 0:
+            if s == '>':
+                s = '<'
+            else:
+                s = '>'
+
+        return b'$%s$%s' % (s, base)
+
+
+    def __pk_latex_l3col__ (self, undefok=False, **kwargs):
+        from .latex import latexify_n2col
+        base = latexify_n2col (self.value, **kwargs)
+
+        if self.kind == 'undef':
+            if undefok:
+                return b' & & '
+            raise ValueError ('tried to LaTeXify undefined Lval')
+
+        if self.kind == 'exact':
+            return b'& ' + base
+
+        if self.kind == 'uncertain':
+            return b'$\\sim$ & ' + base
+
+        s = _lval_pos_sigils[self.kind][0] # note: truncating << pastzero mode.
+        if self.value < 0:
+            if s == '>':
+                s = '<'
+            else:
+                s = '>'
+
+        return b'$%s$ & %s' % (s, base)
 
 
     # Math. We start with addition. It gets complicated!
@@ -1656,7 +1715,7 @@ class Textual (object):
             return r'$%s$--$%s$' % self.data
 
 
-    def __pk_ulatex3col__ (self):
+    def __pk_latex_u3col__ (self):
         if self.dkind == 'exact':
             return r'\multicolumn{3}{c}{$%s$}' % self.data
         if self.dkind == 'uncertain':

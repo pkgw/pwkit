@@ -25,6 +25,7 @@ Modules:
   io               - Utilities for input and output.
   kbn_conf         - Calculate Poisson-like confidence intervals assuming a background.
   kwargv           - Keyword-style argument parsing.
+  latex            - Tools for interacting with the LaTeX typesetting system.
   lmmin            - Levenberg-Marquardt least-squares function minimizer.
   lsqmdl           - Model data with least-squares fitting.
   msmt             - Framework for working with uncertain measurements.
