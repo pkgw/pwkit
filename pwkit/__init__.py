@@ -35,6 +35,7 @@ Modules:
   radio_cal_models - Models of radio-wavelength calibrator flux densities.
   tabfile          - I/O on typed tabular files containing uncertain measurements.
   tinifile         - I/O on typed ini-format files containing uncertain measurements.
+  ucd_physics      - Estimating physical quantities for M stars and UCDs.
   unicode_to_latex - Rendering Unicode to LaTeX.
 
 """
