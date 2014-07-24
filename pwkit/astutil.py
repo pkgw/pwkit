@@ -249,7 +249,7 @@ def _parsesexagesimal (sxgstr, desc, negok):
         raise ValueError ('unable to parse as %s: %s' % (desc, sxgstr_orig))
 
     if mn < 0 or mn > 59 or sec < 0 or sec >= 60.:
-        raise ValueError ('illegal sexagesimal %s expression: ' % (desc, sxgstr_orig))
+        raise ValueError ('illegal sexagesimal %s expression: %s' % (desc, sxgstr_orig))
     if bs < 0: # two minus signs, or something
         raise ValueError ('illegal negative %s expression: %s' % (desc, sxgstr_orig))
 
