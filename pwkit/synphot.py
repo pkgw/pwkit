@@ -2,21 +2,82 @@
 # Copyright 2014 Peter Williams <peter@newton.cx> and collaborators.
 # Licensed under the MIT License.
 
-"""pwkit.synphot - Synthetic photometry.
+"""pwkit.synphot - Synthetic photometry and database of instrumental bandpasses.
 
-We use angstroms for wavelength and equal-energy (vs. quantum-efficiency)
-bandpass definitions whenever possible. XXX document more.
+The basic structure is that we have a registry of bandpass info. You can use
+it to create Bandpass objects that can perform various calculations,
+especially the computation of synthetic photometry given a spectral model.
+Some key attributes of each bandpass are pre-computed so that certain
+operations can be done without needing to load the actual bandpass profile
+(though so far none of these profiles are very large at all).
+
+Classes:
+
+AlreadyDefinedError - Raised when re-registering bandpass info.
+Bandpass            - Performs standard computations given a bandpass profile.
+NotDefinedError     - Raised when needed bandpass info is unavailable.
+Registry            - A registry of known bandpass profiles.
+
+Functions:
+
+get_std_registry - Retrieve a Registry pre-filled with builtin telescope info.
+(unlisted)       - Various internal utilities may be useful for reference.
+
+Variables:
+
+builtin_registrars - Hashtable of functions to register the builtin telescopes.
+
+
+Example
+-------
+
+from pwkit import synphot as ps, cgs as pc, msmt as pm
+reg = ps.get_std_registry ()
+print (reg.telescopes ()) # list known telescopes
+print (reg.bands ('2MASS')) # list known 2MASS bands
+bp = reg.get ('2MASS', 'Ks')
+mag = 12.83
+mjy = pm.repval (bp.mag_to_fnu (12.83) * pc.jypercgs * 1e3)
+print ('%.2f mag is %.2f mjy in 2MASS/Ks' % (mag, mjy))
+
+
+Conventions
+-----------
+
+It is very important to maintain consistent conventions throughout.
+
+Wavelengths are measured in angstroms. Flux densities are either
+per-wavelength (f_λ, "flam") or per-frequency (f_ν, "fnu"). These are measured
+in units of erg/s/cm²/Å and erg/s/cm²/Hz, respectively. Janskys can be
+converted to f_ν by multiplying by cgs.cgsperjy. f_ν's and f_λ's can be
+interconverted for a given filter if you know its "pivot wavelength". Some of
+the routines below show how to calculate this and do the conversion. "AB
+magnitudes" can be directly converted to Janskys and, thus, f_ν's.
+
+Filter bandpasses can be expressed in two conventions: either "equal-energy"
+(EE) or "quantum-efficiency" (QE). The former gives the response per unit
+energy across the band, while the latter gives the response per photon. The EE
+convention can be integrated directly against a model spectrum, so we store
+all bandpasses internally in this convention. CCDs are photon-counting devices
+and so their response curves are generally expressed in the QE convention.
+Interconversion is easy: EE = QE * λ.
+
+We don't expect any particular normalization of bandpass response curves.
+
+The "width" of a bandpass is not a well-defined quantity, but is often needed
+for display purposes or approximate calculations. We use the locations of the
+half-maximum points (in the EE convention) to define the band edges.
 
 This module requires Scipy and Pandas. It doesn't reeeeallllly need Pandas but
-having it makes life easier.
+it's convenient.
 
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'').split ()
+__all__ = (b'AlreadyDefinedError Bandpass NotDefinedError Registry '
+           b'builtin_registrars get_std_registry').split ()
 
-import pkg_resources
-import numpy as np, pandas as pd
+import numpy as np, pandas as pd, pkg_resources
 
 from . import Holder, PKError, cgs, msmt
 
@@ -154,6 +215,35 @@ class NotDefinedError (PKError):
 
 
 class Bandpass (object):
+    """Computations regarding a particular filter bandpass.
+
+    Functions:
+
+    calc_halfmax_points   - Calculate the wavelengths of the filter half-maximum values.
+    calc_pivot_wavelength - Calculate the filter's pivot wavelength.
+    halfmax_points        - Get the filter half-maximum points (calculated if not cached).
+    jy_to_flam            - Convert Jy in this filter to a f_λ.
+    mag_to_flam           - Convert a magnitude in this filter to a f_λ.
+    mag_to_fnu            - Convert a magnitude in this filter to a f_ν.
+    pivot_wavelength      - Get the filter's pivot wavelength (calculated if not cached).
+    synphot               - Compute synthetic photometry given a model spectrum.
+
+    Attributes:
+
+    band             - The name of this bandpass' associated band.
+    native_flux_kind - Which kind of flux this bandpass is calibrated to: 'flam', 'fnu', or 'none'.
+    registry         - This object's parent Registry instance.
+    telescope        - The name of this bandpass' associated telescope.
+
+    The underlying bandpass shape is assumed to be sampled at discrete points.
+    It is stored in _data and loaded on-demand. The object is a Pandas
+    DataFrame containing at least the columns 'wlen' and 'resp'. The former
+    holds the wavelengths of the sample points, in Ångström and in ascending
+    order. The latter gives the response curve in the EE convention. No
+    particular normalization is assumed. Other columns may be present but are
+    not used generically.
+
+    """
     _data = None
     native_flux_kind = 'none'
 
@@ -169,7 +259,7 @@ class Bandpass (object):
 
 
     def calc_pivot_wavelength (self):
-        """Return the bandpass' pivot wavelength.
+        """Compute and return the bandpass' pivot wavelength.
 
         This value is computed directly from the bandpass data, not looked up
         in the Registry. Most of the values in the Registry were in fact
@@ -181,6 +271,12 @@ class Bandpass (object):
 
 
     def pivot_wavelength (self):
+        """Get the bandpass' pivot wavelength.
+
+        Unlike calc_pivot_wavelength(), this function will use a cached
+        value if available.
+
+        """
         wl = self.registry._pivot_wavelengths.get ((self.telescope, self.band))
         if wl is not None:
             return wl
@@ -196,6 +292,13 @@ class Bandpass (object):
 
 
     def halfmax_points (self):
+        """Get the bandpass' half-maximum wavelengths. These can be used to
+        compute a representative bandwidth, or for display purposes.
+
+        Unlike calc_halfmax_points(), this function will use a cached value if
+        available.
+
+        """
         t = self.registry._halfmaxes.get ((self.telescope, self.band))
         if t is not None:
             return t
@@ -206,6 +309,13 @@ class Bandpass (object):
 
 
     def mag_to_fnu (self, mag):
+        """Convert a magnitude in this band to a f_ν flux density.
+
+        It is assumed that the magnitude has been computed in the appropriate
+        photometric system. The definition of "appropriate" will vary from
+        case to case.
+
+        """
         if self.native_flux_kind == 'flam':
             return flam_ang_to_fnu_cgs (self.mag_to_flam (mag), self.pivot_wavelength ())
         raise PKError ('dont\'t know how to get f_ν from mag for bandpass %s/%s',
@@ -213,6 +323,13 @@ class Bandpass (object):
 
 
     def mag_to_flam (self, mag):
+        """Convert a magnitude in this band to a f_λ flux density.
+
+        It is assumed that the magnitude has been computed in the appropriate
+        photometric system. The definition of "appropriate" will vary from
+        case to case.
+
+        """
         if self.native_flux_kind == 'fnu':
             return fnu_cgs_to_flam_ang (self.mag_to_fnu (mag), self.pivot_wavelength ())
         raise PKError ('dont\'t know how to get f_λ from mag for bandpass %s/%s',
@@ -220,13 +337,19 @@ class Bandpass (object):
 
 
     def jy_to_flam (self, jy):
+        """Convert a f_ν flux density measured in Janskys to a f_λ flux density.
+
+        This conversion is bandpass-dependent because it depends on the pivot
+        wavelength of the bandpass used to measure the flux density.
+
+        """
         return fnu_cgs_to_flam_ang (cgs.cgsperjy * jy, self.pivot_wavelength ())
 
 
     def synphot (self, wlen, flam):
         """`wlen` and `flam` give a tabulated model spectrum in wavelength and f_λ
-        units. We interpolate over both the model and the bandpass since
-        they're both discretely sampled.
+        units. We interpolate linearly over both the model and the bandpass
+        since they're both discretely sampled.
 
         Note that quadratic interpolation is both much slower and can blow up
         fatally in some cases. The latter issue might have to do with really large
@@ -261,16 +384,49 @@ class Bandpass (object):
 
 
 class Registry (object):
+    """A registry of known bandpass properties.
+
+    Methods:
+
+    bands                     - Return a list of bands associated with a telescope.
+    get                       - Get a Bandpass object for a known telescope and filter.
+    register_bpass            - Register a Bandpass class.
+    register_halfmaxes        - Register precomputed half-max points.
+    register_pivot_wavelength - Register precomputed pivot wavelengths.
+    telescopes                - Return a list of telescopes known to this registry.
+
+    """
     def __init__ (self):
         self._pivot_wavelengths = {}
         self._halfmaxes = {}
         self._bpass_classes = {}
+        self._seen_bands = {}
+
+
+    def _note (self, telescope, band):
+        q = self._seen_bands.setdefault (telescope, set ())
+        if band is not None:
+            q.add (band)
+
+
+    def telescopes (self):
+        """Return a list of telescopes known to this registry."""
+        return self._seen_bands.keys ()
+
+
+    def bands (self, telescope):
+        """Return a list of bands associated with the specified telescope."""
+        q = self._seen_bands.get (telescope)
+        if q is None:
+            return []
+        return list (q)
 
 
     def register_pivot_wavelength (self, telescope, band, wlen):
         if (telescope, band) in self._pivot_wavelengths:
             raise AlreadyDefinedError ('pivot wavelength for %s/%s already '
                                        'defined', telescope, band)
+        self._note (telescope, band)
         self._pivot_wavelengths[telescope,band] = wlen
         return self
 
@@ -279,6 +435,7 @@ class Registry (object):
         if (telescope, band) in self._halfmaxes:
             raise AlreadyDefinedError ('half-max points for %s/%s already '
                                        'defined', telescope, band)
+        self._note (telescope, band)
         self._halfmaxes[telescope,band] = (lower, upper)
         return self
 
@@ -287,6 +444,7 @@ class Registry (object):
         if telescope in self._bpass_classes:
             raise AlreadyDefinedError ('bandpass class for %s already '
                                        'defined', telescope)
+        self._note (telescope, None)
         self._bpass_classes[telescope] = klass
         return self
 
@@ -294,8 +452,7 @@ class Registry (object):
     def get (self, telescope, band):
         klass = self._bpass_classes.get (telescope)
         if klass is None:
-            raise NotDefinedError ('bandpass data for %s/%s not defined',
-                                   telescope, band)
+            raise NotDefinedError ('bandpass data for %s not defined', telescope)
 
         bp = klass ()
         bp.registry = self
@@ -308,6 +465,10 @@ builtin_registrars = {}
 
 
 def get_std_registry ():
+    """Get a Registry object pre-filled with information for standard
+    telescopes.
+
+    """
     reg = Registry ()
     for fn in builtin_registrars.itervalues ():
         fn (reg)
