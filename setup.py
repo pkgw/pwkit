@@ -9,7 +9,7 @@ from setuptools import setup
 
 setup (
     name = 'pwkit',
-    version = '0.1.1',
+    version = '0.2.0', # also edit pwkit/__init__.py!
 
     zip_safe = True,
     packages = [

@@ -44,6 +44,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 __all__ = (b'Holder PKError binary_type reraise_context text_type '
            b'unicode_to_str').split ()
 
+__version__ = '0.2.0'
 
 # Lightly-exercised simultaneous Python 2 and 3 compat.
 import sys
