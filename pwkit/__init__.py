@@ -5,9 +5,7 @@
 """
 Peter Williams' toolkit for science and astronomy.
 
->>> import pwkit as pk
-
-Modules:
+Modules in this package:
 
   (this one)       - Exceptions, Holder class, Python 3 compat help.
   astimage         - Generic I/O interface for astronomical images (FITS, CASA, MIRIAD).
