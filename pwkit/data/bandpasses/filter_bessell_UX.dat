@@ -1,0 +1,31 @@
+# From Bessell (1990), Table 2. Wavelengths are in angstrom. Normalization is
+# to unity and this is an equal-energy (not quantum efficiency) response. This
+# "UX" passband is somewhat funky and is meant for computing U-B colors when
+# paired with "BX"; see the paper. I'm not importing the BX profile so this
+# one is probably not going to be useful.
+
+3000	0.000
+3050	0.016
+3100	0.068
+3150	0.167
+3200	0.287
+3250	0.423
+3300	0.560
+3350	0.673
+3400	0.772
+3450	0.841
+3500	0.905
+3550	0.943
+3600	0.981
+3650	0.993
+3700	1.000
+3750	0.989
+3800	0.916
+3850	0.804
+3900	0.625
+3950	0.423
+4000	0.238
+4050	0.114
+4100	0.051
+4150	0.019
+4200	0.000

@@ -1,0 +1,55 @@
+# Derived from the product of the MEarth CCD and RG715 response curves, as
+# provided to Peter Williams by Jonathan Irwin. In particular, I modeled those
+# two curves with splines, then sampled their products, and manually added
+# cutoffs at the edges. This is a quantum-efficiency curve, giving response
+# per photon, not response per erg. Created 2014 July 14.
+
+6750	0.000
+6800	0.000
+6853	0.002
+6959	0.009
+7013	0.071
+7066	0.212
+7119	0.409
+7172	0.620
+7225	0.789
+7278	0.896
+7332	0.954
+7385	0.982
+7438	0.995
+7491	1.000
+7544	0.998
+7651	0.978
+7757	0.951
+7863	0.923
+7970	0.894
+8076	0.862
+8182	0.829
+8289	0.794
+8395	0.758
+8501	0.720
+8608	0.680
+8714	0.640
+8820	0.599
+8927	0.558
+9033	0.519
+9139	0.480
+9246	0.442
+9352	0.405
+9458	0.368
+9565	0.332
+9671	0.296
+9777	0.260
+9884	0.226
+9990	0.193
+10096	0.161
+10203	0.132
+10309	0.105
+10415	0.080
+10522	0.059
+10628	0.041
+10734	0.027
+10841	0.017
+10947	0.011
+11000	0.000
+11050	0.000

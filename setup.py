@@ -17,6 +17,10 @@ setup (
         'pwkit.cli',
     ],
 
+    package_data = {
+        'pwkit': ['data/*/*'],
+    },
+
     # install_requires = ['docutils >= 0.3'],
 
     entry_points = {

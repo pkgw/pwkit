@@ -1,0 +1,26 @@
+# From Bessell (1990), Table 2. Wavelengths are in angstrom. Normalization is
+# to unity and this is an equal-energy (not quantum efficiency) response. Note
+# that Bessell also provides a "BX" passband for computing U-B colors; this is
+# *not* that.
+
+3600	0.000
+3700	0.030
+3800	0.134
+3900	0.567
+4000	0.920
+4100	0.978
+4200	1.000
+4300	0.978
+4400	0.935
+4500	0.853
+4600	0.740
+4700	0.640
+4800	0.536
+4900	0.424
+5000	0.325
+5100	0.235
+5200	0.150
+5300	0.095
+5400	0.043
+5500	0.009
+5600	0.000
