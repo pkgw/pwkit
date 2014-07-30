@@ -21,7 +21,14 @@ setup (
         'pwkit': ['data/*/*'],
     },
 
-    # install_requires = ['docutils >= 0.3'],
+    # We want to go easy on the requires; some modules are going to require
+    # more stuff, but others don't need much of anything. But, it's pretty
+    # much impossible to do science without Numpy. We may actually require
+    # version 1.8 but for now I'll optimistically hope that we can get away
+    # with 1.6.
+    install_requires = [
+        'numpy >= 1.6',
+    ],
 
     entry_points = {
         'console_scripts': [
