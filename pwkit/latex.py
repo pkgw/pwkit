@@ -240,7 +240,7 @@ class TableBuilder (object):
     addhcline (headerrowix, logcolidx, latexdeltastart, latexdeltaend)
        Add a horizontal line between columns.
     notemark (key)
-       Return a \tablenotemark{} command for the specified note key.
+       Return a \\tablenotemark{} command for the specified note key.
     emit (stream, items)
        Write the table, with one row for each thing in `items`, to the stream.
 
@@ -251,28 +251,28 @@ class TableBuilder (object):
     ==========
 
     environment - The name of the latex environment to use, default "deluxetable".
-                  You may want to specify "deluxetable*" or "mydeluxetable" if
+                  You may want to specify "deluxetable*", or "mydeluxetable" if
                   using a hacked package.
     label       - The latex reference label of the table. Mandatory.
-    note        - A note at the table footer ("\tablecomments{}" in LaTeX).
+    note        - A note at the table footer ("\\tablecomments{}" in LaTeX).
     preamble    - Commands for table preamble. See below.
     refs        - Contents of the table References section.
     title       - Table title. Default "Untitled table".
-    widthspec   - Passed to \tablewidth{}; default "0em" = auto-widen.
+    widthspec   - Passed to \\tablewidth{}; default "0em" = auto-widen.
     numbercols  - If True, number each column. This can be disabled on a
                   col-by-col basis by calling `addcol` with `numbering` set to
                   False.
 
     Legal preamble commands are:
 
-        \rotate
-        \tablenum{<manual table identifier>}
-        \tabletypesize{<font size command>}
+        \\rotate
+        \\tablenum{<manual table identifier>}
+        \\tabletypesize{<font size command>}
 
-    The commands \tablecaption, \tablecolumns, \tablehead, and \tablewidth are
-    handled specially.
+    The commands \\tablecaption, \\tablecolumns, \\tablehead, and \\tablewidth
+    are handled specially.
 
-    If \tablewidth{} is not provided, the table is set at full width, not its
+    If \\tablewidth{} is not provided, the table is set at full width, not its
     natural width, which is a lame default. The default `widthspec` lets us
     auto-widen while providing a clear avenue to customizing the width.
 
