@@ -658,6 +658,13 @@ class MearthBandpass (Bandpass):
         were fundamentally made by reading points off of data sheets so
         they're not going to be the most accurate.
 
+        I computed the filter response file myself by multiplying spline
+        approximations to the CCD and RG715 response curves emailed to me by
+        Jonathan Irwin on 2014 Jul 11. I should write up something explaining
+        what I did for posterity/reproducibility. AFAIK the response curves
+        aren't published anywhere besides a hard-to-read plot in Nutzman &
+        Charbonneau (2008).
+
         """
         df = bandpass_data_frame ('filter_mearth_' + band + '.dat', 'wlen resp')
         df.resp *= df.wlen # QE to equal-energy response.
