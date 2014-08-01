@@ -37,7 +37,7 @@ print (reg.telescopes ()) # list known telescopes
 print (reg.bands ('2MASS')) # list known 2MASS bands
 bp = reg.get ('2MASS', 'Ks')
 mag = 12.83
-mjy = pm.repval (bp.mag_to_fnu (12.83) * pc.jypercgs * 1e3)
+mjy = pm.repval (bp.mag_to_fnu (mag) * pc.jypercgs * 1e3)
 print ('%.2f mag is %.2f mjy in 2MASS/Ks' % (mag, mjy))
 
 
@@ -723,7 +723,6 @@ class MkoBandpass (Bandpass):
         Vega = 0.
 
         """
-
         return cgs.cgsperjy * self._zeropoints[self.band] * 10**(-0.4 * mag)
 
 
