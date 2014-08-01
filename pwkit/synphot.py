@@ -501,6 +501,11 @@ class TwomassBandpass (Bandpass):
 def register_2mass (reg):
     reg.register_bpass ('2MASS', TwomassBandpass)
 
+    # Computed myself from the filter response curves.
+    reg.register_pivot_wavelength ('2MASS', 'J', 12371.)
+    reg.register_pivot_wavelength ('2MASS', 'H', 16457.)
+    reg.register_pivot_wavelength ('2MASS', 'Ks', 21603.)
+
     # Computed from filter responses using interpolator.
     reg.register_halfmaxes ('2MASS', 'J', 11316., 13465.)
     reg.register_halfmaxes ('2MASS', 'H', 15182., 17792.)
