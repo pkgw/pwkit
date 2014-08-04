@@ -71,6 +71,15 @@ half-maximum points (in the EE convention) to define the band edges.
 This module requires Scipy and Pandas. It doesn't reeeeallllly need Pandas but
 it's convenient.
 
+References
+----------
+
+Casagrande & VandenBerg (2014; arxiv:1407.6095) has a lot of good stuff; see
+  also references therein.
+
+References for specific bandpasses are given in their implementation
+docstrings.
+
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
