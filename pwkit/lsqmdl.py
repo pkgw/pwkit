@@ -223,7 +223,7 @@ class Model (_ModelBase):
         self.covar = soln.covar
 
         from functools import partial
-        self.mfunc = partial (f, *soln.params)
+        self.mfunc = partial (f, soln.params)
 
         # fvec = resids * invsigma = (data - mdata) * invsigma
         self.resids = soln.fvec.reshape (self.data.shape) / self.invsigma
