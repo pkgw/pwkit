@@ -20,8 +20,10 @@ colors. If the input array has shape S, the returned value has a shape (S +
 Example:
 
     data = np.array ([<things between 0 and 1>])
-    mapper = factory_map ('cubehelix_blue')
+    mapper = factory_map['cubehelix_blue']()
     rgb = mapper (data)
+    green_values = rgb[:,1]
+    last_rgb = rgb[-1]
 
 The basic colormap names are:
 
