@@ -122,6 +122,30 @@ class _ModelBase (object):
         return self
 
 
+    def make_param_dict (self):
+        """Return the parameter values and uncertainties in a dictionary.
+
+        The keys are the parameter names as stored in `pnames`. The values
+        are `pwkit.Holder` objects with the following fields:
+
+        index  - The parameter's index number in `pnames`, `params`, etc.
+        value  - Its value: `params[index]`.
+        uncert - Its uncertainty: `puncerts[index]`.
+
+        This is obviously a less efficient representation, but it can be
+        convenient when there are many parameters and their indices are
+        variable or annoying to work out.
+
+        """
+        from . import Holder
+        result = {}
+        for i, n in enumerate (self.pnames):
+            result[n] = Holder (index=i,
+                                value=self.params[i],
+                                uncert=self.puncerts[i])
+        return result
+
+
     def plot (self, modelx, dlines=False, xmin=None, xmax=None,
               ymin=None, ymax=None, **kwargs):
         """This assumes that `data` is 1D and that `mfunc` takes one argument that
