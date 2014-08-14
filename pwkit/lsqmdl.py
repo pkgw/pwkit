@@ -55,16 +55,16 @@ except ImportError:
 class _ModelBase (object):
     """Data and a model for least-squares fitting. Attributes:
 
-    data       - The data to be modeled.
-    invsigma   - Weights: 1/σ for each data point.
-    params     - ndarray of solved model parameters.
-    perror     - ndarray of 1-sigma uncerts on params.
-    paramnames - iterable of string names for parameters.
-    covar      - Covariance matrix of parameters.
-    mfunc      - A function f(...) evaluating model fixed at best params.
-    mdata      - The modeled data at the best params.
-    rchisq     - Reduced χ² of the fit.
-    resids     - resids = data - mdata.
+    data     - The data to be modeled.
+    invsigma - Weights: 1/σ for each data point.
+    params   - ndarray of solved model parameters.
+    puncerts - ndarray of 1-sigma uncerts on params.
+    pnames   - list of string names for parameters.
+    covar    - Covariance matrix of parameters.
+    mfunc    - A function f(...) evaluating model fixed at best params.
+    mdata    - The modeled data at the best params.
+    rchisq   - Reduced χ² of the fit.
+    resids   - resids = data - mdata.
 
     Methods:
 
@@ -78,14 +78,14 @@ class _ModelBase (object):
     """
     data = None
     invsigma = None
-    params = None # ndarray of solved model parameters
-    perror = None # ndarray of 1-sigma uncerts on pamams
-    paramnames = None # iterable of string names for parameters
-    covar = None # covariance matrix
-    mfunc = None # function f(...) evaluating model fixed at best params
-    mdata = None # modeled data at best params
-    rchisq = None # reduced chi squared of the fit
-    resids = None # resids = data - mdata
+    params = None
+    puncerts = None
+    pnames = None
+    covar = None
+    mfunc = None
+    mdata = None
+    rchisq = None
+    resids = None
 
     def __init__ (self, data, invsigma=None):
         self.set_data (data, invsigma)
@@ -105,13 +105,13 @@ class _ModelBase (object):
 
 
     def print_soln (self):
-        lmax = reduce (max, (len (x) for x in self.paramnames), len ('r chi sq'))
+        lmax = reduce (max, (len (x) for x in self.pnames), len ('r chi sq'))
 
-        if self.perror is None:
-            for pn, val in zip (self.paramnames, self.params):
+        if self.puncerts is None:
+            for pn, val in zip (self.pnames, self.params):
                 print ('%s: %14g' % (pn.rjust (lmax), val))
         else:
-            for pn, val, err in zip (self.paramnames, self.params, self.perror):
+            for pn, val, err in zip (self.pnames, self.params, self.puncerts):
                 frac = abs (100. * err / val)
                 print ('%s: %14g +/- %14g (%.2f%%)' % (pn.rjust (lmax), val, err, frac))
 
@@ -181,7 +181,7 @@ class Model (_ModelBase):
             self.set_data (data, invsigma)
 
 
-    def set_func (self, func, parnames, args=()):
+    def set_func (self, func, pnames, args=()):
         """This function creates the `lmmin.Problem` so that the caller can futz with
         it before calling solve(), if so desired.
 
@@ -190,19 +190,19 @@ class Model (_ModelBase):
 
         self.func = func
         self._args = args
-        self.paramnames = list (parnames)
-        self.lm_prob = Problem (len (self.paramnames))
+        self.pnames = list (pnames)
+        self.lm_prob = Problem (len (self.pnames))
         return self
 
 
     def set_simple_func (self, func, args=()):
         npar = func.func_code.co_argcount - len (args)
-        parnames = func.func_code.co_varnames[:npar]
+        pnames = func.func_code.co_varnames[:npar]
 
         def wrapper (params, *args):
             return func (*(tuple (params) + args))
 
-        return self.set_func (wrapper, parnames, args)
+        return self.set_func (wrapper, pnames, args)
 
 
     def make_frozen_func (self, params):
@@ -233,7 +233,7 @@ class Model (_ModelBase):
         self.lm_soln = soln = self.lm_prob.solve (guess)
 
         self.params = soln.params
-        self.perror = soln.perror
+        self.puncerts = soln.perror
         self.covar = soln.covar
         self.mfunc = self.make_frozen_func (soln.params)
 
@@ -257,11 +257,11 @@ class PolynomialModel (_ModelBase):
 
 
     def solve (self):
-        self.paramnames = ['a%d' % i for i in xrange (self.maxexponent + 1)]
+        self.pnames = ['a%d' % i for i in xrange (self.maxexponent + 1)]
         # Based on my reading of the polyfit() docs, I think w=invsigma**2 is right...
         self.params = npoly.polyfit (self.x, self.data, self.maxexponent,
                                      w=self.invsigma**2)
-        self.perror = None # does anything provide this? could farm out to lmmin ...
+        self.puncerts = None # does anything provide this? could farm out to lmmin ...
         self.covar = None
         self.mfunc = lambda x: npoly.polyval (x, self.params)
         self.mdata = self.mfunc (self.x)
@@ -283,10 +283,10 @@ class ScaleModel (_ModelBase):
         m = sxy / sxx
         uc_m = 1. / np.sqrt (sxx)
 
-        self.paramnames = ['m']
+        self.pnames = ['m']
         self.params = np.asarray ([m])
-        self.perror = np.asarray ([uc_m])
-        self.covar = self.perror.reshape ((1, 1))
+        self.puncerts = np.asarray ([uc_m])
+        self.covar = self.puncerts.reshape ((1, 1))
         self.mfunc = lambda x: m * x
         self.mdata = m * self.x
         self.resids = self.data - self.mdata
@@ -300,7 +300,7 @@ class ScaleModel (_ModelBase):
 class ModelComponent (object):
     npar = 0
     name = None
-    paramnames = ()
+    pnames = ()
     nmodelargs = 0
 
     setguess = None
@@ -314,7 +314,7 @@ class ModelComponent (object):
     def _param_names (self):
         """Overridable in case the list of parameter names needs to be
         generated on the fly."""
-        return self.paramnames
+        return self.pnames
 
     def finalize_setup (self):
         """If the component has subcomponents, this should set their `name`,
@@ -402,7 +402,7 @@ class ComposedModel (_ModelBase):
         self.lm_prob = Problem (component.npar)
         self.force_guess = np.empty (component.npar)
         self.force_guess.fill (np.nan)
-        self.paramnames = list (component._param_names ())
+        self.pnames = list (component._param_names ())
 
         component.prep_params ()
 
@@ -428,7 +428,7 @@ class ComposedModel (_ModelBase):
         self.lm_soln = soln = self.lm_prob.solve (guess)
 
         self.params = soln.params
-        self.perror = soln.perror
+        self.puncerts = soln.perror
         self.covar = soln.covar
 
         # fvec = resids * invsigma = (data - mdata) * invsigma
@@ -460,7 +460,7 @@ class ComposedModel (_ModelBase):
 
 class AddConstantComponent (ModelComponent):
     npar = 1
-    paramnames = ('value', )
+    pnames = ('value', )
     nmodelargs = 0
 
     def model (self, pars, mdata):
