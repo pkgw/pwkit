@@ -11,7 +11,13 @@ setup (
     name = 'pwkit',
     version = '0.2.0', # also edit pwkit/__init__.py!
 
-    zip_safe = True,
+    # This package actually *is* zip-safe, but I've run into issues with
+    # installing it as a Zip: in particular, the install sometimes fails with
+    # "bad local file header", and reloading a module after a reinstall in
+    # IPython gives an ImportError with the same message. These are annoying
+    # enough and I don't really care so we just install it as flat files.
+    zip_safe = False,
+
     packages = [
         'pwkit',
         'pwkit.cli',
