@@ -181,7 +181,7 @@ class Model (_ModelBase):
             self.set_data (data, invsigma)
 
 
-    def set_func (self, func, npar, parnames, args=()):
+    def set_func (self, func, parnames, args=()):
         """This function creates the `lmmin.Problem` so that the caller can futz with
         it before calling solve(), if so desired.
 
@@ -190,8 +190,8 @@ class Model (_ModelBase):
 
         self.func = func
         self._args = args
-        self.lm_prob = Problem (npar)
-        self.paramnames = parnames
+        self.paramnames = list (parnames)
+        self.lm_prob = Problem (len (self.paramnames))
         return self
 
 
@@ -202,7 +202,7 @@ class Model (_ModelBase):
         def wrapper (params, *args):
             return func (*(tuple (params) + args))
 
-        return self.set_func (wrapper, npar, parnames, args)
+        return self.set_func (wrapper, parnames, args)
 
 
     def make_frozen_func (self, params):
