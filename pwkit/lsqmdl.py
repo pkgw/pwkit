@@ -244,6 +244,8 @@ class Model (_ModelBase):
         if soln.ndof > 0:
             # lm_soln.fnorm can be unreliable ("max (fnorm, fnorm1)" branch)
             self.rchisq = (self.lm_soln.fvec**2).sum () / soln.ndof
+        else:
+            self.rchisq = None
         return self
 
 
