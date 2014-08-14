@@ -205,6 +205,20 @@ class Model (_ModelBase):
         return self.set_func (wrapper, npar, parnames, args)
 
 
+    def make_frozen_func (self, params):
+        """Returns a model function frozen to the specified parameter values. Any
+        remaining arguments are left free and must be provided when the
+        function is called.
+
+        This just applies `functools.partial` to the `func` property of this
+        object.
+
+        """
+        params = np.array (params, dtype=np.float, ndmin=1)
+        from functools import partial
+        return partial (self.func, params)
+
+
     def solve (self, guess):
         guess = np.array (guess, dtype=np.float, ndmin=1)
         f = self.func
@@ -221,9 +235,7 @@ class Model (_ModelBase):
         self.params = soln.params
         self.perror = soln.perror
         self.covar = soln.covar
-
-        from functools import partial
-        self.mfunc = partial (f, soln.params)
+        self.mfunc = self.make_frozen_func (soln.params)
 
         # fvec = resids * invsigma = (data - mdata) * invsigma
         self.resids = soln.fvec.reshape (self.data.shape) / self.invsigma
