@@ -9,7 +9,7 @@ from setuptools import setup
 
 setup (
     name = 'pwkit',
-    version = '0.2.0', # also edit pwkit/__init__.py!
+    version = '0.2.1', # also edit pwkit/__init__.py!
 
     # This package actually *is* zip-safe, but I've run into issues with
     # installing it as a Zip: in particular, the install sometimes fails with
