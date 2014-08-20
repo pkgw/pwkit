@@ -274,6 +274,19 @@ class Model (_ModelBase):
 
 
 class PolynomialModel (_ModelBase):
+    """Least-squares polynomial fit.
+
+    Because this is a very specialized kind of problem, we don't need an
+    initial guess to solve, and we use some native Numpy routines that are
+    fast.
+
+    The output parameters are name "a0", "a1", ... and are stored in that
+    order in PolynomialModel.params[]. We have ``y = sum(x**i * a[i])``, so
+    "a2" is the quadratic term, etc.
+
+    This model does *not* give uncertainties on the derived coefficients.
+
+    """
     def __init__ (self, maxexponent, x, data, invsigma=None):
         self.maxexponent = maxexponent
         self.x = np.array (x, dtype=np.float, ndmin=1, copy=False, subok=True)
@@ -290,8 +303,13 @@ class PolynomialModel (_ModelBase):
         self.mfunc = lambda x: npoly.polyval (x, self.params)
         self.mdata = self.mfunc (self.x)
         self.resids = self.data - self.mdata
-        self.rchisq = (((self.resids * self.invsigma)**2).sum ()
-                       / (self.x.size - (self.maxexponent + 1)))
+
+        if self.x.size > self.maxexponent + 1:
+            self.rchisq = (((self.resids * self.invsigma)**2).sum ()
+                           / (self.x.size - (self.maxexponent + 1)))
+        else:
+            self.rchisq = None
+
         return self
 
 
