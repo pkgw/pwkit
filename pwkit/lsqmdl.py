@@ -51,8 +51,56 @@ try:
 except ImportError:
     import numpy.polynomial as npoly
 
+from . import text_type
+
+
+class Parameter (object):
+    """Information about a parameter in a least-squares model. These data may only
+    be obtained after solving least-squares problem.
+
+    These objects reference information from their parent objects, so changing
+    the parent will alter the apparent contents of these objects.
+
+    Properties:
+
+    index  - The parameter's index in the Model's arrays.
+    name   - The parameter's name.
+    value  - The parameter's value.
+    uncert - The uncertainty in value.
+    uval   - Accesses ``value`` and ``uncert`` as a ``pwkit.msmt.Uval``.
+
+    """
+    def __init__ (self, owner, index):
+        self._owner = owner
+        self._index = index
+
+    def __repr__ (self):
+        return '<Parameter "%s" (#%d) of %s>' % (self.name, self._index, self._owner)
+
+    @property
+    def index (self): # make this read-only
+        return self._index
+
+    @property
+    def name (self):
+        return self._owner.pnames[self._index]
+
+    @property
+    def value (self):
+        return self._owner.params[self._index]
+
+    @property
+    def uncert (self):
+        return self._owner.puncerts[self._index]
+
+    @property
+    def uval (self):
+        from .msmt import Uval
+        return Uval.from_norm (self.value, self.uncert)
+
 
 class _ModelBase (object):
+
     """Data and a model for least-squares fitting. Attributes:
 
     data     - The data to be modeled.
@@ -74,6 +122,13 @@ class _ModelBase (object):
     show_cov   - Show the parameter covariance matrix with `pwkit.ndshow_gtk2`.
     show_corr  - Show the parameter correlation matrix with `pwkit.ndshow_gtk2`.
     solve      - Fit the model to the data.
+
+    A ``Parameter`` data structure may be obtained by indexing this object
+    with either the parameter's numerical index or its name. I.e.,
+
+      m = Model (...).solve (...)
+      p = m['slope']
+      print (p.name, p.value, p.uncert, p.uval)
 
     """
     data = None
@@ -122,28 +177,20 @@ class _ModelBase (object):
         return self
 
 
-    def make_param_dict (self):
-        """Return the parameter values and uncertainties in a dictionary.
+    def __getitem__ (self, key):
+        if isinstance (key, int):
+            idx = key
+            if idx < 0 or idx >= len (self.pnames):
+                raise ValueError ('illegal parameter number %d' % key)
+        elif isinstance (key, text_type):
+            try:
+                idx = self.pnames.index (key)
+            except ValueError:
+                raise ValueError ('no such parameter named "%s"' % key)
+        else:
+            raise ValueError ('illegal parameter key %r' % key)
 
-        The keys are the parameter names as stored in `pnames`. The values
-        are `pwkit.Holder` objects with the following fields:
-
-        index  - The parameter's index number in `pnames`, `params`, etc.
-        value  - Its value: `params[index]`.
-        uncert - Its uncertainty: `puncerts[index]`.
-
-        This is obviously a less efficient representation, but it can be
-        convenient when there are many parameters and their indices are
-        variable or annoying to work out.
-
-        """
-        from . import Holder
-        result = {}
-        for i, n in enumerate (self.pnames):
-            result[n] = Holder (index=i,
-                                value=self.params[i],
-                                uncert=self.puncerts[i])
-        return result
+        return Parameter (self, idx)
 
 
     def plot (self, modelx, dlines=False, xmin=None, xmax=None,
