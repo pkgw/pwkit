@@ -325,14 +325,15 @@ class PolynomialModel (_ModelBase):
     """Least-squares polynomial fit.
 
     Because this is a very specialized kind of problem, we don't need an
-    initial guess to solve, and we use some native Numpy routines that are
-    fast.
+    initial guess to solve, and we can use fast built-in numerical routines.
 
-    The output parameters are name "a0", "a1", ... and are stored in that
+    The output parameters are named "a0", "a1", ... and are stored in that
     order in PolynomialModel.params[]. We have ``y = sum(x**i * a[i])``, so
-    "a2" is the quadratic term, etc.
+    "a2" = "params[2]" is the quadratic term, etc.
 
-    This model does *not* give uncertainties on the derived coefficients.
+    This model does *not* give uncertainties on the derived coefficients. The
+    as_nonlinear() method can be use to get a `Model` instance with
+    uncertainties.
 
     Methods:
 
