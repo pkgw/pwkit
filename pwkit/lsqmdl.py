@@ -7,6 +7,7 @@
 Classes:
 
 Model                  - Modeling with any function using Levenberg-Marquardt.
+Parameter              - Information about a specific model parameter.
 PolynomialModel        - Modeling with polynomials.
 ScaleModel             - Modeling with a single scale factor.
 ComposedModel          - Modeling with combinations of pluggable components.
@@ -333,6 +334,10 @@ class PolynomialModel (_ModelBase):
 
     This model does *not* give uncertainties on the derived coefficients.
 
+    Methods:
+
+    as_nonlinear - Return a (lmmin-based) `Model` equivalent to self.
+
     """
     def __init__ (self, maxexponent, x, data, invsigma=None):
         self.maxexponent = maxexponent
@@ -360,7 +365,32 @@ class PolynomialModel (_ModelBase):
         return self
 
 
+    def as_nonlinear (self, params=None):
+        """Return a `Model` equivalent to this object. The nonlinear solver is less
+        efficient, but lets you freeze parameters, compute uncertainties, etc.
+
+        If the `params` argument is provided, solve() will be called on the
+        returned object with those parameters. If it is `None` and this object
+        has parameters in `self.params`, those will be use. Otherwise, solve()
+        will not be called on the returned object.
+
+        """
+        if params is None:
+            params = self.params
+
+        nlm = Model (None, self.data, self.invsigma)
+        nlm.set_func (lambda p, x: npoly.polyval (x, p),
+                      self.pnames,
+                      args=(self.x,))
+
+        if params is not None:
+            nlm.solve (params)
+        return nlm
+
+
 class ScaleModel (_ModelBase):
+    """Solve `data = m * x` for `m`."""
+
     def __init__ (self, x, data, invsigma=None):
         self.x = np.array (x, dtype=np.float, ndmin=1, copy=False, subok=True)
         self.set_data (data, invsigma)
