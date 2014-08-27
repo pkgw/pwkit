@@ -52,7 +52,7 @@ try:
 except ImportError:
     import numpy.polynomial as npoly
 
-from . import text_type
+from . import binary_type, text_type
 
 
 class Parameter (object):
@@ -179,6 +179,11 @@ class _ModelBase (object):
 
 
     def __getitem__ (self, key):
+        if isinstance (key, binary_type):
+            # If you're not using the unicode_literals __future__, things get
+            # annoying really quickly without this.
+            key = text_type (key)
+
         if isinstance (key, int):
             idx = key
             if idx < 0 or idx >= len (self.pnames):
