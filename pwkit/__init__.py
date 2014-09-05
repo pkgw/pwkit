@@ -39,6 +39,19 @@ Modules in this package:
   ucd_physics      - Estimating physical quantities for M stars and UCDs.
   unicode_to_latex - Rendering Unicode to LaTeX.
 
+
+Classes in the toplevel module:
+
+Holder      - A "namespace object" that just lets you assign attributes.
+PKError     - Base exception class for PWKit
+binary_type - The binary data type: either `str` (Python 2.x) or `bytes` (Python 3.x)
+text_type   - The binary data type: either `unicode` (Python 2.x) or `str` (Python 3.x)
+
+Functions in the toplevel module:
+
+reraise_context - Reraise an exception with additional contextual information in the message.
+unicode_to_str  - Write `def __unicode__ (self): ... ; __str__ = unicode_to_str` in classes.
+
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
