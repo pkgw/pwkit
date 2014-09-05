@@ -29,6 +29,7 @@ Modules in this package:
   msmt             - Framework for working with uncertain measurements.
   ndshow_gtk2      - Visualize data arrays as interactive images, using Gtk+2.
   numutil          - Basic NumPy and generic numerical utilities.
+  parallel         - Utilities for parallel processing.
   pdm              - Finding periods in data with Phase Dispersion Minimization.
   phoenix          - Working with Phoenix-based model atmospheres.
   radio_cal_models - Models of radio-wavelength calibrator flux densities.
