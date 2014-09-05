@@ -25,31 +25,11 @@ __all__ = (b'PDMResult pdm').split ()
 import numpy as np
 from collections import namedtuple
 
+from .numutil import weighted_variance
+
 
 PDMResult = namedtuple ('PDMResult', 'thetas imin pmin mc_tmins '
                         'mc_pvalue mc_pmins mc_puncert'.split ())
-
-
-def weighted_variance (x, wt):
-    """Essentially copied from Wikipedia (woo!), which cites West (1979, Comm.
-    ACM, 22 (9) 532).
-
-    """
-    n = x.size
-    tot_weight = 0.
-    mean = 0.
-    tot_numer = 0.
-
-    for i in xrange (n):
-        next_tot_weight = wt[i] + tot_weight
-        delta = x[i] - mean
-        r = delta * wt[i] / next_tot_weight
-
-        mean += r
-        tot_numer += tot_weight * delta * r
-        tot_weight = next_tot_weight
-
-    return tot_numer / tot_weight * n / (n - 1.)
 
 
 def one_theta (t, x, wt, period, nbin, nshift, v_all):
@@ -71,7 +51,7 @@ def one_theta (t, x, wt, period, nbin, nshift, v_all):
     return numer / (denom * v_all)
 
 
-def pdm (t, x, u, periods, nbin, nshift=8, nsmc=256, numc=256):
+def pdm (t, x, u, periods, nbin, nshift=8, nsmc=256, numc=256, weights=False):
     """Perform phase dispersion minimization.
 
     `t` - 1D array - time coordinate
@@ -84,6 +64,8 @@ def pdm (t, x, u, periods, nbin, nshift=8, nsmc=256, numc=256):
        significance of the minimal theta value.
     `numc` - int=256 - number of Monte Carlo added-noise datasets to compute, to evaluate
        the uncertainty in the location of the minimal theta value.
+    `weights` - bool=False - if True, 'u' is actually weights, not uncertainties.
+       Usually weights = u**-2.
 
     Returns named tuple of:
 
@@ -110,6 +92,7 @@ def pdm (t, x, u, periods, nbin, nshift=8, nsmc=256, numc=256):
     nbin = int (nbin)
     nshift = int (nshift)
     nsmc = int (nsmc)
+    numc = int (numc)
 
     if t.ndim != 1:
         raise ValueError ('`t` must be <= 1D')
@@ -132,9 +115,17 @@ def pdm (t, x, u, periods, nbin, nshift=8, nsmc=256, numc=256):
     if nsmc < 0:
         raise ValueError ('`nsmc` must be nonnegative')
 
+    if numc < 0:
+        raise ValueError ('`numc` must be nonnegative')
+
     # We can finally get started!
 
-    wt = u ** -2
+    if weights:
+        wt = u
+        u = wt ** -0.5
+    else:
+        wt = u ** -2
+
     v_all = weighted_variance (x, wt)
 
     thetas = np.empty (periods.shape)
