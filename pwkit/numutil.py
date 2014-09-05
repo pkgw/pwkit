@@ -6,14 +6,16 @@
 
 Functions:
 
-make_tophat_ee - Return a tophat function operating on an exclusive/exclusive range.
-make_tophat_ei - Return a tophat function operating on an exclusive/inclusive range.
-make_tophat_ie - Return a tophat function operating on an inclusive/exclusive range.
-make_tophat_ii - Return a tophat function operating on an inclusive/inclusive range.
-unit_tophat_ee - Tophat function on (0,1).
-unit_tophat_ei - Tophat function on (0,1].
-unit_tophat_ie - Tophat function on [0,1).
-unit_tophat_ii - Tophat function on [0,1].
+make_tophat_ee    - Return a tophat function operating on an exclusive/exclusive range.
+make_tophat_ei    - Return a tophat function operating on an exclusive/inclusive range.
+make_tophat_ie    - Return a tophat function operating on an inclusive/exclusive range.
+make_tophat_ii    - Return a tophat function operating on an inclusive/inclusive range.
+rms               - Calculate the square root of the mean of the squares of x.
+unit_tophat_ee    - Tophat function on (0,1).
+unit_tophat_ei    - Tophat function on (0,1].
+unit_tophat_ie    - Tophat function on [0,1).
+unit_tophat_ii    - Tophat function on [0,1].
+weighted_variance - Estimate the variance of a weighted sampled.
 
 Decorators:
 
@@ -23,8 +25,8 @@ broadcastize - Make a Python function automatically broadcast arguments.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 __all__ = (b'broadcastize make_tophat_ee make_tophat_ei make_tophat_ie '
-           b'make_tophat_ii unit_tophat_ee unit_tophat_ei unit_tophat_ie '
-           b'unit_tophat_ii').split ()
+           b'make_tophat_ii rms unit_tophat_ee unit_tophat_ei unit_tophat_ie '
+           b'unit_tophat_ii weighted_variance').split ()
 
 import functools
 import numpy as np
@@ -95,6 +97,29 @@ class _BroadcasterDecorator (object):
 broadcastize = _BroadcasterDecorator
 
 
+# Some miscellaneous numerical tools
+
+def rms (x):
+    """Return the square root of the mean of the squares of ``x``."""
+    return np.sqrt (np.square (x).mean ())
+
+
+def weighted_variance (x, weights):
+    """Return the variance of a weighted sample.
+
+    The weighted sample mean is calculated and subtracted off, so the returned
+    variance is upweighted by ``n / (n - 1)``. If the sample mean is known to
+    be zero, you should just compute ``np.average (x**2, weights=weights)``.
+
+    """
+    n = len (x)
+    if n < 3:
+        raise ValueError ('cannot calculate meaningful variance of fewer '
+                          'than three samples')
+    wt_mean = np.average (x, weights=weights)
+    return np.average (np.square (x - wt_mean), weights=weights) * n / (n - 1)
+
+
 # Tophat functions -- numpy doesn't have anything built-in (that I know of)
 # that does this in a convenient way that I'd like. These are useful for
 # defining functions in a piecewise-ish way, although also pay attention to
@@ -104,7 +129,7 @@ broadcastize = _BroadcasterDecorator
 # important.
 
 def unit_tophat_ee (x):
-    """Tophat function on the unit circle, left-exclusive and right-exclusive.
+    """Tophat function on the unit interval, left-exclusive and right-exclusive.
     Returns 1 if 0 < x < 1, 0 otherwise.
 
     """
@@ -117,7 +142,7 @@ def unit_tophat_ee (x):
 
 
 def unit_tophat_ei (x):
-    """Tophat function on the unit circle, left-exclusive and right-inclusive.
+    """Tophat function on the unit interval, left-exclusive and right-inclusive.
     Returns 1 if 0 < x <= 1, 0 otherwise.
 
     """
@@ -130,7 +155,7 @@ def unit_tophat_ei (x):
 
 
 def unit_tophat_ie (x):
-    """Tophat function on the unit circle, left-inclusive and right-exclusive.
+    """Tophat function on the unit interval, left-inclusive and right-exclusive.
     Returns 1 if 0 <= x < 1, 0 otherwise.
 
     """
@@ -143,7 +168,7 @@ def unit_tophat_ie (x):
 
 
 def unit_tophat_ii (x):
-    """Tophat function on the unit circle, left-inclusive and right-inclusive.
+    """Tophat function on the unit interval, left-inclusive and right-inclusive.
     Returns 1 if 0 <= x <= 1, 0 otherwise.
 
     """

@@ -25,31 +25,11 @@ __all__ = (b'PDMResult pdm').split ()
 import numpy as np
 from collections import namedtuple
 
+from .numutil import weighted_variance
+from .parallel import make_parallel_helper
 
 PDMResult = namedtuple ('PDMResult', 'thetas imin pmin mc_tmins '
                         'mc_pvalue mc_pmins mc_puncert'.split ())
-
-
-def weighted_variance (x, wt):
-    """Essentially copied from Wikipedia (woo!), which cites West (1979, Comm.
-    ACM, 22 (9) 532).
-
-    """
-    n = x.size
-    tot_weight = 0.
-    mean = 0.
-    tot_numer = 0.
-
-    for i in xrange (n):
-        next_tot_weight = wt[i] + tot_weight
-        delta = x[i] - mean
-        r = delta * wt[i] / next_tot_weight
-
-        mean += r
-        tot_numer += tot_weight * delta * r
-        tot_weight = next_tot_weight
-
-    return tot_numer / tot_weight * n / (n - 1.)
 
 
 def one_theta (t, x, wt, period, nbin, nshift, v_all):
@@ -71,7 +51,15 @@ def one_theta (t, x, wt, period, nbin, nshift, v_all):
     return numer / (denom * v_all)
 
 
-def pdm (t, x, u, periods, nbin, nshift=8, nsmc=256, numc=256):
+def _map_one_theta (args):
+    """Needed for the parallel map() call in pdm() due to the gross way in which
+    Python multiprocessing works.
+
+    """
+    return one_theta (*args)
+
+
+def pdm (t, x, u, periods, nbin, nshift=8, nsmc=256, numc=256, weights=False, parallel=True):
     """Perform phase dispersion minimization.
 
     `t` - 1D array - time coordinate
@@ -84,6 +72,10 @@ def pdm (t, x, u, periods, nbin, nshift=8, nsmc=256, numc=256):
        significance of the minimal theta value.
     `numc` - int=256 - number of Monte Carlo added-noise datasets to compute, to evaluate
        the uncertainty in the location of the minimal theta value.
+    `weights` - bool=False - if True, 'u' is actually weights, not uncertainties.
+       Usually weights = u**-2.
+    `parallel` - default True - Controls parallelization of the algorithm. Default
+       uses all available cores. See `pwkit.parallel.make_parallel_helper`.
 
     Returns named tuple of:
 
@@ -110,6 +102,8 @@ def pdm (t, x, u, periods, nbin, nshift=8, nsmc=256, numc=256):
     nbin = int (nbin)
     nshift = int (nshift)
     nsmc = int (nsmc)
+    numc = int (numc)
+    phelp = make_parallel_helper (parallel)
 
     if t.ndim != 1:
         raise ValueError ('`t` must be <= 1D')
@@ -132,53 +126,55 @@ def pdm (t, x, u, periods, nbin, nshift=8, nsmc=256, numc=256):
     if nsmc < 0:
         raise ValueError ('`nsmc` must be nonnegative')
 
+    if numc < 0:
+        raise ValueError ('`numc` must be nonnegative')
+
     # We can finally get started!
 
-    wt = u ** -2
+    if weights:
+        wt = u
+        u = wt ** -0.5
+    else:
+        wt = u ** -2
+
     v_all = weighted_variance (x, wt)
 
-    thetas = np.empty (periods.shape)
+    with phelp.get_map () as map:
+        get_thetas = lambda args: np.asarray (map (_map_one_theta, args))
+        thetas = get_thetas ((t, x, wt, p, nbin, nshift, v_all)
+                             for p in periods)
+        imin = thetas.argmin ()
+        pmin = periods[imin]
 
-    for i in xrange (periods.size):
-        thetas[i] = one_theta (t, x, wt, periods[i], nbin, nshift, v_all)
+        # Now do the Monte Carlo jacknifing so that the caller can have some idea
+        # as to the significance of the minimal value of `thetas`.
 
-    imin = thetas.argmin ()
-    pmin = periods[imin]
+        mc_thetas = np.empty (periods.shape)
+        mc_tmins = np.empty (nsmc)
 
-    # Now do the Monte Carlo jacknifing so that the caller can have some idea
-    # as to the significance of the minimal value of `thetas`. XXX: ripe for
-    # parallelization.
+        for i in xrange (nsmc):
+            shuf = np.random.permutation (x.size)
+            # Note that what we do here is very MapReduce-y. I'm not aware of
+            # an easy way to implement this computation in that model, though.
+            mc_thetas = get_thetas ((t, x[shuf], wt[shuf], p, nbin, nshift, v_all)
+                                    for p in periods)
+            mc_tmins[i] = mc_thetas.min ()
 
-    mc_thetas = np.empty (periods.shape)
-    mc_tmins = np.empty (nsmc)
+        mc_tmins.sort ()
+        mc_pvalue = mc_tmins.searchsorted (thetas[imin]) / nsmc
 
-    for i in xrange (nsmc):
-        shuf = np.random.permutation (x.size)
+        # Now add noise to assess the uncertainty of the period.
 
-        for j in xrange (periods.size):
-            mc_thetas[j] = one_theta (t, x[shuf], wt[shuf], periods[j],
-                                      nbin, nshift, v_all)
+        mc_pmins = np.empty (numc)
 
-        mc_tmins[i] = mc_thetas.min ()
+        for i in xrange (numc):
+            noised = np.random.normal (x, u)
+            mc_thetas = get_thetas ((t, noised, wt, p, nbin, nshift, v_all)
+                                    for p in periods)
+            mc_pmins[i] = periods[mc_thetas.argmin ()]
 
-    mc_tmins.sort ()
-    mc_pvalue = mc_tmins.searchsorted (thetas[imin]) / nsmc
-
-    # Now add noise to assess the uncertainty of the period.
-
-    mc_pmins = np.empty (numc)
-
-    for i in xrange (numc):
-        noised = np.random.normal (x, u)
-
-        for j in xrange (periods.size):
-            mc_thetas[j] = one_theta (t, noised, wt, periods[j],
-                                      nbin, nshift, v_all)
-
-        mc_pmins[i] = periods[mc_thetas.argmin ()]
-
-    mc_pmins.sort ()
-    mc_puncert = mc_pmins.std ()
+        mc_pmins.sort ()
+        mc_puncert = mc_pmins.std ()
 
     # All done.
 
