@@ -43,18 +43,20 @@ def logrun (command, boring_args, interesting_arg, logpath):
     else:
         print ('+', command, interesting_arg)
 
+    argv = [command] + boring_args + [interesting_arg]
+
     try:
         with io.open (logpath, 'wb') as f:
-            subprocess.check_call ([command] + boring_args + [interesting_arg],
-                                   stdout=f, stderr=f)
+            print ('## running:', ' '.join (argv), file=f)
+            f.flush ()
+            subprocess.check_call (argv, stdout=f, stderr=f)
     except subprocess.CalledProcessError as e:
         with io.open (logpath, 'rt') as f:
             for line in f:
                 print (line, end='', file=sys.stderr)
         print (file=sys.stderr)
         die ('command "%s" failed with exit status %d',
-             ' '.join ([command] + boring_args + [interesting_arg]),
-             e.returncode)
+             ' '.join (argv), e.returncode)
 
 
 def bib_export (style, auxpath, bibpath):
