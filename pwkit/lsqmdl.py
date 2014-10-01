@@ -612,6 +612,7 @@ class AddValuesComponent (ModelComponent):
     nmodelargs = 0
 
     def __init__ (self, nvals, name=None):
+        super (AddValuesComponent, self).__init__ (name)
         self.npar = nvals
 
     def _param_names (self):
@@ -641,6 +642,7 @@ class AddPolynomialComponent (ModelComponent):
     nmodelargs = 1
 
     def __init__ (self, maxexponent, x, name=None):
+        super (AddPolynomialComponent, self).__init__ (name)
         self.npar = maxexponent + 1
         self.x = np.array (x, dtype=np.float, ndmin=1, copy=False, subok=True)
 
@@ -708,7 +710,7 @@ class SeriesComponent (ModelComponent):
     is only valid if every subcomponent except the first is additive --
     otherwise, the Jacobian won't be right."""
 
-    def __init__ (self, name=None, components=()):
+    def __init__ (self, components=(), name=None):
         super (SeriesComponent, self).__init__ (name)
         self.components = list (components)
 
@@ -1004,7 +1006,7 @@ class MatMultComponent (ModelComponent):
 class ScaleComponent (ModelComponent):
     npar = 1
 
-    def __init__ (self, name=None, subcomp=None):
+    def __init__ (self, subcomp=None, name=None):
         super (ScaleComponent, self).__init__ (name)
         self.setsubcomp (subcomp)
 
