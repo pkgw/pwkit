@@ -167,6 +167,7 @@ class Wrapper (object):
         self.outpar ('exitcode', proc.returncode)
         if proc.returncode != 0:
             self.output (OUTKIND_STDERR, 'process exited with error code\n')
+        return proc.returncode
 
 
 def commandline (argv=None):
@@ -217,7 +218,7 @@ def commandline (argv=None):
     wrapper = Wrapper ()
     wrapper.use_colors = use_colors
     wrapper.echo_stderr = echo_stderr
-    wrapper.launch (subcommand, subargv)
+    sys.exit (wrapper.launch (subcommand, subargv))
 
 
 if __name__ == '__main__':
