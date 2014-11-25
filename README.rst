@@ -34,6 +34,11 @@ Peter K. G. Williams and collaborators. Despite this package being named after
 me, contributions are welcome and will be given full credit. I just don’t want
 to have to make up a decent name for this package right now.
 
+Contributions have come from (alphabetically by surname):
+
+* Maïca Clavel
+* Elisabeth Newton
+
 
 =======
 License
