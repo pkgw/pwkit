@@ -16,11 +16,21 @@ import numpy as np, sys
 from .. import PKError
 from . import *
 from .. import astimage
-from .. import ndshow_gtk2 as ndshow # one day: flexible backend
 
 
 class UsageError (PKError):
     pass
+
+
+def load_ndshow ():
+    # one day: flexible backend
+
+    try:
+        from .. import ndshow_gtk2 as ndshow
+    except ImportError as e:
+        die ('cannot load graphics backend for viewing images: %s', e)
+
+    return ndshow
 
 
 # The commands.
@@ -57,6 +67,7 @@ def _blink_load (path, fft, maxnorm):
 def cmd_blink (args):
     fft = pop_option ('f', args)
     maxnorm = pop_option ('m', args)
+    ndshow = load_ndshow ()
 
     images = []
     toworlds = []
@@ -248,6 +259,7 @@ cmd_setrect.summary = 'Set a rectangle in an image to a constant.'
 
 def cmd_show (args):
     anyfailures = False
+    ndshow = load_ndshow ()
 
     for path in args:
         try:
