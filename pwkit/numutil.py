@@ -6,6 +6,8 @@
 
 Functions:
 
+make_step_lcont   - Return a step function that is left-continuous.
+make_step_rcont   - Return a step function that is right-continuous.
 make_tophat_ee    - Return a tophat function operating on an exclusive/exclusive range.
 make_tophat_ei    - Return a tophat function operating on an exclusive/inclusive range.
 make_tophat_ie    - Return a tophat function operating on an inclusive/exclusive range.
@@ -24,9 +26,9 @@ broadcastize - Make a Python function automatically broadcast arguments.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'broadcastize make_tophat_ee make_tophat_ei make_tophat_ie '
-           b'make_tophat_ii rms unit_tophat_ee unit_tophat_ei unit_tophat_ie '
-           b'unit_tophat_ii weighted_variance').split ()
+__all__ = (b'broadcastize make_step_lcont make_step_rcont make_tophat_ee '
+           b'make_tophat_ei make_tophat_ie make_tophat_ii rms unit_tophat_ee '
+           b'unit_tophat_ei unit_tophat_ie unit_tophat_ii weighted_variance').split ()
 
 import functools
 import numpy as np
@@ -274,3 +276,47 @@ def make_tophat_ii (lower, upper):
                                'right-inclusive. Returns 1 if %g <= x <= %g, '
                                '0 otherwise.') % (lower, upper)
     return range_tophat_ii
+
+
+# Step functions
+
+def make_step_lcont (transition):
+    """Return a ufunc-like step function that is left-continuous. Returns 1 if
+    x > transition, 0 otherwise.
+
+    """
+    if not np.isfinite (transition):
+        raise ValueError ('"transition" argument must be finite number; got %r' % transition)
+
+    def step_lcont (x):
+        x = np.asarray (x)
+        x1 = np.atleast_1d (x)
+        r = (x1 > transition).astype (x.dtype)
+        if x.ndim == 0:
+            return np.asscalar (r)
+        return r
+
+    step_lcont.__doc__ = ('Left-continuous step function. Returns 1 if x > %g, '
+                          '0 otherwise.') % (transition,)
+    return step_lcont
+
+
+def make_step_rcont (transition):
+    """Return a ufunc-like step function that is right-continuous. Returns 1 if
+    x >= transition, 0 otherwise.
+
+    """
+    if not np.isfinite (transition):
+        raise ValueError ('"transition" argument must be finite number; got %r' % transition)
+
+    def step_rcont (x):
+        x = np.asarray (x)
+        x1 = np.atleast_1d (x)
+        r = (x1 >= transition).astype (x.dtype)
+        if x.ndim == 0:
+            return np.asscalar (r)
+        return r
+
+    step_rcont.__doc__ = ('Right-continuous step function. Returns 1 if x >= '
+                          '%g, 0 otherwise.') % (transition,)
+    return step_rcont
