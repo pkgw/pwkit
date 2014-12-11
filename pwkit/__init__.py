@@ -106,8 +106,49 @@ def reraise_context (fmt, *args):
 
 
 class Holder (object):
-    def __init__ (self, **kwargs):
-        self.set (**kwargs)
+    """A basic 'namespace class' that provides you a place to easily stick named
+    data with a minimum of fuss.
+
+    Holder (name1=val1, name2=val2, ...)
+
+    Provides nice str/unicode/repr representations, and basic manipulations:
+
+    set(**kwargs)           - Set named keys as a group
+    setone (name, value)    - Set a specific key
+    get (name, defval=None) - Retrieve a key with an optional default
+    copy ()                 - Make a shallow clone of the Holder
+
+    This class may also be used as a decorator on a class definition to transform
+    its contents into a Holder instance. Writing:
+
+        @Holder
+        class mydata ():
+            a = 1
+            b = 'hello'
+
+    creates a Holder instance named 'mydata' containing names 'a' and 'b'.
+    This can be a convenient way to populate one-off data structures.
+
+    """
+    def __init__ (self, __decorating=None, **kwargs):
+        import types
+
+        if __decorating is None:
+            values = kwargs
+        elif isinstance (__decorating, (type, types.ClassType)):
+            # We're decorating a class definition. Transform the definition
+            # into a Holder instance thusly:
+            values = dict (kv for kv in __decorating.__dict__.iteritems ()
+                           if not kv[0].startswith ('__'))
+        else:
+            # You could imagine allowing @Holder on a function and doing
+            # something with its return value, but I can't think of a use that
+            # would be more sensible than just creating and returning a Holder
+            # directly.
+            raise ValueError ('unexpected use of Holder as a decorator (on %r)'
+                              % __decorating)
+
+        self.set (**values)
 
     def __unicode__ (self):
         d = self.__dict__
