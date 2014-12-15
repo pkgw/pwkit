@@ -21,7 +21,12 @@ and the RA/long axis should be considered the Y axis.
 
 Possible TODO: make more array-friendly. All of the bounds-checking becomes a
 pain (e.g. need to wrap in np.any()) to make array-friendly while still
-providing useful debug output. np.vectorize() might save the day here.
+providing useful debug output. np.vectorize() might save the day here, or my
+@numutil.broadcastize.
+
+NOTE: Pineau et al 2011A&A...527A.126P has some relevant equations, including
+ones for computing the overlap of two error ellipses, which is something I've
+had trouble figuring out in the past.
 
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
