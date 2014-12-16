@@ -8,11 +8,12 @@ Classes:
 
 Clipper      - Map data into [0,1]
 ColorMapper  - Map data onto RGB colorrs using `pwkit.colormaps`
+Stretcher    - Map data within [0,1] using a stretch like sqrt, log, etc.
 
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'Clipper ColorMapper LazyComputer').split ()
+__all__ = (b'Clipper ColorMapper LazyComputer Stretcher').split ()
 
 import numpy as np
 
@@ -124,6 +125,31 @@ class Clipper (LazyComputer):
                 np.clip (dest, 0, 1, dest)
 
         return func
+
+
+class Stretcher (LazyComputer):
+    """Assumes that its inputs are in [0, 1]. Maps its outputs to the same
+    range.
+
+    """
+
+    def passthrough (src, dest):
+        dest[:] = src
+
+    modes = {
+        'linear': passthrough,
+        'sqrt': np.sqrt,
+        'square': np.square,
+    }
+
+    def __init__ (self, mode):
+        if mode not in self.modes:
+            raise ValueError ('unrecognized Stretcher mode %r', mode)
+
+        self.mode = mode
+
+    def _make_func (self, ismasked):
+        return self.modes[self.mode]
 
 
 class ColorMapper (LazyComputer):
