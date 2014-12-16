@@ -7,13 +7,17 @@
 Classes:
 
 Clipper      - Map data into [0,1]
-ColorMapper  - Map data onto RGB colorrs using `pwkit.colormaps`
-Stretcher    - Map data within [0,1] using a stretch like sqrt, log, etc.
+ColorMapper  - Map data onto RGB colors using `pwkit.colormaps`
+Stretcher    - Map data within [0,1] using a stretch like sqrt, etc.
+
+Functions:
+
+data_to_argb32 - Turn arbitrary data values into ARGB32 colors.
 
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'Clipper ColorMapper LazyComputer Stretcher').split ()
+__all__ = (b'data_to_argb32 Clipper ColorMapper LazyComputer Stretcher').split ()
 
 import numpy as np
 
@@ -202,3 +206,50 @@ class ColorMapper (LazyComputer):
                 np.multiply (dest, effscratch2, dest)
 
         return func
+
+
+def data_to_argb32 (data, cmin=None, cmax=None, stretch='linear', cmap='black_to_blue'):
+    """Turn arbitrary data values into ARGB32 colors.
+
+    There are three steps to this process: clipping the data values to a
+    maximum and minimum; stretching the spacing between those values; and
+    converting their amplitudes into colors with some kind of color map.
+
+    `data`    - Input data; can (and should) be a MaskedArray if some values are
+                invalid.
+    `cmin`    - The data clip minimum; all values <= cmin are treated
+                identically. If None (the default), `data.min ()` is used.
+    `cmax`    - The data clip maximum; all values >= cmax are treated
+                identically. If None (the default), `data.max ()` is used.
+    `stretch` - The stretch function name; 'linear', 'sqrt', or 'square'; see
+                the Stretcher class.
+    `cmap`    - The color map name; defaults to 'black_to_blue'. See the
+                `pwkit.colormaps` module for more choices.
+
+    Returns a Numpy array of the same shape as `data` with dtype `np.uint32`,
+    which represents the ARGB32 colorized version of the data. If your
+    colormap is restricted to a single R or G or B channel, you can make color
+    images by bitwise-or'ing together different such arrays.
+
+    """
+    # This could be more efficient, but whatever. This lets us share code with
+    # the ndshow module.
+
+    clipper = Clipper ()
+    clipper.alloc_buffer (data)
+    clipper.set_tile_size ()
+    clipper.dmin = cmin if cmin is not None else data.min ()
+    clipper.dmax = cmax if cmax is not None else data.max ()
+    clipper.ensure_all_updated (data)
+
+    stretcher = Stretcher (stretch)
+    stretcher.alloc_buffer (clipper.buffer)
+    stretcher.set_tile_size ()
+    stretcher.ensure_all_updated (clipper.buffer)
+
+    mapper = ColorMapper (cmap)
+    mapper.alloc_buffer (stretcher.buffer)
+    mapper.set_tile_size ()
+    mapper.ensure_all_updated (stretcher.buffer)
+
+    return mapper.buffer
