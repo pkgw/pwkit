@@ -12,7 +12,8 @@ Stretcher    - Map data within [0,1] using a stretch like sqrt, etc.
 
 Functions:
 
-data_to_argb32 - Turn arbitrary data values into ARGB32 colors.
+data_to_argb32       - Turn arbitrary data values into ARGB32 colors.
+data_to_imagesurface - Turn arbitrary data values into a Cairo ImageSurface.
 
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
@@ -253,3 +254,33 @@ def data_to_argb32 (data, cmin=None, cmax=None, stretch='linear', cmap='black_to
     mapper.ensure_all_updated (stretcher.buffer)
 
     return mapper.buffer
+
+
+def data_to_imagesurface (data, **kwargs):
+    """Turn arbitrary data values into a Cairo ImageSurface.
+
+    The method and arguments are the same as data_to_argb32, except that the
+    data array will be treated as 2D, and higher dimensionalities are not
+    allowed. The return value is a Cairo ImageSurface object.
+
+    Combined with the write_to_png() method on ImageSurfaces, this is an easy
+    way to quickly visualize 2D data.
+
+    """
+    import cairo
+
+    data = np.atleast_2d (data)
+    if data.ndim != 2:
+        raise ValueError ('input array may not have more than 2 dimensions')
+
+    argb32 = data_to_argb32 (data, **kwargs)
+
+    format = cairo.FORMAT_ARGB32
+    height, width = argb32.shape
+    stride = cairo.ImageSurface.format_stride_for_width (format, width)
+
+    if argb32.strides[0] != stride:
+        raise ValueError ('stride of data array not compatible with ARGB32')
+
+    return cairo.ImageSurface.create_for_data (argb32, format,
+                                               width, height, stride)
