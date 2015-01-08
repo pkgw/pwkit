@@ -39,6 +39,72 @@ class UnsupportedError (PKError):
     pass
 
 
+def _load_fits_module ():
+    try:
+        from astropy.io import fits
+        return fits
+    except ImportError:
+        pass
+
+    try:
+        import pyfits
+        import warnings
+
+        # YARRRRGGHH. Some versionfs of Pyfits override functions in the
+        # warnings module for no good reason. (The motivation seems to be
+        # compat with Python <2.6.) Part of what it does is to make warnings
+        # be printed to stdout, rather than stderr, which breaks things if
+        # you're printing specially-formatted output to stdout and a random
+        # warning comes up. Hypothetically. At least the original routines are
+        # backed up.
+
+        if hasattr (pyfits.core, '_formatwarning'):
+            warnings.formatwarning = pyfits.core._formatwarning
+
+        if hasattr (pyfits.core, '_showwarning'):
+            warnings.showwarning = pyfits.core._showwarning
+
+        return pyfits
+    except ImportError:
+        pass
+
+    raise UnsupportedError ('cannot open FITS images without either the '
+                            '"astropy.io.fits" or "pyfits" modules')
+
+
+def _load_wcs_module ():
+    try:
+        from astropy import wcs
+        return wcs
+    except ImportError:
+        pass
+
+    try:
+        import pywcs
+        return pywcs
+    except ImportError:
+        pass
+
+    raise UnsupportedError ('cannot open this image without either the '
+                            '"astropy.wcs" or "pywcs" modules')
+
+
+def _create_wcs (fitsheader):
+    """For compatibility between astropy and pywcs."""
+    wcsmodule = _load_wcs_module ()
+    is_pywcs = hasattr (wcsmodule, 'UnitConverter')
+
+    wcs = wcsmodule.WCS (fitsheader)
+    wcs.wcs.set ()
+    wcs.wcs.fix () # I'm interested in MJD computation via datfix()
+
+    if hasattr (wcs, 'wcs_pix2sky'):
+        wcs.wcs_pix2world = wcs.wcs_pix2sky
+        wcs.wcs_world2pix = wcs.wcs_sky2pix
+
+    return wcs
+
+
 class AstroImage (object):
     """An astronomical image.
 
@@ -199,27 +265,36 @@ def maybelower (x):
     return x.lower ()
 
 
-# We use WCSLIB/pywcs for coordinates for both FITS and MIRIAD
-# images. It does two things that we don't like. First of all, it
-# stores axes in Fortran style, with the first axis being the most
-# rapidly varying. Secondly, it does all of its angular work in
-# degrees, not radians (why??). We fix these up as best we can.
+# We use astropy.wcs/WCSLIB/pywcs for coordinates for both FITS and MIRIAD
+# images. It does two things that we don't like. First of all, it stores axes
+# in Fortran style, with the first axis being the most rapidly varying.
+# Secondly, it does all of its angular work in degrees, not radians (why??).
+# We fix these up as best we can.
 
 def _get_wcs_scale (wcs, naxis):
-    import pywcs
+    wcsmodule = _load_wcs_module ()
     wcscale = np.ones (naxis)
 
-    for i in xrange (naxis):
-        q = wcscale.size - 1 - i
-        text = wcs.wcs.cunit[q].strip ()
+    is_pywcs = hasattr (wcsmodule, 'UnitConverter')
+    if not is_pywcs:
+        from astropy.units import UnitsError, rad
 
-        try:
-            uc = pywcs.UnitConverter (text, 'rad')
-            wcscale[i] = uc.scale
-        except SyntaxError: # !! pywcs 1.10
-            pass # not an angle unit; don't futz.
-        except ValueError: # pywcs 1.11
-            pass
+    for i in xrange (naxis):
+        u = wcs.wcs.cunit[wcscale.size - 1 - i]
+
+        if is_pywcs:
+            try:
+                uc = wcsmodule.UnitConverter (u.strip (), 'rad')
+                wcscale[i] = uc.scale
+            except SyntaxError: # !! pywcs 1.10
+                pass # not an angle unit; don't futz.
+            except ValueError: # pywcs 1.11
+                pass
+        else:
+            try:
+                wcscale[i] = u.to (rad)
+            except UnitsError:
+                pass # not an angle unit
 
     return wcscale
 
@@ -234,7 +309,7 @@ def _wcs_toworld (wcs, pixel, wcscale, naxis):
         raise ValueError ('pixel coordinate must be a %d-element vector', naxis)
 
     pixel = pixel.reshape ((1, naxis))[:,::-1]
-    world = wcs.wcs_pix2sky (pixel, 0)
+    world = wcs.wcs_pix2world (pixel, 0)
     return world[0,::-1] * wcscale
 
 
@@ -244,7 +319,7 @@ def _wcs_topixel (wcs, world, wcscale, naxis):
         raise ValueError ('world coordinate must be a %d-element vector', naxis)
 
     world = (world / wcscale)[::-1].reshape ((1, naxis))
-    pixel = wcs.wcs_sky2pix (world, 0)
+    pixel = wcs.wcs_world2pix (world, 0)
     return pixel[0,::-1]
 
 
@@ -874,37 +949,21 @@ except ImportError:
 
 
 class FITSImage (AstroImage):
-    """A FITS format image loaded with the 'pyfits' module."""
+    """A FITS format image."""
 
     _modemap = {'r': 'readonly',
                 'rw': 'update' # ???
                 }
 
     def __init__ (self, path, mode):
-        try:
-            import pyfits, pywcs
-        except ImportError:
-            raise UnsupportedError ('cannot open FITS images without the '
-                                    'Python modules "pyfits" and "pywcs"')
-
-        # YARRRRGGHH. Pyfits overrides functions in the warnings module for no
-        # good reason. (The motivation seems to be compat with Python <2.6.)
-        # Part of what it does is to make warnings be printed to stdout,
-        # rather than stderr, which breaks things if you're printing
-        # specially-formatted output to stdout and a random warning comes up.
-        # Hypothetically. At least the original routines are backed up.
-        import warnings
-        warnings.formatwarning = pyfits.core._formatwarning
-        if hasattr (pyfits.core, '_showwarning'): # not overridden in pyfits >=3.1
-            warnings.showwarning = pyfits.core._showwarning
+        fitsmodule = _load_fits_module ()
+        wcsmodule = _load_wcs_module ()
 
         super (FITSImage, self).__init__ (path, mode)
 
-        self._handle = pyfits.open (path, self._modemap[mode])
+        self._handle = fitsmodule.open (path, self._modemap[mode])
         header = self._handle[0].header
-        self._wcs = pywcs.WCS (header)
-        self._wcs.wcs.set ()
-        self._wcs.wcs.fix () # I'm interested in mjd computation via datfix()
+        self._wcs = _create_wcs (header)
 
         self.units = maybelower (header.get ('bunit'))
 
