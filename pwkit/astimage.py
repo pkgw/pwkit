@@ -1191,6 +1191,10 @@ class SimpleImage (AstroImage):
 
 
     def toworld (self, pixel):
+        pixel = np.asarray (pixel)
+        if pixel.shape != (2,):
+            raise ValueError ('"pixel" must be a single pair of numbers')
+
         self._checkOpen ()
         p = self._pctmpl.copy ()
         p[self._platax] = pixel[0]
@@ -1203,6 +1207,10 @@ class SimpleImage (AstroImage):
 
 
     def topixel (self, world):
+        world = np.asarray (world)
+        if world.shape != (2,):
+            raise ValueError ('"world" must be a single pair of numbers')
+
         self._checkOpen ()
         if not self._topixelok:
             raise UnsupportedError ('mixing in the coordinate system of '
