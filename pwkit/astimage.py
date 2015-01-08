@@ -131,6 +131,7 @@ class AstroImage (object):
     toworld ()      - Convert pixel coordinates to world coordinates.
     topixel ()      - Convert world coordinates to pixel coordinates.
     simple ()       - Convert to a 2D lat/lon image.
+    subimage ()     - Extract a sub-cube of the image.
     save_copy ()    - Save a copy of the image.
     save_as_fits () - Save a copy of the image in FITS format.
     delete ()       - Delete the on-disk image.
@@ -239,6 +240,18 @@ class AstroImage (object):
         if self._latax == 0 and self._lonax == 1 and self.shape.size == 2:
             return self # noop
         return SimpleImage (self)
+
+
+    def subimage (self, pixofs, shape):
+        """Extract a sub-cube of this image.
+
+        Both `pixofs` and `shape` should be integer arrays with as many
+        elements as this image has axes. Thinking of this operation as taking
+        a Python slice of an N-dimensional cube, the i'th axis of the
+        sub-image is slices from `pixofs[i]` to `pixofs[i] + shape[i]`.
+
+        """
+        return NaiveSubImage (self, pixofs, shape)
 
 
     def save_copy (self, path, overwrite=False, openmode=None):
@@ -1208,6 +1221,80 @@ class SimpleImage (AstroImage):
 
     def simple (self):
         return self
+
+
+    def save_copy (self, path, overwrite=False, openmode=None):
+        raise UnsupportedError ('cannot save a copy of a subimage')
+
+
+    def save_as_fits (self, path, overwrite=False, openmode=None):
+        raise UnsupportedError ('cannot save subimage as FITS')
+
+
+class NaiveSubImage (AstroImage):
+    """A subset of a parent image, implemented naively."""
+
+    def __init__ (self, parent, pixofs, shape):
+        pixofs = np.asarray (pixofs)
+        shape = np.asarray (shape)
+
+        if pixofs.shape != parent.shape.shape:
+            raise UnsupportedError ('sub-image pixofs must match parent shape')
+        if shape.shape != parent.shape.shape:
+            raise UnsupportedError ('sub-image shape must match parent shape')
+        if np.any (pixofs < 0):
+            raise UnsupportedError ('sub-image pixofs must be nonnegative; '
+                                    'got %r' % pixofs)
+        if np.any (pixofs + shape > parent.shape):
+            raise UnsupportedError ('sub-image may not extend past parent; '
+                                    'got pixofs=%r subshape=%r vs shape=%r'
+                                    % (pixofs, shape, parent.shape))
+
+        self._handle = parent
+        self._pixofs = pixofs
+        self.shape = shape
+
+        self.path = '<subimage of %s>' % parent.path
+        self.axdescs = parent.axdescs
+        self.bmaj = parent.bmaj
+        self.bmin = parent.bmin
+        self.bpa = parent.bpa
+        self.units = parent.units
+        self.pclat = parent.pclat
+        self.pclon = parent.pclon
+        self.charfreq = parent.charfreq
+        self.mjd = parent.mjd
+
+
+    def _close_impl (self):
+        pass
+
+
+    def read (self, squeeze=False, flip=False):
+        self._checkOpen ()
+        data = self._handle.read (flip=flip)
+        slices = tuple (slice (self._pixofs[i], self._pixofs[i] + self.shape[i])
+                        for i in xrange (self.shape.size))
+        data = data[slices]
+
+        if squeeze:
+            data = data.squeeze ()
+
+        return data
+
+
+    def write (self, data):
+        raise UnsupportedError ('writing a subimage is not supported')
+
+
+    def toworld (self, pixel):
+        self._checkOpen ()
+        return self._handle.toworld (pixel + self._pixofs)
+
+
+    def topixel (self, world):
+        self._checkOpen ()
+        return self._handle.topixel (world) - self._pixofs
 
 
     def save_copy (self, path, overwrite=False, openmode=None):
