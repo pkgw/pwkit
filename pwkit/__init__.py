@@ -28,6 +28,7 @@ Modules in this package:
   lsqmdl           - Model data with least-squares fitting.
   msmt             - Framework for working with uncertain measurements.
   ndshow_gtk2      - Visualize data arrays as interactive images, using Gtk+2.
+  ndshow_gtk2      - Visualize data arrays as interactive images, using Gtk+3.
   numutil          - Basic NumPy and generic numerical utilities.
   parallel         - Utilities for parallel processing.
   pdm              - Finding periods in data with Phase Dispersion Minimization.
