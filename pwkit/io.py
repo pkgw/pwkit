@@ -1,8 +1,22 @@
 # -*- mode: python; coding: utf-8 -*-
-# Copyright 2012-2014 Peter Williams <peter@newton.cx> and collaborators.
+# Copyright 2012-2015 Peter Williams <peter@newton.cx> and collaborators.
 # Licensed under the MIT License.
 
-"""Miscellaneous I/O utilities."""
+"""pwkit.io - Utilities for input and output.
+
+Functions:
+
+  djoin          - "Dotless" version of os.path.join.
+  ensure_dir     - Ensure that a directory exists.
+  ensure_symlink - Ensure that a symbolic link exists.
+  make_path_func - Make a function that conveniently constructs paths.
+  pathlines      - Yield lines from a text file at a specified path.
+  pathwords      - Yield lists of words from a text file at a specified path.
+  rellink        - Create a symbolic link to a relative path.
+  try_open       - Try opening a file; no exception if it doesn't exist.
+  words          - Split a list of lines into individual words.
+
+"""
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
