@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 __all__ = [b'commandline']
 
-import sys, subprocess, threading, time, Queue
+import os, sys, subprocess, threading, time, Queue
 
 from . import die
 
@@ -119,6 +119,7 @@ class Wrapper (object):
 
         proc = subprocess.Popen (argv,
                                  executable=cmd,
+                                 stdin=open (os.devnull, 'r'),
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.PIPE,
                                  shell=False)
@@ -146,6 +147,10 @@ class Wrapper (object):
             try:
                 kind, line = self._lines.get (timeout=self.poll_timeout)
             except Queue.Empty:
+                continue
+            except KeyboardInterrupt:
+                self.output (OUTKIND_STDERR, 'interrupted\n')
+                proc.send_signal (2) # SIGINT
                 continue
 
             self.output (kind, line)
