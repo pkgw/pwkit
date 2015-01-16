@@ -368,6 +368,7 @@ usagestr = _fullusage ()
 def commandline (argv=None):
     if argv is None:
         argv = sys.argv
+        propagate_sigint ()
         unicode_stdio ()
 
     check_usage (usagestr, argv, usageifnoargs='long')

@@ -12,7 +12,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 __all__ = [b'commandline']
 
-import io, os.path, subprocess, sys
+import io, os.path, signal, subprocess, sys
 
 from .. import PKError
 from ..io import ensure_dir, ensure_symlink
@@ -55,8 +55,15 @@ def logrun (command, boring_args, interesting_arg, logpath):
             for line in f:
                 print (line, end='', file=sys.stderr)
         print (file=sys.stderr)
-        die ('command "%s" failed with exit status %d',
-             ' '.join (argv), e.returncode)
+
+        if e.returncode > 0:
+            die ('command "%s" failed with exit status %d',
+                 ' '.join (argv), e.returncode)
+        elif e.returncode == -signal.SIGINT:
+            raise KeyboardInterrupt () # make sure to propagate SIGINT
+        else:
+            die ('command "%s" killed by signal %d',
+                 ' '.join (argv), -e.returncode)
 
 
 def bib_export (style, auxpath, bibpath):
@@ -67,14 +74,20 @@ def bib_export (style, auxpath, bibpath):
         with io.open (bibpath, 'wb') as f:
             subprocess.check_call (args, stdout=f)
     except subprocess.CalledProcessError as e:
-        die ('command "%s >%s" failed with exit status %d',
-             ' '.join (args), bibpath, e.returncode)
-
+        if e.returncode > 0:
+            die ('command "%s >%s" failed with exit status %d',
+                 ' '.join (args), bibpath, e.returncode)
+        elif e.returncode == -signal.SIGINT:
+            raise KeyboardInterrupt () # make sure to propagate SIGINT
+        else:
+            die ('command "%s >%s" killed by signal %d',
+                 ' '.join (args), bibpath, -e.returncode)
 
 
 def commandline (argv=None):
     if argv is None:
         argv = sys.argv
+        propagate_sigint ()
         unicode_stdio ()
 
     check_usage (usage, argv, usageifnoargs='long')
