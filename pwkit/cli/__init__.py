@@ -6,21 +6,22 @@
 
 Functions:
 
-check_usage   - Print usage and exit if --help is in argv.
-die           - Print an error and exit.
-pop_option    - Check for a single command-line option.
-show_usage    - Print a usage message.
-unicode_stdio - Ensure that sys.std{in,out,err} accept unicode strings.
-warn          - Print a warning.
-wrong_usage   - Print an error about wrong usage and the usage help.
+check_usage      - Print usage and exit if --help is in argv.
+die              - Print an error and exit.
+pop_option       - Check for a single command-line option.
+propagate_sigint - Ensure that calling shells know when we die from SIGINT.
+show_usage       - Print a usage message.
+unicode_stdio    - Ensure that sys.std{in,out,err} accept unicode strings.
+warn             - Print a warning.
+wrong_usage      - Print an error about wrong usage and the usage help.
 
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'check_usage die pop_option show_usage unicode_stdio warn '
-           b'wrong_usage').split ()
+__all__ = (b'check_usage die pop_option propagate_sigint show_usage '
+           b'unicode_stdio warn wrong_usage').split ()
 
-import codecs, sys
+import codecs, os, signal, sys, traceback
 from .. import text_type
 
 
@@ -53,6 +54,73 @@ def unicode_stdio ():
     sys.stdout = codecs.getwriter (enc) (sys.stdout)
     enc = sys.stderr.encoding or enc
     sys.stderr = codecs.getwriter (enc) (sys.stderr)
+
+
+class _InterruptSignalPropagator (object):
+    """Ensure that calling shells know when we die from SIGINT.
+
+    Imagine that a shell script is running a long-running subprogram and the
+    user hits control-C to interrupt the program. What happens is that both
+    the shell and the subprogram are sent SIGINT, which usually causes the
+    subprogram to die immediately. However, the shell's behavior is more
+    complicated. Certain subprograms might handle the SIGINT and *not* die
+    immediately, and the shell needs to be prepared to handle that situation.
+    Therefore the shell notes the SIGINT and sees what happens next. If the
+    subprogram dies from the SIGINT, then the shell dies too. If not, the
+    shell continues. The shell can determine this by using the POSIX-defined C
+    macros WIFSIGNALED() and WTERMSIG() to see how the subprogram exited.
+
+    A problem comes in to view. Python programs trap SIGINT and turn it into
+    a KeyboardInterrupt. Uncaught KeyboardInterrupts cause the program to exit,
+    but *not* through the death-by-signal route. Therefore, interrupting
+    Python programs will not cause parent shells to exit as desired. This can
+    be seen by control-C'ing the following shell script:
+
+       for x in 1 2 3 4 5 ; do
+         echo $x
+         python -c "import time; time.sleep (5)"
+       done
+
+    This function fixes this behavior by causing uncaught KeyboardInterrupts
+    to trigger death-by-SIGINT. Importantly, you can't fool the shell by
+    exiting with the right code; you have to kill yourself with an
+    honest-to-God uncaught SIGINT.
+
+    This is all accomplished by placing in a shim sys.excepthook() handler for
+    KeyboardInterrupt exceptions. The previous excepthook can be accessed as
+    `pwkit.cli.propagate_sigint.inner_excepthook`.
+
+    """
+    inner_excepthook = None
+
+    def __call__ (self):
+        """Set sys.excepthook to our special version.
+
+        It chains to the previous excepthook, of course. This value can be
+        accessed as `pwkit.cli.propagate_sigint.inner_excepthook`.
+
+        """
+        if self.inner_excepthook is None:
+            self.inner_excepthook = sys.excepthook
+            sys.excepthook = self.excepthook
+
+    def excepthook (self, etype, evalue, etb):
+        """Handle an uncaught exception. We always forward the exception on to
+        whatever `sys.excepthook` was present upon setup. However, if the
+        exception is a KeyboardInterrupt, we additionally kill ourselves with
+        an uncaught SIGINT, so that invoking programs know what happened.
+
+        """
+        self.inner_excepthook (etype, evalue, etb)
+
+        if issubclass (etype, KeyboardInterrupt):
+            # Don't try this at home, kids. On some systems os.kill (0, ...)
+            # signals our entire progress group, which is not what we want,
+            # so we use os.getpid ().
+            signal.signal (signal.SIGINT, signal.SIG_DFL)
+            os.kill (os.getpid (), signal.SIGINT)
+
+propagate_sigint = _InterruptSignalPropagator ()
 
 
 def die (fmt, *args):
