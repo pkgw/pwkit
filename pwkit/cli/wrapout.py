@@ -8,9 +8,9 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 __all__ = [b'commandline']
 
-import os, sys, subprocess, threading, time, Queue
+import os, signal, subprocess, sys, threading, time, Queue
 
-from . import die
+from . import die, propagate_sigint
 
 
 usage = """usage: wrapout [-c] [-e] [-a name] <command> [command args...]
@@ -170,8 +170,18 @@ class Wrapper (object):
         self.outpar ('finish_time', time.strftime (rfc3339_fmt))
         self.outpar ('elapsed_seconds', int (round (time.time () - self._t0)))
         self.outpar ('exitcode', proc.returncode)
-        if proc.returncode != 0:
+
+        # note: subprocess pre-processes exit codes, so shouldn't use
+        # os.WIFSIGNALED, os.WTERMSIG, etc.
+
+        if proc.returncode < 0:
+            self.output (OUTKIND_STDERR,
+                         'process killed by signal %d\n' % -proc.returncode)
+            if proc.returncode == -signal.SIGINT:
+                raise KeyboardInterrupt () # make sure to propagate death-by-SIGINT
+        elif proc.returncode != 0:
             self.output (OUTKIND_STDERR, 'process exited with error code\n')
+
         return proc.returncode
 
 
@@ -181,6 +191,7 @@ def commandline (argv=None):
 
     # NOTE: we do NOT initialize stdout and stderr to be Unicode streams
     # since we're actually intentionally writing raw bytes to them.
+    propagate_sigint ()
 
     args = list (argv[1:])
     use_colors = None
@@ -227,4 +238,6 @@ def commandline (argv=None):
 
 
 if __name__ == '__main__':
+    # Note that the standard wrapper created by setup.py does not actually
+    # follow this code path! It invokes commandline() directly.
     commandline ()
