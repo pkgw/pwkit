@@ -805,17 +805,17 @@ class CasaCImage (AstroImage):
         p2w = self._pax2wax = np.asarray (cs.axesmap (toworld=True))[::-1].copy ()
         assert p2w.size == self.shape.size
 
-        self._specax = w2p[_casac_findwcoord (cs, 'spectral')[0]]
-        #self._polax = w2p[_casac_findwcoord (cs, 'stokes')[0]]
-        self._lonax = w2p[_casac_findwcoord (cs, 'direction')[0]]
-        self._latax = w2p[_casac_findwcoord (cs, 'direction')[1]]
+        self._specax = w2p[_casac_findwcoord (cs, b'spectral')[0]]
+        #self._polax = w2p[_casac_findwcoord (cs, b'stokes')[0]]
+        self._lonax = w2p[_casac_findwcoord (cs, b'direction')[0]]
+        self._latax = w2p[_casac_findwcoord (cs, b'direction')[1]]
 
         self.axdescs = [None] * naxis
         names = cs.names ()
         for i in xrange (naxis):
             self.axdescs[i] = names[p2w[i]]
 
-        self.charfreq = _casac_convert (cs.referencevalue (format='m', type='spectral')
+        self.charfreq = _casac_convert (cs.referencevalue (format=b'm', type=b'spectral')
                                         ['measure']['spectral']['frequency']['m0'], 'GHz')
         self.units = maybelower (self._handle.brightnessunit ())
 
@@ -882,7 +882,7 @@ class CasaCImage (AstroImage):
 
         self._checkOpen ()
         pixel = np.asarray (pixel)[::-1] # reverse to CASA's ordering
-        qtys = self._handle.toworld (pixel, format='q')['quantity']
+        qtys = self._handle.toworld (pixel, format=b'q')['quantity']
 
         # Our "world" coordinates are still in what CASA would call
         # its "pixel" ordering. This will probably all go down in
