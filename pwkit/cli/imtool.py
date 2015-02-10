@@ -18,12 +18,13 @@ from .. import astimage
 
 
 def load_ndshow ():
-    # one day: flexible backend
-
     try:
-        from .. import ndshow_gtk2 as ndshow
+        from .. import ndshow_gtk3 as ndshow
     except ImportError as e:
-        die ('cannot load graphics backend for viewing images: %s', e)
+        try:
+            from .. import ndshow_gtk2 as ndshow
+        except ImportError as e:
+            die ('cannot load graphics backend for viewing images: %s', e)
 
     return ndshow
 
