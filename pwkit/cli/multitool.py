@@ -10,9 +10,10 @@ interface works).
 
 Classes:
 
-  Command    - A command supported by the tool.
-  Multitool  - The tool itself.
-  UsageError - Raised if illegal command-line arguments are used.
+  Command           - A command supported by the tool.
+  DelegatingCommand - A command that delegates to named sub-commands.
+  Multitool         - The tool itself.
+  UsageError        - Raised if illegal command-line arguments are used.
 
 Functions:
 
@@ -24,12 +25,12 @@ Standard usage:
     name = 'info'
     summary = 'Do something useful.'
 
-    def invoke (self, app, args):
+    def invoke (self, args, **kwargs):
       print ('hello')
 
   class MyTool (multitool.MultiTool):
     cli_name = 'mytool'
-    help_summary = 'Do several useful things.'
+    summary = 'Do several useful things.'
 
   def commandline ():
     multitool.invoke_tool (globals ())
@@ -64,7 +65,7 @@ class Command (object):
 
     Functions:
 
-      invoke(self, app, args) - Execute this command.
+      invoke(self, args, **kwargs) - Execute this command.
 
     'name' must be set; other attributes are optional, although at least
     'summary' and 'argspec' should be set. 'invoke()' must be implemented.
@@ -76,12 +77,44 @@ class Command (object):
     more_help = ''
     help_if_no_args = True
 
-    def invoke (self, app, args):
-        """Invoke this command. 'app' is the Multitool instance. 'args' is a list of
-        the remaining command-line arguments.
+    def invoke (self, args, **kwargs):
+        """Invoke this command. 'args' is a list of the remaining command-line
+        arguments. 'kwargs' contains at least 'argv0', which is the equivalent
+        of, well, `argv[0]` for this command; 'tool', the originating
+        Multitool instance; and 'parent', the parent DelegatingCommand
+        instance. Other kwargs may be added in an application-specific manner.
+        Basic processing of '--help' will already have been done if invoked
+        through invoke_with_usage().
 
         """
         raise NotImplementedError ()
+
+
+    def invoke_with_usage (self, args, **kwargs):
+        """Invoke the command with standardized usage-help processing. Same calling
+        convention as `Command.invoke()`.
+
+        """
+        argv0 = kwargs['argv0']
+        usage = self._usage (argv0)
+        argv = [argv0] + args
+        uina = 'long' if self.help_if_no_args else False
+
+        check_usage (usage, argv, usageifnoargs=uina)
+
+        try:
+            return self.invoke (args, **kwargs)
+        except UsageError as e:
+            wrong_usage (usage, str (e))
+
+
+    def _usage (self, argv0):
+        text = '%s %s' % (argv0, self.argspec)
+        if len (self.summary):
+            text += '\n\n' + self.summary
+        if len (self.more_help):
+            text += '\n\n' + self.more_help
+        return text
 
 
 def is_strict_subclass (value, klass):
@@ -95,37 +128,43 @@ def is_strict_subclass (value, klass):
             value is not klass)
 
 
-class Multitool (object):
-    """A command-line tool with multiple sub-commands.
+class DelegatingCommand (Command):
+    """A command that delegates to sub-commands.
 
     Attributes:
 
-      cli_name     - The usual name of this tool on the command line.
-      help_summary - A one-line summary of this tool's functionality.
-      usage_tmpl   - A formatting template for long tool usage.
+      cmd_desc   - The noun used to desribe the sub-commands.
+      usage_tmpl - A formatting template for long tool usage. The default
+                   is almost surely acceptable.
 
     Functions:
 
-      commandline - Execute a command as if invoked from the command-line.
-      register    - Register a new command.
-      populate    - Register many commands automatically.
+      register - Register a new sub-command.
+      populate - Register many sub-commands automatically.
 
     """
-    cli_name = '<no name>'
-    help_summary = ''
-    usage_tmpl = """%(cli_name)s <command> [arguments...]
+    argspec = '<command> [arguments...]'
+    cmd_desc = 'sub-command'
+    usage_tmpl = """%(argv0)s %(argspec)s
 
-%(help_summary)s
+%(summary)s
 
 Commands are:
 
 %(indented_command_help)s
 
-Most commands will give help if run with no arguments.
+%(more_help)s
 """
+    more_help = 'Most commands will give help if run with no arguments.'
 
-    def __init__ (self):
+    def __init__ (self, populate_from_self=True):
         self.commands = {}
+
+        if populate_from_self:
+            # Avoiding '_' items is important; otherwise we'll recurse
+            # infinitely on self.__class__!
+            self.populate (getattr (self, n) for n in dir (self)
+                           if not n.startswith ('_'))
 
 
     def register (self, cmd):
@@ -156,53 +195,38 @@ Most commands will give help if run with no arguments.
         for value in values:
             if isinstance (value, Command):
                 self.register (value)
-            elif is_strict_subclass (value, Command):
+            elif is_strict_subclass (value, Command) and getattr (value, 'name') is not None:
                 self.register (value ())
 
         return self
 
 
-    def invoke_command (self, cmd, args):
+    def invoke_command (self, cmd, args, argv0=None, parent=None, **kwargs):
         """This function mainly exists to be overridden by subclasses."""
-        return cmd.invoke (self, args)
+        argv0 += ' ' + cmd.name
+        return cmd.invoke_with_usage (args,
+                                      argv0=argv0,
+                                      parent=self,
+                                      **kwargs)
 
 
-    def commandline (self, argv):
-        """Run as if invoked from the command line. 'argv' is a Unix-style list of
-        arguments, where the zeroth item is the program name (which is ignored
-        here). Usage help is printed if deemed appropriate (e.g., no arguments
-        are given). This function always terminates with an exception, with
-        the exception being a SystemExit(0) in case of success.
+    def invoke (self, args, **kwargs):
+        if len (args) < 1:
+            raise UsageError ('need to specify a %s', self.cmd_desc)
 
-        """
-        check_usage (self._usage (), argv, usageifnoargs='long')
-
-        if len (argv) < 2:
-            wrong_usage (self._usage (), 'need to specify a command')
-
-        cmdname = argv[1]
+        cmdname = args[0]
         cmd = self.commands.get (cmdname)
         if cmd is None:
-            wrong_usage (self._usage (), 'no such command "%s"', cmdname)
+            raise UsageError ('no such %s "%s"', self.cmd_desc, cmdname)
 
-        args = argv[2:]
-        if not len (args) and cmd.help_if_no_args:
-            print ('usage:', self.cli_name, cmdname, cmd.argspec)
-            print ()
-            print (cmd.summary)
-            if len (cmd.more_help):
-                print ()
-                print (cmd.more_help)
-            raise SystemExit (0)
-
-        try:
-            raise SystemExit (self.invoke_command (cmd, args))
-        except UsageError as e:
-            wrong_usage ('%s %s %s' % (self.cli_name, cmdname, cmd.argspec),
-                         str (e))
+        self.invoke_command (cmd, args[1:], **kwargs)
 
 
-    def _usage_keys (self):
+    def _usage (self, argv0):
+        return self.usage_tmpl % self._usage_keys (argv0)
+
+
+    def _usage_keys (self, argv0):
         scmds = sorted ((cmd for cmd in self.commands.itervalues ()),
                         key=lambda c: c.name)
         maxlen = 0
@@ -211,18 +235,53 @@ Most commands will give help if run with no arguments.
             maxlen = max (maxlen, len (cmd.name))
 
         ich = '\n'.join ('  %s %-*s - %s' %
-                         (self.cli_name, maxlen, cmd.name, cmd.summary)
+                         (argv0, maxlen, cmd.name, cmd.summary)
                          for cmd in scmds)
 
-        return {
-            'cli_name': self.cli_name,
-            'help_summary': self.help_summary,
-            'indented_command_help': ich,
-        }
+        return dict (argspec=self.argspec,
+                     argv0=argv0,
+                     indented_command_help=ich,
+                     more_help=self.more_help,
+                     summary=self.summary)
 
 
-    def _usage (self):
-        return self.usage_tmpl % self._usage_keys ()
+class Multitool (DelegatingCommand):
+    """A command-line tool with multiple sub-commands.
+
+    Attributes:
+
+      cli_name  - The usual name of this tool on the command line.
+      more_help - Additional help text.
+      summary   - A one-line summary of this tool's functionality.
+
+    Functions:
+
+      commandline - Execute a command as if invoked from the command-line.
+      register    - Register a new command.
+      populate    - Register many commands automatically.
+
+    """
+    cli_name = '<no name>'
+    cmd_desc = 'command'
+
+    def __init__ (self):
+        super (Multitool, self).__init__ (populate_from_self=False)
+
+    def commandline (self, argv):
+        """Run as if invoked from the command line. 'argv' is a Unix-style list of
+        arguments, where the zeroth item is the program name (which is ignored
+        here). Usage help is printed if deemed appropriate (e.g., no arguments
+        are given). This function always terminates with an exception, with
+        the exception being a SystemExit(0) in case of success.
+
+        Note that we don't actually use `argv[0]` to set `argv0` because it
+        will generally be the full path to the script name, which is
+        unattractive.
+
+        """
+        self.invoke_with_usage (argv[1:],
+                                tool=self,
+                                argv0=self.cli_name)
 
 
 def invoke_tool (namespace, tool_class=None):

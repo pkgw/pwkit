@@ -56,7 +56,7 @@ class Abs2app (multitool.Command):
     argspec = '<absmag [mag]> <dist [pc]>'
     summary = 'Convert absolute to apparent magnitude.'
 
-    def invoke (self, app, args):
+    def invoke (self, args, **kwargs):
         if len (args) != 2:
             raise multitool.UsageError ('abs2app expected exactly 2 arguments')
 
@@ -71,7 +71,7 @@ class App2abs (multitool.Command):
     argspec = '<appmag [mag]> <dist [pc]>'
     summary = 'Convert apparent to absolute magnitude.'
 
-    def invoke (self, app, args):
+    def invoke (self, args, **kwargs):
         if len (args) != 2:
             raise multitool.UsageError ('app2abs expected exactly 2 arguments')
 
@@ -86,7 +86,7 @@ class C2m (multitool.Command):
     argspec = '<year> <month> <frac.day> [hour] [min] [sec]'
     summary = 'Convert a calendar date to MJD[TAI].'
 
-    def invoke (self, app, args):
+    def invoke (self, args, **kwargs):
         """c2m  - calendar to MJD[TAI]"""
 
         if len (args) not in (3, 6):
@@ -120,7 +120,7 @@ class Calc (multitool.Command):
     argspec = '{expr...}'
     summary = 'Evaluate and print an expression.'
 
-    def invoke (self, app, args):
+    def invoke (self, args, **kwargs):
         if not len (args):
             raise multitool.UsageError ('calc expected arguments')
 
@@ -132,7 +132,7 @@ class Csep (multitool.Command):
     argspec = '<RA 1> <dec 1> <RA 2> <dec 2>'
     summary = 'Print separation between two positions; args in sexagesimal.'
 
-    def invoke (self, app, args):
+    def invoke (self, args, **kwargs):
         if len (args) != 4:
             raise multitool.UsageError ('csep expected 4 arguments')
 
@@ -153,7 +153,7 @@ class D2sh (multitool.Command):
     argspec = '{expr}'
     summary = 'Convert decimal degrees to sexagesimal hours (RA).'
 
-    def invoke (self, app, args):
+    def invoke (self, args, **kwargs):
         if not len (args):
             raise multitool.UsageError ('d2sh expected arguments')
 
@@ -166,7 +166,7 @@ class D2sl (multitool.Command):
     argspec = '{expr}'
     summary = 'Convert decimal degrees to a sexagesimal latitude (declination).'
 
-    def invoke (self, app, args):
+    def invoke (self, args, **kwargs):
         if not len (args):
             raise multitool.UsageError ('d2sl expected arguments')
 
@@ -179,7 +179,7 @@ class Ephem (multitool.Command):
     argspec = '<name> <mjd>'
     summary = 'Compute position of ephemeris object at a given time.'
 
-    def invoke (self, app, args):
+    def invoke (self, args, **kwargs):
         # This is obviously not going to be super high accuracy.
 
         if len (args) != 2:
@@ -204,7 +204,7 @@ class Flux2lum (multitool.Command):
     argspec = '<flux [cgs]> <dist [pc]>'
     summary = 'Compute luminosity from flux and distance.'
 
-    def invoke (self, app, args):
+    def invoke (self, args, **kwargs):
         if len (args) != 2:
             raise multitool.UsageError ('flux2lum expected exactly 2 arguments')
 
@@ -219,7 +219,7 @@ class Lum2flux (multitool.Command):
     argspec = '<lum [cgs]> <dist [pc]>'
     summary = 'Compute flux from luminosity and distance.'
 
-    def invoke (self, app, args):
+    def invoke (self, args, **kwargs):
         if len (args) != 2:
             raise multitool.UsageError ('lum2flux expected exactly 2 arguments')
 
@@ -234,7 +234,7 @@ class M2c (multitool.Command):
     argspec = '<MJD>'
     summary = 'Convert MJD[TAI] to a calendar date.'
 
-    def invoke (self, app, args):
+    def invoke (self, args, **kwargs):
         if len (args) != 1:
             raise multitool.UsageError ('m2c expected exactly 1 argument')
 
@@ -253,7 +253,7 @@ class Sastrom (multitool.Command):
     argspec = '[-v] <source name> <MJD>'
     summary = 'Compute source location using Simbad data.'
 
-    def invoke (self, app, args):
+    def invoke (self, args, **kwargs):
         verbose = pop_option ('v', args)
 
         if len (args) != 2:
@@ -275,7 +275,7 @@ class Sesame (multitool.Command):
     argspec = '{source name}'
     summary = 'Print source information from Sesame.'
 
-    def invoke (self, app, args):
+    def invoke (self, args, **kwargs):
         if not len (args):
             raise multitool.UsageError ('sesame expected an argument')
 
@@ -300,7 +300,7 @@ class Senscale (multitool.Command):
     argspec = '<sens 1> <time 1> <time 2>'
     summary = 'Scale a sensitivity to a different integration time.'
 
-    def invoke (self, app, args):
+    def invoke (self, args, **kwargs):
         if len (args) != 3:
             raise multitool.UsageError ('senscale expected 3 arguments')
 
@@ -317,7 +317,7 @@ class Sh2d (multitool.Command):
     summary = 'Convert sexagesimal hours to decimal degrees.'
     more_help = """The argument should look like "12:20:14.6"."""
 
-    def invoke (self, app, args):
+    def invoke (self, args, **kwargs):
         if len (args) != 1:
             raise multitool.UsageError ('sh2d expected 1 argument')
 
@@ -336,7 +336,7 @@ class Sl2d (multitool.Command):
     summary = 'Convert sexagesimal latitude (ie, declination) to decimal degrees.'
     more_help = """The argument should look like "47:20:14.6". The leading sign is optional."""
 
-    def invoke (self, app, args):
+    def invoke (self, args, **kwargs):
         if len (args) != 1:
             raise multitool.UsageError ('sl2d expected 1 argument')
 
@@ -354,7 +354,7 @@ class Ssep (multitool.Command):
     argspec = '<source name> <source name>'
     summary = 'Print separation between two sources identified by name.'
 
-    def invoke (self, app, args):
+    def invoke (self, args, **kwargs):
         if len (args) != 2:
             raise multitool.UsageError ('ssep expected 2 arguments')
 
@@ -381,7 +381,7 @@ class Ssep (multitool.Command):
 
 class Astrotool (multitool.Multitool):
     cli_name = 'astrotool'
-    help_summary = 'Perform miscellaneous astronomical calculations.'
+    summary = 'Perform miscellaneous astronomical calculations.'
 
 def commandline ():
     multitool.invoke_tool (globals ())

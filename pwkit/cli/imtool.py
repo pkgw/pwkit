@@ -64,9 +64,9 @@ class BlinkCommand (multitool.Command):
 
         return data, toworld
 
-    def invoke (self, app, args):
-        fft = pop_option ('f', args)
-        maxnorm = pop_option ('m', args)
+    def invoke (self, args, **kwargs):
+        fft = pop_option ('f', [''] + args)
+        maxnorm = pop_option ('m', [''] + args)
         ndshow = load_ndshow ()
 
         images = []
@@ -112,9 +112,9 @@ class FitsrcCommand (multitool.Command):
     summary = 'Fit a compact-source model to a location in an image.'
     more_help = """-p  - Force use of a point-source model."""
 
-    def invoke (self, app, args):
+    def invoke (self, args, **kwargs):
         from ..immodel import fit_one_source
-        forcepoint = pop_option ('p', args)
+        forcepoint = pop_option ('p', [''] + args)
 
         if len (args) != 3:
             raise multitool.UsageError ('expect exactly three arguments')
@@ -131,7 +131,7 @@ class HackdataCommand (multitool.Command):
     argspec = '<inpath> <outpath>'
     summary = 'Blindly copy pixel data from one image to another.'
 
-    def invoke (self, app, args):
+    def invoke (self, args, **kwargs):
         if len (args) != 2:
             raise multitool.UsageError ('expect exactly two arguments')
 
@@ -226,7 +226,7 @@ class InfoCommand (multitool.Command):
         if im.units is not None:
             print ('units    =', im.units)
 
-    def invoke (self, app, args):
+    def invoke (self, args, **kwargs):
         if len (args) == 1:
             self._print (args[0])
         else:
@@ -242,7 +242,7 @@ class SetrectCommand (multitool.Command):
     argspec = '<image> <x> <y> <halfwidth> <value>'
     summary = 'Set a rectangle in an image to a constant.'
 
-    def invoke (self, app, args):
+    def invoke (self, args, **kwargs):
         if len (args) != 5:
             raise multitool.UsageError ('expected exactly 5 arguments')
 
@@ -271,7 +271,7 @@ class ShowCommand (multitool.Command):
     argspec = '<image> [images...]'
     summary = 'Show images interactively.'
 
-    def invoke (self, app, args):
+    def invoke (self, args, **kwargs):
         anyfailures = False
         ndshow = load_ndshow ()
 
@@ -343,7 +343,7 @@ class StatsCommand (multitool.Command):
         print ('med  = %.2f * 10^%d' % (f * med, expt))
         print ('rms  = %.2f * 10^%d' % (f * rms, expt))
 
-    def invoke (self, app, args):
+    def invoke (self, args, **kwargs):
         if len (args) == 1:
             self._print (args[0])
         else:
@@ -358,7 +358,7 @@ class StatsCommand (multitool.Command):
 
 class Imtool (multitool.Multitool):
     cli_name = 'imtool'
-    help_summary = 'Perform miscellaneous tasks with astronomical images.'
+    summary = 'Perform miscellaneous tasks with astronomical images.'
 
 def commandline ():
     multitool.invoke_tool (globals ())
