@@ -13,11 +13,8 @@ import math, numpy as np, os, sys
 from .. import PKError
 from ..astutil import *
 from ..cgs import *
+from . import multitool
 from . import *
-
-
-class UsageError (PKError):
-    pass
 
 
 def fparse (text):
@@ -54,335 +51,337 @@ def fmt (v):
 
 # The commands.
 
-def cmd_abs2app (args):
-    if len (args) != 2:
-        raise UsageError ('abs2app expected exactly 2 arguments')
-
-    absmag = fparse (args[0])
-    dist = fparse (args[1])
-    appmag = absmag + 5 * (log10 (dist) - 1)
-    print (fmt (appmag))
-cmd_abs2app.argspec = '<absmag [mag]> <dist [pc]>'
-cmd_abs2app.summary = 'Convert absolute to apparent magnitude.'
-
-def cmd_app2abs (args):
-    if len (args) != 2:
-        raise UsageError ('app2abs expected exactly 2 arguments')
-
-    appmag = fparse (args[0])
-    dist = fparse (args[1])
-    absmag = appmag - 5 * (log10 (dist) - 1)
-    print (fmt (absmag))
-cmd_app2abs.argspec = '<appmag [mag]> <dist [pc]>'
-cmd_app2abs.summary = 'Convert apparent to absolute magnitude.'
-
-
-def cmd_c2m (args):
-    """c2m  - calendar to MJD[TAI]"""
-
-    if len (args) not in (3, 6):
-        raise UsageError ('c2m expected exactly 3 or 6 arguments')
+class Abs2app (multitool.Command):
+    name = 'abs2app'
+    argspec = '<absmag [mag]> <dist [pc]>'
+    summary = 'Convert absolute to apparent magnitude.'
 
-    try:
-        import precastro
-    except ImportError:
-        die ('need the "precastro" module')
-
-    year = int (args[0])
-    month = int (args[1])
+    def invoke (self, app, args):
+        if len (args) != 2:
+            raise multitool.UsageError ('abs2app expected exactly 2 arguments')
 
-    if len (args) == 3:
-        day = float (args[2])
-        iday = int (math.floor (day))
-        fday = day - iday
-    else:
-        iday = int (args[2])
-        hour = int (args[3])
-        minute = int (args[4])
-        second = float (args[5])
-        fday = (hour + minute / 60. + second / 3600.) / 24
+        absmag = fparse (args[0])
+        dist = fparse (args[1])
+        appmag = absmag + 5 * (log10 (dist) - 1)
+        print (fmt (appmag))
 
-    t = precastro.Time ().fromfdcal (year, month, iday, fday, 'TAI')
-    print ('%.4f' % t.asMJD ())
-cmd_c2m.argspec = '<year> <month> <frac.day> [hour] [min] [sec]'
-cmd_c2m.summary = 'Convert a calendar date to MJD[TAI].'
 
-
-def cmd_calc (args):
-    if not len (args):
-        raise UsageError ('calc expected arguments')
-
-    print (fmt (fparse (' '.join (args))))
-cmd_calc.argspec = '{expr...}'
-cmd_calc.summary = 'Evaluate and print an expression.'
-
-
-def cmd_csep (args):
-    if len (args) != 4:
-        raise UsageError ('csep expected 4 arguments')
+class App2abs (multitool.Command):
+    name = 'app2abs'
+    argspec = '<appmag [mag]> <dist [pc]>'
+    summary = 'Convert apparent to absolute magnitude.'
 
-    try:
-        lat1 = parsedeglat (args[1])
-        lon1 = parsehours (args[0])
-        lat2 = parsedeglat (args[3])
-        lon2 = parsehours (args[2])
-    except Exception as e:
-        die (e)
+    def invoke (self, app, args):
+        if len (args) != 2:
+            raise multitool.UsageError ('app2abs expected exactly 2 arguments')
 
-    print ('degree:', fmt (sphdist (lat1, lon1, lat2, lon2) * R2D))
-    print ('arcsec:', fmt (sphdist (lat1, lon1, lat2, lon2) * R2A))
-cmd_csep.argspec = '<RA 1> <dec 1> <RA 2> <dec 2>'
-cmd_csep.summary = 'Print separation between two positions; args in sexagesimal.'
-
-
-def cmd_d2sh (args):
-    if not len (args):
-        raise UsageError ('d2sh expected arguments')
+        appmag = fparse (args[0])
+        dist = fparse (args[1])
+        absmag = appmag - 5 * (log10 (dist) - 1)
+        print (fmt (absmag))
 
-    deglon = fparse (' '.join (args))
-    print (fmthours (deglon * D2R))
-cmd_d2sh.argspec = '{expr}'
-cmd_d2sh.summary = 'Convert decimal degrees to sexagesimal hours (RA).'
-
-
-def cmd_d2sl (args):
-    if not len (args):
-        raise UsageError ('d2sl expected arguments')
 
-    deglat = fparse (' '.join (args))
-    print (fmtdeglat (deglat * D2R))
-cmd_d2sl.argspec = '{expr}'
-cmd_d2sl.summary = 'Convert decimal degrees to a sexagesimal latitude (declination).'
+class C2m (multitool.Command):
+    name = 'c2m'
+    argspec = '<year> <month> <frac.day> [hour] [min] [sec]'
+    summary = 'Convert a calendar date to MJD[TAI].'
 
+    def invoke (self, app, args):
+        """c2m  - calendar to MJD[TAI]"""
 
-def cmd_ephem (args):
-    # This is obviously not going to be super high accuracy.
+        if len (args) not in (3, 6):
+            raise multitool.UsageError ('c2m expected exactly 3 or 6 arguments')
 
-    if len (args) != 2:
-        raise UsageError ('ephem expected exactly 2 arguments')
+        try:
+            import precastro
+        except ImportError:
+            die ('need the "precastro" module')
 
-    try:
-        import precastro
-    except ImportError:
-        die ('need the "precastro" module')
+        year = int (args[0])
+        month = int (args[1])
 
-    try:
-        obj = precastro.EphemObject (args[0])
-    except Exception as e:
-        die (e)
+        if len (args) == 3:
+            day = float (args[2])
+            iday = int (math.floor (day))
+            fday = day - iday
+        else:
+            iday = int (args[2])
+            hour = int (args[3])
+            minute = int (args[4])
+            second = float (args[5])
+            fday = (hour + minute / 60. + second / 3600.) / 24
 
-    mjd = fparse (args[1])
-    print (fmtradec (*obj.astropos (mjd + 2400000.5)))
-cmd_ephem.argspec = '<name> <mjd>'
-cmd_ephem.summary = 'Compute position of ephemeris object at a given time.'
+        t = precastro.Time ().fromfdcal (year, month, iday, fday, 'TAI')
+        print ('%.4f' % t.asMJD ())
 
 
-def cmd_flux2lum (args):
-    if len (args) != 2:
-        raise UsageError ('flux2lum expected exactly 2 arguments')
+class Calc (multitool.Command):
+    name = 'calc'
+    argspec = '{expr...}'
+    summary = 'Evaluate and print an expression.'
 
-    flux = fparse (args[0])
-    dist = fparse (args[1])
-    lum = flux * 4 * pi * (dist * cmperpc)**2
-    print (fmt (lum))
-cmd_flux2lum.argspec = '<flux [cgs]> <dist [pc]>'
-cmd_flux2lum.summary = 'Compute luminosity from flux and distance.'
+    def invoke (self, app, args):
+        if not len (args):
+            raise multitool.UsageError ('calc expected arguments')
 
+        print (fmt (fparse (' '.join (args))))
 
-def cmd_lum2flux (args):
-    if len (args) != 2:
-        raise UsageError ('lum2flux expected exactly 2 arguments')
 
-    lum = fparse (args[0])
-    dist = fparse (args[1])
-    flux = lum / (4 * pi * (dist * cmperpc)**2)
-    print (fmt (flux))
-cmd_lum2flux.argspec = '<lum [cgs]> <dist [pc]>'
-cmd_lum2flux.summary = 'Compute flux from luminosity and distance.'
+class Csep (multitool.Command):
+    name = 'csep'
+    argspec = '<RA 1> <dec 1> <RA 2> <dec 2>'
+    summary = 'Print separation between two positions; args in sexagesimal.'
 
+    def invoke (self, app, args):
+        if len (args) != 4:
+            raise multitool.UsageError ('csep expected 4 arguments')
 
-def cmd_m2c (args):
-    if len (args) != 1:
-        raise UsageError ('m2c expected exactly 1 argument')
+        try:
+            lat1 = parsedeglat (args[1])
+            lon1 = parsehours (args[0])
+            lat2 = parsedeglat (args[3])
+            lon2 = parsehours (args[2])
+        except Exception as e:
+            die (e)
 
-    try:
-        import precastro
-    except ImportError:
-        die ('need the "precastro" module')
+        print ('degree:', fmt (sphdist (lat1, lon1, lat2, lon2) * R2D))
+        print ('arcsec:', fmt (sphdist (lat1, lon1, lat2, lon2) * R2A))
 
-    mjd = float (args[0])
-    t = precastro.Time ().fromMJD (mjd, 'TAI')
-    print (t.fmtcalendar ())
-cmd_m2c.argspec = '<MJD>'
-cmd_m2c.summary = 'Convert MJD[TAI] to a calendar date.'
 
+class D2sh (multitool.Command):
+    name = 'd2sh'
+    argspec = '{expr}'
+    summary = 'Convert decimal degrees to sexagesimal hours (RA).'
 
-def cmd_sastrom (args):
-    verbose = pop_option ('v', args)
+    def invoke (self, app, args):
+        if not len (args):
+            raise multitool.UsageError ('d2sh expected arguments')
 
-    if len (args) != 2:
-        raise UsageError ('simbadastrom expected 2 arguments')
+        deglon = fparse (' '.join (args))
+        print (fmthours (deglon * D2R))
 
-    ident = args[0]
-    mjd = float (args[1])
 
-    info = AstrometryInfo ()
-    info.fill_from_simbad (ident, debug=verbose)
-    p = info.predict (mjd)
-    print ('%s at %.3f:' % (ident, mjd))
-    print ()
-    info.print_prediction (p)
-cmd_sastrom.argspec = '[-v] <source name> <MJD>'
-cmd_sastrom.summary = 'Compute source location using Simbad data.'
+class D2sl (multitool.Command):
+    name = 'd2sl'
+    argspec = '{expr}'
+    summary = 'Convert decimal degrees to a sexagesimal latitude (declination).'
 
+    def invoke (self, app, args):
+        if not len (args):
+            raise multitool.UsageError ('d2sl expected arguments')
 
-def cmd_sesame (args):
-    if not len (args):
-        raise UsageError ('sesame expected an argument')
+        deglat = fparse (' '.join (args))
+        print (fmtdeglat (deglat * D2R))
 
-    try:
-        import precastro
-    except ImportError:
-        die ('need the "precastro" module')
 
-    src = ' '.join (args)
-    obj = precastro.SiderealObject ()
+class Ephem (multitool.Command):
+    name = 'ephem'
+    argspec = '<name> <mjd>'
+    summary = 'Compute position of ephemeris object at a given time.'
 
-    try:
-        obj.fromsesame (src)
-    except Exception as e:
-        die ('couldn\'t look up "%s": %s (%s)', src, e, e.__class__.__name__)
+    def invoke (self, app, args):
+        # This is obviously not going to be super high accuracy.
 
-    print (obj.describe ())
-cmd_sesame.argspec = '{source name}'
-cmd_sesame.summary = 'Print source information from Sesame.'
+        if len (args) != 2:
+            raise multitool.UsageError ('ephem expected exactly 2 arguments')
 
+        try:
+            import precastro
+        except ImportError:
+            die ('need the "precastro" module')
 
-def cmd_senscale (args):
-    if len (args) != 3:
-        raise UsageError ('senscale expected 3 arguments')
+        try:
+            obj = precastro.EphemObject (args[0])
+        except Exception as e:
+            die (e)
 
-    s1 = fparse (args[0])
-    t1 = fparse (args[1])
-    t2 = fparse (args[2])
-    s2 = s1 * np.sqrt (t1 / t2)
-    print (fmt (s2))
-cmd_senscale.argspec = '<sens 1> <time 1> <time 2>'
-cmd_senscale.summary = 'Scale a sensitivity to a different integration time.'
+        mjd = fparse (args[1])
+        print (fmtradec (*obj.astropos (mjd + 2400000.5)))
 
 
-def cmd_sh2d (args):
-    if len (args) != 1:
-        raise UsageError ('sh2d expected 1 argument')
+class Flux2lum (multitool.Command):
+    name = 'flux2lum'
+    argspec = '<flux [cgs]> <dist [pc]>'
+    summary = 'Compute luminosity from flux and distance.'
 
-    try:
-        rarad = parsehours (args[0])
-    except Exception as e:
-        die ('couldn\'t parse "%s" as sexagesimal hours: %s (%s)',
-             args[0], e, e.__class__.__name__)
+    def invoke (self, app, args):
+        if len (args) != 2:
+            raise multitool.UsageError ('flux2lum expected exactly 2 arguments')
 
-    print ('%.8f' % (rarad * R2D))
-cmd_sh2d.argspec = '<sexagesimal hours>'
-cmd_sh2d.summary = 'Convert sexagesimal hours to decimal degrees.'
-cmd_sh2d.moredocs = """The argument should look like "12:20:14.6"."""
+        flux = fparse (args[0])
+        dist = fparse (args[1])
+        lum = flux * 4 * pi * (dist * cmperpc)**2
+        print (fmt (lum))
 
 
-def cmd_sl2d (args):
-    if len (args) != 1:
-        raise UsageError ('sl2d expected 1 argument')
+class Lum2flux (multitool.Command):
+    name = 'lum2flux'
+    argspec = '<lum [cgs]> <dist [pc]>'
+    summary = 'Compute flux from luminosity and distance.'
 
-    try:
-        decrad = parsedeglat (args[0])
-    except Exception as e:
-        die ('couldn\'t parse "%s" as sexagesimal latitude in degrees: %s (%s)',
-             args[0], e, e.__class__.__name__)
+    def invoke (self, app, args):
+        if len (args) != 2:
+            raise multitool.UsageError ('lum2flux expected exactly 2 arguments')
 
-    print ('%.8f' % (decrad * R2D))
-cmd_sl2d.argspec = '<sexagesimal latitude in degrees>'
-cmd_sl2d.summary = 'Convert sexagesimal latitude (ie, declination) to decimal degrees.'
-cmd_sl2d.moredocs = """The argument should look like "47:20:14.6". The leading sign is optional."""
+        lum = fparse (args[0])
+        dist = fparse (args[1])
+        flux = lum / (4 * pi * (dist * cmperpc)**2)
+        print (fmt (flux))
 
 
-def cmd_ssep (args):
-    if len (args) != 2:
-        raise UsageError ('ssep expected 2 arguments')
+class M2c (multitool.Command):
+    name = 'm2c'
+    argspec = '<MJD>'
+    summary = 'Convert MJD[TAI] to a calendar date.'
 
-    try:
-        import precastro
-    except ImportError:
-        die ('need the "precastro" module')
+    def invoke (self, app, args):
+        if len (args) != 1:
+            raise multitool.UsageError ('m2c expected exactly 1 argument')
 
-    try:
-        obj1 = precastro.SiderealObject ().fromsesame (args[0])
-    except Exception as e:
-        die ('couldn\'t look up "%s": %s (%s)', args[0], e, e.__class__.__name__)
+        try:
+            import precastro
+        except ImportError:
+            die ('need the "precastro" module')
 
-    try:
-        obj2 = precastro.SiderealObject ().fromsesame (args[1])
-    except Exception as e:
-        die ('couldn\'t look up "%s": %s (%s)', args[1], e, e.__class__.__name__)
+        mjd = float (args[0])
+        t = precastro.Time ().fromMJD (mjd, 'TAI')
+        print (t.fmtcalendar ())
 
-    print ('degree:', fmt (sphdist (obj1.dec, obj1.ra, obj2.dec, obj2.ra) * R2D))
-    print ('arcsec:', fmt (sphdist (obj1.dec, obj1.ra, obj2.dec, obj2.ra) * R2A))
-cmd_ssep.argspec = '<source name> <source name>'
-cmd_ssep.summary = 'Print separation between two sources identified by name.'
+
+class Sastrom (multitool.Command):
+    name = 'sastrom'
+    argspec = '[-v] <source name> <MJD>'
+    summary = 'Compute source location using Simbad data.'
+
+    def invoke (self, app, args):
+        verbose = pop_option ('v', args)
+
+        if len (args) != 2:
+            raise multitool.UsageError ('simbadastrom expected 2 arguments')
+
+        ident = args[0]
+        mjd = float (args[1])
+
+        info = AstrometryInfo ()
+        info.fill_from_simbad (ident, debug=verbose)
+        p = info.predict (mjd)
+        print ('%s at %.3f:' % (ident, mjd))
+        print ()
+        info.print_prediction (p)
+
+
+class Sesame (multitool.Command):
+    name = 'sesame'
+    argspec = '{source name}'
+    summary = 'Print source information from Sesame.'
+
+    def invoke (self, app, args):
+        if not len (args):
+            raise multitool.UsageError ('sesame expected an argument')
+
+        try:
+            import precastro
+        except ImportError:
+            die ('need the "precastro" module')
+
+        src = ' '.join (args)
+        obj = precastro.SiderealObject ()
+
+        try:
+            obj.fromsesame (src)
+        except Exception as e:
+            die ('couldn\'t look up "%s": %s (%s)', src, e, e.__class__.__name__)
+
+        print (obj.describe ())
+
+
+class Senscale (multitool.Command):
+    name = 'senscale'
+    argspec = '<sens 1> <time 1> <time 2>'
+    summary = 'Scale a sensitivity to a different integration time.'
+
+    def invoke (self, app, args):
+        if len (args) != 3:
+            raise multitool.UsageError ('senscale expected 3 arguments')
+
+        s1 = fparse (args[0])
+        t1 = fparse (args[1])
+        t2 = fparse (args[2])
+        s2 = s1 * np.sqrt (t1 / t2)
+        print (fmt (s2))
+
+
+class Sh2d (multitool.Command):
+    name = 'sh2d'
+    argspec = '<sexagesimal hours>'
+    summary = 'Convert sexagesimal hours to decimal degrees.'
+    more_help = """The argument should look like "12:20:14.6"."""
+
+    def invoke (self, app, args):
+        if len (args) != 1:
+            raise multitool.UsageError ('sh2d expected 1 argument')
+
+        try:
+            rarad = parsehours (args[0])
+        except Exception as e:
+            die ('couldn\'t parse "%s" as sexagesimal hours: %s (%s)',
+                 args[0], e, e.__class__.__name__)
+
+        print ('%.8f' % (rarad * R2D))
+
+
+class Sl2d (multitool.Command):
+    name = 'sl2d'
+    argspec = '<sexagesimal latitude in degrees>'
+    summary = 'Convert sexagesimal latitude (ie, declination) to decimal degrees.'
+    more_help = """The argument should look like "47:20:14.6". The leading sign is optional."""
+
+    def invoke (self, app, args):
+        if len (args) != 1:
+            raise multitool.UsageError ('sl2d expected 1 argument')
+
+        try:
+            decrad = parsedeglat (args[0])
+        except Exception as e:
+            die ('couldn\'t parse "%s" as sexagesimal latitude in degrees: %s (%s)',
+                 args[0], e, e.__class__.__name__)
+
+        print ('%.8f' % (decrad * R2D))
+
+
+class Ssep (multitool.Command):
+    name = 'ssep'
+    argspec = '<source name> <source name>'
+    summary = 'Print separation between two sources identified by name.'
+
+    def invoke (self, app, args):
+        if len (args) != 2:
+            raise multitool.UsageError ('ssep expected 2 arguments')
+
+        try:
+            import precastro
+        except ImportError:
+            die ('need the "precastro" module')
+
+        try:
+            obj1 = precastro.SiderealObject ().fromsesame (args[0])
+        except Exception as e:
+            die ('couldn\'t look up "%s": %s (%s)', args[0], e, e.__class__.__name__)
+
+        try:
+            obj2 = precastro.SiderealObject ().fromsesame (args[1])
+        except Exception as e:
+            die ('couldn\'t look up "%s": %s (%s)', args[1], e, e.__class__.__name__)
+
+        print ('degree:', fmt (sphdist (obj1.dec, obj1.ra, obj2.dec, obj2.ra) * R2D))
+        print ('arcsec:', fmt (sphdist (obj1.dec, obj1.ra, obj2.dec, obj2.ra) * R2A))
 
 
 # The driver.
 
-def _fullusage ():
-    usagestr = """astrotool <command> [arguments...]
+class Astrotool (multitool.Multitool):
+    cli_name = 'astrotool'
+    help_summary = 'Perform miscellaneous astronomical calculations.'
 
-This is a tool that does quick astronomical calculations that I find myself
-performing frequently.
-
-Subcommands are:
-
-"""
-
-    g = globals ()
-    cnames = sorted (n for n in g.iterkeys () if n.startswith ('cmd_'))
-
-    for cname in cnames:
-        usagestr += '  astrotool %-8s - %s\n' % (cname[4:], g[cname].summary)
-
-    usagestr += """
-Most commands will give help if run with no arguments."""
-
-    return usagestr
-
-usagestr = _fullusage ()
-
-
-def commandline (argv=None):
-    if argv is None:
-        argv = sys.argv
-        propagate_sigint ()
-        unicode_stdio ()
-
-    check_usage (usagestr, argv, usageifnoargs='long')
-
-    if len (argv) < 2:
-        wrong_usage (usagestr, 'need to specify a command')
-
-    cmdname = argv[1]
-    func = globals ().get ('cmd_' + cmdname)
-
-    if func is None:
-        wrong_usage (usagestr, 'no such command "%s"', cmdname)
-
-    args = argv[2:]
-    if not len (args) and not hasattr (func, 'no_args_is_ok'):
-        print ('usage: astrotool', cmdname, func.argspec)
-        print ()
-        print (func.summary)
-        if hasattr (func, 'moredocs'):
-            print ()
-            print (func.moredocs)
-        return
-
-    try:
-        func (args)
-    except UsageError as e:
-        print ('error:', e, '\n\nusage: astrotool', cmdname, func.argspec,
-               file=sys.stderr)
+def commandline ():
+    multitool.invoke_tool (globals ())
