@@ -356,6 +356,8 @@ class StatsCommand (multitool.Command):
 
 # The driver.
 
+from .multitool import HelpCommand
+
 class Imtool (multitool.Multitool):
     cli_name = 'imtool'
     summary = 'Perform miscellaneous tasks with astronomical images.'

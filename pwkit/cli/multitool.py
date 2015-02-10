@@ -12,6 +12,7 @@ Classes:
 
   Command           - A command supported by the tool.
   DelegatingCommand - A command that delegates to named sub-commands.
+  HelpCommand       - A command that prints the help for other commands.
   Multitool         - The tool itself.
   UsageError        - Raised if illegal command-line arguments are used.
 
@@ -32,13 +33,16 @@ Standard usage:
     cli_name = 'mytool'
     summary = 'Do several useful things.'
 
+  HelpCommand = multitool.HelpCommand # optional
+
   def commandline ():
     multitool.invoke_tool (globals ())
 
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'invoke_tool Command Multitool UsageError').split ()
+__all__ = (b'invoke_tool Command DelegatingCommand HelpCommand Multitool '
+           b'UsageError').split ()
 
 from .. import PKError
 from . import check_usage, propagate_sigint, unicode_stdio, wrong_usage
@@ -201,13 +205,13 @@ Commands are:
         return self
 
 
-    def invoke_command (self, cmd, args, argv0=None, parent=None, **kwargs):
+    def invoke_command (self, cmd, args, **kwargs):
         """This function mainly exists to be overridden by subclasses."""
-        argv0 += ' ' + cmd.name
-        return cmd.invoke_with_usage (args,
-                                      argv0=argv0,
-                                      parent=self,
-                                      **kwargs)
+        new_kwargs = kwargs.copy ()
+        new_kwargs['argv0'] = kwargs['argv0'] + ' ' + cmd.name
+        new_kwargs['parent'] = self
+        new_kwargs['parent_kwargs'] = kwargs
+        return cmd.invoke_with_usage (args, **new_kwargs)
 
 
     def invoke (self, args, **kwargs):
@@ -326,3 +330,16 @@ def invoke_tool (namespace, tool_class=None):
     tool = tool_class ()
     tool.populate (namespace.itervalues ())
     tool.commandline (sys.argv)
+
+
+class HelpCommand (Command):
+    name = 'help'
+    argspec = '<command name>'
+    summary = 'Show help on other commands.'
+    help_if_no_args = False
+
+    def invoke (self, args, parent=None, parent_kwargs=None, **kwargs):
+        # This will Do The Right Thing if someone does the equivalent of "git
+        # help remote show". Other than that it's kind of open to weird
+        # misusage ...
+        parent.invoke_with_usage (args + ['--help'], **parent_kwargs)

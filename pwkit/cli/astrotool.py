@@ -379,6 +379,8 @@ class Ssep (multitool.Command):
 
 # The driver.
 
+from .multitool import HelpCommand
+
 class Astrotool (multitool.Multitool):
     cli_name = 'astrotool'
     summary = 'Perform miscellaneous astronomical calculations.'
