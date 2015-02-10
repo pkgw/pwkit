@@ -162,6 +162,11 @@ Most commands will give help if run with no arguments.
         return self
 
 
+    def invoke_command (self, cmd, args):
+        """This function mainly exists to be overridden by subclasses."""
+        return cmd.invoke (self, args)
+
+
     def commandline (self, argv):
         """Run as if invoked from the command line. 'argv' is a Unix-style list of
         arguments, where the zeroth item is the program name (which is ignored
@@ -191,7 +196,7 @@ Most commands will give help if run with no arguments.
             raise SystemExit (0)
 
         try:
-            raise SystemExit (cmd.invoke (self, args))
+            raise SystemExit (self.invoke_command (cmd, args))
         except UsageError as e:
             wrong_usage ('%s %s %s' % (self.cli_name, cmdname, cmd.argspec),
                          str (e))
