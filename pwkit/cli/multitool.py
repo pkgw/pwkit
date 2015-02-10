@@ -96,7 +96,7 @@ def is_strict_subclass (value, klass):
 
 
 class Multitool (object):
-    """A command-line tool with multiple subcommands.
+    """A command-line tool with multiple sub-commands.
 
     Attributes:
 
@@ -117,9 +117,9 @@ class Multitool (object):
 
 %(help_summary)s
 
-Subcommands are:
+Commands are:
 
-%(indented_subcommand_help)s
+%(indented_command_help)s
 
 Most commands will give help if run with no arguments.
 """
@@ -205,14 +205,14 @@ Most commands will give help if run with no arguments.
         for cmd in scmds:
             maxlen = max (maxlen, len (cmd.name))
 
-        ish = '\n'.join ('  %s %-*s - %s' %
+        ich = '\n'.join ('  %s %-*s - %s' %
                          (self.cli_name, maxlen, cmd.name, cmd.summary)
                          for cmd in scmds)
 
         return {
             'cli_name': self.cli_name,
             'help_summary': self.help_summary,
-            'indented_subcommand_help': ish,
+            'indented_command_help': ich,
         }
 
 
