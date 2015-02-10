@@ -30,39 +30,38 @@ def load_ndshow ():
 
 # The commands.
 
-def _blink_load (path, fft, maxnorm):
-    try:
-        img = astimage.open (path, 'r')
-    except Exception as e:
-        die ('can\'t open path “%s”: %s', path, e)
-
-    try:
-        img = img.simple ()
-    except Exception as e:
-        print ('blink: can\'t convert “%s” to simple 2D sky image; taking '
-               'first plane' % path, file=sys.stderr)
-        data = img.read (flip=True)[tuple (np.zeros (img.shape.size - 2))]
-        toworld = None
-    else:
-        data = img.read (flip=True)
-        toworld = img.toworld
-
-    if fft:
-        from numpy.fft import ifftshift, fft2, fftshift
-        data = np.abs (ifftshift (fft2 (fftshift (data.filled (0)))))
-        data = np.ma.MaskedArray (data)
-        toworld = None
-
-    if maxnorm:
-        data /= np.ma.max (data)
-
-    return data, toworld
-
-
 class BlinkCommand (multitool.Command):
     name = 'blink'
     argspec = '<images...>'
     summary = 'Blink zero or more images.'
+
+    def _load (self, path, fft, maxnorm):
+        try:
+            img = astimage.open (path, 'r')
+        except Exception as e:
+            die ('can\'t open path “%s”: %s', path, e)
+
+        try:
+            img = img.simple ()
+        except Exception as e:
+            print ('blink: can\'t convert “%s” to simple 2D sky image; taking '
+                   'first plane' % path, file=sys.stderr)
+            data = img.read (flip=True)[tuple (np.zeros (img.shape.size - 2))]
+            toworld = None
+        else:
+            data = img.read (flip=True)
+            toworld = img.toworld
+
+        if fft:
+            from numpy.fft import ifftshift, fft2, fftshift
+            data = np.abs (ifftshift (fft2 (fftshift (data.filled (0)))))
+            data = np.ma.MaskedArray (data)
+            toworld = None
+
+        if maxnorm:
+            data /= np.ma.max (data)
+
+        return data, toworld
 
     def invoke (self, app, args):
         fft = pop_option ('f', args)
@@ -73,7 +72,7 @@ class BlinkCommand (multitool.Command):
         toworlds = []
 
         for path in args:
-            image, toworld = _blink_load (path, fft, maxnorm)
+            image, toworld = self._load (path, fft, maxnorm)
             images.append (image)
             toworlds.append (toworld)
 
@@ -154,88 +153,87 @@ class HackdataCommand (multitool.Command):
             die ('cannot write to output "%s": %s', outpath, e)
 
 
-def _info_print (path):
-    from ..astutil import fmtradec, R2A, R2D
-
-    try:
-        im = astimage.open (path, 'r')
-    except Exception as e:
-        die ('can\'t open "%s": %s', path, e)
-
-    print ('kind     =', im.__class__.__name__)
-
-    latcell = loncell = None
-
-    if im.toworld is not None:
-        latax, lonax = im._latax, im._lonax
-        delta = 1e-6
-        p = 0.5 * (np.asfarray (im.shape) - 1)
-        w1 = im.toworld (p)
-        p[latax] += delta
-        w2 = im.toworld (p)
-        latcell = (w2[latax] - w1[latax]) / delta
-        p[latax] -= delta
-        p[lonax] += delta
-        w2 = im.toworld (p)
-        loncell = (w2[lonax] - w1[lonax]) / delta * np.cos (w2[latax])
-
-    if im.pclat is not None:
-        print ('center   =', fmtradec (im.pclon, im.pclat), '# pointing')
-    elif im.toworld is not None:
-        w = im.toworld (0.5 * (np.asfarray (im.shape) - 1))
-        print ('center   =', fmtradec (w[lonax], w[latax]), '# lattice')
-
-    if im.shape is not None:
-        print ('shape    =', ' '.join (str (x) for x in im.shape))
-        npix = 1
-        for x in im.shape:
-            npix *= x
-        print ('npix     =', npix)
-
-    if im.axdescs is not None:
-        print ('axdescs  =', ' '.join (x for x in im.axdescs))
-
-    if im.charfreq is not None:
-        print ('charfreq = %f GHz' % im.charfreq)
-
-    if im.mjd is not None:
-        from time import gmtime, strftime
-        posix = 86400. * (im.mjd - 40587.)
-        ts = strftime ('%Y-%m-%dT%H-%M-%SZ', gmtime (posix))
-        print ('mjd      = %f # %s' % (im.mjd, ts))
-
-    if latcell is not None:
-        print ('ctrcell  = %fʺ × %fʺ # lat, lon' % (latcell * R2A,
-                                                    loncell * R2A))
-
-    if im.bmaj is not None:
-        print ('beam     = %fʺ × %fʺ @ %f°' % (im.bmaj * R2A,
-                                               im.bmin * R2A,
-                                               im.bpa * R2D))
-
-        if latcell is not None:
-            bmrad2 = 2 * np.pi * im.bmaj * im.bmin / (8 * np.log (2))
-            cellrad2 = latcell * loncell
-            print ('ctrbmvol = %f px' % np.abs (bmrad2 / cellrad2))
-
-    if im.units is not None:
-        print ('units    =', im.units)
-
-
 class InfoCommand (multitool.Command):
     name = 'info'
     argspec = '<images...>'
     summary = 'Print properties of the image.'
 
+    def _print (self, path):
+        from ..astutil import fmtradec, R2A, R2D
+
+        try:
+            im = astimage.open (path, 'r')
+        except Exception as e:
+            die ('can\'t open "%s": %s', path, e)
+
+        print ('kind     =', im.__class__.__name__)
+
+        latcell = loncell = None
+
+        if im.toworld is not None:
+            latax, lonax = im._latax, im._lonax
+            delta = 1e-6
+            p = 0.5 * (np.asfarray (im.shape) - 1)
+            w1 = im.toworld (p)
+            p[latax] += delta
+            w2 = im.toworld (p)
+            latcell = (w2[latax] - w1[latax]) / delta
+            p[latax] -= delta
+            p[lonax] += delta
+            w2 = im.toworld (p)
+            loncell = (w2[lonax] - w1[lonax]) / delta * np.cos (w2[latax])
+
+        if im.pclat is not None:
+            print ('center   =', fmtradec (im.pclon, im.pclat), '# pointing')
+        elif im.toworld is not None:
+            w = im.toworld (0.5 * (np.asfarray (im.shape) - 1))
+            print ('center   =', fmtradec (w[lonax], w[latax]), '# lattice')
+
+        if im.shape is not None:
+            print ('shape    =', ' '.join (str (x) for x in im.shape))
+            npix = 1
+            for x in im.shape:
+                npix *= x
+            print ('npix     =', npix)
+
+        if im.axdescs is not None:
+            print ('axdescs  =', ' '.join (x for x in im.axdescs))
+
+        if im.charfreq is not None:
+            print ('charfreq = %f GHz' % im.charfreq)
+
+        if im.mjd is not None:
+            from time import gmtime, strftime
+            posix = 86400. * (im.mjd - 40587.)
+            ts = strftime ('%Y-%m-%dT%H-%M-%SZ', gmtime (posix))
+            print ('mjd      = %f # %s' % (im.mjd, ts))
+
+        if latcell is not None:
+            print ('ctrcell  = %fʺ × %fʺ # lat, lon' % (latcell * R2A,
+                                                        loncell * R2A))
+
+        if im.bmaj is not None:
+            print ('beam     = %fʺ × %fʺ @ %f°' % (im.bmaj * R2A,
+                                                   im.bmin * R2A,
+                                                   im.bpa * R2D))
+
+            if latcell is not None:
+                bmrad2 = 2 * np.pi * im.bmaj * im.bmin / (8 * np.log (2))
+                cellrad2 = latcell * loncell
+                print ('ctrbmvol = %f px' % np.abs (bmrad2 / cellrad2))
+
+        if im.units is not None:
+            print ('units    =', im.units)
+
     def invoke (self, app, args):
         if len (args) == 1:
-            _info_print (args[0])
+            self._print (args[0])
         else:
             for i, path in enumerate (args):
                 if i > 0:
                     print ()
                 print ('path     =', path)
-                _info_print (path)
+                self._print (path)
 
 
 class SetrectCommand (multitool.Command):
@@ -301,59 +299,58 @@ class ShowCommand (multitool.Command):
         sys.exit (int (anyfailures))
 
 
-def _stats_print (path):
-    try:
-        img = astimage.open (path, 'r')
-    except Exception as e:
-        die ('error: can\'t open "%s": %s', path, e)
-
-    try:
-        img = img.simple ()
-    except Exception, e:
-        print ('imstats: can\'t convert “%s” to simple 2D sky image; '
-               'taking first plane' % path, file=sys.stderr)
-        data = img.read ()[tuple (np.zeros (img.shape.size - 2))]
-    else:
-        data = img.read ()
-
-    h, w = data.shape
-    patchhalfsize = 32
-
-    p = data[h//2 - patchhalfsize:h//2 + patchhalfsize,
-             w//2 - patchhalfsize:w//2 + patchhalfsize]
-
-    mx = p.max ()
-    mn = p.min ()
-    med = np.median (p)
-    rms = np.sqrt ((p**2).mean ())
-
-    sc = max (abs (mx), abs (mn))
-    if sc <= 0:
-        expt = 0
-    else:
-        expt = 3 * (int (np.floor (np.log10 (sc))) // 3)
-    f = 10**-expt
-
-    print ('min  = %.2f * 10^%d' % (f * mn, expt))
-    print ('max  = %.2f * 10^%d' % (f * mx, expt))
-    print ('med  = %.2f * 10^%d' % (f * med, expt))
-    print ('rms  = %.2f * 10^%d' % (f * rms, expt))
-
-
 class StatsCommand (multitool.Command):
     name = 'stats'
     argspec = '<images...>'
     summary = 'Compute and print statistics of a 64×64 patch at image center.'
 
+    def _print (self, path):
+        try:
+            img = astimage.open (path, 'r')
+        except Exception as e:
+            die ('error: can\'t open "%s": %s', path, e)
+
+        try:
+            img = img.simple ()
+        except Exception, e:
+            print ('imstats: can\'t convert “%s” to simple 2D sky image; '
+                   'taking first plane' % path, file=sys.stderr)
+            data = img.read ()[tuple (np.zeros (img.shape.size - 2))]
+        else:
+            data = img.read ()
+
+        h, w = data.shape
+        patchhalfsize = 32
+
+        p = data[h//2 - patchhalfsize:h//2 + patchhalfsize,
+                 w//2 - patchhalfsize:w//2 + patchhalfsize]
+
+        mx = p.max ()
+        mn = p.min ()
+        med = np.median (p)
+        rms = np.sqrt ((p**2).mean ())
+
+        sc = max (abs (mx), abs (mn))
+        if sc <= 0:
+            expt = 0
+        else:
+            expt = 3 * (int (np.floor (np.log10 (sc))) // 3)
+        f = 10**-expt
+
+        print ('min  = %.2f * 10^%d' % (f * mn, expt))
+        print ('max  = %.2f * 10^%d' % (f * mx, expt))
+        print ('med  = %.2f * 10^%d' % (f * med, expt))
+        print ('rms  = %.2f * 10^%d' % (f * rms, expt))
+
     def invoke (self, app, args):
         if len (args) == 1:
-            _stats_print (args[0])
+            self._print (args[0])
         else:
             for i, path in enumerate (args):
                 if i > 0:
                     print ()
                 print ('path =', path)
-                _stats_print (path)
+                self._print (path)
 
 
 # The driver.
