@@ -4,8 +4,6 @@
 
 """pwkit.cli.imtool - the 'imtool' program.
 
-FIXME: the structure of this is all very redundant with astrotool.
-
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
@@ -14,12 +12,9 @@ __all__ = [b'commandline']
 import numpy as np, sys
 
 from .. import PKError
+from . import multitool
 from . import *
 from .. import astimage
-
-
-class UsageError (PKError):
-    pass
 
 
 def load_ndshow ():
@@ -64,90 +59,99 @@ def _blink_load (path, fft, maxnorm):
     return data, toworld
 
 
-def cmd_blink (args):
-    fft = pop_option ('f', args)
-    maxnorm = pop_option ('m', args)
-    ndshow = load_ndshow ()
+class BlinkCommand (multitool.Command):
+    name = 'blink'
+    argspec = '<images...>'
+    summary = 'Blink zero or more images.'
 
-    images = []
-    toworlds = []
+    def invoke (self, app, args):
+        fft = pop_option ('f', args)
+        maxnorm = pop_option ('m', args)
+        ndshow = load_ndshow ()
 
-    for path in args:
-        image, toworld = _blink_load (path, fft, maxnorm)
-        images.append (image)
-        toworlds.append (toworld)
+        images = []
+        toworlds = []
 
-    if not len (images):
-        return
+        for path in args:
+            image, toworld = _blink_load (path, fft, maxnorm)
+            images.append (image)
+            toworlds.append (toworld)
 
-    shape = images[0].shape
-    for i, im in enumerate (images[1:]):
-        if im.shape != shape:
-            die ('shape of “%s” (%s) does not agree with that '
-                 'of “%s” (%s)',
-                 paths[i+1], '×'.join (map (str, im.shape)),
-                 paths[0], '×'.join (map (str, shape)))
+        if not len (images):
+            return
 
-    # Merge masks. This is more complicated than you might think since you
-    # can't "or" nomask with itself.
+        shape = images[0].shape
+        for i, im in enumerate (images[1:]):
+            if im.shape != shape:
+                die ('shape of “%s” (%s) does not agree with that '
+                     'of “%s” (%s)',
+                     paths[i+1], '×'.join (map (str, im.shape)),
+                     paths[0], '×'.join (map (str, shape)))
 
-    jointmask = np.ma.nomask
+        # Merge masks. This is more complicated than you might think since you
+        # can't "or" nomask with itself.
 
-    for i in xrange (len (images)):
-        if jointmask is np.ma.nomask:
-            if images[i].mask is not np.ma.nomask:
-                jointmask = images[i].mask
-        else:
-            np.logical_or (jointmask, images[i].mask, jointmask)
+        jointmask = np.ma.nomask
 
-    for im in images:
-        im.mask = jointmask
+        for i in xrange (len (images)):
+            if jointmask is np.ma.nomask:
+                if images[i].mask is not np.ma.nomask:
+                    jointmask = images[i].mask
+            else:
+                np.logical_or (jointmask, images[i].mask, jointmask)
 
-    ndshow.cycle (images, args, toworlds=toworlds, yflip=True)
-cmd_blink.argspec = '<images...>'
-cmd_blink.summary = 'Blink zero or more images.'
+        for im in images:
+            im.mask = jointmask
 
-
-def cmd_fitsrc (args):
-    from ..immodel import fit_one_source
-    forcepoint = pop_option ('p', args)
-
-    if len (args) != 3:
-        raise UsageError ('expect exactly three arguments')
-
-    im = astimage.open (args[0], 'r').simple ()
-    x = int (args[1])
-    y = int (args[2])
-
-    fit_one_source (im, x, y, forcepoint=forcepoint)
-cmd_fitsrc.argspec = '[-p] <image> <x(pixels)> <y(pixels)>'
-cmd_fitsrc.summary = 'Fit a compact-source model to a location in an image.'
-cmd_fitsrc.moredocs = """-p  - Force use of a point-source model."""
+        ndshow.cycle (images, args, toworlds=toworlds, yflip=True)
 
 
-def cmd_hackdata (args):
-    if len (args) != 2:
-        raise UsageError ('expect exactly two arguments')
+class FitsrcCommand (multitool.Command):
+    name = 'fitsrc'
+    argspec = '[-p] <image> <x(pixels)> <y(pixels)>'
+    summary = 'Fit a compact-source model to a location in an image.'
+    more_help = """-p  - Force use of a point-source model."""
 
-    inpath, outpath = args
+    def invoke (self, app, args):
+        from ..immodel import fit_one_source
+        forcepoint = pop_option ('p', args)
 
-    try:
-        with astimage.open (inpath, 'r') as imin:
-            indata = imin.read ()
-    except Exception as e:
-        die ('cannot open input "%s": %s', inpath, e)
+        if len (args) != 3:
+            raise multitool.UsageError ('expect exactly three arguments')
 
-    try:
-        with astimage.open (outpath, 'rw') as imout:
-            if imout.size != indata.size:
-                die ('cannot import data: input has %d pixels; output has %d',
-                     indata.size, imout.size)
+        im = astimage.open (args[0], 'r').simple ()
+        x = int (args[1])
+        y = int (args[2])
 
-            imout.write (indata)
-    except Exception as e:
-        die ('cannot write to output "%s": %s', outpath, e)
-cmd_hackdata.argspec = '<inpath> <outpath>'
-cmd_hackdata.summary = 'Blindly copy pixel data from one image to another.'
+        fit_one_source (im, x, y, forcepoint=forcepoint)
+
+
+class HackdataCommand (multitool.Command):
+    name = 'hackdata'
+    argspec = '<inpath> <outpath>'
+    summary = 'Blindly copy pixel data from one image to another.'
+
+    def invoke (self, app, args):
+        if len (args) != 2:
+            raise multitool.UsageError ('expect exactly two arguments')
+
+        inpath, outpath = args
+
+        try:
+            with astimage.open (inpath, 'r') as imin:
+                indata = imin.read ()
+        except Exception as e:
+            die ('cannot open input "%s": %s', inpath, e)
+
+        try:
+            with astimage.open (outpath, 'rw') as imout:
+                if imout.size != indata.size:
+                    die ('cannot import data: input has %d pixels; output has %d',
+                         indata.size, imout.size)
+
+                imout.write (indata)
+        except Exception as e:
+            die ('cannot write to output "%s": %s', outpath, e)
 
 
 def _info_print (path):
@@ -218,74 +222,83 @@ def _info_print (path):
         print ('units    =', im.units)
 
 
-def cmd_info (args):
-    if len (args) == 1:
-        _info_print (args[0])
-    else:
-        for i, path in enumerate (args):
-            if i > 0:
-                print ()
-            print ('path     =', path)
-            _info_print (path)
-cmd_info.argspec = '<images...>'
-cmd_info.summary = 'Print properties of the image.'
+class InfoCommand (multitool.Command):
+    name = 'info'
+    argspec = '<images...>'
+    summary = 'Print properties of the image.'
 
-
-def cmd_setrect (args):
-    if len (args) != 5:
-        raise UsageError ('expected exactly 5 arguments')
-
-    path = args[0]
-
-    try:
-        x = int (args[1])
-        y = int (args[2])
-        halfwidth = int (args[3])
-        value = float (args[4])
-    except ValueError:
-        raise UsageError ('could not parse one of the numeric arguments')
-
-    try:
-        img = astimage.open (path, 'rw')
-    except Exception as e:
-        die ('can\'t open path “%s”: %s', path, e)
-
-    data = img.read ()
-    data[...,y-halfwidth:y+halfwidth,x-halfwidth:x+halfwidth] = value
-    img.write (data)
-cmd_setrect.argspec = '<image> <x> <y> <halfwidth> <value>'
-cmd_setrect.summary = 'Set a rectangle in an image to a constant.'
-
-
-def cmd_show (args):
-    anyfailures = False
-    ndshow = load_ndshow ()
-
-    for path in args:
-        try:
-            img = astimage.open (path, 'r')
-        except Exception as e:
-            print ('pwshow: can\'t open path “%s”: %s' % (path, e), file=sys.stderr)
-            anyfailures = True
-            continue
-
-        try:
-            img = img.simple ()
-        except Exception as e:
-            print ('pwshow: can\'t convert “%s” to simple 2D sky image; taking '
-                   ' first plane' % path, file=sys.stderr)
-            data = img.read (flip=True)[tuple (np.zeros (img.shape.size - 2))]
-            toworld = None
+    def invoke (self, app, args):
+        if len (args) == 1:
+            _info_print (args[0])
         else:
-            data = img.read (flip=True)
-            toworld = img.toworld
+            for i, path in enumerate (args):
+                if i > 0:
+                    print ()
+                print ('path     =', path)
+                _info_print (path)
 
-        ndshow.view (data, title=path + ' — Array Viewer',
-                     toworld=toworld, yflip=True)
 
-    sys.exit (int (anyfailures))
-cmd_show.argspec = '<image> [images...]'
-cmd_show.summary = 'Show images interactively.'
+class SetrectCommand (multitool.Command):
+    name = 'setrect'
+    argspec = '<image> <x> <y> <halfwidth> <value>'
+    summary = 'Set a rectangle in an image to a constant.'
+
+    def invoke (self, app, args):
+        if len (args) != 5:
+            raise multitool.UsageError ('expected exactly 5 arguments')
+
+        path = args[0]
+
+        try:
+            x = int (args[1])
+            y = int (args[2])
+            halfwidth = int (args[3])
+            value = float (args[4])
+        except ValueError:
+            raise multitool.UsageError ('could not parse one of the numeric arguments')
+
+        try:
+            img = astimage.open (path, 'rw')
+        except Exception as e:
+            die ('can\'t open path “%s”: %s', path, e)
+
+        data = img.read ()
+        data[...,y-halfwidth:y+halfwidth,x-halfwidth:x+halfwidth] = value
+        img.write (data)
+
+
+class ShowCommand (multitool.Command):
+    name = 'show'
+    argspec = '<image> [images...]'
+    summary = 'Show images interactively.'
+
+    def invoke (self, app, args):
+        anyfailures = False
+        ndshow = load_ndshow ()
+
+        for path in args:
+            try:
+                img = astimage.open (path, 'r')
+            except Exception as e:
+                print ('pwshow: can\'t open path “%s”: %s' % (path, e), file=sys.stderr)
+                anyfailures = True
+                continue
+
+            try:
+                img = img.simple ()
+            except Exception as e:
+                print ('pwshow: can\'t convert “%s” to simple 2D sky image; taking '
+                       ' first plane' % path, file=sys.stderr)
+                data = img.read (flip=True)[tuple (np.zeros (img.shape.size - 2))]
+                toworld = None
+            else:
+                data = img.read (flip=True)
+                toworld = img.toworld
+
+            ndshow.view (data, title=path + ' — Array Viewer',
+                         toworld=toworld, yflip=True)
+
+        sys.exit (int (anyfailures))
 
 
 def _stats_print (path):
@@ -327,73 +340,27 @@ def _stats_print (path):
     print ('rms  = %.2f * 10^%d' % (f * rms, expt))
 
 
-def cmd_stats (args):
-    if len (args) == 1:
-        _stats_print (args[0])
-    else:
-        for i, path in enumerate (args):
-            if i > 0:
-                print ()
-            print ('path =', path)
-            _stats_print (path)
-cmd_stats.argspec = '<images...>'
-cmd_stats.summary = 'Compute and print statistics of a 64×64 patch at image center.'
+class StatsCommand (multitool.Command):
+    name = 'stats'
+    argspec = '<images...>'
+    summary = 'Compute and print statistics of a 64×64 patch at image center.'
+
+    def invoke (self, app, args):
+        if len (args) == 1:
+            _stats_print (args[0])
+        else:
+            for i, path in enumerate (args):
+                if i > 0:
+                    print ()
+                print ('path =', path)
+                _stats_print (path)
 
 
 # The driver.
 
-def _fullusage ():
-    usagestr = """imtool <command> [arguments...]
+class Imtool (multitool.Multitool):
+    cli_name = 'imtool'
+    help_summary = 'Perform miscellaneous tasks with astronomical images.'
 
-This is a tool for miscellaneous operations on astronomical images.
-
-Subcommands are:
-
-"""
-
-    g = globals ()
-    cnames = sorted (n for n in g.iterkeys () if n.startswith ('cmd_'))
-
-    for cname in cnames:
-        usagestr += '  imtool %-8s - %s\n' % (cname[4:], g[cname].summary)
-
-    usagestr += """
-Most commands will give help if run with no arguments."""
-
-    return usagestr
-
-usagestr = _fullusage ()
-
-
-def commandline (argv=None):
-    if argv is None:
-        argv = sys.argv
-        propagate_sigint ()
-        unicode_stdio ()
-
-    check_usage (usagestr, argv, usageifnoargs='long')
-
-    if len (argv) < 2:
-        wrong_usage (usagestr, 'need to specify a command')
-
-    cmdname = argv[1]
-    func = globals ().get ('cmd_' + cmdname)
-
-    if func is None:
-        wrong_usage (usagestr, 'no such command "%s"', cmdname)
-
-    args = argv[2:]
-    if not len (args) and not hasattr (func, 'no_args_is_ok'):
-        print ('usage: imtool', cmdname, func.argspec)
-        print ()
-        print (func.summary)
-        if hasattr (func, 'moredocs'):
-            print ()
-            print (func.moredocs)
-        return
-
-    try:
-        func (args)
-    except UsageError as e:
-        print ('error:', e, '\n\nusage: imtool', cmdname, func.argspec,
-               file=sys.stderr)
+def commandline ():
+    multitool.invoke_tool (globals ())

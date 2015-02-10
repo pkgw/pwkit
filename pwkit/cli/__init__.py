@@ -15,6 +15,10 @@ unicode_stdio    - Ensure that sys.std{in,out,err} accept unicode strings.
 warn             - Print a warning.
 wrong_usage      - Print an error about wrong usage and the usage help.
 
+Submodules:
+
+multitool - Framework for command-line programs with sub-commands.
+
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
