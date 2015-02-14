@@ -33,28 +33,25 @@ __all__ = (b'broadcastize make_step_lcont make_step_rcont make_tophat_ee '
 import functools
 import numpy as np
 
+from .method_decorator import method_decorator
 
-class _Broadcaster (object):
-    def __init__ (self, n_arr, subfunc):
-        self._subfunc = subfunc
-        self._n_arr = int (n_arr)
+class _Broadcaster (method_decorator):
+    # _BroadcasterDecorator must set self._n_arr on creation.
 
-        if self._n_arr < 1:
-            raise ValueError ('broadcastiz\'ed function must take at least 1 '
-                              'array argument')
-
-        functools.update_wrapper (self, subfunc)
-
+    def fixup (self, newobj):
+        newobj._n_arr = object.__getattribute__ (self, '_n_arr')
 
     def __call__ (self, *args, **kwargs):
-        if len (args) < self._n_arr:
-            raise TypeError ('expected at least %d arguments, got %d'
-                             % (self._n_arr, len (args)))
+        n_arr = object.__getattribute__ (self, '_n_arr')
 
-        bc_raw = np.broadcast_arrays (*args[:self._n_arr])
+        if len (args) < n_arr:
+            raise TypeError ('expected at least %d arguments, got %d'
+                             % (n_arr, len (args)))
+
+        bc_raw = np.broadcast_arrays (*args[:n_arr])
         bc_1d = tuple (np.atleast_1d (a) for a in bc_raw)
-        rest = args[self._n_arr:]
-        result = self._subfunc (*(bc_1d + rest), **kwargs)
+        rest = args[n_arr:]
+        result = super (_Broadcaster, self).__call__ (*(bc_1d + rest), **kwargs)
 
         if bc_raw[0].ndim == 0:
             return np.asscalar (result)
@@ -93,8 +90,9 @@ class _BroadcasterDecorator (object):
                               'array argument')
 
     def __call__ (self, subfunc):
-        return _Broadcaster (self._n_arr, subfunc)
-
+        b = _Broadcaster (subfunc)
+        b._n_arr = self._n_arr
+        return b
 
 broadcastize = _BroadcasterDecorator
 
