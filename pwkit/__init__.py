@@ -26,6 +26,7 @@ Modules in this package:
   latex            - Tools for interacting with the LaTeX typesetting system.
   lmmin            - Levenberg-Marquardt least-squares function minimizer.
   lsqmdl           - Model data with least-squares fitting.
+  method_decorator - Utility for writing decorators that go on methods in classes.
   msmt             - Framework for working with uncertain measurements.
   ndshow_gtk2      - Visualize data arrays as interactive images, using Gtk+2.
   ndshow_gtk2      - Visualize data arrays as interactive images, using Gtk+3.

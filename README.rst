@@ -38,7 +38,9 @@ Contributions have come from (alphabetically by surname):
 
 * Maïca Clavel
 * Elisabeth Newton
+* Denis Ryzhkov (I copied `method_decorator`_)
 
+.. _method_decorator: https://github.com/denis-ryzhkov/method_decorator/
 
 =======
 License
