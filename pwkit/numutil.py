@@ -1,5 +1,5 @@
 # -*- mode: python; coding: utf-8 -*-
-# Copyright 2014 Peter Williams <peter@newton.cx> and collaborators.
+# Copyright 2014-2015 Peter Williams <peter@newton.cx> and collaborators.
 # Licensed under the MIT License.
 
 """numutil - NumPy and generic numerical utilities.
@@ -13,6 +13,8 @@ make_tophat_ei    - Return a tophat function operating on an exclusive/inclusive
 make_tophat_ie    - Return a tophat function operating on an inclusive/exclusive range.
 make_tophat_ii    - Return a tophat function operating on an inclusive/inclusive range.
 rms               - Calculate the square root of the mean of the squares of x.
+parallel_newton   - Parallelized invocation of `scipy.optimize.newton`.
+parallel_quad     - Parallelized invocation of `scipy.integrate.quad`.
 unit_tophat_ee    - Tophat function on (0,1).
 unit_tophat_ei    - Tophat function on (0,1].
 unit_tophat_ie    - Tophat function on [0,1).
@@ -27,8 +29,9 @@ broadcastize - Make a Python function automatically broadcast arguments.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 __all__ = (b'broadcastize make_step_lcont make_step_rcont make_tophat_ee '
-           b'make_tophat_ei make_tophat_ie make_tophat_ii rms unit_tophat_ee '
-           b'unit_tophat_ei unit_tophat_ie unit_tophat_ii weighted_variance').split ()
+           b'make_tophat_ei make_tophat_ie make_tophat_ii parallel_newton '
+           b'parallel_quad rms unit_tophat_ee unit_tophat_ei unit_tophat_ie '
+           b'unit_tophat_ii weighted_variance').split ()
 
 import functools
 import numpy as np
@@ -99,6 +102,78 @@ broadcastize = _BroadcasterDecorator
 
 # Parallelized versions of various routines that don't operate vectorially
 # even though sometimes it'd be nice to pretend that they do.
+
+def parallel_newton (func, x0, fprime=None, par_args=(), simple_args=(), tol=1.48e-8,
+                     maxiter=50, parallel=True, **kwargs):
+    """A parallelized version of `scipy.optimize.newton`.
+
+    Arguments:
+
+    func        - The function to search for zeros, called as f(x, [*par_args...], [*simple_args...])
+    x0          - The initial point for the zero search.
+    fprime      - (Optional) The first derivative of `func`, called the same way.
+    par_args    - Tuple of additional parallelized arguments.
+    simple_args - Tuple of additional arguments passed identically to every invocation.
+    tol         - The allowable error of the zero value.
+    maxiter     - Maximum number of iterations.
+    parallel    - Controls parallelization; default uses all available cores.
+                  See `pwkit.parallel.make_parallel_helper`.
+    **kwargs    - Passed to `scipy.optimize.newton`.
+
+    Returns: locations of zeros.
+
+    Finds zeros in parallel. The values `x0`, `tol`, `maxiter`, and the items
+    of `par_args` should all be numeric, and may be N-dimensional Numpy
+    arrays. They are all broadcast to a common shape, and one zero-finding run
+    is performed for each element in the resulting array. The return value is
+    an array of zero locations having the same shape as the common broadcast
+    of the parameters named above.
+
+    The `simple_args` are passed to each function identically for each
+    integration. They do not need to be Pickle-able.
+
+    Example:
+
+    >>> parallel_newton (lambda x, a: x - 2 * a, 2,
+                         par_args=(np.arange (6),))
+    <<< array([  0.,   2.,   4.,   6.,   8.,  10.])
+
+    >>> parallel_newton (lambda x: np.sin (x), np.arange (6))
+    <<< array([  0.00000000e+00,   3.65526589e-26,   3.14159265e+00,
+                 3.14159265e+00,   3.14159265e+00,   6.28318531e+00])
+
+    """
+    from scipy.optimize import newton
+
+    from .parallel import make_parallel_helper
+    phelp = make_parallel_helper (parallel)
+
+    if not isinstance (par_args, tuple):
+        raise ValueError ('par_args must be a tuple')
+
+    if not isinstance (simple_args, tuple):
+        raise ValueError ('simple_args must be a tuple')
+
+    bc_raw = np.broadcast_arrays (x0, tol, maxiter, *par_args)
+    bc_1d = tuple (np.atleast_1d (a) for a in bc_raw)
+
+    def gen_var_args ():
+        for i in xrange (bc_1d[0].size):
+            yield tuple (x.flat[i] for x in bc_1d)
+
+    def helper (i, _, var_args):
+        x0, tol, maxiter = var_args[:3]
+        args = var_args[3:] + simple_args
+        return newton (func, x0, fprime=fprime, args=args, tol=tol,
+                       maxiter=maxiter, **kwargs)
+
+    with phelp.get_ppmap () as ppmap:
+        result = np.asarray (ppmap (helper, None, gen_var_args ()))
+
+    if bc_raw[0].ndim == 0:
+        return np.asscalar (result)
+    return result
+
 
 def parallel_quad (func, a, b, par_args=(), simple_args=(), parallel=True, **kwargs):
     """A parallelized version of `scipy.integrate.quad`.

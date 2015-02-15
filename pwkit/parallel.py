@@ -261,6 +261,7 @@ class MultiprocessingPoolHelper (ParallelHelper):
         what the Pool class is all about -- but this gets us off the ground
         for those cases where the Pickle limitation is important.
 
+        XXX This deadlocks if a child process crashes!!! XXX
         """
         n_procs = self.pool_kwargs.get ('processes')
         if n_procs is None:
