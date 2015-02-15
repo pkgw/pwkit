@@ -31,6 +31,11 @@ used as a context manager (the "with" statement) because the parallel
 computation may involve creating and destroying heavyweight resources (namely,
 child processes).
 
+Along with standard `map`, `ParallelHelper` instances support a
+"partially-Pickling" `map`-like function `ppmap` that works around
+Pickle-related limitations in the `multiprocessing` library. See the docs for
+`pwkit.parallel.serial_ppmap` for usage information.
+
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
@@ -38,7 +43,7 @@ __all__ = (b'make_parallel_helper').split ()
 
 import functools, signal
 from multiprocessing.pool import Pool
-from multiprocessing import TimeoutError
+from multiprocessing import Process, Queue, TimeoutError
 
 
 def _initializer_wrapper (actual_initializer, *rest):
@@ -126,21 +131,64 @@ class ParallelHelper (object):
         results_arr = map (my_function, my_args)
     ```
 
+    Functions:
+
+    get_map   - resolves a function that behaves as classic Python map()
+    get_ppmap - resolves a partially-Pickling map function (see below)
+
+    The partially-Pickling map works around a limitation in the
+    multiprocessing library. This library spawns subprocesses and executes
+    parallel tasks by sending them to the subprocesses, which means that the
+    data describing the task must be pickle-able. There are hacks so that you
+    can pass functions defined in the global namespace but they're pretty much
+    useless in production code. The "partially-Pickling map" works around this
+    by using a different method that allows some arguments to the map
+    operation to avoid being pickled. (Instead, they are directly inherited by
+    fork()ed subprocesses.) See the docs for `pwkit.parallel.serial_ppmap` for
+    usage information.
+
     """
     def get_map (self):
         raise NotImplementedError ('get_map() not available')
 
+    def get_ppmap (self):
+        raise NotImplementedError ('get_ppmap() not available')
+
+
+class VacuousContextManager (object):
+    def __init__ (self, value):
+        self.value = value
+    def __enter__ (self):
+        return self.value
+    def __exit__ (self, etype, evalue, etb):
+        return False
+
+
+def serial_ppmap (func, fixed_arg, var_arg_iter):
+    """Partially-pickling map (serial version).
+
+    Arguments:
+
+    func         - A function.
+    fixed_arg    - Any value.
+    var_arg_iter - An iterable that generates values.
+
+    Returns: `[func (i, fixed_arg, x) for i, x in enumerate (var_arg_iter)]`
+
+    This variant of the standard map() function exists to allow the
+    parallel-processing system to work around Pickle-related limitations in
+    the multiprocessing library. This particular incarnation operates serially
+    and doesn't pickle anything at all, but its calling convention is the same
+    as the parallelized version. In the parallel version, `func` and
+    `fixed_arg` need not be Pickle-able, while `var_arg_iter` needs to
+    generate Pickle-able values. The return values need to be Pickle-able too.
+
+    """
+    return [func (i, fixed_arg, x) for i, x in enumerate (var_arg_iter)]
+
 
 class SerialHelper (ParallelHelper):
     """A `ParallelHelper` that actually does serial processing."""
-
-    class VacuousContextManager (object):
-        def __init__ (self, value):
-            self.value = value
-        def __enter__ (self):
-            return self.value
-        def __exit__ (self, etype, evalue, etb):
-            return False
 
     def __init__ (self, chunksize=None):
         # We accept and discard some of the multiprocessing kwargs that turn
@@ -148,7 +196,23 @@ class SerialHelper (ParallelHelper):
         pass
 
     def get_map (self):
-        return self.VacuousContextManager (map)
+        return VacuousContextManager (map)
+
+    def get_ppmap (self):
+        return VacuousContextManager (serial_ppmap)
+
+
+def multiprocessing_ppmap_worker (in_queue, out_queue, func, fixed_arg):
+    """Worker for the multiprocessing ppmap implementation. Strongly derived from
+    code posted on StackExchange by "klaus se":
+    `<http://stackoverflow.com/a/16071616/3760486>`_.
+
+    """
+    while True:
+        i, var_arg = in_queue.get ()
+        if i is None:
+            break
+        out_queue.put ((i, func (i, fixed_arg, var_arg)))
 
 
 class MultiprocessingPoolHelper (ParallelHelper):
@@ -184,6 +248,61 @@ class MultiprocessingPoolHelper (ParallelHelper):
         return self.InterruptiblePoolContextManager ('map',
                                                      {'chunksize': self.chunksize},
                                                      **self.pool_kwargs)
+
+
+    def _ppmap (self, func, fixed_arg, var_arg_iter):
+        """The multiprocessing implementation of the partially-Pickling "ppmap"
+        function. This doesn't use a Pool like map() does, because the whole
+        problem is that Pool chokes on un-Pickle-able values. Strongly derived
+        from code posted on StackExchange by "klaus se":
+        `<http://stackoverflow.com/a/16071616/3760486>`_.
+
+        This implementation could definitely be improved -- that's basically
+        what the Pool class is all about -- but this gets us off the ground
+        for those cases where the Pickle limitation is important.
+
+        """
+        n_procs = self.pool_kwargs.get ('processes')
+        if n_procs is None:
+            # Logic copied from multiprocessing.pool.Pool.__init__()
+            try:
+                from multiprocessing import cpu_count
+                n_procs = cpu_count ()
+            except NotImplementedError:
+                n_procs = 1
+
+        in_queue = Queue (1)
+        out_queue = Queue ()
+        procs = [Process (target=multiprocessing_ppmap_worker,
+                          args=(in_queue, out_queue, func, fixed_arg))
+                 for _ in xrange (n_procs)]
+
+        for p in procs:
+            p.daemon = True
+            p.start ()
+
+        i = -1
+
+        for i, var_arg in enumerate (var_arg_iter):
+            in_queue.put ((i, var_arg))
+
+        n_items = i + 1
+        result = [None] * n_items
+
+        for p in procs:
+            in_queue.put ((None, None))
+
+        for _ in xrange (n_items):
+            i, value = out_queue.get ()
+            result[i] = value
+
+        for p in procs:
+            p.join ()
+
+        return result
+
+    def get_ppmap (self):
+        return VacuousContextManager (self._ppmap)
 
 
 def make_parallel_helper (parallel_arg, **kwargs):
@@ -227,9 +346,14 @@ def make_parallel_helper (parallel_arg, **kwargs):
 
     This means that `my_parallelizable_function` doesn't have to worry about
     all of the various fancy things the caller might want to do in terms of
-    special parallel magic. Note that `sub_operation` must be defined in a
-    stand-alone fashion because of the way Python's `multiprocessing` module
-    works.
+    special parallel magic.
+
+    Note that `sub_operation` above must be defined in a stand-alone fashion
+    because of the way Python's `multiprocessing` module works. This can be
+    worked around somewhat with the special `get_ppmap` variant. This returns
+    a "partially-Pickling" map operation -- with a different calling signature
+    -- that allows un-Pickle-able values to be used. See the documentation for
+    `pwkit.parallel.serial_ppmap` for usage information.
 
     """
     if parallel_arg is True: # note: (True == 1) is True
