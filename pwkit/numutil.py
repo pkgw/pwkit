@@ -97,6 +97,95 @@ class _BroadcasterDecorator (object):
 broadcastize = _BroadcasterDecorator
 
 
+# Parallelized versions of various routines that don't operate vectorially
+# even though sometimes it'd be nice to pretend that they do.
+
+def parallel_quad (func, a, b, par_args=(), simple_args=(), parallel=True, **kwargs):
+    """A parallelized version of `scipy.integrate.quad`.
+
+    Arguments:
+
+    func        - The function to integrate, called as f(x, [*par_args...], [*simple_args...])
+    a           - The lower limit(s) of integration.
+    b           - The upper limits(s) of integration.
+    par_args    - Tuple of additional parallelized arguments.
+    simple_args - Tuple of additional arguments passed identically to every invocation.
+    parallel    - Controls parallelization; default uses all available cores.
+                  See `pwkit.parallel.make_parallel_helper`.
+    **kwargs    - Passed to `scipy.integrate.quad`. Don't set 'full_output' to True.
+
+    Returns: integrals and errors, see below.
+
+    Computes many integrals in parallel. The values `a`, `b`, and the items of
+    `par_args` should all be numeric, and may be N-dimensional Numpy arrays.
+    They are all broadcast to a common shape, and one integral is performed
+    for each element in the resulting array. If this common shape is (X,Y,Z),
+    the return value has shape (2,X,Y,Z), where the subarray [0,...] contains
+    the computed integrals and the subarray [1,...] contains the absolute
+    error estimates. If `a`, `b`, and the items in `par_args` are all scalars,
+    the return value has shape (2,).
+
+    The `simple_args` are passed to each integrand function identically for each
+    integration. They do not need to be Pickle-able.
+
+    Example:
+
+    >>> parallel_quad (lambda x, u, v, q: u * x + v,
+                       0, # a
+                       [3, 4], # b
+                       (np.arange (6).reshape ((3,2)), np.arange (3).reshape ((3,1))), # par_args
+                       ('hello',),)
+
+    Computes six integrals and returns an array of shape (2,3,2). The
+    functions that are evaluated are
+
+      [[ 0*x + 0, 1*x + 0 ],
+       [ 2*x + 1, 3*x + 1 ],
+       [ 4*x + 2, 5*x + 2 ]]
+
+    and the bounds of the integrals are
+
+      [[ (0, 3), (0, 4) ],
+       [ (0, 3), (0, 4) ],
+       [ (0, 3), (0, 4) ]]
+
+    In all cases the unused fourth parameter 'q' is 'hello'.
+
+    """
+    from scipy.integrate import quad
+
+    from .parallel import make_parallel_helper
+    phelp = make_parallel_helper (parallel)
+
+    if not isinstance (par_args, tuple):
+        raise ValueError ('par_args must be a tuple')
+
+    if not isinstance (simple_args, tuple):
+        raise ValueError ('simple_args must be a tuple')
+
+    bc_raw = np.broadcast_arrays (a, b, *par_args)
+    bc_1d = tuple (np.atleast_1d (a) for a in bc_raw)
+
+    def gen_var_args ():
+        for i in xrange (bc_1d[0].size):
+            yield tuple (x.flat[i] for x in bc_1d)
+
+    def helper (i, _, var_args):
+        a, b = var_args[:2]
+        return quad (func, a, b, var_args[2:] + simple_args, **kwargs)
+
+    with phelp.get_ppmap () as ppmap:
+        result_list = ppmap (helper, None, gen_var_args ())
+
+    if bc_raw[0].ndim == 0:
+        return np.asarray (result_list[0])
+
+    result_arr = np.empty ((2,) + bc_raw[0].shape)
+    for i in xrange (bc_1d[0].size):
+        result_arr[0].flat[i], result_arr[1].flat[i] = result_list[i]
+    return result_arr
+
+
 # Some miscellaneous numerical tools
 
 def rms (x):
