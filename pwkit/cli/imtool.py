@@ -268,12 +268,16 @@ class SetrectCommand (multitool.Command):
 
 class ShowCommand (multitool.Command):
     name = 'show'
-    argspec = '<image> [images...]'
+    argspec = '[--no-coords] <image> [images...]'
     summary = 'Show images interactively.'
+    more_help = """--no-coords - Do not show coordinates even if available
+
+WCS support isn't fantastic and sometimes causes crashes."""
 
     def invoke (self, args, **kwargs):
         anyfailures = False
         ndshow = load_ndshow ()
+        no_coords = pop_option ('no-coords', args)
 
         for path in args:
             try:
@@ -293,6 +297,9 @@ class ShowCommand (multitool.Command):
             else:
                 data = img.read (flip=True)
                 toworld = img.toworld
+
+            if no_coords:
+                toworld = None
 
             ndshow.view (data, title=path + ' — Array Viewer',
                          toworld=toworld, yflip=True)
