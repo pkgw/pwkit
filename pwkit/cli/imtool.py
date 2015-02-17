@@ -279,14 +279,14 @@ class ShowCommand (multitool.Command):
             try:
                 img = astimage.open (path, 'r')
             except Exception as e:
-                print ('pwshow: can\'t open path “%s”: %s' % (path, e), file=sys.stderr)
+                print ('imtool show: can\'t open path “%s”: %s' % (path, e), file=sys.stderr)
                 anyfailures = True
                 continue
 
             try:
                 img = img.simple ()
             except Exception as e:
-                print ('pwshow: can\'t convert “%s” to simple 2D sky image; taking '
+                print ('imtool show: can\'t convert “%s” to simple 2D sky image; taking '
                        ' first plane' % path, file=sys.stderr)
                 data = img.read (flip=True)[tuple (np.zeros (img.shape.size - 2))]
                 toworld = None
