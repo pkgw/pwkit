@@ -375,6 +375,10 @@ class MIRIADImage (AstroImage):
         self._handle = h = XYDataSet (path, self._modemap[mode])
         self._wcs, warnings = h.wcs ()
 
+        if hasattr (self._wcs, 'wcs_pix2sky'):
+            self._wcs.wcs_pix2world = self._wcs.wcs_pix2sky
+            self._wcs.wcs_world2pix = self._wcs.wcs_sky2pix
+
         for w in warnings:
             # Whatever.
             import sys
