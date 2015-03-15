@@ -1,0 +1,46 @@
+package:
+  name: pwkit
+  version: !!str 0.4.1
+
+source:
+  fn: pwkit-0.4.1.tar.gz
+  url: https://pypi.python.org/packages/source/p/pwkit/pwkit-0.4.1.tar.gz
+  md5: 500dbcc259170d27e10cb1199cf9a929
+
+build:
+  entry_points:
+    - astrotool = pwkit.cli.astrotool:commandline
+    - imtool = pwkit.cli.imtool:commandline
+    - latexdriver = pwkit.cli.latexdriver:commandline
+    - wrapout = pwkit.cli.wrapout:commandline
+
+  # build number if rebuilding same version:
+  # number: 1
+
+requirements:
+  build:
+    - numpy
+    - python
+    - setuptools
+
+  run:
+    - numpy
+    - python
+
+test:
+  imports:
+    - pwkit
+
+  #commands:
+    # (commands)
+
+  # You can also put a file called run_test.py in the recipe that will be run
+  # at test time.
+
+  #requires:
+    #- nose # e.g.
+
+about:
+  home: https://github.com/pkgw/pwkit/
+  license: MIT License
+  summary: Miscellaneous scientific and astronomical tools
