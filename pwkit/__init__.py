@@ -120,7 +120,13 @@ class Holder (object):
     set(**kwargs)           - Set named keys as a group
     setone (name, value)    - Set a specific key
     get (name, defval=None) - Retrieve a key with an optional default
+    has (name)              - Test whether a key is in the Holder
+                              (can also test `name in holderobj`)
     copy ()                 - Make a shallow clone of the Holder
+    to_dict ()              - Return a copy of the contents as a dict
+
+    Iterating over a Holder yields its contents in the form of a sequence of
+    (name, value) tuples.
 
     This class may also be used as a decorator on a class definition to transform
     its contents into a Holder instance. Writing:
@@ -167,6 +173,12 @@ class Holder (object):
         return b'%s(%s)' % (self.__class__.__name__,
                             b', '.join (b'%s=%r' % (k, d[k]) for k in s))
 
+    def __iter__ (self):
+        return self.__dict__.iteritems ()
+
+    def __contains__ (self, key):
+        return key in self.__dict__
+
     def set (self, **kwargs):
         self.__dict__.update (kwargs)
         return self
@@ -185,3 +197,6 @@ class Holder (object):
         new = self.__class__ ()
         new.__dict__ = dict (self.__dict__)
         return new
+
+    def to_dict (self):
+        return self.__dict__.copy ()
