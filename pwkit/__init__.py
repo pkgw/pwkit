@@ -117,13 +117,14 @@ class Holder (object):
 
     Provides nice str/unicode/repr representations, and basic manipulations:
 
-    set(**kwargs)           - Set named keys as a group
-    setone (name, value)    - Set a specific key
-    get (name, defval=None) - Retrieve a key with an optional default
-    has (name)              - Test whether a key is in the Holder
-                              (can also test `name in holderobj`)
-    copy ()                 - Make a shallow clone of the Holder
-    to_dict ()              - Return a copy of the contents as a dict
+    set(**kwargs)            - Set named keys as a group
+    setone (name, value)     - Set a specific key
+    get (name, defval=None)  - Retrieve a key with an optional default
+    has (name)               - Test whether a key is in the Holder
+                               (can also test `name in holderobj`)
+    copy ()                  - Make a shallow clone of the Holder
+    to_dict ()               - Return a copy of the contents as a dict
+    to_pretty (format='str') - Return aligned, multi-line stringification
 
     Iterating over a Holder yields its contents in the form of a sequence of
     (name, value) tuples.
@@ -200,3 +201,20 @@ class Holder (object):
 
     def to_dict (self):
         return self.__dict__.copy ()
+
+    def to_pretty (self, format='str'):
+        if format == 'str':
+            template = '%-*s = %s'
+        elif format == 'repr':
+            template = '%-*s = %r'
+        else:
+            raise ValueError ('unrecognied value for "format": %r' % format)
+
+        d = self.__dict__
+        maxlen = 0
+
+        for k in d.iterkeys ():
+            maxlen = max (maxlen, len (k))
+
+        return '\n'.join (template % (maxlen, k, d[k])
+                          for k in sorted (d.iterkeys ()))
