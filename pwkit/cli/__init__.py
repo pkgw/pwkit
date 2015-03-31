@@ -129,11 +129,20 @@ propagate_sigint = _InterruptSignalPropagator ()
 
 
 def _print_backtrace_signal_handler (signum, frame):
-    import traceback
-    print ('*** Printing traceback due to receipt of signal #%d' % signum)
-    for fn, line, func, text in traceback.extract_stack (frame):
-        print ('***   %s (%s:%d): %s' % (fn, func, line, text or '??'))
-    print ('*** End of traceback (innermost call is last)')
+    try:
+        import traceback
+        print ('*** Printing traceback due to receipt of signal #%d' % signum,
+               file=sys.stderr)
+        for fn, line, func, text in traceback.extract_stack (frame):
+            print ('***   %s (%s:%d): %s' % (fn, func, line, text or '??'),
+                   file=sys.stderr)
+        print ('*** End of traceback (innermost call is last)',
+               file=sys.stderr)
+        assert False
+    except StandardError as e:
+        print ('*** Failed to print traceback on receipt of signal #%d: %s (%s)'
+               % (signum, e, e.__class__.__name__), file=sys.stderr)
+
 
 def backtrace_on_usr1 ():
     """Install a signal handler such that this program prints a Python traceback
