@@ -1,19 +1,20 @@
 # -*- mode: python; coding: utf-8 -*-
-# Copyright 2012-2014 Peter Williams <peter@newton.cx> and collaborators.
+# Copyright 2012-2015 Peter Williams <peter@newton.cx> and collaborators.
 # Licensed under the MIT License.
 
 """pwkit.cli - miscellaneous utilities for command-line programs.
 
 Functions:
 
-check_usage      - Print usage and exit if --help is in argv.
-die              - Print an error and exit.
-pop_option       - Check for a single command-line option.
-propagate_sigint - Ensure that calling shells know when we die from SIGINT.
-show_usage       - Print a usage message.
-unicode_stdio    - Ensure that sys.std{in,out,err} accept unicode strings.
-warn             - Print a warning.
-wrong_usage      - Print an error about wrong usage and the usage help.
+backtrace_on_usr1 - Make it so that a Python backtrace is printed on SIGUSR1.
+check_usage       - Print usage and exit if --help is in argv.
+die               - Print an error and exit.
+pop_option        - Check for a single command-line option.
+propagate_sigint  - Ensure that calling shells know when we die from SIGINT.
+show_usage        - Print a usage message.
+unicode_stdio     - Ensure that sys.std{in,out,err} accept unicode strings.
+warn              - Print a warning.
+wrong_usage       - Print an error about wrong usage and the usage help.
 
 Submodules:
 
@@ -125,6 +126,33 @@ class _InterruptSignalPropagator (object):
             os.kill (os.getpid (), signal.SIGINT)
 
 propagate_sigint = _InterruptSignalPropagator ()
+
+
+def _print_backtrace_signal_handler (signum, frame):
+    import traceback
+    print ('*** Printing traceback due to receipt of signal #%d' % signum)
+    for fn, line, func, text in traceback.extract_stack (frame):
+        print ('***   %s (%s:%d): %s' % (fn, func, line, text or '??'))
+    print ('*** End of traceback (innermost call is last)')
+
+def backtrace_on_usr1 ():
+    """Install a signal handler such that this program prints a Python traceback
+    upon receipt of SIGUSR1. This could be useful for checking that
+    long-running programs are behaving properly, or for discovering where an
+    infinite loop is occurring.
+
+    Note, however, that the Python interpreter does not invoke Python signal
+    handlers exactly when the process is signaled. For instance, a signal
+    delivered in the midst of a time.sleep() call will only be seen by Python
+    code after that call completes. This means that this feature may not be as
+    helpful as one might like for debugging certain kinds of problems.
+
+    """
+    import signal
+    try:
+        signal.signal (signal.SIGUSR1, _print_backtrace_signal_handler)
+    except StandardError as e:
+        warn ('failed to set up Python backtraces on SIGUSR1: %s', e)
 
 
 def die (fmt, *args):
