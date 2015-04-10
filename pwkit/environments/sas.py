@@ -47,6 +47,7 @@ __all__ = (b'').split ()
 import io, os.path
 
 from .. import PKError, cli
+from ..cli import multitool
 from . import Environment, prepend_environ_path, user_data_path
 
 
@@ -167,22 +168,60 @@ class SasEnvironment (Environment):
             env['SAS_ODF'] = self._sumsas
 
 
+# Command-line interface
+
+class Exec (multitool.Command):
+    name = 'exec'
+    argspec = '<manifest> <command> [args...]'
+    summary = 'Run a program in SAS.'
+    more_help = '''Due to the way SAS works, the path to a MANIFEST.nnnnn file in an ODF
+directory must be specified, and all operations work on the specified data
+set.'''
+
+    def invoke (self, args, **kwargs):
+        if len (args) < 2:
+            raise multitool.UsageError ('exec requires at least 2 arguments')
+
+        manifest = args[0]
+        progargv = args[1:]
+
+        env = SasEnvironment (manifest)
+        env.execvpe (progargv)
+
+
+class UpdateCcf (multitool.Command):
+    name = 'update-ccf'
+    argspec = ''
+    summary = 'Update the SAS "current calibration files".'
+    more_help = 'This executes an rsync command to make sure the files are up-to-date.'
+    help_if_no_args = False
+
+    def invoke (self, args, **kwargs):
+        if len (args):
+            raise multitool.UsageError ('update-ccf expects no arguments')
+
+        sasdir = os.environ.get ('PWKIT_SAS')
+        if sasdir is None:
+            cli.die ('environment variable $PWKIT_SAS must be set')
+
+        os.chdir (os.path.join (sasdir, 'ccf'))
+        os.execvp ('rsync', ['rsync',
+                             '-av',
+                             '--delete',
+                             '--delete-after',
+                             '--force',
+                             '--include=*.CCF',
+                             '--exclude=*/',
+                             'xmm.esac.esa.int::XMM_RED_CCF',
+                             '.'])
+
+
+class SasTool (multitool.Multitool):
+    cli_name = 'pkenvtool sas'
+    summary = 'Run tools in the SAS environment.'
+
+
 def commandline (argv):
-    # TODO: convert to multitool if other subcommands are needed
-
-    if len (argv) < 4 or argv[1] in ('-h', '--help'):
-        print ('''usage: %s <manifestpath> exec <command> [args...]
-
-Execute a program in the SAS environment. Due to the way SAS works, the path
-to a MANIFEST.nnnnn file in an ODF directory must be specified, and all
-operations work on the specified data set.''' % argv[0])
-
-    manifest = argv[1]
-    env = SasEnvironment (manifest)
-    cmd = argv[2]
-
-    if cmd != 'exec':
-        cli.die ('usage: %s <manifestpath> exec <command> [args...]' % argv[0])
-
-    progargv = argv[3:]
-    env.execvpe (progargv)
+    tool = SasTool ()
+    tool.populate (globals ().itervalues ())
+    tool.commandline (argv)
