@@ -189,6 +189,91 @@ set.'''
         env.execvpe (progargv)
 
 
+class MakeOMAliases (multitool.Command):
+    name = 'make-om-aliases'
+    argspec = '<srcdir> <destdir>'
+    summary = 'Generate user-friendly aliases to XMM-Newton OM data files.'
+    more_help = 'destdir should already not exist and will be created.'
+
+    PROD_TYPE = slice (0, 1) # 'P': final product; 'F': intermediate
+    OBSID = slice (1, 11)
+    EXPFLAG = slice (11, 12) # 'S': sched, 'U': unsched; 'X': N/A
+    EXPNO = slice (14, 17) # (12-14 is the string 'OM')
+    DTYPE = slice (17, 23)
+    WINNUM = slice (23, 24)
+    SRCNUM = slice (24, 27)
+    EXTENSION = slice (28, None)
+
+    extmap = {
+        'ASC': 'txt',
+        'FIT': 'fits',
+        'PDF': 'pdf',
+        'PS': 'ps',
+    }
+
+    dtypemap = {
+        'image_': 'image_ccd',
+        'simage': 'image_sky',
+        'swsrli': 'source_list',
+        'timesr': 'lightcurve',
+        'tshplt': 'tracking_plot',
+        'tstrts': 'tracking_stars',
+    }
+
+    def invoke (self, args, **kwargs):
+        if len (args) != 2:
+            raise multitool.UsageError ('make-om-aliases requires exactly 2 arguments')
+
+        from fnmatch import fnmatch
+        srcdir, destdir = args
+
+        srcfiles = [x for x in os.listdir (srcdir)
+                    if x[0] == 'P' and len (x) > 28]
+
+        # Sorted list of exposure numbers.
+
+        expnos = set ()
+
+        for f in srcfiles:
+            if not fnmatch (f, 'P*IMAGE_*.FIT'):
+                continue
+            expnos.add (f[self.EXPNO])
+
+        expseqs = dict ((n, i) for i, n in enumerate (sorted (expnos)))
+
+        # Do it.
+
+        idents = set ()
+        os.mkdir (destdir) # intentionally crash if exists; easiest approach
+
+        for f in srcfiles:
+            ptype = f[self.PROD_TYPE]
+            obsid = f[self.OBSID]
+            eflag = f[self.EXPFLAG]
+            expno = f[self.EXPNO]
+            dtype = f[self.DTYPE]
+            winnum = f[self.WINNUM]
+            srcnum = f[self.SRCNUM]
+            ext = f[self.EXTENSION]
+
+            seq = expseqs[expno]
+            dtype = self.dtypemap[dtype.lower ()]
+            ext = self.extmap[ext]
+
+            # There's only one clash, and it's easy:
+            if dtype == 'lightcurve' and ext == 'pdf':
+                continue
+
+            ident = (seq, dtype)
+            if ident in idents:
+                cli.die ('short identifier clash: %r', ident)
+            idents.add (ident)
+
+            oldpath = os.path.join (srcdir, f)
+            newpath = os.path.join (destdir, '%s.%02d.%s' % (dtype, seq, ext))
+            os.symlink (os.path.relpath (oldpath, destdir), newpath)
+
+
 class UpdateCcf (multitool.Command):
     name = 'update-ccf'
     argspec = ''
