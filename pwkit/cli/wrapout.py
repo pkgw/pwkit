@@ -64,6 +64,7 @@ class Wrapper (object):
     use_colors = False
     echo_stderr = False
     poll_timeout = 0.2
+    destination = None
 
     _red = ''
     _cyan = ''
@@ -71,11 +72,16 @@ class Wrapper (object):
     _reset = ''
     _kind_prefixes = ['', '', '']
 
-    def __init__ (self):
+    def __init__ (self, destination=None):
         # Python print output isn't threadsafe (!) so we have to communicate
         # lines from the readers back to the main thread for things to come
         # out correctly.
         self._lines = Queue.Queue ()
+
+        if destination is None:
+            self.destination = sys.stdout
+        else:
+            self.destination = destination
 
 
     def monitor (self, fd, outkind):
@@ -95,8 +101,8 @@ class Wrapper (object):
                self.markers[kind],
                line,
                self._reset,
-               sep='', end='')
-        sys.stdout.flush ()
+               sep='', end='', file=self.destination)
+        self.destination.flush ()
 
 
     def outpar (self, name, value):
@@ -104,7 +110,7 @@ class Wrapper (object):
         self.output (OUTKIND_EXTRA, line)
 
 
-    def launch (self, cmd, argv):
+    def launch (self, cmd, argv, env=None, cwd=None):
         if self.use_colors:
             self._red = ansi_red
             self._cyan = ansi_cyan
@@ -119,6 +125,8 @@ class Wrapper (object):
 
         proc = subprocess.Popen (argv,
                                  executable=cmd,
+                                 env=env,
+                                 cwd=cwd,
                                  stdin=open (os.devnull, 'r'),
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.PIPE,

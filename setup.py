@@ -21,6 +21,7 @@ setup (
     packages = [
         'pwkit',
         'pwkit.cli',
+        'pwkit.environments',
     ],
 
     package_data = {
@@ -41,6 +42,7 @@ setup (
             'astrotool = pwkit.cli.astrotool:commandline',
             'imtool = pwkit.cli.imtool:commandline',
             'latexdriver = pwkit.cli.latexdriver:commandline',
+            'pkenvtool = pwkit.environments:commandline',
             'wrapout = pwkit.cli.wrapout:commandline',
         ],
     },

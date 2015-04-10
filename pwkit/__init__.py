@@ -18,6 +18,7 @@ Modules in this package:
   contours         - Tracing contours in functions and data.
   data_gui_helpers - Helpers for GUIs for investigating data arrays.
   ellipses         - Computations with ellipses in several parametrizations.
+  environments     - Interfacing with external software environments (SAS, CIAO, etc).
   immodel          - Analytical modeling of astronomical images.
   inifile          - Simple ini-format file parser.
   io               - Utilities for input and output.
