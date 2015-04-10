@@ -37,6 +37,7 @@ __all__ = (b'Environment prepend_environ_path prepend_path user_data_path').spli
 import os, subprocess, sys
 
 from .. import cli
+from ..cli import multitool
 
 
 class Environment (object):
@@ -126,6 +127,36 @@ user_data_path = _make_user_data_pather ()
 
 # Command-line access
 
+class DefaultExecCommand (multitool.Command):
+    name = 'exec'
+    argspec = '<command> [args...]'
+    summary = 'Run a program in the environment.'
+
+    def invoke (self, args, envclass=None, **kwargs):
+        if len (args) < 1:
+            raise multitool.UsageError ('exec requires at least 1 argument')
+
+        envclass ().execvpe (args)
+
+
+class DefaultTool (multitool.Multitool):
+    def __init__ (self, envname, envclass, module):
+        super (DefaultTool, self).__init__ ()
+        self.envname = envname
+        self.envclass = envclass
+        self.module = module
+
+        self.cli_name = 'pkenvtool ' + envname
+        self.summary = 'Run tools in the %s environment.' % envname
+
+    def invoke_command (self, cmd, args, **kwargs):
+        return super (DefaultTool, self).invoke_command (cmd, args,
+                                                         envname=self.envname,
+                                                         envclass=self.envclass,
+                                                         module=self.module,
+                                                         **kwargs)
+
+
 def _default_env_commandline (envname, module, argv):
     for name in dir (module):
         v = getattr (module, name)
@@ -136,18 +167,9 @@ def _default_env_commandline (envname, module, argv):
         cli.die ('internal error: cannot identify environment class for %s',
                  envname)
 
-    if len (argv) < 3 or argv[1] in ('-h', '--help'):
-        print ('''usage: %s exec <program> [args...]
-
-Run a program in the %s environment. This is a generic launcher,
-and the only supported operation is "exec".''' % (argv[0], envname))
-        return
-
-    if argv[1] != 'exec':
-        cli.die ('usage: %s exec <program> [args...]' % argv[0])
-
-    progargv = argv[2:]
-    envclass ().execvpe (progargv)
+    tool = DefaultTool (envname, envclass, module)
+    tool.populate (globals ().itervalues ())
+    tool.commandline (argv)
 
 
 def commandline (argv=sys.argv):
