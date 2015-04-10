@@ -139,6 +139,28 @@ class DefaultExecCommand (multitool.Command):
         envclass ().execvpe (args)
 
 
+class DefaultShellCommand (multitool.Command):
+    # XXX we hardcode bash!
+    name = 'shell'
+    argspec = ''
+    summary = 'Start an interactive shell in the environment.'
+    help_if_no_args = False
+
+    def invoke (self, args, envname=None, envclass=None, **kwargs):
+        if len (args):
+            raise multitool.UsageError ('shell expects no arguments')
+
+        from tempfile import NamedTemporaryFile
+        with NamedTemporaryFile (delete=False) as f:
+            print ('''[ -e ~/.bashrc ] && source ~/.bashrc
+PS1="%s $PS1"
+rm %s''' % (envname, f.name), file=f)
+
+        envclass ().execvpe (['bash',
+                              '--rcfile', f.name,
+                              '-i'])
+
+
 class DefaultTool (multitool.Multitool):
     def __init__ (self, envname, envclass, module):
         super (DefaultTool, self).__init__ ()

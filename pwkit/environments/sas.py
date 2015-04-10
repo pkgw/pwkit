@@ -274,6 +274,31 @@ class MakeOMAliases (multitool.Command):
             os.symlink (os.path.relpath (oldpath, destdir), newpath)
 
 
+class Shell (multitool.Command):
+    # XXX we hardcode bash! and we copy/paste from environments/__init__.py
+    name = 'shell'
+    argspec = '<manifest>'
+    summary = 'Start an interactive shell in the SAS environment.'
+    help_if_no_args = False
+    more_help = '''Due to the way SAS works, the path to a MANIFEST.nnnnn file in an ODF
+directory must be specified, and all operations work on the specified data
+set.'''
+
+    def invoke (self, args, **kwargs):
+        if len (args) != 1:
+            raise multitool.UsageError ('shell expects exactly 1 argument')
+
+        env = SasEnvironment (args[0])
+
+        from tempfile import NamedTemporaryFile
+        with NamedTemporaryFile (delete=False) as f:
+            print ('''[ -e ~/.bashrc ] && source ~/.bashrc
+PS1="SAS(%s) $PS1"
+rm %s''' % (env._obsid, f.name), file=f)
+
+        env.execvpe (['bash', '--rcfile', f.name, '-i'])
+
+
 class UpdateCcf (multitool.Command):
     name = 'update-ccf'
     argspec = ''
