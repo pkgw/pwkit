@@ -150,7 +150,7 @@ class Wrapper (object):
             prev_handlers = {}
 
             def handle (signum, frame):
-                self.output (OUTKIND_STDERR, 'received signal %d; propagating to child\n' % signum)
+                self.output (OUTKIND_EXTRA, 'received signal %d; propagating to child\n' % signum)
                 proc.send_signal (signum)
 
             for signum in signals_for_child:
