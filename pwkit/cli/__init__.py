@@ -16,6 +16,10 @@ unicode_stdio     - Ensure that sys.std{in,out,err} accept unicode strings.
 warn              - Print a warning.
 wrong_usage       - Print an error about wrong usage and the usage help.
 
+Context managers:
+
+print_tracebacks  - Catch exceptions and print tracebacks without reraising them.
+
 Submodules:
 
 multitool - Framework for command-line programs with sub-commands.
@@ -23,8 +27,8 @@ multitool - Framework for command-line programs with sub-commands.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'check_usage die pop_option propagate_sigint show_usage '
-           b'unicode_stdio warn wrong_usage').split ()
+__all__ = (b'''check_usage die pop_option print_tracebacks propagate_sigint show_usage
+unicode_stdio warn wrong_usage''').split ()
 
 import codecs, os, signal, sys, traceback
 from .. import text_type
@@ -193,6 +197,59 @@ def warn (fmt, *args):
         s = fmt % args
 
     print ('warning:', s, file=sys.stderr)
+
+
+class print_tracebacks (object):
+    """Context manager that catches exceptions and prints their tracebacks without
+    reraising them. Intended for robust programs that want to continue
+    execution even if something bad happens; this provides the infrastructure
+    to swallow exceptions while still preserving exception information for
+    later debugging.
+
+    You can specify which exception classes to catch with the `types` keyword
+    argument to the constructor. The `header` keyword will be printed if
+    specified; this could be used to add contextual information. The `file`
+    keyword specifies the destination for the printed output; default is
+    sys.stderr.
+
+    Instances preserve the exception information in the fields 'etype',
+    'evalue', and 'etb' if your program in fact wants to do something with the
+    information. One basic use would be checking whether an exception did, in
+    fact, occur.
+
+    """
+    header = 'Swallowed exception:'
+
+    def __init__ (self, types=(Exception,), header=None, file=None):
+        self.types = types
+        self.file = file
+
+        if header is not None:
+            self.header = header
+
+    def __enter__ (self):
+        self.etype = self.evalue = self.etb = None
+        return self
+
+    def __exit__ (self, etype, evalue, etb):
+        if etype is None:
+            return False # all good, woohoo
+
+        if not isinstance (evalue, self.types):
+            # Exception happened but not something of the kind we expect. Reraise.
+            return False
+
+        # Exception happened and we should do our thing.
+        self.etype = etype
+        self.evalue = evalue
+        self.etb = etb
+
+        if self.header is not None:
+            print (self.header, file=self.file or sys.stderr)
+
+        from traceback import print_exception
+        print_exception (etype, evalue, etb, file=self.file)
+        return True # swallow this exception
 
 
 # Simple-minded argument handling -- see also kwargv.
