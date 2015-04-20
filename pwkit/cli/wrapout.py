@@ -13,7 +13,7 @@ import os, signal, subprocess, sys, threading, time, Queue
 from . import die, propagate_sigint
 
 
-usage = """usage: wrapout [-c] [-e] [-a name] <command> [command args...]
+usage = """usage: wrapout [-ces] [-a name] <command> [command args...]
 
 Runs *command*, merging its standard output ("stdout") and standard error
 ("stderr") into a single stream that is printed to this program's stdout.
@@ -26,6 +26,7 @@ Options:
 -a name -- use *name* as the argv[0] for *command*
 -e      -- echo the subcommand's standard error to our own
            (helpful when logging output to a file).
+-s      -- do not propagate signals to or from the child program
 
 Examples:
 
@@ -46,6 +47,11 @@ This program obviously assumes that *command* outputs line-oriented text. It
 processes the output line-by-line, so extremely long lines and the like may
 cause problems.
 
+If "-s" is not specified, wrapout will attempt to propagate signals to and
+from the child program. If this process receives a signal such as SIGTERM, it
+will kill the child with the same signal. If the child dies from a signal,
+wrapout will kill itself with the same signal.
+
 """
 
 rfc3339_fmt = '%Y-%m-%dT%H:%M:%S%z'
@@ -57,6 +63,14 @@ ansi_reset = '\033[m'
 
 OUTKIND_STDOUT, OUTKIND_STDERR, OUTKIND_EXTRA = 0, 1, 2
 
+signals_for_child = [
+    signal.SIGHUP,
+    signal.SIGINT,
+    signal.SIGQUIT,
+    signal.SIGTERM,
+    signal.SIGUSR1,
+    signal.SIGUSR2,
+]
 
 class Wrapper (object):
     # I like !! for errors and ** for info, but those are nigh-un-grep-able.
@@ -132,6 +146,16 @@ class Wrapper (object):
                                  stderr=subprocess.PIPE,
                                  shell=False)
 
+        if self.propagate_signals:
+            prev_handlers = {}
+
+            def handle (signum, frame):
+                self.output (OUTKIND_STDERR, 'received signal %d; propagating to child\n' % signum)
+                proc.send_signal (signum)
+
+            for signum in signals_for_child:
+                prev_handlers[signum] = signal.signal (signum, handle)
+
         tout = threading.Thread (target=self.monitor,
                                  name='stdout-monitor',
                                  args=(proc.stdout, OUTKIND_STDOUT))
@@ -156,10 +180,6 @@ class Wrapper (object):
                 kind, line = self._lines.get (timeout=self.poll_timeout)
             except Queue.Empty:
                 continue
-            except KeyboardInterrupt:
-                self.output (OUTKIND_STDERR, 'interrupted\n')
-                proc.send_signal (2) # SIGINT
-                continue
 
             self.output (kind, line)
 
@@ -183,12 +203,19 @@ class Wrapper (object):
         # os.WIFSIGNALED, os.WTERMSIG, etc.
 
         if proc.returncode < 0:
+            signum = -proc.returncode
             self.output (OUTKIND_STDERR,
-                         'process killed by signal %d\n' % -proc.returncode)
-            if proc.returncode == -signal.SIGINT:
-                raise KeyboardInterrupt () # make sure to propagate death-by-SIGINT
+                         'process killed by signal %d\n' % signum)
+
+            if self.propagate_signals:
+                signal.signal (signum, signal.SIG_DFL)
+                os.kill (os.getpid (), signum) # sayonara
         elif proc.returncode != 0:
             self.output (OUTKIND_STDERR, 'process exited with error code\n')
+
+        if self.propagate_signals:
+            for signum, prev_handler in prev_handlers.iteritems ():
+                signal.signal (signum, prev_handler)
 
         return proc.returncode
 
@@ -204,6 +231,7 @@ def commandline (argv=None):
     args = list (argv[1:])
     use_colors = None
     echo_stderr = False
+    propagate_signals = True
     argv0 = None
 
     while len (args):
@@ -212,6 +240,9 @@ def commandline (argv=None):
             args = args[1:]
         elif args[0] == '-e':
             echo_stderr = True
+            args = args[1:]
+        elif args[0] == '-s':
+            propagate_signals = False
             args = args[1:]
         elif args[0] == '-a':
             if len (args) < 2:
@@ -242,6 +273,7 @@ def commandline (argv=None):
     wrapper = Wrapper ()
     wrapper.use_colors = use_colors
     wrapper.echo_stderr = echo_stderr
+    wrapper.propagate_signals = propagate_signals
     sys.exit (wrapper.launch (subcommand, subargv))
 
 
