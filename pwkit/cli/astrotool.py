@@ -377,6 +377,109 @@ class Ssep (multitool.Command):
         print ('arcsec:', fmt (sphdist (obj1.dec, obj1.ra, obj2.dec, obj2.ra) * R2A))
 
 
+class Summfits (multitool.Command):
+    name = 'summfits'
+    argspec = '<path>'
+    summary = 'Summarize contents of a FITS file.'
+
+    _commentary_card_names = frozenset (('HISTORY', 'COMMENT'))
+    _skip_headers = frozenset (('XTENSION', 'BITPIX', 'SIMPLE', 'EXTEND',
+                                'EXTNAME'))
+
+    def invoke (self, args, **kwargs):
+        if len (args) != 1:
+            raise multitool.UsageError ('summfits expected 1 argument')
+
+        try:
+            from astropy.io import fits
+        except ImportError:
+            try:
+                import pyfits as fits
+                warn ('falling back to untested "pyfits" backend')
+            except ImportError:
+                die ('need either the "astropy.io.fits" or the "pyfits" modules')
+
+        fitspath = args[0]
+
+        try:
+            hdulist = fits.open (fitspath)
+        except Exception as e:
+            die ('couldn\'t open "%s" as a FITS file: %s', fitspath, e)
+
+        def output (depth, fmt, *args):
+            print ('  ' * depth, fmt % args, sep='')
+
+        output (0, '%s: %d HDUs', fitspath, len (hdulist))
+        hduidxwidth = len (str (len (hdulist)))
+        hdunamewidth = 0
+
+        for hdu in hdulist:
+            hdunamewidth = max (hdunamewidth, len (hdu.name))
+
+        for hduidx, hdu in enumerate (hdulist):
+            # TODO: handle more HDU kinds. See
+            # astropy/io/fits/hdu/__init__.py. Looks like possibilities are
+            # Primary, Image, Table, BinTable, Groups, CompImage,
+            # nonstandard/Fits, and Streaming.
+
+            if hdu.data is None:
+                kind = 'empty'
+            elif hasattr (hdu, 'columns'):
+                kind = 'table'
+            elif hdu.is_image:
+                kind = 'image'
+            else:
+                kind = '???'
+
+            output (1, 'HDU %*d = %*s: kind=%s size=%d ver=%d level=%d',
+                    hduidxwidth, hduidx, hdunamewidth, hdu.name, kind, hdu.size,
+                    hdu.ver, hdu.level)
+
+            output (2, '%d headers (some omitted)', len (hdu.header))
+
+            for k in hdu.header.keys ():
+                if k in self._commentary_card_names or k in self._skip_headers:
+                    continue
+
+                output (3, '%-8s = %r # %s', k, hdu.header[k], hdu.header.comments[k])
+
+            for ck in self._commentary_card_names:
+                # hacky linewrapping logic here
+                if ck not in hdu.header:
+                    continue
+
+                buf = ''
+                h = hdu.header[ck]
+                output (2, '%s commentary', ck)
+
+                for ccidx in xrange (len (h)):
+                    s = h[ccidx]
+                    buf += s
+
+                    if len (s) in (71, 72):
+                        continue # assume hard linewrapping
+
+                    output (3, '%s', buf)
+                    buf = ''
+
+                if len (buf):
+                    output (3, '%s', buf)
+
+            if kind == 'table':
+                colidxwidth = len (str (len (hdu.columns)))
+                colnamewidth = 0
+
+                output (2, '%d rows, %d columns', hdu.data.size, len (hdu.columns))
+
+                for col in hdu.columns:
+                    colnamewidth = max (colnamewidth, len (col.name))
+
+                for colidx, col in enumerate (hdu.columns):
+                    output (3, 'col %*d = %*s: format=%s unit=%s', colidxwidth,
+                            colidx, colnamewidth, col.name, col.format, col.unit)
+            elif kind == 'image':
+                output (2, 'data shape=%r dtype=%s', hdu.data.shape, hdu.data.dtype)
+
 # The driver.
 
 from .multitool import HelpCommand
