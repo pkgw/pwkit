@@ -6,6 +6,8 @@
 
 Functions:
 
+fits_recarray_to_data_frame
+                  - Convert a FITS data table to a Pandas DataFrame
 make_step_lcont   - Return a step function that is left-continuous.
 make_step_rcont   - Return a step function that is right-continuous.
 make_tophat_ee    - Return a tophat function operating on an exclusive/exclusive range.
@@ -28,10 +30,10 @@ broadcastize - Make a Python function automatically broadcast arguments.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'broadcastize make_step_lcont make_step_rcont make_tophat_ee '
-           b'make_tophat_ei make_tophat_ie make_tophat_ii parallel_newton '
-           b'parallel_quad rms unit_tophat_ee unit_tophat_ei unit_tophat_ie '
-           b'unit_tophat_ii weighted_variance').split ()
+__all__ = (b'''broadcastize fits_recarray_to_data_frame make_step_lcont make_step_rcont
+           make_tophat_ee make_tophat_ei make_tophat_ie make_tophat_ii
+           parallel_newton parallel_quad rms unit_tophat_ee unit_tophat_ei
+           unit_tophat_ie unit_tophat_ii weighted_variance''').split ()
 
 import functools
 import numpy as np
@@ -98,6 +100,30 @@ class _BroadcasterDecorator (object):
         return b
 
 broadcastize = _BroadcasterDecorator
+
+
+# Very misc.
+
+def fits_recarray_to_data_frame (recarray):
+    """Convert a FITS data table, stored as a Numpy record array, into a Pandas
+    DataFrame object.
+
+    FITS data are big-endian, whereas nowadays almost everything is
+    little-endian. This seems to be an issue for Pandas DataFrames, where
+    df[['col1', 'col2']] triggers an assertion for me if the underlying data
+    are not native-byte-ordered. While we're at it, we lower-case the column
+    names.
+
+    """
+    from pandas import DataFrame
+
+    def normalize (col):
+        n = col.name
+        if recarray[n].dtype.isnative:
+            return (n.lower (), recarray[n])
+        return (n.lower (), recarray[n].byteswap (True).newbyteorder ())
+
+    return DataFrame (dict (normalize (c) for c in recarray.columns))
 
 
 # Parallelized versions of various routines that don't operate vectorially
