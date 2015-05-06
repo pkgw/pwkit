@@ -77,6 +77,7 @@ class Wrapper (object):
     markers = [' -- ', ' EE ', ' II ']
     use_colors = False
     echo_stderr = False
+    propagate_signals = False
     poll_timeout = 0.2
     destination = None
 
