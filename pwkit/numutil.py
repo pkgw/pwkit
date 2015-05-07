@@ -14,13 +14,20 @@ make_tophat_ee    - Return a tophat function operating on an exclusive/exclusive
 make_tophat_ei    - Return a tophat function operating on an exclusive/inclusive range.
 make_tophat_ie    - Return a tophat function operating on an inclusive/exclusive range.
 make_tophat_ii    - Return a tophat function operating on an inclusive/inclusive range.
+reduce_data_frame - Reduce rows of a DataFrame in chunks
+reduce_data_frame_evenly_with_gaps
+                  - Reduce DataFrame rows in approximately even-sized chunks.
 rms               - Calculate the square root of the mean of the squares of x.
 parallel_newton   - Parallelized invocation of `scipy.optimize.newton`.
 parallel_quad     - Parallelized invocation of `scipy.integrate.quad`.
+slice_around_gaps - Slice an ordered array into chunks separated by gaps.
+slice_evenly_with_gaps
+                  - Generate approximately same-sized slices of an ordered array.
 unit_tophat_ee    - Tophat function on (0,1).
 unit_tophat_ei    - Tophat function on (0,1].
 unit_tophat_ie    - Tophat function on [0,1).
 unit_tophat_ii    - Tophat function on [0,1].
+weighted_mean     - Compute a weighted mean from values and their uncertainties.
 weighted_variance - Estimate the variance of a weighted sampled.
 
 Decorators:
@@ -124,6 +131,125 @@ def fits_recarray_to_data_frame (recarray):
         return (n.lower (), recarray[n].byteswap (True).newbyteorder ())
 
     return DataFrame (dict (normalize (c) for c in recarray.columns))
+
+
+# Chunked averaging of data tables
+
+def slice_around_gaps (values, maxgap):
+    """Given an ordered array of values, generate a set of slices that traverse
+    all of the values. Within each slice, no gap between adjacent values is
+    larger than `maxgap`. In other words, these slices break the array into
+    chunks separated by gaps of size larger than maxgap.
+
+    """
+    if not (maxgap > 0):
+        # above test catches NaNs, other weird cases
+        raise ValueError ('maxgap must be positive; got %r' % maxgap)
+
+    values = np.asarray (values)
+    delta = values[1:] - values[:-1]
+
+    if np.any (delta < 0):
+        raise ValueError ('values must be in nondecreasing order')
+
+    whgap = np.where (delta > maxgap)[0] + 1
+    prev_idx = None
+
+    for gap_idx in whgap:
+        yield slice (prev_idx, gap_idx)
+        prev_idx = gap_idx
+
+    yield slice (prev_idx, None)
+
+
+def slice_evenly_with_gaps (values, target_len, maxgap):
+    """Given an ordered array of values, generate a set of slices that traverse
+    all of the values. Each slice contains about `target_len` items. However,
+    no slice contains a gap larger than `maxgap`, so a slice may contain only
+    a single item (if it is surrounded on both sides by a large gap). If a
+    non-gapped run of values does not divide evenly into `target_len`, the
+    algorithm errs on the side of making the slices contain more than
+    `target_len` items, rather than fewer. It also attempts to keep the slice
+    size uniform within each non-gapped run.
+
+    """
+    if not (target_len > 0):
+        raise ValueError ('target_len must be positive; got %r' % target_len)
+
+    values = np.asarray (values)
+    l = values.size
+
+    for gapslice in slice_around_gaps (values, maxgap):
+        start, stop, ignored_stride = gapslice.indices (l)
+        num_elements = stop - start
+        nsegments = int (np.floor (float (num_elements) / target_len))
+        nsegments = max (nsegments, 1)
+        nsegments = min (nsegments, num_elements)
+        segment_len = num_elements / nsegments
+        offset = 0.
+        prev = start
+
+        for _ in xrange (nsegments):
+            offset += segment_len
+            next = start + int (round (offset))
+            if next > prev:
+                yield slice (prev, next)
+            prev = next
+
+
+def reduce_data_frame (df, chunk_slicers,
+                       avg_cols=(),
+                       uavg_cols=(),
+                       minmax_cols=(),
+                       nchunk_colname='nchunk',
+                       uncert_prefix='u',
+                       min_points_per_chunk=3):
+    """"Reduce" a DataFrame by collapsing rows in grouped chunks. Returns another
+    DataFrame with similar columns but fewer rows.
+
+    `chunk_slicers` is an iterable that returns values that are used to slice
+    `df` with its `iloc()` method. An example value might be the generator
+    returned from `slice_evenly_with_gaps`.
+
+       avg_cols - Reduced by taking the mean
+      uavg_cols - Reduced by taking a weighted mean
+    minmax_cols - Reduced by reporting the min and max values in each chunk.
+
+    """
+    subds = [df.iloc[idx] for idx in chunk_slicers]
+    subds = [sd for sd in subds if sd.shape[0] >= min_points_per_chunk]
+
+    chunked = df.__class__ ({nchunk_colname: np.zeros (len (subds), dtype=np.int)})
+
+    # Some future-proofing: allow possibility of different ways of mapping
+    # from a column giving a value to a column giving its uncertainty.
+
+    uncert_col_name = lambda c: uncert_prefix + c
+
+    for i, subd in enumerate (subds):
+        label = chunked.index[i]
+        chunked.loc[label,nchunk_colname] = subd.shape[0]
+
+        for col in avg_cols:
+            chunked.loc[label,col] = subd[col].mean ()
+
+        for col in uavg_cols:
+            ucol = uncert_col_name (col)
+            v, u = weighted_mean (subd[col], subd[ucol])
+            chunked.loc[label,col] = v
+            chunked.loc[label,ucol] = u
+
+        for col in minmax_cols:
+            chunked.loc[label, 'min_'+col] = subd[col].min ()
+            chunked.loc[label, 'max_'+col] = subd[col].max ()
+
+    return chunked
+
+
+def reduce_data_frame_evenly_with_gaps (df, valcol, target_len, maxgap, **kwargs):
+    return reduce_data_frame (df,
+                              slice_evenly_with_gaps (df[valcol], target_len, maxgap),
+                              **kwargs)
 
 
 # Parallelized versions of various routines that don't operate vectorially
@@ -292,6 +418,14 @@ def parallel_quad (func, a, b, par_args=(), simple_args=(), parallel=True, **kwa
 def rms (x):
     """Return the square root of the mean of the squares of ``x``."""
     return np.sqrt (np.square (x).mean ())
+
+
+def weighted_mean (values, uncerts, **kwargs):
+    values = np.asarray (values)
+    uncerts = np.asarray (uncerts)
+    weights = uncerts ** -2
+    wt_mean, wt_sum = np.average (values, weights=weights, returned=True, **kwargs)
+    return wt_mean, wt_sum ** -0.5
 
 
 def weighted_variance (x, weights):
