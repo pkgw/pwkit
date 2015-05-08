@@ -22,6 +22,7 @@ setup (
         'pwkit',
         'pwkit.cli',
         'pwkit.environments',
+        'pwkit.environments.casa',
     ],
 
     package_data = {
