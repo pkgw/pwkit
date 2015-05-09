@@ -10,6 +10,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 __all__ = (b'''INVERSE_C_MS INVERSE_C_MNS pol_names pol_to_miriad msselect_keys datadir
 logger forkandlog tools''').split ()
 
+from ... import binary_type
 
 # Some constants that can be useful.
 
@@ -101,7 +102,7 @@ def logger (filter='WARN'):
 
     sink.showconsole (True)
     sink.setglobal (True)
-    sink.filter (filter.upper ())
+    sink.filter (binary_type (filter.upper ()))
     return sink
 
 
