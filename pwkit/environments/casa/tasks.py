@@ -1150,9 +1150,6 @@ def getopacities (ms, plotdest):
     script = os.path.join (os.path.dirname (__file__), 'cscript_getopacities.py')
 
     with CasapyScript (script, [ms, plotdest]) as cs:
-        if cs.exitcode:
-            raise Exception ('internal casapy script failed')
-
         try:
             with open (os.path.join (cs.workdir, 'opac.npy'), 'rb') as f:
                 opac = pickle.load (f)

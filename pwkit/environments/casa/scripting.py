@@ -20,7 +20,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 __all__ = (b'CasapyScript commandline').split ()
 
 import os.path, shutil, signal, sys, tempfile
-from ... import cli, reraise_context
+from ... import PKError, cli, reraise_context
 from . import CasaEnvironment
 
 
@@ -67,9 +67,10 @@ class CasapyScript (object):
     code sleeps for at least 5 seconds to allow various cleanups to happen.
 
     """
-    def __init__ (self, script, args):
+    def __init__ (self, script, args, raise_on_error=True):
         self.script = script
         self.args = args
+        self.raise_on_error = raise_on_error
 
 
     def __enter__ (self):
@@ -144,10 +145,32 @@ class CasapyScript (object):
 
         # default: delte workdir on success or intentional script abort
         self.rmtree = (self.exitcode == 0 or self.exitcode == 127)
+
+        if self.raise_on_error and self.exitcode != 0:
+            # Note that we have to raise the exception here to prevent the
+            # `with` statement body from executing. In that case __exit__
+            # isn't called so we need to do that too.
+            self._cleanup ()
+
+            if self.exitcode < 0:
+                raise PKError ('casapy was killed by signal %d', -self.exitcode)
+            elif self.exitcode == 127:
+                raise PKError ('the casapy script signaled an internal error')
+            else:
+                raise PKError ('casapy exited with error code %d', self.exitcode)
+
         return self
 
 
     def __exit__ (self, etype, evalue, etb):
+        if etype is not None:
+            self.rmtree = False
+
+        self._cleanup ()
+        return False # propagate exceptions
+
+
+    def _cleanup (self):
         # Ugh, I hate having a hardcoded sleep, but it seems to be necessary
         # to let the watchdog clean everything up. Or something. The casapy
         # process tree is a mess several process groups being created, and I
@@ -173,13 +196,11 @@ class CasapyScript (object):
 
         # OK, blow away the directory.
 
-        if not self.rmtree or etype is not None:
+        if not self.rmtree:
             cli.warn ('preserving directory tree %r since script %r failed',
                       self.workdir, self.script)
         else:
             shutil.rmtree (self.workdir, ignore_errors=True)
-
-        return False # propagate exceptions
 
 
 cli_usage = """pkcasascript <scriptfile> [more args...]
