@@ -2,7 +2,12 @@
 # Copyright 2015 Peter Williams <peter@newton.cx> and collaborators
 # Licensed under the MIT License
 
-"""This file is a casapy script. Do not use it as a module."""
+"""This file is a casapy script. Do not use it as a module.
+
+It is also useless to run directly via pkcasascript. Use
+`pwkit.environments.casa.tasks.getopacities`.
+
+"""
 
 def in_casapy (helper, args):
     """This function is run inside the weirdo casapy IPython environment! A
@@ -11,24 +16,18 @@ def in_casapy (helper, args):
     environment to allow encapsulated scripting.
 
     """
-    import numpy as np, os
+    import numpy as np, os, cPickle as pickle
 
-    if len (args) != 3:
-        helper.die ('usage: getopacities <MS> <spwwidths> <plotdest>')
+    if len (args) != 2:
+        helper.die ('usage: cscript_getopacities.py <MS> <plotdest>')
 
     ms = args[0]
-    spwwidths = [int (w) for w in args[1].split (',')]
-    plotdest = args[2]
+    plotdest = args[1]
 
     opac = helper.casans.plotweather (vis=ms)
 
-    averaged = []
-    idx = 0
+    opac = np.asarray (opac)
+    with open (helper.temppath ('opac.npy'), 'wb') as f:
+        pickle.dump (opac, f)
 
-    for width in spwwidths:
-        a = np.asarray (opac[idx:idx+width])
-        averaged.append (a.mean ())
-        idx += width
-
-    helper.log ('opacity = [%s]', ', '.join ('%.5f' % q for q in averaged))
     os.rename (ms + '.plotweather.png', plotdest)

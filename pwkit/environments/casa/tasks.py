@@ -18,7 +18,7 @@ it, we make them available on the command line.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from . import util
-from ... import binary_type, text_type
+from ... import binary_type, reraise_context, text_type
 from ...cli import check_usage, wrong_usage, warn, die
 from ...kwargv import ParseKeywords, Custom
 
@@ -1143,12 +1143,33 @@ Calculate atmospheric opacities in the MS's spectral windows from its weather
 data. Output the opacities and save a plot of the weather conditions.
 """
 
-def getopacities_cli (argv):
-    import os.path
-    from . import scripting
+def getopacities (ms, plotdest):
+    import os.path, cPickle as pickle
+    from .scripting import CasapyScript
 
     script = os.path.join (os.path.dirname (__file__), 'cscript_getopacities.py')
-    scripting.commandline ([argv[0], script] + argv[1:])
+
+    with CasapyScript (script, [ms, plotdest]) as cs:
+        if cs.exitcode:
+            raise Exception ('internal casapy script failed')
+
+        try:
+            with open (os.path.join (cs.workdir, 'opac.npy'), 'rb') as f:
+                opac = pickle.load (f)
+        except Exception:
+            reraise_context ('interal casapy script seemingly failed; no opac.npy')
+
+    return opac
+
+
+def getopacities_cli (argv):
+    check_usage (getopacities_doc, argv, usageifnoargs=True)
+
+    if len (argv) != 3:
+        wrong_usage (getopacities_doc, 'expected exactly 2 arguments')
+
+    opac = getopacities (argv[1], argv[2])
+    print ('opac = ', opac)
 
 
 # image2fits
