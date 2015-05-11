@@ -37,6 +37,7 @@ fluxscale fluxscale_cli FluxscaleConfig
 ft ft_cli FtConfig
 gaincal gaincal_cli GaincalConfig
 gencal gencal_cli GencalConfig
+getopacities_cli
 image2fits image2fits_cli
 mfsclean mfsclean_cli MfscleanConfig
 plotants plotants_cli
@@ -1129,6 +1130,27 @@ def gencal (cfg):
 gencal_cli = makekwcli (gencal_doc, GencalConfig, gencal)
 
 
+# getopacities
+#
+# This is a casapy script. TODO: we could make the script callable as a
+# function and not CLI-only with a bit of work.
+
+getopacities_doc = \
+"""
+casatask getopacities <MS> <spwwidth1,spwwidth2,...> <plotdest>
+
+Calculate atmospheric opacities in the MS's spectral windows from its weather
+data. Output the opacities and save a plot of the weather conditions.
+"""
+
+def getopacities_cli (argv):
+    import os.path
+    from . import scripting
+
+    script = os.path.join (os.path.dirname (__file__), 'cscript_getopacities.py')
+    scripting.commandline ([argv[0], script] + argv[1:])
+
+
 # image2fits
 #
 # This is basically the "exportfits" task with fewer options and a slightly
@@ -1834,12 +1856,14 @@ def uvsub (cfg):
 uvsub_cli = makekwcli (uvsub_doc, UvsubConfig, uvsub)
 
 
-# Driver for command-line access
+# Driver for command-line access. I wrote this before multitool, and it
+# doesn't seem particularly valuable to convert them to Multitool since the
+# current system works fine.
 
 def cmdline_usage (stream, exitcode):
     print ('usage: casatask <task> [task-specific arguments]', file=stream)
     print (file=stream)
-    print ('Supported tasks:', files=stream)
+    print ('Supported tasks:', file=stream)
     print (file=stream)
 
     for name in sorted (globals ().iterkeys ()):
@@ -1849,8 +1873,15 @@ def cmdline_usage (stream, exitcode):
     raise SystemExit (exitcode)
 
 
-def cmdline_driver (argv):
+def commandline (argv=None):
     import sys
+
+    if argv is None:
+        argv = sys.argv
+        from ... import cli
+        cli.propagate_sigint ()
+        cli.backtrace_on_usr1 ()
+        cli.unicode_stdio ()
 
     if len (argv) < 2 or argv[1] == '--help':
         cmdline_usage (sys.stdout, 0)
@@ -1861,8 +1892,3 @@ def cmdline_driver (argv):
 
     subargv = [' '.join (argv[:2])] + argv[2:]
     driver (subargv)
-
-
-if __name__ == '__main__':
-    import sys
-    cmdline_driver (sys.argv)

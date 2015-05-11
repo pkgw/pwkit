@@ -41,6 +41,7 @@ setup (
     entry_points = {
         'console_scripts': [
             'astrotool = pwkit.cli.astrotool:commandline',
+            'casatask = pwkit.environments.casa.tasks:commandline',
             'imtool = pwkit.cli.imtool:commandline',
             'latexdriver = pwkit.cli.latexdriver:commandline',
             'pkcasascript = pwkit.environments.casa.scripting:commandline',

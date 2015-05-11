@@ -157,9 +157,10 @@ def commandline (argv=None):
 
     if exitcode < 0:
         signum = -exitcode
-        print ('error: casapy died with signal %d' % signum)
+        print ('casascript error: casapy died with signal %d' % signum)
         signal.signal (signum, signal.SIG_DFL)
         os.kill (os.getpid (), signum)
     elif exitcode:
-        print ('error: casapy died with exit code %d' % exitcode)
+        if exitcode != 127:
+            print ('casascript error: casapy died with exit code %d' % exitcode)
         sys.exit (exitcode)
