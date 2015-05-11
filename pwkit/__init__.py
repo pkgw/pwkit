@@ -104,9 +104,15 @@ def reraise_context (fmt, *args):
         cstr = text_type (fmt)
 
     ex = sys.exc_info ()[1]
-    if len (ex.args):
-        cstr = '%s: %s' % (cstr, ex.args[0])
-    ex.args = (cstr, ) + ex.args[1:]
+
+    if isinstance (ex, EnvironmentError):
+        ex.strerror = '%s: %s' % (cstr, ex.strerror)
+        ex.args = (ex.errno, ex.strerror)
+    else:
+        if len (ex.args):
+            cstr = '%s: %s' % (cstr, ex.args[0])
+        ex.args = (cstr, ) + ex.args[1:]
+
     raise
 
 
