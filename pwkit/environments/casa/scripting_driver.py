@@ -33,7 +33,7 @@ if running_in_casapy:
     import os
     script_stdout = os.fdopen (3, 'wb')
     script_stderr = os.fdopen (4, 'wb')
-
+    __rethrow_casa_exceptions = True # Amateurs.
 
 class CasaNamespace (object):
     def __init__ (self):
@@ -44,19 +44,22 @@ class CasapyScriptHelper (object):
 
     Methods:
 
-    die  (fmt, *args) - print an error and exit
-    log  (fmt, *args) - print to standard output
-    warn (fmt, *args) - print a warning
+    die  (fmt, *args)  - print an error and exit
+    log  (fmt, *args)  - print to standard output
+    warn (fmt, *args)  - print a warning
+    temppath (*pieces) - generate a path within `tempdir`
 
     Attributes:
 
     casans      - The populated casapy namespace, with items accessible
                   as (e.g.) `helper.casans.clean()`.
     script_path - The original path of the script being run.
+    tempdir     - The path of the temporary directory.
 
     """
-    def __init__ (self, script_path):
+    def __init__ (self, script_path, tempdir):
         self.script_path = script_path
+        self.tempdir = tempdir
         self.casans = CasaNamespace ()
 
     def log (self, fmt, *args, **kwargs):
@@ -82,14 +85,18 @@ class CasapyScriptHelper (object):
         printfn ('error:', text, file=script_stderr)
         os._exit (127) # indicates internal script abort, not problem running script
 
+    def temppath (self, *args):
+        return os.path.join (self.tempdir, *args)
+
 
 def _pkcs_inner ():
     # Get back to the directory where we were invoked, rather than the
     # temporary directory where we hide CASA's logfiles:
     import os
+    tempdir = os.getcwd ()
     os.chdir (_pkcs_origcwd)
 
-    helper = CasapyScriptHelper (_pkcs_script)
+    helper = CasapyScriptHelper (_pkcs_script, tempdir)
 
     try:
         code = compile (_pkcs_text, _pkcs_script, 'exec')
