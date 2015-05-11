@@ -127,5 +127,12 @@ if running_in_casapy:
         _pkcs_inner ()
     except:
         import os, sys, traceback
-        traceback.print_exception (*sys.exc_info (), file=script_stderr)
+        class Prefixer (object):
+            def __init__ (self, inner):
+                self.inner = inner
+            def write (self, text):
+                self.inner.write ('casascript: ')
+                self.inner.write (text)
+        printfn ('casascript: unhandled exception within casapy:', file=script_stderr)
+        traceback.print_exception (*sys.exc_info (), file=Prefixer (script_stderr))
         os._exit (1)
