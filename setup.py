@@ -43,6 +43,7 @@ setup (
             'astrotool = pwkit.cli.astrotool:commandline',
             'imtool = pwkit.cli.imtool:commandline',
             'latexdriver = pwkit.cli.latexdriver:commandline',
+            'pkcasascript = pwkit.environments.casa.scripting:commandline',
             'pkenvtool = pwkit.environments:commandline',
             'wrapout = pwkit.cli.wrapout:commandline',
         ],

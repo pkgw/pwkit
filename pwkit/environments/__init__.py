@@ -54,16 +54,18 @@ class Environment (object):
         pass
 
 
-    def launch (self, args, stdin=None, stdout=None, stderr=None,
-                close_fds=False, env=None, shell=False, cwd=None, **kwargs):
+    def launch (self, argv, stdin=None, stdout=None, stderr=None,
+                close_fds=False, env=None, shell=False, cwd=None,
+                preexec_fn=None, **kwargs):
         if env is None:
             env = os.environ
 
         env = self.modify_environment (env.copy ())
         self._preexec (env, **kwargs)
-        return subprocess.Popen (args, stdin=stdin, stdout=stdout,
+        return subprocess.Popen (argv, stdin=stdin, stdout=stdout,
                                  stderr=stderr, close_fds=close_fds,
-                                 env=env, shell=shell, cwd=cwd)
+                                 env=env, shell=shell, cwd=cwd,
+                                 preexec_fn=preexec_fn)
 
     def execvpe (self, argv, env=None, **kwargs):
         if env is None:
