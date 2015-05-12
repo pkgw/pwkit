@@ -44,6 +44,7 @@ plotants plotants_cli
 plotcal plotcal_cli plotcal_multipage_page PlotcalConfig
 setjy setjy_cli SetjyConfig
 split split_cli SplitConfig
+spwglue_cli
 uvsub uvsub_cli UvsubConfig
 cmdline_driver
 ''').split ()
@@ -1820,6 +1821,15 @@ def split (cfg):
 
 
 split_cli = makekwcli (split_doc, SplitConfig, split)
+
+
+# spwglue
+#
+# Shim for a separate module
+
+def spwglue_cli (argv):
+    from . import spwglue
+    spwglue_cli (argv)
 
 
 # uvsub
