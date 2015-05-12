@@ -52,41 +52,56 @@ class CasaEnvironment (Environment):
     def modify_environment (self, env):
         """Maintaining compatibility with different CASA versions is a pain."""
 
+        # Ugh. I don't see any way out of special-casing the RPM-based
+        # installations ... which only exist on NRAO computers, AFAICT.
+        # Hardcoding 64-bitness, hopefully that won't come back to bite me.
+        is_rpm_install = self._rootdir.startswith ('/usr/lib64/casapy/release/')
+
         def path (*args):
             return os.path.join (self._rootdir, *args)
-
-        lib = 'lib64' if os.path.isdir (path ('lib64')) else 'lib'
-        # 4.3.1 comes with both python2.6 and python2.7???
-        pydir = sorted (glob.glob (path (lib, 'python2*')))[-1]
-
-        tcldir = path ('share', 'tcl')
-        if not os.path.isdir (tcldir):
-            tcldir = glob.glob (path ('share', 'tcl*'))[-1]
-
-        bindir = path (lib, 'casa', 'bin')
-        if not os.path.isdir (bindir):
-            bindir = path (lib, 'casapy', 'bin')
 
         env[b'CASAROOT'] = path ()
         env[b'CASAPATH'] = ' '.join ([path (),
                                       os.uname ()[0].lower (),
                                       'local',
                                       os.uname ()[1]])
-        env[b'CASA_INSTALLATION_TYPE'] = b'tar-installation'
-        env[b'CASA_INSTALLATION_DIRECTORY'] = env[b'CASAROOT']
-        env[b'__CASAPY_PYTHONDIR'] = pydir
-        env[b'MATPLOTLIBRC'] = path ('share', 'matplotlib')
-        env[b'PYTHONHOME'] = env[b'CASAROOT']
-        env[b'TCL_LIBRARY'] = tcldir
-        env[b'TK_LIBRARY'] = path ('share', 'tk')
-        env[b'QT_PLUGIN_PATH'] = path (lib, 'qt4', 'plugins')
 
-        prepend_environ_path (env, b'PATH', bindir)
-        prepend_environ_path (env, b'LD_LIBRARY_PATH', path (lib))
-        # should we overwite PYTHONPATH instead?
-        prepend_environ_path (env, b'PYTHONPATH', os.path.join (pydir, 'site-packages'))
-        prepend_environ_path (env, b'PYTHONPATH', os.path.join (pydir, 'heuristics'))
-        prepend_environ_path (env, b'PYTHONPATH', pydir)
+        if is_rpm_install:
+            env[b'CASA_INSTALLATION_TYPE'] = b'rpm-installation'
+            prepend_environ_path (env, b'PATH', b'/usr/lib64/casa/01/bin')
+            prepend_environ_path (env, b'PATH', path ('bin'))
+        else:
+            env[b'CASA_INSTALLATION_TYPE'] = b'tar-installation'
+
+            lib = 'lib64' if os.path.isdir (path ('lib64')) else 'lib'
+            # 4.3.1 comes with both python2.6 and python2.7???
+            pydir = sorted (glob.glob (path (lib, 'python2*')))[-1]
+
+            tcldir = path ('share', 'tcl')
+            if os.path.isdir (tcldir):
+                env[b'TCL_LIBRARY'] = tcldir
+            else:
+                tcl_versioned_dirs = glob.glob (path ('share', 'tcl*'))
+                if len (tcl_versioned_dirs):
+                    env[b'TCL_LIBRARY'] = tcl_versioned_dirs[-1]
+
+            bindir = path (lib, 'casa', 'bin')
+            if not os.path.isdir (bindir):
+                bindir = path (lib, 'casapy', 'bin')
+            prepend_environ_path (env, b'PATH', bindir)
+
+            env[b'CASA_INSTALLATION_DIRECTORY'] = env[b'CASAROOT']
+            env[b'__CASAPY_PYTHONDIR'] = pydir
+            env[b'MATPLOTLIBRC'] = path ('share', 'matplotlib')
+            env[b'PYTHONHOME'] = env[b'CASAROOT']
+            env[b'TK_LIBRARY'] = path ('share', 'tk')
+            env[b'QT_PLUGIN_PATH'] = path (lib, 'qt4', 'plugins')
+
+            prepend_environ_path (env, b'LD_LIBRARY_PATH', path (lib))
+            # should we overwite PYTHONPATH instead?
+            prepend_environ_path (env, b'PYTHONPATH', os.path.join (pydir, 'site-packages'))
+            prepend_environ_path (env, b'PYTHONPATH', os.path.join (pydir, 'heuristics'))
+            prepend_environ_path (env, b'PYTHONPATH', pydir)
 
         return env
 
