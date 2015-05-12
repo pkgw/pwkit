@@ -56,6 +56,10 @@ cmdline_driver
 def b (item):
     if isinstance (item, text_type):
         return item.encode ('utf8')
+    if isinstance (item, dict):
+        return dict ((b (k), b (v)) for k, v in item.iteritems ())
+    if isinstance (item, (list, tuple)):
+        return item.__class__ (b (x) for x in item)
     return item
 
 
@@ -274,7 +278,7 @@ def applycal (cfg):
 
     selkws = extractmsselect (cfg)
     selkws['chanmode'] = 'none' # ?
-    cb.selectvis (**selkws)
+    cb.selectvis (**b(selkws))
 
     applyonthefly (cb, cfg)
 
@@ -632,7 +636,7 @@ def flaglist (cfg):
 
         params.setdefault ('mode', 'manual')
 
-        if not af.parseagentparameters (params):
+        if not af.parseagentparameters (b(params)):
             raise Exception ('cannot parse flag line: %s' % origline)
 
     af.init ()
@@ -840,8 +844,8 @@ def ft (cfg):
     im = util.tools.imager ()
 
     im.open (b(cfg.vis), usescratch=cfg.usescratch)
-    im.selectvis (**extractmsselect (cfg, haveintent=False,
-                                     taqltomsselect=False))
+    im.selectvis (**b(extractmsselect (cfg, haveintent=False,
+                                       taqltomsselect=False)))
     nmodel = len (cfg.model)
 
     if nmodel > 1:
@@ -999,7 +1003,7 @@ def gaincal (cfg):
 
     selkws = extractmsselect (cfg)
     selkws['chanmode'] = 'none' # ?
-    cb.selectvis (**selkws)
+    cb.selectvis (**b(selkws))
 
     applyonthefly (cb, cfg)
 
@@ -1029,11 +1033,11 @@ def gaincal (cfg):
     solkws['type'] = cfg.gaintype.upper ()
 
     if solkws['type'] == 'GSPLINE':
-        cb.setsolvegainspline (**solkws)
+        cb.setsolvegainspline (**b(solkws))
     elif solkws['type'] == 'BPOLY':
-        cb.setsolvebandpoly (**solkws)
+        cb.setsolvebandpoly (**b(solkws))
     else:
-        cb.setsolve (**solkws)
+        cb.setsolve (**b(solkws))
 
     cb.solve ()
     cb.close ()
@@ -1445,7 +1449,7 @@ def mfsclean (cfg):
     # Set up all of this junk
 
     im.open (b(cfg.vis), usescratch=False)
-    im.selectvis (nchan=-1, start=0, step=1, usescratch=False, writeaccess=False, **selkws)
+    im.selectvis (nchan=-1, start=0, step=1, usescratch=False, writeaccess=False, **b(selkws))
     im.defineimage (nx=cfg.imsize[0], ny=cfg.imsize[1],
                     cellx=qa.quantity (cfg.cell, 'arcsec'),
                     celly=qa.quantity (cfg.cell, 'arcsec'),
@@ -1652,10 +1656,10 @@ def plotcal_multipage_pdf (cfg, pdfpath, **kwargs):
     pdf = PdfPages (pdfpath)
     try:
         cp.plot (b(cfg.xaxis.upper ()), b(cfg.yaxis.upper ()))
-        pdf.savefig (**kwargs)
+        pdf.savefig (**b(kwargs))
 
         while cp.next ():
-            pdf.savefig (**kwargs)
+            pdf.savefig (**b(kwargs))
 
         plt.close ()
     finally:
@@ -1767,7 +1771,7 @@ def setjy (cfg):
 
     im = util.tools.imager ()
     im.open (b(cfg.vis), usescratch=False) # don't think you'll ever want True?
-    im.setjy (**kws)
+    im.setjy (**b(kws))
     im.close ()
 
 
@@ -1870,7 +1874,7 @@ def split (cfg):
             workdir = tempfile.mkdtemp (dir=os.path.dirname (cfg.out),
                                         prefix=os.path.basename (cfg.out) + '_')
             kws['outputms'] = os.path.join (workdir, os.path.basename (cfg.out))
-            ms.split (**kws)
+            ms.split (**b(kws))
             os.rename (kws['outputms'], cfg.out)
             renamed = True
         finally:
