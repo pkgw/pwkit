@@ -198,17 +198,17 @@ def applyonthefly (cb, cfg):
 
     for table, field, interp, spwmap in zip (cfg.gaintable, gainfields,
                                              interps, spwmaps):
-        cb.setapply (table=table, field=field, interp=interp, spwmap=spwmap,
+        cb.setapply (table=b(table), field=b(field), interp=b(interp), spwmap=b(spwmap),
                      t=0., calwt=True)
 
     if len (cfg.opacity):
-        cb.setapply (type='TOPAC', opacity=cfg.opacity, t=-1, calwt=True)
+        cb.setapply (type=b'TOPAC', opacity=b(cfg.opacity), t=-1, calwt=True)
 
     if cfg.gaincurve:
-        cb.setapply (type='GAINCURVE', t=-1, calwt=True)
+        cb.setapply (type=b'GAINCURVE', t=-1, calwt=True)
 
     if cfg.parang:
-        cb.setapply (type='P')
+        cb.setapply (type=b'P')
 
 
 def makekwcli (doc, cfgclass, impl):
@@ -270,7 +270,7 @@ class ApplycalConfig (ParseKeywords):
 
 def applycal (cfg):
     cb = util.tools.calibrater ()
-    cb.open (filename=cfg.vis, compress=False, addcorr=True, addmodel=False)
+    cb.open (filename=b(cfg.vis), compress=False, addcorr=True, addmodel=False)
 
     selkws = extractmsselect (cfg)
     selkws['chanmode'] = 'none' # ?
@@ -278,7 +278,7 @@ def applycal (cfg):
 
     applyonthefly (cb, cfg)
 
-    cb.correct (cfg.applymode)
+    cb.correct (b(cfg.applymode))
     cb.close ()
 
 
@@ -323,17 +323,17 @@ def clearcal (vis, weightonly=False):
     # cb.open() will create the tables if they're not present, so
     # if that's the case, we don't actually need to run initcalset()
 
-    tb.open (vis, nomodify=False)
+    tb.open (b(vis), nomodify=False)
     colnames = tb.colnames ()
     needinit = ('MODEL_DATA' in colnames) or ('CORRECTED_DATA' in colnames)
     if 'IMAGING_WEIGHT' not in colnames:
         c = dict (clearcal_imaging_col_tmpl)
-        c['shape'] = tb.getcell ('DATA', 0).shape[-1:]
-        tb.addcols ({'IMAGING_WEIGHT': c}, clearcal_imaging_dminfo_tmpl)
+        c['shape'] = tb.getcell (b'DATA', 0).shape[-1:]
+        tb.addcols ({b'IMAGING_WEIGHT': c}, clearcal_imaging_dminfo_tmpl)
     tb.close ()
 
     if not weightonly:
-        cb.open (vis)
+        cb.open (b(vis))
         if needinit:
             cb.initcalset ()
         cb.close ()
@@ -352,7 +352,7 @@ def clearcal_cli (argv):
 
     util.logger ()
     for vis in argv[1:]:
-        clearcal (vis, weightonly=weightonly)
+        clearcal (b(vis), weightonly=weightonly)
 
 
 # concat
@@ -381,19 +381,19 @@ def concat (invises, outvis, timesort=False):
         if not os.path.isdir (invis):
             raise RuntimeError ('input "%s" does not exist' % invis)
 
-    tb.open (invises[0])
-    tb.copy (outvis, deep=True, valuecopy=True)
+    tb.open (b(invises[0]))
+    tb.copy (b(outvis), deep=True, valuecopy=True)
     tb.close ()
 
-    ms.open (outvis, nomodify=False)
+    ms.open (b(outvis), nomodify=False)
 
     for invis in invises[1:]:
-        ms.concatenate (msfile=invis, freqtol=concat_freqtol,
-                        dirtol=concat_dirtol)
+        ms.concatenate (msfile=b(invis), freqtol=b(concat_freqtol),
+                        dirtol=b(concat_dirtol))
 
-    ms.writehistory (message='taskname=tasklib.concat', origin='tasklib.concat')
-    ms.writehistory (message='vis = ' + ', '.join (invises), origin='tasklib.concat')
-    ms.writehistory (message='timesort = ' + 'FT'[int (timesort)], origin='tasklib.concat')
+    ms.writehistory (message=b'taskname=tasklib.concat', origin=b'tasklib.concat')
+    ms.writehistory (message=b('vis = ' + ', '.join (invises)), origin=b'tasklib.concat')
+    ms.writehistory (message=b('timesort = ' + 'FT'[int (timesort)]), origin=b'tasklib.concat')
 
     if timesort:
         ms.timesort ()
@@ -432,9 +432,9 @@ Delete the MODEL_DATA and CORRECTED_DATA columns from MSes.
 def delcal (mspath):
     wantremove = 'MODEL_DATA CORRECTED_DATA'.split ()
     tb = util.tools.table ()
-    tb.open (mspath, nomodify=False)
+    tb.open (b(mspath), nomodify=False)
     cols = frozenset (tb.colnames ())
-    toremove = [c for c in wantremove if c in cols]
+    toremove = [b(c) for c in wantremove if c in cols]
     if len (toremove):
         tb.removecols (toremove)
     tb.close ()
@@ -476,7 +476,7 @@ def delmod_cli (argv, alter_logger=True):
     cb = util.tools.calibrater ()
 
     for mspath in argv[1:]:
-        cb.open (mspath, addcorr=False, addmodel=False)
+        cb.open (b(mspath), addcorr=False, addmodel=False)
         cb.delmod (otf=True, scr=False)
         cb.close ()
 
@@ -517,7 +517,7 @@ def flagmanager_cli (argv, alter_logger=True):
         factory = util.tools.testflagger
 
     af = factory ()
-    af.open (ms)
+    af.open (b(ms))
 
     if mode == 'list':
         if len (argv) != 3:
@@ -528,14 +528,14 @@ def flagmanager_cli (argv, alter_logger=True):
             wrong_usage (flagmanager_doc, 'expect exactly two arguments in save mode')
         from time import strftime
         name = argv[3]
-        af.saveflagversion (versionname=name, merge='replace',
-                            comment='created %s (casatask flagmanager)'
-                            % strftime ('%Y-%m-%dT%H:%M:%SZ'))
+        af.saveflagversion (versionname=b(name), merge=b'replace',
+                            comment=b('created %s (casatask flagmanager)'
+                                      % strftime ('%Y-%m-%dT%H:%M:%SZ')))
     elif mode == 'restore':
         if len (argv) != 4:
             wrong_usage (flagmanager_doc, 'expect exactly two arguments in restore mode')
         name = argv[3]
-        af.restoreflagversion (versionname=name, merge='replace')
+        af.restoreflagversion (versionname=b(name), merge=b'replace')
     elif mode == 'delete':
         if len (argv) != 4:
             wrong_usage (flagmanager_doc, 'expect exactly two arguments in delete mode')
@@ -546,7 +546,7 @@ def flagmanager_cli (argv, alter_logger=True):
             raise RuntimeError ('version "%s" doesn\'t exist in "%s.flagversions"'
                                 % (name, ms))
 
-        af.deleteflagversion (versionname=name)
+        af.deleteflagversion (versionname=b(name))
     else:
         wrong_usage (flagmanager_doc, 'unknown flagmanager mode "%s"' % mode)
 
@@ -589,7 +589,7 @@ def flaglist (cfg):
         factory = util.tools.testflagger
 
     af = factory ()
-    af.open (cfg.vis, 0.0)
+    af.open (b(cfg.vis), 0.0)
     af.selectdata ()
 
     for row, origline in enumerate (open (cfg.inpfile)):
@@ -669,7 +669,7 @@ def flagzeros (cfg):
         factory = util.tools.testflagger
 
     af = factory ()
-    af.open (cfg.vis, 0.0)
+    af.open (b(cfg.vis), 0.0)
     af.selectdata ()
     pars = dict (datacolumn=cfg.datacol.upper (),
                  clipzeros=True, name='CLIP', mode='clip',
@@ -760,11 +760,11 @@ def fluxscale (cfg):
     if not len (refspwmap):
         refspwmap = [-1]
 
-    cb.open (cfg.vis, compress=False, addcorr=False, addmodel=False)
-    result = cb.fluxscale (tablein=cfg.caltable, tableout=cfg.fluxtable,
-                           reference=reference, transfer=transfer,
-                           listfile=cfg.listfile or '',
-                           append=cfg.append, refspwmap=refspwmap)
+    cb.open (b(cfg.vis), compress=False, addcorr=False, addmodel=False)
+    result = cb.fluxscale (tablein=b(cfg.caltable), tableout=b(cfg.fluxtable),
+                           reference=b(reference), transfer=b(transfer),
+                           listfile=b(cfg.listfile or ''),
+                           append=cfg.append, refspwmap=b(refspwmap))
                            #incremental=cfg.incremental)
     cb.close ()
     return result
@@ -839,14 +839,14 @@ class FtConfig (ParseKeywords):
 def ft (cfg):
     im = util.tools.imager ()
 
-    im.open (cfg.vis, usescratch=cfg.usescratch)
+    im.open (b(cfg.vis), usescratch=cfg.usescratch)
     im.selectvis (**extractmsselect (cfg, haveintent=False,
                                      taqltomsselect=False))
     nmodel = len (cfg.model)
 
     if nmodel > 1:
         ia = util.tools.image ()
-        ia.open (cfg.model[0])
+        ia.open (b(cfg.model[0]))
         # This gives Hz:
         reffreq = ia.coordsys ().referencevalue (type='spectral')['numeric'][0]
         ia.close ()
@@ -854,10 +854,10 @@ def ft (cfg):
 
     if cfg.wprojplanes is not None:
         im.defineimage ()
-        im.setoptions (ftmachine='wproject', wprojplanes=cfg.wprojplanes)
+        im.setoptions (ftmachine=b'wproject', wprojplanes=cfg.wprojplanes)
 
-    im.ft (model=cfg.model,
-           complist=cfg.complist or '',
+    im.ft (model=b(cfg.model),
+           complist=b(cfg.complist or ''),
            incremental=cfg.incremental)
     im.close ()
 
@@ -995,7 +995,7 @@ class GaincalConfig (ParseKeywords):
 
 def gaincal (cfg):
     cb = util.tools.calibrater ()
-    cb.open (filename=cfg.vis, compress=False, addcorr=False, addmodel=False)
+    cb.open (filename=b(cfg.vis), compress=False, addcorr=False, addmodel=False)
 
     selkws = extractmsselect (cfg)
     selkws['chanmode'] = 'none' # ?
@@ -1107,7 +1107,7 @@ class GencalConfig (ParseKeywords):
 
 def gencal (cfg):
     cb = util.tools.calibrater ()
-    cb.open (filename=cfg.vis, compress=False, addcorr=False, addmodel=False)
+    cb.open (filename=b(cfg.vis), compress=False, addcorr=False, addmodel=False)
 
     antenna = cfg.antenna or ''
     parameter = cfg.parameter
@@ -1123,9 +1123,9 @@ def gencal (cfg):
         antenna = info[1]
         parameter = info[2]
 
-    cb.specifycal (caltable=cfg.caltable, time='', spw=(cfg.spw or ''),
-                   antenna=antenna, pol=(cfg.pol or ''), caltype=cfg.caltype,
-                   parameter=parameter)
+    cb.specifycal (caltable=b(cfg.caltable), time=b'', spw=b(cfg.spw or ''),
+                   antenna=b(antenna), pol=b(cfg.pol or ''), caltype=b(cfg.caltype),
+                   parameter=b(parameter))
     cb.close ()
 
 
@@ -1185,8 +1185,8 @@ Convert an image in MS format to FITS format.
 
 def image2fits (mspath, fitspath):
     ia = util.tools.image ()
-    ia.open (mspath)
-    ia.tofits (outfile=fitspath, velocity=False, optical=False, bitpix=-32,
+    ia.open (b(mspath))
+    ia.tofits (outfile=b(fitspath), velocity=False, optical=False, bitpix=-32,
                minpix=0, maxpix=-1, overwrite=False, dropstokes=False,
                stokeslast=True, history=True)
     ia.close ()
@@ -1396,21 +1396,21 @@ def mfsclean (cfg):
     # out later.
 
     selkws = extractmsselect (cfg, havearray=False, haveintent=False, taqltomsselect=False)
-    ms.open (cfg.vis)
+    ms.open (b(cfg.vis))
     ms.msselect (selkws)
-    rangeinfo = ms.range ('data_desc_id field_id'.split ())
+    rangeinfo = ms.range (b'data_desc_id field_id'.split ())
     ddids = rangeinfo['data_desc_id']
     fields = rangeinfo['field_id']
 
     # Get the spectral frame from the first spw of the selected data
 
-    tb.open (os.path.join (cfg.vis, 'DATA_DESCRIPTION'))
-    ddspws = tb.getcol ('SPECTRAL_WINDOW_ID')
+    tb.open (b(os.path.join (cfg.vis, 'DATA_DESCRIPTION')))
+    ddspws = tb.getcol (b'SPECTRAL_WINDOW_ID')
     tb.close ()
     spw0 = ddspws[ddids[0]]
 
-    tb.open (os.path.join (cfg.vis, 'SPECTRAL_WINDOW'))
-    specframe = specframenames[tb.getcell ('MEAS_FREQ_REF', spw0)]
+    tb.open (b(os.path.join (cfg.vis, 'SPECTRAL_WINDOW')))
+    specframe = specframenames[tb.getcell (b'MEAS_FREQ_REF', spw0)]
     tb.close ()
 
     # Choose phase center
@@ -1444,33 +1444,33 @@ def mfsclean (cfg):
 
     # Set up all of this junk
 
-    im.open (cfg.vis, usescratch=False)
+    im.open (b(cfg.vis), usescratch=False)
     im.selectvis (nchan=-1, start=0, step=1, usescratch=False, writeaccess=False, **selkws)
     im.defineimage (nx=cfg.imsize[0], ny=cfg.imsize[1],
                     cellx=qa.quantity (cfg.cell, 'arcsec'),
                     celly=qa.quantity (cfg.cell, 'arcsec'),
-                    outframe=specframe, phasecenter=phasecenter,
+                    outframe=b(specframe), phasecenter=b(phasecenter),
                     stokes=cfg.stokes,
                     spw=-1, # to verify: selectvis (spw=) good enough?
-                    restfreq='', mode='mfs', veltype='radio',
+                    restfreq=b'', mode=b'mfs', veltype=b'radio',
                     nchan=-1, start=0, step=1, facets=1)
 
     if cfg.weighting == 'briggs':
-        im.weight (type='briggs', rmode='norm', robust=0.5, npixels=0) #noise=, mosaic=
+        im.weight (type=b'briggs', rmode=b'norm', robust=0.5, npixels=0) #noise=, mosaic=
     elif cfg.weighting == 'natural':
-        im.weight (type='natural', rmode='none')
+        im.weight (type=b'natural', rmode=b'none')
     else:
         raise ValueError ('unknown weighting type "%s"' % cfg.weighting)
 
     # im.filter (...)
-    im.setscales (scalemethod='uservector', uservector=[0])
+    im.setscales (scalemethod=b'uservector', uservector=[0])
     im.setsmallscalebias (0.6)
     im.setmfcontrol ()
     im.setvp (dovp=True)
-    im.makeimage (type='pb', image=pb, compleximage='', verbose=False)
+    im.makeimage (type=b'pb', image=b(pb), compleximage=b'', verbose=False)
     im.setvp (dovp=False, verbose=False)
-    im.setoptions (ftmachine=cfg.ftmachine, wprojplanes=cfg.wprojplanes,
-                   freqinterp='linear', padding=1.2, pastep=360.0, pblimit=cfg.minpb,
+    im.setoptions (ftmachine=b(cfg.ftmachine), wprojplanes=b(cfg.wprojplanes),
+                   freqinterp=b'linear', padding=1.2, pastep=360.0, pblimit=b(cfg.minpb),
                    applypointingoffsets=False, dopbgriddingcorrections=True)
 
     if cfg.nterms > 1:
@@ -1485,18 +1485,18 @@ def mfsclean (cfg):
         maskstr = ''
     else:
         maskstr = mask
-        im.make (mask)
-        ia.open (mask)
+        im.make (b(mask))
+        ia.open (b(mask))
         maskcs = ia.coordsys ()
-        maskcs.setreferencecode (specframe, 'spectral', True)
+        maskcs.setreferencecode (b(specframe), b'spectral', True)
         ia.setcoordsys (maskcs.torecord ())
 
         if cfg.mask is not None:
             rg = util.tools.regionmanager ()
-            regions = rg.fromtextfile (filename=cfg.mask,
+            regions = rg.fromtextfile (filename=b(cfg.mask),
                                        shape=ia.shape (),
                                        csys=maskcs.torecord ())
-            im.regiontoimagemask (mask=mask, region=regions)
+            im.regiontoimagemask (mask=b(mask), region=regions)
 
         ia.close ()
 
@@ -1504,14 +1504,14 @@ def mfsclean (cfg):
     # significantly than usual here.
 
     for model in models:
-        im.make (model)
+        im.make (b(model))
 
     # Go!
 
-    im.clean (algorithm='msmfs', niter=cfg.niter, gain=cfg.gain,
+    im.clean (algorithm=b'msmfs', niter=cfg.niter, gain=cfg.gain,
               threshold=qa.quantity (cfg.threshold, 'mJy'),
-              model=models, residual=resids, image=restoreds,
-              psfimage=psfs, mask=maskstr, interactive=False)
+              model=b(models), residual=b(resids), image=b(restoreds),
+              psfimage=b(psfs), mask=b(maskstr), interactive=False)
     im.close ()
 
 
@@ -1531,15 +1531,15 @@ def plotants (vis):
     import pylab as pl
     mp = util.tools.msplot ()
 
-    mp.open (vis)
+    mp.open (b(vis))
     pl.ion ()
     pl.clf ()
-    mp.plotoptions (plotsymbol='ro')
-    mp.plot (type='array')
+    mp.plotoptions (plotsymbol=b'ro')
+    mp.plot (type=b'array')
     mp.reset ()
-    pl.axis ('equal')
-    pl.axis ('scaled')
-    pl.title ('Antenna configuration stored in ' + vis)
+    pl.axis (b'equal')
+    pl.axis (b'scaled')
+    pl.title (b('Antenna configuration stored in ' + vis))
 
 
 def plotants_cli (argv):
@@ -1640,18 +1640,18 @@ def plotcal_multipage_pdf (cfg, pdfpath, **kwargs):
     from matplotlib.backends.backend_pdf import PdfPages
 
     cp = util.tools.calplot ()
-    cp.open (cfg.caltable)
-    cp.selectcal (antenna=cfg.antenna, field=cfg.field,
-                  poln=cfg.poln.upper (), spw=cfg.spw, time=cfg.timerange)
-    cp.plotoptions (iteration=cfg.iteration, plotrange=[0.0]*4,
-                    plotsymbol=cfg.plotsymbol,
-                    plotcolor=cfg.plotcolor,
-                    markersize=cfg.markersize,
-                    fontsize=cfg.fontsize)
+    cp.open (b(cfg.caltable))
+    cp.selectcal (antenna=b(cfg.antenna), field=b(cfg.field),
+                  poln=b(cfg.poln.upper ()), spw=b(cfg.spw), time=b(cfg.timerange))
+    cp.plotoptions (iteration=b(cfg.iteration), plotrange=[0.0]*4,
+                    plotsymbol=b(cfg.plotsymbol),
+                    plotcolor=b(cfg.plotcolor),
+                    markersize=b(cfg.markersize),
+                    fontsize=b(cfg.fontsize))
 
     pdf = PdfPages (pdfpath)
     try:
-        cp.plot (cfg.xaxis.upper (), cfg.yaxis.upper ())
+        cp.plot (b(cfg.xaxis.upper ()), b(cfg.yaxis.upper ()))
         pdf.savefig (**kwargs)
 
         while cp.next ():
@@ -1766,7 +1766,7 @@ def setjy (cfg):
         kws['modimage'] = mi
 
     im = util.tools.imager ()
-    im.open (cfg.vis, usescratch=False) # don't think you'll ever want True?
+    im.open (b(cfg.vis), usescratch=False) # don't think you'll ever want True?
     im.setjy (**kws)
     im.close ()
 
@@ -1838,7 +1838,7 @@ def split (cfg):
         kws['timebin'] = str (cfg.timebin) + 's'
 
     ms = util.tools.ms ()
-    ms.open (cfg.vis)
+    ms.open (b(cfg.vis))
 
     # split() will merrily overwrite an existing MS, which I think is
     # very bad behavior. We try to prevent this in two steps: 1) claim
@@ -1854,7 +1854,7 @@ def split (cfg):
     # It's also possible for someone with our UID to spoil our rename
     # by changing the permissions on our placeholder output directory
     # and stuffing something in it, but this failure mode doesn't
-    # involved data loss.
+    # involve data loss.
     #
     # We put the temporary working directory adjacent to the destination
     # to make sure it's on the same device.
@@ -1939,7 +1939,7 @@ class UvsubConfig (ParseKeywords):
 def uvsub (cfg):
     ms = util.tools.ms ()
 
-    ms.open (cfg.vis, nomodify=False)
+    ms.open (b(cfg.vis), nomodify=False)
     ms.msselect (extractmsselect (cfg, havearray=True,
                                   intenttoscanintent=True,
                                   taqltomsselect=False))
