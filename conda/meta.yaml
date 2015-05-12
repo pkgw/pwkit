@@ -1,17 +1,20 @@
 package:
   name: pwkit
-  version: !!str 0.5.0
+  version: "0.6.0"
 
 source:
-  fn: pwkit-0.5.0.tar.gz
-  url: https://pypi.python.org/packages/source/p/pwkit/pwkit-0.5.0.tar.gz
-  md5: bb0d7088248e1c84370a4ad63b9a7173
+  fn: pwkit-0.6.0.tar.gz
+  url: https://pypi.python.org/packages/source/p/pwkit/pwkit-0.6.0.tar.gz
+  md5: 89a9baf719be284a7169cec952e3451a
 
 build:
   entry_points:
     - astrotool = pwkit.cli.astrotool:commandline
+    - casatask = pwkit.environments.casa.tasks:commandline
     - imtool = pwkit.cli.imtool:commandline
     - latexdriver = pwkit.cli.latexdriver:commandline
+    - pkcasascript = pwkit.environments.casa.scripting:commandline
+    - pkenvtool = pwkit.environments:commandline
     - wrapout = pwkit.cli.wrapout:commandline
 
   # build number if rebuilding same version:
