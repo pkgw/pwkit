@@ -1828,7 +1828,7 @@ split_cli = makekwcli (split_doc, SplitConfig, split)
 # Shim for a separate module
 
 def spwglue_cli (argv):
-    from . import spwglue
+    from .spwglue import spwglue_cli
     spwglue_cli (argv)
 
 
