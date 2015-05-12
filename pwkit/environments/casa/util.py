@@ -92,7 +92,7 @@ def logger (filter='WARN'):
         try:
             os.chdir (tempdir)
             sink = tools.logsink ()
-            sink.setlogfile (os.devnull)
+            sink.setlogfile (binary_type (os.devnull))
             os.unlink ('casapy.log')
         finally:
             os.chdir (cwd)
@@ -135,7 +135,7 @@ def forkandlog (function, filter='INFO5', debug=False):
             os.dup2 (f.fileno (), 2)
 
         sink = logger (filter=filter)
-        sink.setlogfile ('/dev/fd/%d' % writefd)
+        sink.setlogfile (b'/dev/fd/%d' % writefd)
         function (sink)
         sys.exit (0)
 

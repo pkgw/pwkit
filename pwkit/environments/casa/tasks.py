@@ -39,6 +39,7 @@ gaincal gaincal_cli GaincalConfig
 gencal gencal_cli GencalConfig
 getopacities_cli
 image2fits image2fits_cli
+listobs listobs_cli
 mfsclean mfsclean_cli MfscleanConfig
 plotants plotants_cli
 plotcal plotcal_cli plotcal_multipage_page PlotcalConfig
@@ -1200,6 +1201,71 @@ def image2fits_cli (argv):
 
     image2fits (argv[1], argv[2])
 
+
+# listobs
+#
+# This one is mostly about the CLI.
+
+listobs_doc = \
+"""
+casatask listobs <MS>
+
+Generate a standard "listobs" listing of visibility MS contents. If
+standard output is a TTY, the listing will be paged.
+"""
+
+def listobs (vis):
+    """Generates a set of lines of output. Errors are only detected by looking
+    at the output."""
+
+    def inner_list (sink):
+        try:
+            ms = util.tools.ms ()
+            ms.open (vis)
+            ms.summary (verbose=True)
+            ms.close ()
+        except Exception as e:
+            sink.post (b'listobs failed: %s' % e, priority=b'SEVERE')
+
+    for line in util.forkandlog (inner_list):
+        info = line.rstrip ().split ('\t', 3) # date, priority, origin, message
+        if len (info) > 3:
+            yield info[3]
+        else:
+            yield ''
+
+
+def listobs_cli (argv):
+    check_usage (listobs_doc, argv, usageifnoargs=True)
+
+    if len (argv) != 2:
+        wrong_usage (listobs_doc, 'expect exactly one argument, the MS path')
+
+    vis = argv[1]
+
+    import sys
+    proc = None
+    out = sys.stdout
+
+    if sys.stdout.isatty () or \
+           (hasattr (sys.stdout, 'stream') and sys.stdout.stream.isatty ()):
+        # Send our output to a pager!
+        import os, subprocess
+        pager = os.environ.get ('PAGER') or 'less -SRFX'
+        try:
+            proc = subprocess.Popen (pager, stdin=subprocess.PIPE, close_fds=True,
+                                     shell=True)
+        except Exception as e:
+            warn ('couldn\'t start pager %r: %s', pager, e)
+        else:
+            out = proc.stdin
+
+    for line in listobs (vis):
+        print (line, file=out)
+
+    if proc is not None:
+        proc.stdin.close ()
+        proc.wait () # ignore return code
 
 # mfsclean
 #
