@@ -26,6 +26,7 @@ from ...kwargv import ParseKeywords, Custom
 
 __all__ = (b'''
 applycal applycal_cli ApplycalConfig
+bpplot bpplot_cli BpplotConfig
 clearcal clearcal_cli
 concat concat_cli
 delcal delcal_cli
@@ -287,6 +288,150 @@ def applycal (cfg):
 
 
 applycal_cli = makekwcli (applycal_doc, ApplycalConfig, applycal)
+
+
+# bpplot
+#
+# plotcal() can do this, but it is slow, ugly, and has not-very-informative
+# output. Yes, CASA is so crappy that I can even speed up bandpass plotting
+# by an order of magnitude.
+
+bpplot_doc = \
+"""
+casatask bpplot caltable= dest=
+
+Plot a bandpass calibration table. Currently, the supported format is a series
+of pages showing amplitude and phase against normalized channel number, with
+each page showing a particular antenna and polarization. Polarizations are
+always reported as "R" and "L" since the relevant information is not stored
+within the bandpass data set.
+
+caltable=MS
+  The input calibration Measurement Set
+
+dest=PATH
+  If specified, plots are saved to this file -- the format is inferred
+  from the extension, which must allow multiple pages to be saved. If
+  unspecified, the plots are displayed using a Gtk3 backend.
+
+dims=WIDTH,HEIGHT
+  If saving to a file, the dimensions of a each page. These are in points
+  for vector formats (PDF, PS) and pixels for bitmaps (PNG). Defaults to
+  1000, 600.
+
+margins=TOP,RIGHT,LEFT,BOTTOM
+  If saving to a file, the plot margins in the same units as the dims.
+  The default is 4 on every side.
+""" + loglevel_doc
+
+
+class BpplotConfig (ParseKeywords):
+    caltable = Custom (str, required=True)
+    dest = str
+    dims = [1000, 600]
+    margins = [4, 4, 4, 4]
+    loglevel = 'warn'
+
+
+def bpplot (cfg):
+    import os.path, numpy as np, omega as om, omega.render
+    from ... import numutil
+
+    if isinstance (cfg.dest, omega.render.Pager):
+        # This is for non-CLI invocation.
+        pager = cfg.dest
+    elif cfg.dest is None:
+        import omega.gtk3
+        pager = om.makeDisplayPager ()
+    else:
+        pager = om.makePager (cfg.dest,
+                              dims=cfg.dims,
+                              margins=cfg.margins,
+                              style=om.styles.ColorOnWhiteVector ())
+
+    tb = util.tools.table ()
+
+    tb.open (binary_type (cfg.caltable), nomodify=True)
+    spws = tb.getcol (b'SPECTRAL_WINDOW_ID')
+    ants = tb.getcol (b'ANTENNA1')
+    vals = tb.getcol (b'CPARAM')
+    flags = tb.getcol (b'FLAG')
+    tb.close ()
+
+    tb.open (binary_type (os.path.join (cfg.caltable, 'ANTENNA')), nomodify=True)
+    names = tb.getcol (b'NAME')
+    tb.close ()
+
+    npol, nchan, nsoln = vals.shape
+
+    # see what we've got
+
+    antpols = {}
+    seenspws = set ()
+
+    for ipol in xrange (npol):
+        for isoln in xrange (nsoln):
+            if not flags[ipol,:,isoln].all ():
+                k = (ants[isoln], ipol)
+                byspw = antpols.get (k)
+                if byspw is None:
+                    antpols[k] = byspw = []
+
+                byspw.append ((spws[isoln], isoln))
+                seenspws.add (spws[isoln])
+
+    seenspws = sorted (seenspws)
+    spw_to_offset = dict ((spwid, spwofs * nchan)
+                          for spwofs, spwid in enumerate (seenspws))
+
+    okvals = vals[np.where (~flags)]
+    max_am = np.abs (okvals).max () * 1.05
+    min_am = np.abs (okvals).min () * 0.95
+    max_ph = np.angle (okvals, deg=True).max () * 1.05
+    min_ph = np.angle (okvals, deg=True).min () * 0.95
+    if max_ph > 160:
+        max_ph = 180
+    if min_ph < -160:
+        min_ph = -180
+    polnames = 'RL' # XXX: identification doesn't seem to be stored in cal table
+
+    # plot away
+
+    for iant, ipol in sorted (antpols.iterkeys ()):
+        p_am = om.RectPlot ()
+        p_ph = om.RectPlot ()
+
+        for ispw, isoln in antpols[iant,ipol]:
+            f = flags[ipol,:,isoln]
+            a = np.abs (vals[ipol,:,isoln])
+            p = np.angle (vals[ipol,:,isoln], deg=True)
+            w = np.where (~f)[0]
+
+            for s in numutil.slice_around_gaps (w, 1):
+                p_am.addXY (w[s] + spw_to_offset[ispw], a[w[s]], None, dsn=ispw)
+                p_ph.addXY (w[s] + spw_to_offset[ispw], p[w[s]], None, dsn=ispw)
+
+        p_am.setBounds (xmin=0,
+                        xmax=len (seenspws) * nchan,
+                        ymin=min_am,
+                        ymax=max_am)
+        p_ph.setBounds (xmin=0,
+                        xmax=len (seenspws) * nchan,
+                        ymin=min_ph,
+                        ymax=max_ph)
+        p_am.addKeyItem ('%s %s' % (names[iant], polnames[ipol]))
+
+        p_am.bpainter.paintLabels = False
+        p_am.setYLabel ('Amplitude')
+        p_ph.setLabels ('Normalized channel', 'Phase (deg)')
+
+        vb = om.layout.VBox (2)
+        vb[0] = p_am
+        vb[1] = p_ph
+        vb.setWeight (0, 2.5)
+        pager.send (vb)
+
+bpplot_cli = makekwcli (bpplot_doc, BpplotConfig, bpplot)
 
 
 # clearcal
