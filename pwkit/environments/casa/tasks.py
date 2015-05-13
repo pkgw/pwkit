@@ -1082,7 +1082,7 @@ def ft (cfg):
         ia = util.tools.image ()
         ia.open (b(cfg.model[0]))
         # This gives Hz:
-        reffreq = ia.coordsys ().referencevalue (type='spectral')['numeric'][0]
+        reffreq = ia.coordsys ().referencevalue (type=b'spectral')['numeric'][0]
         ia.close ()
         im.settaylorterms (ntaylorterms=nmodel, reffreq=reffreq)
 
@@ -1627,7 +1627,7 @@ def mfsclean (cfg):
 
     selkws = extractmsselect (cfg, havearray=False, haveintent=False, taqltomsselect=False)
     ms.open (b(cfg.vis))
-    ms.msselect (selkws)
+    ms.msselect (b(selkws))
     rangeinfo = ms.range (b'data_desc_id field_id'.split ())
     ddids = rangeinfo['data_desc_id']
     fields = rangeinfo['field_id']
@@ -1677,8 +1677,8 @@ def mfsclean (cfg):
     im.open (b(cfg.vis), usescratch=False)
     im.selectvis (nchan=-1, start=0, step=1, usescratch=False, writeaccess=False, **b(selkws))
     im.defineimage (nx=cfg.imsize[0], ny=cfg.imsize[1],
-                    cellx=qa.quantity (cfg.cell, 'arcsec'),
-                    celly=qa.quantity (cfg.cell, 'arcsec'),
+                    cellx=qa.quantity (b(cfg.cell), b'arcsec'),
+                    celly=qa.quantity (b(cfg.cell), b'arcsec'),
                     outframe=b(specframe), phasecenter=b(phasecenter),
                     stokes=cfg.stokes,
                     spw=-1, # to verify: selectvis (spw=) good enough?
@@ -1739,7 +1739,7 @@ def mfsclean (cfg):
     # Go!
 
     im.clean (algorithm=b'msmfs', niter=cfg.niter, gain=cfg.gain,
-              threshold=qa.quantity (cfg.threshold, 'mJy'),
+              threshold=qa.quantity (b(cfg.threshold), b'mJy'),
               model=b(models), residual=b(resids), image=b(restoreds),
               psfimage=b(psfs), mask=b(maskstr), interactive=False)
     im.close ()
@@ -2169,9 +2169,10 @@ def uvsub (cfg):
     ms = util.tools.ms ()
 
     ms.open (b(cfg.vis), nomodify=False)
-    ms.msselect (extractmsselect (cfg, havearray=True,
-                                  intenttoscanintent=True,
-                                  taqltomsselect=False))
+    ms.msselect (b(extractmsselect (cfg,
+                                    havearray=True,
+                                    intenttoscanintent=True,
+                                    taqltomsselect=False)))
     ms.uvsub (reverse=cfg.reverse)
     ms.close ()
 
