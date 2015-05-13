@@ -7,10 +7,10 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'''INVERSE_C_MS INVERSE_C_MNS pol_names pol_to_miriad msselect_keys datadir
-logger forkandlog tools''').split ()
+__all__ = (b'''INVERSE_C_MS INVERSE_C_MNS pol_names pol_to_miriad msselect_keys
+datadir logger forkandlog sanitize_unicode tools''').split ()
 
-from ... import binary_type
+from ... import binary_type, text_type
 
 # Some constants that can be useful.
 
@@ -43,6 +43,30 @@ pol_to_miriad = {
 
 msselect_keys = frozenset ('array baseline field observation '
                            'scan scaninent spw taql time uvdist'.split ())
+
+
+def sanitize_unicode (item):
+
+    """The Python bindings to CASA tasks expect to receive all string values
+    as binary data (Python 2.X "str" or 3.X "bytes") and not Unicode (Python
+    2.X "unicode" or 3.X "str"). To prep for Python 3 (not that CASA will ever
+    be compatible with it ...) I true to use the unicode_literals everywhere,
+    and other Python modules are getting better about using Unicode
+    consistently, so this causes problems. This helper converts Unicode into
+    UTF-8 encoded bytes, handling the common data structures that are passed
+    to CASA functions.
+
+    I usually import this as just 'b' and write tool.method (b(arg)), in
+    analogy with the b'' byte string syntax.
+
+    """
+    if isinstance (item, text_type):
+        return item.encode ('utf8')
+    if isinstance (item, dict):
+        return dict ((sanitize_unicode (k), sanitize_unicode (v)) for k, v in item.iteritems ())
+    if isinstance (item, (list, tuple)):
+        return item.__class__ (sanitize_unicode (x) for x in item)
+    return item
 
 
 # Finding the data directory
@@ -92,7 +116,7 @@ def logger (filter='WARN'):
         try:
             os.chdir (tempdir)
             sink = tools.logsink ()
-            sink.setlogfile (binary_type (os.devnull))
+            sink.setlogfile (sanitize_unicode (os.devnull))
             os.unlink ('casapy.log')
         finally:
             os.chdir (cwd)
@@ -102,7 +126,7 @@ def logger (filter='WARN'):
 
     sink.showconsole (True)
     sink.setglobal (True)
-    sink.filter (binary_type (filter.upper ()))
+    sink.filter (sanitize_unicode (filter.upper ()))
     return sink
 
 

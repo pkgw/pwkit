@@ -58,15 +58,7 @@ cmdline_driver
 
 # Some utilities
 
-def b (item):
-    if isinstance (item, text_type):
-        return item.encode ('utf8')
-    if isinstance (item, dict):
-        return dict ((b (k), b (v)) for k, v in item.iteritems ())
-    if isinstance (item, (list, tuple)):
-        return item.__class__ (b (x) for x in item)
-    return item
-
+from .util import sanitize_unicode as b
 
 precal_doc = \
 """

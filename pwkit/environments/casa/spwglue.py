@@ -17,12 +17,7 @@ from ... import binary_type, text_type
 from ...kwargv import ParseKeywords, Custom
 from ...cli import check_usage, die
 from . import util
-
-
-def b (val):
-    if isinstance (val, text_type):
-        return val.encode ('utf8')
-    return val
+from .util import sanitize_unicode as b
 
 def _sfmt (t):
     # Format timespan (t in seconds)
