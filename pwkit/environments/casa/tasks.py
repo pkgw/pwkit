@@ -34,6 +34,7 @@ clearcal clearcal_cli
 concat concat_cli
 delcal delcal_cli
 delmod delmod_cli
+dftphotom_cli
 extractbpflags extractbpflags_cli
 flagmanager_cli
 flaglist flaglist_cli FlaglistConfig
@@ -623,6 +624,15 @@ def delmod_cli (argv, alter_logger=True):
         cb.open (b(mspath), addcorr=False, addmodel=False)
         cb.delmod (otf=True, scr=False)
         cb.close ()
+
+
+# dftphotom
+#
+# Shim for a separate module
+
+def dftphotom_cli (argv):
+    from .dftphotom import dftphotom_cli
+    dftphotom_cli (argv)
 
 
 # extractbpflags
