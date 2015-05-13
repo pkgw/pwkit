@@ -34,6 +34,7 @@ clearcal clearcal_cli
 concat concat_cli
 delcal delcal_cli
 delmod delmod_cli
+extractbpflags extractbpflags_cli
 flagmanager_cli
 flaglist flaglist_cli FlaglistConfig
 flagzeros flagzeros_cli FlagzerosConfig
@@ -630,6 +631,89 @@ def delmod_cli (argv, alter_logger=True):
         cb.open (b(mspath), addcorr=False, addmodel=False)
         cb.delmod (otf=True, scr=False)
         cb.close ()
+
+
+# extractbpflags
+#
+# Not a CASA task, but I've found this to be very useful.
+
+extractbpflags_doc = \
+"""
+When CASA encounters flagged channels in bandpass calibration tables, it
+interpolates over them as best it can -- even if interp='<any>,nearest'. This
+means that if certain channels are unflagged in some target data but entirely
+flagged in your BP cal, they'll get multiplied by some number that may or may
+not be reasonable, not flagged. This is scary if, for instance, you're using
+an automated system to find RFI, or you flag edge channels in some uneven way.
+
+This script writes out a list of flagging commands corresponding to the
+flagged channels in the bandpass table to ensure that the data without
+bandpass solutions are flagged.
+
+Note that, because we can't select by antpol, we can't express a situation in
+which the R and L bandpass solutions have different flags. But in CASA the
+flags seem to always be the same.
+
+We're assuming that the channelization of the bandpass solution and the data
+are the same.
+"""
+
+def extractbpflags (calpath, deststream):
+    tb = util.tools.table ()
+    tb.open (b(os.path.join (calpath, 'ANTENNA')))
+    antnames = tb.getcol (b'NAME')
+    tb.close ()
+
+    tb.open (b(calpath))
+    try:
+        t = tb.getkeyword (b'VisCal')
+    except RuntimeError:
+        raise PKError ('no "VisCal" keyword in %s; it doesn\'t seem to be a '
+                       'bandpass calibration table', calpath)
+
+    if t != 'B Jones':
+        raise PKError ('table %s doesn\'t seem to be a bandpass calibration '
+                       'table; its type is "%s"', calpath, t)
+
+    def emit (antidx, spwidx, chanstart, chanend):
+        # Channel ranges are inclusive, unlike Python syntax.
+        print ("antenna='%s&*' spw='%d:%d~%d' reason='BANDPASS_FLAGGED'" % \
+               (antnames[antidx], spwidx, chanstart, chanend), file=deststream)
+
+    for row in xrange (tb.nrows ()):
+        ant = tb.getcell (b'ANTENNA1', row)
+        spw = tb.getcell (b'SPECTRAL_WINDOW_ID', row)
+        flag = tb.getcell (b'FLAG', row)
+
+        # This is the logical 'or' of the two polarizations: i.e., anything that
+        # is flagged in either poln is flagged in this.
+        sqflag = ~((~flag).prod (axis=0, dtype=np.bool))
+
+        runstart = None
+
+        for i in xrange (sqflag.size):
+            if sqflag[i]:
+                # This channel is flagged. Start a run if not already in one.
+                if runstart is None:
+                    runstart = i
+            elif runstart is not None:
+                # The current run just ended.
+                emit (ant, spw, runstart, i - 1)
+                runstart = None
+
+        if runstart is not None:
+            emit (ant, spw, runstart, i)
+
+    tb.close ()
+
+
+def extractbpflags_cli (argv):
+    check_usage (extractbpflags_doc, argv, usageifnoargs='long')
+
+    if len (argv) != 2:
+        wrong_usage (extractbpflags_doc, 'expect one MS name as an argument')
+
+    extractbpflags (argv[1], sys.stdout)
 
 
 # flagmanager. Not really complicated enough to make it worth making a
