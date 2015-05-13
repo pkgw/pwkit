@@ -1374,10 +1374,16 @@ gencal_cli = makekwcli (gencal_doc, GencalConfig, gencal)
 
 getopacities_doc = \
 """
-casatask getopacities <MS> <spwwidth1,spwwidth2,...> <plotdest>
+casatask getopacities <MS> <plotdest> [spwwidth1,spwwidth2]
 
 Calculate atmospheric opacities in the MS's spectral windows from its weather
-data. Output the opacities and save a plot of the weather conditions.
+data. Output the opacities and save a plot of the weather conditions. Optionally
+output opacities averaged over spectral windows; for instance, in a standard
+VLA wideband setup, in which the data come in 16 spectral windows,
+
+  casatask getopacities unglued.ms weather.png 8,8
+
+will print 2 values, averaged over 8 spectral windows each.
 """
 
 def getopacities (ms, plotdest):
@@ -1399,11 +1405,23 @@ def getopacities (ms, plotdest):
 def getopacities_cli (argv):
     check_usage (getopacities_doc, argv, usageifnoargs=True)
 
-    if len (argv) != 3:
-        wrong_usage (getopacities_doc, 'expected exactly 2 arguments')
+    if len (argv) not in (3, 4):
+        wrong_usage (getopacities_doc, 'expected 2 or 3 arguments')
 
     opac = getopacities (argv[1], argv[2])
-    print ('opac = ', opac)
+
+    if len (argv) > 3:
+        spwwidths = [int (x) for x in argv[3].split (',')]
+        averaged = []
+        idx = 0
+
+        for width in spwwidths:
+            averaged.append (opac[idx:idx+width].mean ())
+            idx += width
+
+        opac = averaged
+
+    print ('opacity = [%s]' % (', '.join ('%.5f' % q for q in opac)))
 
 
 # image2fits
