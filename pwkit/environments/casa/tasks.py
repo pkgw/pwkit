@@ -17,8 +17,11 @@ it, we make them available on the command line.
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import os.path, sys
+import numpy as np
+
 from . import util
-from ... import binary_type, reraise_context, text_type
+from ... import binary_type, reraise_context, text_type, PKError
 from ...cli import check_usage, wrong_usage, warn, die
 from ...kwargv import ParseKeywords, Custom
 
@@ -334,7 +337,7 @@ class BpplotConfig (ParseKeywords):
 
 
 def bpplot (cfg):
-    import os.path, numpy as np, omega as om, omega.render
+    import omega as om, omega.render
     from ... import numutil
 
     if isinstance (cfg.dest, omega.render.Pager):
@@ -519,7 +522,6 @@ concat_freqtol = 1e-5
 concat_dirtol = 1e-5
 
 def concat (invises, outvis, timesort=False):
-    import os.path
     tb = util.tools.table ()
     ms = util.tools.ms ()
 
@@ -642,7 +644,6 @@ casatask flagmanager delete <ms> <name>
 """
 
 def flagmanager_cli (argv, alter_logger=True):
-    import os.path
     check_usage (flagmanager_doc, argv, usageifnoargs=True)
 
     if len (argv) < 3:
@@ -1265,7 +1266,6 @@ def gencal (cfg):
         from correct_ant_posns import correct_ant_posns
         info = correct_ant_posns (cfg.vis, False)
         if len (info) != 3 or info[0] != 0 or not len (info[1]):
-            import sys
             print ('correct_ant_posns: got %r' % info, file=sys.stderr)
             raise RuntimeError ('failed to fetch VLA antenna positions')
 
@@ -1295,7 +1295,7 @@ data. Output the opacities and save a plot of the weather conditions.
 """
 
 def getopacities (ms, plotdest):
-    import os.path, cPickle as pickle
+    import cPickle as pickle
     from .scripting import CasapyScript
 
     script = os.path.join (os.path.dirname (__file__), 'cscript_getopacities.py')
@@ -1392,14 +1392,13 @@ def listobs_cli (argv):
 
     vis = argv[1]
 
-    import sys
     proc = None
     out = sys.stdout
 
     if sys.stdout.isatty () or \
            (hasattr (sys.stdout, 'stream') and sys.stdout.stream.isatty ()):
         # Send our output to a pager!
-        import os, subprocess
+        import subprocess
         pager = os.environ.get ('PAGER') or 'less -SRFX'
         try:
             proc = subprocess.Popen (pager, stdin=subprocess.PIPE, close_fds=True,
@@ -1510,8 +1509,6 @@ specframenames = 'REST LSRK LSRD BARY GEO TOPO GALACTO LGROUP CMB'.split ()
 
 
 def mfsclean (cfg):
-    import os.path
-
     ms = util.tools.ms ()
     im = util.tools.imager ()
     tb = util.tools.table ()
@@ -1692,7 +1689,7 @@ def plotants (vis):
 
 
 def plotants_cli (argv):
-    import os, pylab as pl
+    import pylab as pl
 
     check_usage (plotants_doc, argv, usageifnoargs=True)
 
@@ -1812,7 +1809,7 @@ def plotcal_multipage_pdf (cfg, pdfpath, **kwargs):
 
 
 def plotcal_cli (argv):
-    import os, pylab as pl
+    import pylab as pl
     check_usage (plotcal_doc, argv, usageifnoargs=True)
 
     # I can't find where in the source this shows up (maybe removed by 4.0?)
@@ -1892,7 +1889,6 @@ class SetjyConfig (ParseKeywords):
 
 
 def setjy (cfg):
-    import os.path
     kws = {}
 
     for kw in 'field fluxdensity observation scan spw standard'.split ():
@@ -1973,7 +1969,7 @@ class SplitConfig (ParseKeywords):
 
 
 def split (cfg):
-    import os.path, tempfile, shutil
+    import tempfile, shutil
 
     kws = extractmsselect (cfg, havearray=True, havecorr=True,
                            observationtoobs=True, taqltomsselect=False)
@@ -2117,8 +2113,6 @@ def cmdline_usage (stream, exitcode):
 
 
 def commandline (argv=None):
-    import sys
-
     if argv is None:
         argv = sys.argv
         from ... import cli
