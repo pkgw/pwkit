@@ -84,35 +84,39 @@ class App2abs (multitool.Command):
 class C2m (multitool.Command):
     name = 'c2m'
     argspec = '<year> <month> <frac.day> [hour] [min] [sec]'
-    summary = 'Convert a calendar date to MJD[TAI].'
+    summary = 'Convert a UTC calendar date to MJD[TAI].'
+    more_help = '''Note that fractional UTC days are not well-specified because of
+the possibility of leap seconds.'''
 
     def invoke (self, args, **kwargs):
-        """c2m  - calendar to MJD[TAI]"""
+        """c2m  - UTC calendar to MJD[TAI]"""
 
         if len (args) not in (3, 6):
             raise multitool.UsageError ('c2m expected exactly 3 or 6 arguments')
 
-        try:
-            import precastro
-        except ImportError:
-            die ('need the "precastro" module')
-
         year = int (args[0])
         month = int (args[1])
+
+        import astropy.time
 
         if len (args) == 3:
             day = float (args[2])
             iday = int (math.floor (day))
-            fday = day - iday
+            r = 24 * (day - iday)
+            hour = int (np.floor (r))
+            r = 60 * (r - hour)
+            minute = int (np.floor (r))
+            second = 60 * (r - minute)
         else:
             iday = int (args[2])
             hour = int (args[3])
             minute = int (args[4])
             second = float (args[5])
-            fday = (hour + minute / 60. + second / 3600.) / 24
 
-        t = precastro.Time ().fromfdcal (year, month, iday, fday, 'TAI')
-        print ('%.4f' % t.asMJD ())
+        s = '%d-%02d-%02d %02d:%02d:%02.8f' % (year, month, iday,
+                                               hour, minute, second)
+        t = astropy.time.Time (s, format='iso', scale='utc')
+        print ('%.4f' % t.tai.mjd)
 
 
 class Calc (multitool.Command):
@@ -232,20 +236,17 @@ class Lum2flux (multitool.Command):
 class M2c (multitool.Command):
     name = 'm2c'
     argspec = '<MJD>'
-    summary = 'Convert MJD[TAI] to a calendar date.'
+    summary = 'Convert MJD[TAI] to a UTC calendar date.'
 
     def invoke (self, args, **kwargs):
         if len (args) != 1:
             raise multitool.UsageError ('m2c expected exactly 1 argument')
 
-        try:
-            import precastro
-        except ImportError:
-            die ('need the "precastro" module')
-
         mjd = float (args[0])
-        t = precastro.Time ().fromMJD (mjd, 'TAI')
-        print (t.fmtcalendar ())
+
+        import astropy.time
+        t = astropy.time.Time (mjd, format='mjd', scale='tai')
+        print (t.utc.iso, 'UTC')
 
 
 class Sastrom (multitool.Command):
