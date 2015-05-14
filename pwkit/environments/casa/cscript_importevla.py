@@ -9,19 +9,19 @@ It is also not intended to be invoked directly through pkcasascript. See
 
 """
 
-def in_casapy (helper, args):
+def in_casapy (helper, asdm=None, ms=None, tbuff=None):
     """This function is run inside the weirdo casapy IPython environment! A
     strange set of modules is available, and the
     `pwkit.environments.casa.scripting` system sets up a very particular
     environment to allow encapsulated scripting.
 
     """
-    if len (args) != 3:
-        helper.die ('usage: cscript_importevla.py <ASDM> <MS> <tbuff>')
-
-    asdm = args[0]
-    ms = args[1]
-    tbuff = args[2]
+    if asdm is None:
+        raise ValueError ('asdm')
+    if ms is None:
+        raise ValueError ('ms')
+    if tbuff is None:
+        raise ValueError ('tbuff')
 
     helper.casans.importevla (asdm=asdm, vis=ms, ocorr_mode='co', online=True,
                               tbuff=tbuff, flagpol=False, tolerance=1.3,

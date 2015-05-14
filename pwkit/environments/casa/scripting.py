@@ -67,9 +67,9 @@ class CasapyScript (object):
     code sleeps for at least 5 seconds to allow various cleanups to happen.
 
     """
-    def __init__ (self, script, args, raise_on_error=True):
+    def __init__ (self, script, raise_on_error=True, **kwargs):
         self.script = script
-        self.args = args
+        self.kwargs = kwargs
         self.raise_on_error = raise_on_error
 
 
@@ -91,7 +91,7 @@ class CasapyScript (object):
         with open (self.wrapped, 'wb') as wrapper:
             print ('_pkcs_script = ' + repr (self.script), file=wrapper)
             print ('_pkcs_text = ' + repr (text), file=wrapper)
-            print ('_pkcs_args = ' + repr (self.args), file=wrapper)
+            print ('_pkcs_kwargs = ' + repr (self.kwargs), file=wrapper)
             print ('_pkcs_origcwd = ' + repr (os.getcwd ()), file=wrapper)
 
             driver = __file__.replace ('.pyc', '.py').replace ('.py', '_driver.py')
@@ -221,7 +221,7 @@ def commandline (argv=None):
     args = argv[2:]
 
     try:
-        with CasapyScript (script, args) as cs:
+        with CasapyScript (script, cli_args=args) as cs:
             pass
     except Exception:
         reraise_context ('when running casapy script %r', script)

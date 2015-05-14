@@ -1392,7 +1392,7 @@ def getopacities (ms, plotdest):
 
     script = os.path.join (os.path.dirname (__file__), 'cscript_getopacities.py')
 
-    with CasapyScript (script, [ms, plotdest]) as cs:
+    with CasapyScript (script, ms=ms, plotdest=plotdest) as cs:
         try:
             with open (os.path.join (cs.workdir, 'opac.npy'), 'rb') as f:
                 opac = pickle.load (f)
@@ -1506,7 +1506,7 @@ def importevla (asdm, ms):
     print ('importevla: %s -> %s with tbuff=%.2f', asdm, ms, tbuff)
 
     script = os.path.join (os.path.dirname (__file__), 'cscript_importevla.py')
-    with CasapyScript (script, [asdm, ms, tbuff]) as cs:
+    with CasapyScript (script, asdm=asdm, ms=ms, tbuff=tbuff) as cs:
         pass
 
 

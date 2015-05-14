@@ -16,7 +16,9 @@ reprs before the beginning of this file).
   _pkcs_script  - the path the script file to be run
   _pkcs_text    - the contents of that file -- allows existence-checking to
                   happen before casapy is started
-  _pkcs_args    - the script arguments (without the argv[0] equivalent)
+  _pkcs_kwargs  - keyword arguments to the script. If it was launched from
+                  the CLI, the command-line arguments are available as a
+                  list "cli_args", not including argv[0].
   _pkcs_origcwd - the original working directory of the script; we chdir()
                   on startup to hide the log files.
 """
@@ -119,7 +121,7 @@ def _pkcs_inner ():
         helper.die ('script %r provides something called "in_casapy", but '
                     'it\'s not a function', _pkcs_script)
 
-    in_casapy_func (helper, _pkcs_args)
+    in_casapy_func (helper, **_pkcs_kwargs)
 
 
 if running_in_casapy:

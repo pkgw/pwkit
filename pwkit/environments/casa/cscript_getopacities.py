@@ -9,7 +9,7 @@ It is also useless to run directly via pkcasascript. Use
 
 """
 
-def in_casapy (helper, args):
+def in_casapy (helper, ms=None, plotdest=None):
     """This function is run inside the weirdo casapy IPython environment! A
     strange set of modules is available, and the
     `pwkit.environments.casa.scripting` system sets up a very particular
@@ -18,11 +18,10 @@ def in_casapy (helper, args):
     """
     import numpy as np, os, cPickle as pickle
 
-    if len (args) != 2:
-        helper.die ('usage: cscript_getopacities.py <MS> <plotdest>')
-
-    ms = args[0]
-    plotdest = args[1]
+    if ms is None:
+        raise ValueError ('ms')
+    if plotdest is None:
+        raise ValueError ('plotdest')
 
     opac = helper.casans.plotweather (vis=ms)
 
