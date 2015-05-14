@@ -43,7 +43,7 @@ fluxscale fluxscale_cli FluxscaleConfig
 ft ft_cli FtConfig
 gaincal gaincal_cli GaincalConfig
 gencal gencal_cli GencalConfig
-getopacities_cli
+getopacities getopacities_cli
 image2fits image2fits_cli
 listobs listobs_cli
 mfsclean mfsclean_cli MfscleanConfig
@@ -1369,8 +1369,7 @@ gencal_cli = makekwcli (gencal_doc, GencalConfig, gencal)
 
 # getopacities
 #
-# This is a casapy script. TODO: we could make the script callable as a
-# function and not CLI-only with a bit of work.
+# This is a casapy script.
 
 getopacities_doc = \
 """
