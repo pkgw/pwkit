@@ -44,6 +44,7 @@ ft ft_cli FtConfig
 gaincal gaincal_cli GaincalConfig
 gencal gencal_cli GencalConfig
 getopacities getopacities_cli
+gpplot gpplot_cli GpplotConfig
 image2fits image2fits_cli
 importevla importevla_cli
 listobs listobs_cli
@@ -1422,6 +1423,168 @@ def getopacities_cli (argv):
         opac = averaged
 
     print ('opacity = [%s]' % (', '.join ('%.5f' % q for q in opac)))
+
+
+# gpplot
+#
+# See bpplot() -- CASA plotcal can do this in a certain sense, but it's slow
+# and ugly.
+
+gpplot_doc = \
+"""
+casatask gpplot caltable= dest=
+
+Plot a gain calibration table. Currently, the supported format is a series of
+pages showing amplitude and phase against time, with each page showing a
+particular antenna and polarization. Polarizations are always reported as "R"
+and "L" since the relevant information is not stored within the bandpass data
+set.
+
+caltable=MS
+  The input calibration Measurement Set
+
+dest=PATH
+  If specified, plots are saved to this file -- the format is inferred
+  from the extension, which must allow multiple pages to be saved. If
+  unspecified, the plots are displayed using a Gtk3 backend.
+
+dims=WIDTH,HEIGHT
+  If saving to a file, the dimensions of a each page. These are in points
+  for vector formats (PDF, PS) and pixels for bitmaps (PNG). Defaults to
+  1000, 600.
+
+margins=TOP,RIGHT,LEFT,BOTTOM
+  If saving to a file, the plot margins in the same units as the dims.
+  The default is 4 on every side.
+""" + loglevel_doc
+
+
+class GpplotConfig (ParseKeywords):
+    caltable = Custom (str, required=True)
+    dest = str
+    dims = [1000, 600]
+    margins = [4, 4, 4, 4]
+    loglevel = 'warn'
+
+
+def gpplot (cfg):
+    import omega as om, omega.render
+    from ... import numutil
+
+    if isinstance (cfg.dest, omega.render.Pager):
+        # This is for non-CLI invocation.
+        pager = cfg.dest
+    elif cfg.dest is None:
+        import omega.gtk3
+        pager = om.makeDisplayPager ()
+    else:
+        pager = om.makePager (cfg.dest,
+                              dims=cfg.dims,
+                              margins=cfg.margins,
+                              style=om.styles.ColorOnWhiteVector ())
+
+    tb = util.tools.table ()
+
+    tb.open (binary_type (cfg.caltable), nomodify=True)
+    fields = tb.getcol (b'FIELD_ID')
+    spws = tb.getcol (b'SPECTRAL_WINDOW_ID')
+    ants = tb.getcol (b'ANTENNA1')
+    vals = tb.getcol (b'CPARAM')
+    flags = tb.getcol (b'FLAG')
+    times = tb.getcol (b'TIME')
+    tb.close ()
+
+    tb.open (binary_type (os.path.join (cfg.caltable, 'ANTENNA')), nomodify=True)
+    names = tb.getcol (b'NAME')
+    tb.close ()
+
+    npol, unused, nsoln = vals.shape
+    assert unused == 1, 'unexpected gain table structure!'
+    vals = vals[:,0,:]
+    flags = flags[:,0,:]
+
+    # see what we've got
+
+    def seen_values (data):
+        return [idx for idx, count in enumerate (np.bincount (data)) if count]
+
+    any_ok = ~(np.all (flags, axis=0)) # mask for solns where at least one pol is unflagged
+    seenfields = seen_values (fields[any_ok])
+    seenspws = seen_values (spws[any_ok])
+    seenants = seen_values (ants[any_ok])
+
+    field_offsets = dict ((fieldid, idx) for idx, fieldid in enumerate (seenfields))
+    spw_offsets = dict ((spwid, idx) for idx, spwid in enumerate (seenspws))
+
+    times /= 86400. # convert to MJD
+    min_time = times[any_ok].min ()
+    max_time = times[any_ok].max ()
+    mjdref = int (np.floor (min_time))
+    times -= mjdref # convert to delta-MJD
+    min_time = (min_time - mjdref) * 0.95
+    max_time = (max_time - mjdref) * 1.05
+
+    okvals = vals[np.where (~flags)]
+    max_am = np.abs (okvals).max () * 1.05
+    min_am = np.abs (okvals).min () * 0.95
+    max_ph = np.angle (okvals, deg=True).max () * 1.05
+    min_ph = np.angle (okvals, deg=True).min () * 0.95
+    if max_ph > 160:
+        max_ph = 180
+    if min_ph < -160:
+        min_ph = -180
+
+    polnames = 'RL' # XXX: identification doesn't seem to be stored in cal table
+    maxtimegap = 10. / 1440 # 10 minutes, in units of days
+
+    for iant in seenants:
+        for ipol in xrange (npol):
+            filter = (ants == iant) & ~flags[ipol]
+            p_am = om.RectPlot ()
+            p_ph = om.RectPlot ()
+            anyseen = False
+
+            for ispw in seenspws:
+                # XXX: do something by field
+                sfilter = filter & (spws == ispw)
+                t = times[sfilter]
+                if not times.size:
+                    continue
+
+                v = vals[ipol,sfilter]
+                a = np.abs (v)
+                p = np.angle (v, deg=True)
+                kt = '%s %s spw#%d' % (names[iant], polnames[ipol], ispw)
+
+                for s in numutil.slice_around_gaps (t, maxtimegap):
+                    p_am.addXY (t[s], a[s], kt, dsn=spw_offsets[ispw])
+                    p_ph.addXY (t[s], p[s], None, dsn=spw_offsets[ispw])
+                    anyseen = True
+                    kt = None
+
+            if not anyseen:
+                continue
+
+            p_am.setBounds (xmin=min_time,
+                            xmax=max_time,
+                            ymin=min_am,
+                            ymax=max_am)
+            p_ph.setBounds (xmin=min_time,
+                            xmax=max_time,
+                            ymin=min_ph,
+                            ymax=max_ph)
+
+            p_am.bpainter.paintLabels = False
+            p_am.setYLabel ('Amplitude')
+            p_ph.setLabels ('Time (MJD - %d)' % mjdref, 'Phase (deg)')
+
+            vb = om.layout.VBox (2)
+            vb[0] = p_am
+            vb[1] = p_ph
+            vb.setWeight (0, 2.5)
+            pager.send (vb)
+
+gpplot_cli = makekwcli (gpplot_doc, GpplotConfig, gpplot)
 
 
 # image2fits
