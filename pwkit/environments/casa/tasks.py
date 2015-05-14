@@ -1929,66 +1929,45 @@ class PlotcalConfig (ParseKeywords):
     spw = ''
     timerange = ''
 
-    loglevel = 'warn'
-
 
 def plotcal (cfg):
-    cp = util.tools.calplot ()
+    # casa-tools plotting relies on invoking matplotlib in an internal Python
+    # interpreter (!), and it uses a very old version of matplotlib that's
+    # essentially incompatible with what's available in any up-to-date Python
+    # environment (e.g. Anaconda). Therefore we have to launch any plotcal
+    # operations as casapy scripts to ensure compatibility.
 
-    cp.open (b(cfg.caltable))
-    cp.selectcal (antenna=b(cfg.antenna), field=b(cfg.field),
-                  poln=b(cfg.poln.upper ()), spw=b(cfg.spw), time=b(cfg.timerange))
-    cp.plotoptions (iteration=b(cfg.iteration), plotrange=[0.0]*4,
-                    plotsymbol=b(cfg.plotsymbol),
-                    plotcolor=b(cfg.plotcolor),
-                    markersize=b(cfg.markersize),
-                    fontsize=b(cfg.fontsize))
-    cp.plot (b(cfg.xaxis.upper ()), b(cfg.yaxis.upper ()))
+    from .scripting import CasapyScript
 
-    if cfg.figfile is not None:
-        cp.savefig (b(cfg.figfile))
+    script = os.path.join (os.path.dirname (__file__), 'cscript_plotcal.py')
 
+    selectcals = b(dict (antenna = cfg.antenna,
+                         field = cfg.field,
+                         poln = cfg.poln.upper (),
+                         spw = cfg.spw,
+                         time = cfg.timerange))
 
-def plotcal_multipage_pdf (cfg, pdfpath, **kwargs):
-    import matplotlib.pyplot as plt
-    from matplotlib.backends.backend_pdf import PdfPages
+    plotoptions = b(dict (iteration = cfg.iteration,
+                          plotrange = [0.0]*4,
+                          plotsymbol = cfg.plotsymbol,
+                          plotcolor = cfg.plotcolor,
+                          markersize = cfg.markersize,
+                          fontsize = cfg.fontsize))
 
-    cp = util.tools.calplot ()
-    cp.open (b(cfg.caltable))
-    cp.selectcal (antenna=b(cfg.antenna), field=b(cfg.field),
-                  poln=b(cfg.poln.upper ()), spw=b(cfg.spw), time=b(cfg.timerange))
-    cp.plotoptions (iteration=b(cfg.iteration), plotrange=[0.0]*4,
-                    plotsymbol=b(cfg.plotsymbol),
-                    plotcolor=b(cfg.plotcolor),
-                    markersize=b(cfg.markersize),
-                    fontsize=b(cfg.fontsize))
-
-    pdf = PdfPages (pdfpath)
-    try:
-        cp.plot (b(cfg.xaxis.upper ()), b(cfg.yaxis.upper ()))
-        pdf.savefig (**b(kwargs))
-
-        while cp.next ():
-            pdf.savefig (**b(kwargs))
-
-        plt.close ()
-    finally:
-        pdf.close ()
+    with CasapyScript (script,
+                       caltable=b(cfg.caltable),
+                       selectcals=selectcals,
+                       plotoptions=plotoptions,
+                       xaxis=b(cfg.xaxis.upper ()),
+                       yaxis=b(cfg.yaxis.upper ()),
+                       figfile=b(cfg.figfile)) as cs:
+        pass
 
 
 def plotcal_cli (argv):
-    import pylab as pl
     check_usage (plotcal_doc, argv, usageifnoargs=True)
-
-    # I can't find where in the source this shows up (maybe removed by 4.0?)
-    # but if I turn off the check, things seem to still work without the
-    # annoying warnings.
-    os.environ['CASA_NOLUSTRE_CHECK'] = '1'
-
     cfg = PlotcalConfig ().parse (argv[1:])
-    util.logger (cfg.loglevel)
     plotcal (cfg)
-    pl.show ()
 
 
 # setjy
