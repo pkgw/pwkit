@@ -45,6 +45,7 @@ gaincal gaincal_cli GaincalConfig
 gencal gencal_cli GencalConfig
 getopacities getopacities_cli
 image2fits image2fits_cli
+importevla importevla_cli
 listobs listobs_cli
 mfsclean mfsclean_cli MfscleanConfig
 plotants plotants_cli
@@ -1434,6 +1435,70 @@ def image2fits_cli (argv):
         wrong_usage (image2fits_doc, 'expected exactly 2 arguments')
 
     image2fits (argv[1], argv[2])
+
+
+# importevla
+#
+# This is a casapy script. We don't reeeallly need to be, but there's enough
+# logic in CASA's task_importevla.py that I'm not thrilled to copy/paste it
+# all.
+
+importevla_doc = \
+"""
+casatask importevla <ASDM> <MS>
+
+Convert an EVLA low-level ASDM dataset to Measurement Set format. This
+implementation automatically infers the value of the "tbuff" parameter.
+"""
+
+def importevla (asdm, ms):
+    from .scripting import CasapyScript
+
+    # Here's the best way I can figure to find the recommended value of tbuff
+    # (= 1.5 * integration time). Obviously you might have different
+    # integration times in the dataset and such, and we're just going to
+    # ignore that possibility.
+
+    bdfstem = os.listdir (os.path.join (asdm, 'ASDMBinary'))[0]
+    bdf = os.path.join (asdm, 'ASDMBinary', bdfstem)
+    tbuff = None
+
+    with open (bdf) as f:
+        for linenum, line in enumerate (f):
+            if linenum > 60:
+                raise PKError ('cannot find integration time info in %s', bdf)
+
+            if not line.startswith ('<sdmDataSubsetHeader'):
+                continue
+
+            try:
+                i1 = line.index ('<interval>') + len ('<interval>')
+                i2 = line.index ('</interval>')
+                if i2 <= i1:
+                    raise ValueError ()
+            except ValueError:
+                raise PKError ('cannot parse integration time info in %s', bdf)
+
+            tbuff = float (line[i1:i2]) * 1.5e-9 # nanosecs, and want 1.5x
+            break
+
+    if tbuff is None:
+        raise PKError ('found no integration time info')
+
+    print ('importevla: %s -> %s with tbuff=%.2f', asdm, ms, tbuff)
+
+    script = os.path.join (os.path.dirname (__file__), 'cscript_importevla.py')
+    with CasapyScript (script, [asdm, ms, tbuff]) as cs:
+        pass
+
+
+def importevla_cli (argv):
+    check_usage (importevla_doc, argv, usageifnoargs=True)
+
+    if len (argv) != 3:
+        wrong_usage (importevla_doc, 'expected exactly 2 arguments')
+
+    importevla (argv[1], argv[2])
 
 
 # listobs
