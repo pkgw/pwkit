@@ -277,22 +277,23 @@ def parsedeglon (lonstr):
 
 # Spherical trig
 
+@broadcastize (4)
 def sphdist (lat1, lon1, lat2, lon2):
-    """Args are: lat1, lon1, lat2, lon2 -- consistent with
-    the usual coordinates in images, but note that this maps
-    to (Dec, RA) or (Y, X), so be careful with this.
-    """
-    # "specialized Vincenty formula"
-    # faster but more error-prone formula are possible; see Wikipedia
-    # on Great-circle Distance
+    """Args are: lat1, lon1, lat2, lon2 -- consistent with the usual coordinates
+    in images, but note that this maps to (Dec, RA) or (Y, X), so be careful
+    with this.
 
+    The distance is computed with the "specialized Vincenty formula". Faster
+    but more error-prone formulae are possible; see Wikipedia on Great-circle
+    Distance.
+
+    """
     cd = np.cos (lon2 - lon1)
     sd = np.sin (lon2 - lon1)
     c2 = np.cos (lat2)
     c1 = np.cos (lat1)
     s2 = np.sin (lat2)
     s1 = np.sin (lat1)
-
     a = np.sqrt ((c2 * sd)**2 + (c1 * s2 - s1 * c2 * cd)**2)
     b = s1 * s2 + c1 * c2 * cd
     return np.arctan2 (a, b)
