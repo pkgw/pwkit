@@ -383,6 +383,16 @@ def bpplot (cfg):
     spw_to_offset = dict ((spwid, spwofs * nchan)
                           for spwofs, spwid in enumerate (seenspws))
 
+    # normalize phases to avoid distracting wraps
+
+    for iant, ipol in sorted (antpols.iterkeys ()):
+        for ispw, isoln in antpols[iant,ipol]:
+            f = flags[ipol,:,isoln]
+            meanph = np.angle (vals[ipol,~f,isoln].mean ())
+            vals[ipol,:,isoln] *= np.exp (-1j * meanph)
+
+    # find plot limits
+
     okvals = vals[np.where (~flags)]
     max_am = np.abs (okvals).max () * 1.05
     min_am = np.abs (okvals).min () * 0.95
@@ -422,7 +432,7 @@ def bpplot (cfg):
 
         p_am.bpainter.paintLabels = False
         p_am.setYLabel ('Amplitude')
-        p_ph.setLabels ('Normalized channel', 'Phase (deg)')
+        p_ph.setLabels ('Normalized channel', 'De-meaned Phase (deg)')
 
         vb = om.layout.VBox (2)
         vb[0] = p_am
@@ -1522,6 +1532,22 @@ def gpplot (cfg):
     field_offsets = dict ((fieldid, idx) for idx, fieldid in enumerate (seenfields))
     spw_offsets = dict ((spwid, idx) for idx, spwid in enumerate (seenspws))
 
+    # normalize phases to avoid distracting wraps
+
+    for iant in seenants:
+        for ipol in xrange (npol):
+            filter = (ants == iant) & ~flags[ipol]
+
+            for ispw in seenspws:
+                sfilter = filter & (spws == ispw)
+                if not sfilter.any ():
+                    continue
+
+                meanph = np.angle (vals[ipol,sfilter].mean ())
+                vals[ipol,sfilter] *= np.exp (-1j * meanph)
+
+    # find plot limits
+
     times /= 86400. # convert to MJD
     min_time = times[any_ok].min ()
     max_time = times[any_ok].max ()
@@ -1582,7 +1608,7 @@ def gpplot (cfg):
 
             p_am.bpainter.paintLabels = False
             p_am.setYLabel ('Amplitude')
-            p_ph.setLabels ('Time (MJD - %d)' % mjdref, 'Phase (deg)')
+            p_ph.setLabels ('Time (MJD - %d)' % mjdref, 'De-meaned Phase (deg)')
 
             vb = om.layout.VBox (2)
             vb[0] = p_am
