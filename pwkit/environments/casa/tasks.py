@@ -1548,7 +1548,7 @@ def gpplot (cfg):
                 # XXX: do something by field
                 sfilter = filter & (spws == ispw)
                 t = times[sfilter]
-                if not times.size:
+                if not t.size:
                     continue
 
                 v = vals[ipol,sfilter]
@@ -1666,7 +1666,7 @@ def importevla (asdm, ms):
     if tbuff is None:
         raise PKError ('found no integration time info')
 
-    print ('importevla: %s -> %s with tbuff=%.2f', asdm, ms, tbuff)
+    print ('importevla: %s -> %s with tbuff=%.2f' % (asdm, ms, tbuff))
 
     script = os.path.join (os.path.dirname (__file__), 'cscript_importevla.py')
     with CasapyScript (script, asdm=asdm, ms=ms, tbuff=tbuff) as cs:
