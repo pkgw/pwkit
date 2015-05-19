@@ -2050,37 +2050,27 @@ mfsclean_cli = makekwcli (mfsclean_doc, MfscleanConfig, mfsclean)
 
 plotants_doc = \
 """
-casatask plotants <MS>
+casatask plotants <MS> <figfile>
 
 Plot the physical layout of the antennas described in the MS.
 """
 
-def plotants (vis):
-    import pylab as pl
-    mp = util.tools.msplot ()
+def plotants (vis, figfile):
+    from .scripting import CasapyScript
 
-    mp.open (b(vis))
-    pl.ion ()
-    pl.clf ()
-    mp.plotoptions (plotsymbol=b'ro')
-    mp.plot (type=b'array')
-    mp.reset ()
-    pl.axis (b'equal')
-    pl.axis (b'scaled')
-    pl.title (b('Antenna configuration stored in ' + vis))
+    script = os.path.join (os.path.dirname (__file__), 'cscript_plotants.py')
+
+    with CasapyScript (script, vis=vis, figfile=figfile) as cs:
+        pass
 
 
 def plotants_cli (argv):
-    import pylab as pl
-
     check_usage (plotants_doc, argv, usageifnoargs=True)
 
-    if len (argv) != 2:
-        wrong_usage (plotants_doc, 'expect exactly one argument, the MS path')
+    if len (argv) != 3:
+        wrong_usage (plotants_doc, 'expect exactly two arguments')
 
-    util.logger ('warn')
-    plotants (argv[1])
-    pl.show ()
+    plotants (argv[1], argv[2])
 
 
 # plotcal
