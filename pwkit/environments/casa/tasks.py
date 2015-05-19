@@ -394,14 +394,23 @@ def bpplot (cfg):
     # find plot limits
 
     okvals = vals[np.where (~flags)]
-    max_am = np.abs (okvals).max () * 1.05
-    min_am = np.abs (okvals).min () * 0.95
-    max_ph = np.angle (okvals, deg=True).max () * 1.05
-    min_ph = np.angle (okvals, deg=True).min () * 0.95
+
+    max_am = np.abs (okvals).max ()
+    min_am = np.abs (okvals).min ()
+    span = max_am - min_am
+    max_am += 0.05 * span
+    min_am -= 0.05 * span
+
+    max_ph = np.angle (okvals, deg=True).max ()
+    min_ph = np.angle (okvals, deg=True).min ()
+    span = max_ph - min_ph
+    max_ph += 0.05 * span
+    min_ph -= 0.05 * span
     if max_ph > 160:
         max_ph = 180
     if min_ph < -160:
         min_ph = -180
+
     polnames = 'RL' # XXX: identification doesn't seem to be stored in cal table
 
     # plot away
@@ -1553,14 +1562,24 @@ def gpplot (cfg):
     max_time = times[any_ok].max ()
     mjdref = int (np.floor (min_time))
     times -= mjdref # convert to delta-MJD
-    min_time = (min_time - mjdref) * 0.95
-    max_time = (max_time - mjdref) * 1.05
+    min_time = (min_time - mjdref)
+    max_time = (max_time - mjdref)
+    span = max_time - min_time
+    max_time += 0.05 * span
+    min_time -= 0.05 * span
 
     okvals = vals[np.where (~flags)]
-    max_am = np.abs (okvals).max () * 1.05
-    min_am = np.abs (okvals).min () * 0.95
-    max_ph = np.angle (okvals, deg=True).max () * 1.05
-    min_ph = np.angle (okvals, deg=True).min () * 0.95
+    max_am = np.abs (okvals).max ()
+    min_am = np.abs (okvals).min ()
+    span = max_am - min_am
+    max_am += 0.05 * span
+    min_am -= 0.05 * span
+
+    max_ph = np.angle (okvals, deg=True).max ()
+    min_ph = np.angle (okvals, deg=True).min ()
+    span = max_ph - min_ph
+    max_ph += 0.05 * span
+    min_ph -= 0.05 * span
     if max_ph > 160:
         max_ph = 180
     if min_ph < -160:
