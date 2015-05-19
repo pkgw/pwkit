@@ -73,10 +73,23 @@ def sanitize_unicode (item):
 
 def datadir (*subdirs):
     import os.path
+    data = None
 
     if 'CASAPATH' in os.environ:
         data = os.path.join (os.environ['CASAPATH'].split ()[0], 'data')
-    else:
+
+    if data is None:
+        # The Conda CASA directory layout:
+        try:
+            import casadef
+        except ImportError:
+            pass
+        else:
+            data = os.path.join (os.path.dirname (casadef.task_directory), 'data')
+            if not os.path.isdir (data):
+                data = None
+
+    if data is None:
         import casac
 
         prevp = None
