@@ -1351,14 +1351,20 @@ def gencal (cfg):
     parameter = cfg.parameter
 
     if cfg.caltype == 'antpos' and cfg.antenna is None:
-        from correct_ant_posns import correct_ant_posns
-        info = correct_ant_posns (cfg.vis, False)
-        if len (info) != 3 or info[0] != 0 or not len (info[1]):
-            print ('correct_ant_posns: got %r' % info, file=sys.stderr)
-            raise RuntimeError ('failed to fetch VLA antenna positions')
+        # There's a Python module in casapy that implements this; I don't want
+        # to shadow it entirely ...
+        import cPickle as pickle
+        from .scripting import CasapyScript
 
-        antenna = info[1]
-        parameter = info[2]
+        script = os.path.join (os.path.dirname (__file__), 'cscript_genantpos.py')
+
+        with CasapyScript (script, vis=cfg.vis) as cs:
+            try:
+                with open (os.path.join (cs.workdir, 'info.pkl'), 'rb') as f:
+                    antenna = pickle.load (f)
+                    parameter = pickle.load (f)
+            except Exception:
+                reraise_context ('interal casapy script seemingly failed; no info.pkl')
 
     cb.specifycal (caltable=b(cfg.caltable), time=b'', spw=b(cfg.spw or ''),
                    antenna=b(antenna), pol=b(cfg.pol or ''), caltype=b(cfg.caltype),
