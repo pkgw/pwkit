@@ -165,6 +165,7 @@ class Path (_ParentPath):
 
     as_uri            - Return as a file:/// URI.
     chmod             - Change file mode.
+    ensure_parent (*) - Ensure the path's parent directory exists.
     exists            - Test whether path exists.
     glob              - Glob for files at this path (assumes it's a directory).
     is_absolute       - Test whether the path is absolute.
@@ -230,6 +231,27 @@ class Path (_ParentPath):
 
         from . import binary_type
         return scandir (binary_type (self))
+
+    def ensure_parent (self, mode=0o777, parents=False):
+        """Ensure that this path's *parent* directory exists. Returns a boolean
+        indicating whether the directory already existed. Will attempt to
+        create superior parent directories if *parents* is True.
+
+        """
+        p = self.parent
+        if p == self:
+            return True # can never create root; avoids loop when parents=True
+
+        if parents:
+            p.ensure_parent (mode, True)
+
+        try:
+            p.mkdir (mode)
+        except OSError as e:
+            if e.errno == 17: # EEXIST?
+                return True # that's fine
+            raise # other exceptions are not fine
+        return False
 
     def try_open (self, **kwargs):
         try:
