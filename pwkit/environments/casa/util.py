@@ -3,6 +3,26 @@
 # Licensed under the MIT License.
 
 """pwkit.environments.casa.util - core utilities for the CASA Python libraries
+
+Variables:
+
+INVERSE_C_SM     - Inverse of C in s/m (useful for wavelength to time conversion)
+INVERSE_C_NSM    - Inverse of C in ns/m (ditto).
+pol_names        - Dict mapping CASA polarization codes to their string names.
+pol_to_miriad    - Dict mapping CASA polarization codes to their MIRIAD equivalents.
+msselect_keys    - A set of the keys supported by the CASA ms-select subsystem.
+tools            - An object for constructing CASA tools: ``ia = tools.image ()``.
+
+Functions:
+
+datadir          - Return the CASA data directory.
+logger           - Create a CASA logger that prints to stderr without leaving a
+                   casapy.log file around.
+forkandlog       - Run a function in a subprocess, returning the text it outputs
+                   via the CASA logging subsystem.
+sanitize_unicode - Encode Unicode strings as bytes for interfacing with casac
+                   functions.
+
 """
 
 from __future__ import absolute_import, division, print_function, unicode_literals
@@ -46,7 +66,6 @@ msselect_keys = frozenset ('array baseline field observation '
 
 
 def sanitize_unicode (item):
-
     """The Python bindings to CASA tasks expect to receive all string values
     as binary data (Python 2.X "str" or 3.X "bytes") and not Unicode (Python
     2.X "unicode" or 3.X "str"). To prep for Python 3 (not that CASA will ever

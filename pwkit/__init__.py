@@ -11,7 +11,6 @@ Modules in this package:
   astimage         - Generic I/O interface for astronomical images (FITS, CASA, MIRIAD).
   astutil          - Miscellaneous astronomy-related constants and functions.
   bblocks          - Bayesian Blocks analysis for binning time-tagged events.
-  casautil         - Helpers for saner usage of CASA in Python.
   cgs              - Physical constants in CGS.
   cli              - Utilities for command-line programs.
   colormaps        - Mapping scalars into a color palette for visualization.

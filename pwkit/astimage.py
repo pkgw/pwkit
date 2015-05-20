@@ -31,7 +31,7 @@ __all__ = (b'UnsupportedError AstroImage MIRIADImage PyrapImage '
 import numpy as np
 from numpy import pi
 
-from . import PKError, casautil
+from . import PKError
 from .astutil import D2R, R2D
 
 
@@ -776,7 +776,8 @@ class PyrapImage (AstroImage):
 # 'casac' images.
 
 def _casac_convert (d, unitstr):
-    qa = casautil.tools.quanta ()
+    from .environments.casa.util import tools
+    qa = tools.quanta ()
     x = qa.quantity (d['value'], d['unit'])
     return qa.convert (x, unitstr)['value']
 
@@ -797,7 +798,8 @@ class CasaCImage (AstroImage):
 
     def __init__ (self, path, mode):
         super (CasaCImage, self).__init__ (path, mode)
-        self._handle = casautil.tools.image ()
+        from .environments.casa.util import tools
+        self._handle = tools.image ()
         self._handle.open (path) # no mode specifiable.
         self.shape = np.asarray (self._handle.shape ())[::-1].copy ()
 
@@ -921,7 +923,8 @@ class CasaCImage (AstroImage):
         # is not None. In practice, I'd have to mess with __init__() and who
         # cares?
 
-        ia = casautil.tools.image ()
+        from .environments.casa.util import tools
+        ia = tools.image ()
         ia.newimagefromimage (self.path, path, overwrite=overwrite)
         ia.close ()
 
