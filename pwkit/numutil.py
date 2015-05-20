@@ -6,6 +6,7 @@
 
 Functions:
 
+dfsmooth          - Convolve data series in a pandas DataFrame with a window.
 fits_recarray_to_data_frame
                   - Convert a FITS data table to a Pandas DataFrame
 make_step_lcont   - Return a step function that is left-continuous.
@@ -27,6 +28,7 @@ unit_tophat_ee    - Tophat function on (0,1).
 unit_tophat_ei    - Tophat function on (0,1].
 unit_tophat_ie    - Tophat function on [0,1).
 unit_tophat_ii    - Tophat function on [0,1].
+usmooth           - Convolve data series with a window, with uncertainties.
 weighted_mean     - Compute a weighted mean from values and their uncertainties.
 weighted_variance - Estimate the variance of a weighted sampled.
 
@@ -37,10 +39,11 @@ broadcastize - Make a Python function automatically broadcast arguments.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'''broadcastize fits_recarray_to_data_frame make_step_lcont make_step_rcont
-           make_tophat_ee make_tophat_ei make_tophat_ie make_tophat_ii
-           parallel_newton parallel_quad rms unit_tophat_ee unit_tophat_ei
-           unit_tophat_ie unit_tophat_ii weighted_variance''').split ()
+__all__ = (b'''broadcastize dfsmooth fits_recarray_to_data_frame make_step_lcont
+           make_step_rcont make_tophat_ee make_tophat_ei make_tophat_ie
+           make_tophat_ii parallel_newton parallel_quad rms unit_tophat_ee
+           unit_tophat_ei unit_tophat_ie unit_tophat_ii usmooth
+           weighted_variance''').split ()
 
 import functools
 import numpy as np
@@ -250,6 +253,102 @@ def reduce_data_frame_evenly_with_gaps (df, valcol, target_len, maxgap, **kwargs
     return reduce_data_frame (df,
                               slice_evenly_with_gaps (df[valcol], target_len, maxgap),
                               **kwargs)
+
+
+# Smooth a timeseries with uncertainties
+
+def usmooth (window, uncerts, *data, **kwargs):
+    """Smooth data series according to a window, weighting based on uncertainties.
+    Arguments:
+
+    window  - the window
+    uncerts - an array of uncertainties used to weight the smoothing
+    *data   - the data series, same size as `uncerts`
+    k=None  - Only keep every `k`th point of the results; if k is None,
+              it is set to window.size.
+
+    Returns: (s_uncerts, s_data[0], s_data[1], ...) - the smoothed uncertainties
+    and data series.
+
+    Example:
+
+        u, x, y = numutil.usmooth (np.hamming (7), u, x, y)
+
+    """
+    window = np.asarray (window)
+    uncerts = np.asarray (uncerts)
+
+    # Hacky keyword argument handling because you can't write "def foo (*args,
+    # k=0)".
+
+    k = kwargs.pop ('k', None)
+
+    if len (kwargs):
+        raise TypeError ("smooth() got an unexpected keyword argument '%s'"
+                         % kwargs.keys ()[0])
+
+    # Done with kwargs futzing.
+
+    if k is None:
+        k = window.size
+
+    conv = lambda q, r: np.convolve (q, r, mode='valid')
+
+    if uncerts is None:
+        w = np.ones_like (x)
+    else:
+        w = uncerts ** -2
+
+    cw = conv (w, window)
+    cu = np.sqrt (conv (w, window**2)) / cw
+    result = [cu] + [conv (w * np.asarray (x), window) / cw for x in data]
+
+    if k != 1:
+        result = [x[::k] for x in result]
+    return result
+
+
+def dfsmooth (window, df, ucol, k=None):
+    """Smooth a Pandas DataFrame according to a window, weighting based on
+    uncertainties. Arguments:
+
+    window  - the window.
+    df      - the data frame.
+    ucol    - the name of the column in `df` that contains the uncertainties
+              to weight by.
+    k=None  - Only keep every `k`th point of the results; if k is None,
+              it is set to window.size.
+
+    Returns: a smoothed data frame.
+
+    The returned data frame has a default integer index.
+
+    Example:
+
+        sdata = numutil.dfsmooth (np.hamming (7), data, 'u_temp')
+
+    """
+    import pandas as pd
+
+    if k is None:
+        k = window.size
+
+    conv = lambda q, r: np.convolve (q, r, mode='valid')
+    w = df[ucol] ** -2
+    invcw = 1. / conv (w, window)
+
+    # XXX: we're not smoothing the index.
+
+    res = {}
+
+    for col in df.columns:
+        if col == ucol:
+            res[col] = np.sqrt (conv (w, window**2)) * invcw
+        else:
+            res[col] = conv (w * df[col], window) * invcw
+
+    res = pd.DataFrame (res)
+    return res[::k]
 
 
 # Parallelized versions of various routines that don't operate vectorially

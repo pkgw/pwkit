@@ -23,7 +23,6 @@ J2000               - J2000 as an MJD: 51544.5
 Functions:
 
 angcen              - Center an angle in radians in [-π, π].
-dfsmooth            - Convolve data series in a pandas DataFrame with a window.
 fmtdeglat           - Format radian latitude (dec) as sexagesimal degrees.
 fmtdeglon           - Format radian longitude as sexagesimal degrees.
 fmthours            - Format radian longitude (RA) as sexagesimal hours.
@@ -38,7 +37,6 @@ parsehours          - Parse sexagesimal hours (RA) into a longitude.
 sphbear             - Calculate the bearing (~PA) from one lat/lon to another.
 sphdist             - Calculate the distance between two lat/lons
 sphofs              - Calculate lat/lon from an initial lat/lon and an offset.
-usmooth             - Convolve data series with a window, with uncertainties.
 
 Classes:
 
@@ -51,7 +49,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 __all__ = b'''np pi twopi halfpi R2A A2R R2D D2R R2H H2R F2S S2F J2000 angcen orientcen
            fmthours fmtdeglon fmtdeglat fmtradec parsehours parsedeglat
            parsedeglon sphdist sphbear sphofs parang gaussian_convolve
-           gaussian_deconvolve usmooth dfsmooth AstrometryInfo'''.split ()
+           gaussian_deconvolve AstrometryInfo'''.split ()
 
 import numpy as np
 
@@ -504,86 +502,6 @@ def gaussian_deconvolve (smaj, smin, spa, bmaj, bmin, bpa):
             dpa = 0.5 * arctan2 (-gamma, alpha - beta)
 
     return dmaj, dmin, dpa, status
-
-
-# Smooth a timeseries with uncertainties
-
-def usmooth (window, uncerts, *data, **kwargs):
-    """Smooth data series according to a window, weighting based on uncertainties.
-    Arguments:
-
-    window  - the window
-    uncerts - an array of uncertainties used to weight the smoothing
-    *data   - the data series, same size as `uncerts`
-    k=None  - Only keep every `k`th point of the results; if k is None,
-              it is set to window.size // 2.
-
-    Returns: (s_uncerts, s_data[0], s_data[1], ...) - the smoothed uncertainties
-    and data series.
-
-    The default decimation by k//2 gives mild correlations between adjacent
-    bins that are not accounted for in the returned uncertainties.
-
-    Example:
-
-        u, x, y = pk.astutil.smooth (np.hamming (7), u, x, y)
-
-    """
-    window = np.asarray (window)
-    uncerts = np.asarray (uncerts)
-
-    # Hacky keyword argument handling because you can't write "def foo (*args,
-    # k=0)".
-
-    k = kwargs.pop ('k', None)
-
-    if len (kwargs):
-        raise TypeError ("smooth() got an unexpected keyword argument '%s'"
-                         % kwargs.keys ()[0])
-
-    # Done with kwargs futzing.
-
-    if k is None:
-        k = window.size // 2
-
-    conv = lambda q, r: np.convolve (q, r, mode='valid')
-
-    if uncerts is None:
-        w = np.ones_like (x)
-    else:
-        w = uncerts ** -2
-
-    cw = conv (w, window)
-    cu = np.sqrt (conv (w, window**2)) / cw
-    result = [cu] + [conv (w * np.asarray (x), window) / cw for x in data]
-
-    if k != 1:
-        result = [x[::k] for x in result]
-    return result
-
-
-def dfsmooth (window, df, ucol, k=None):
-    import pandas as pd
-
-    if k is None:
-        k = window.size
-
-    conv = lambda q, r: np.convolve (q, r, mode='valid')
-    w = df[ucol] ** -2
-    invcw = 1. / conv (w, window)
-
-    # XXX: we're not smoothing the index.
-
-    res = {}
-
-    for col in df.columns:
-        if col == ucol:
-            res[col] = np.sqrt (conv (w, window**2)) * invcw
-        else:
-            res[col] = conv (w * df[col], window) * invcw
-
-    res = pd.DataFrame (res)
-    return res[::k]
 
 
 # Given astrometric properties of a source, predict its position *with
