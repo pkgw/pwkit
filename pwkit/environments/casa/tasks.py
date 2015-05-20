@@ -426,8 +426,19 @@ def bpplot (cfg):
             w = np.where (~f)[0]
 
             for s in numutil.slice_around_gaps (w, 1):
-                p_am.addXY (w[s] + spw_to_offset[ispw], a[w[s]], None, dsn=ispw)
-                p_ph.addXY (w[s] + spw_to_offset[ispw], p[w[s]], None, dsn=ispw)
+                wsub = w[s]
+                if wsub.size == 0:
+                    continue # Should never happen, but eh.
+                else:
+                    # It'd also be pretty weird to have a spectral window
+                    # containing just one (valid) channel, but it could
+                    # happen.
+                    lines = (wsub.size > 1)
+
+                p_am.addXY (wsub + spw_to_offset[ispw], a[wsub], None,
+                            lines=lines, dsn=ispw)
+                p_ph.addXY (wsub + spw_to_offset[ispw], p[wsub], None,
+                            lines=lines, dsn=ispw)
 
         p_am.setBounds (xmin=0,
                         xmax=len (seenspws) * nchan,
@@ -1608,8 +1619,14 @@ def gpplot (cfg):
                 kt = '%s %s spw#%d' % (names[iant], polnames[ipol], ispw)
 
                 for s in numutil.slice_around_gaps (t, maxtimegap):
-                    p_am.addXY (t[s], a[s], kt, dsn=spw_offsets[ispw])
-                    p_ph.addXY (t[s], p[s], None, dsn=spw_offsets[ispw])
+                    tsub, asub, psub = t[s], a[s], p[s]
+                    if tsub.size == 0:
+                        continue # Should never happen, but eh.
+                    else:
+                        lines = (tsub.size > 1)
+
+                    p_am.addXY (tsub, asub, kt, lines=lines, dsn=spw_offsets[ispw])
+                    p_ph.addXY (tsub, psub, None, lines=lines, dsn=spw_offsets[ispw])
                     anyseen = True
                     kt = None
 
