@@ -184,6 +184,7 @@ class Path (_ParentPath):
     resolve           - Make path absolute and remove symlinks.
     rglob             - Glob for files at this path, recursively.
     rmdir             - Remove this directory.
+    rmtree (*)        - Remove this directory and its contents recursively.
     scandir (*)       - Generate information about directory contents.
     stat              - Stat this path and return the result.
     symlink_to(targ)  - Make this path a symbolic link to to `targ`.
@@ -252,6 +253,17 @@ class Path (_ParentPath):
                 return True # that's fine
             raise # other exceptions are not fine
         return False
+
+    def rmtree (self):
+        import shutil
+        from pwkit.cli import warn
+
+        def on_error (func, path, exc_info):
+            warn ('couldn\'t rmtree %s: in %s of %s: %s', self, func.__name__,
+                  path, exc_info[1])
+
+        shutil.rmtree (str (self), ignore_errors=False, onerror=on_error)
+        return self
 
     def try_open (self, **kwargs):
         try:
