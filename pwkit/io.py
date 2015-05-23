@@ -29,6 +29,8 @@ __all__ = b'''djoin ensure_dir ensure_symlink make_path_func rellink pathlines p
 
 import io, os, pathlib
 
+from . import PKError, text_type
+
 
 # Reading text.
 
@@ -233,6 +235,7 @@ class Path (_ParentPath):
         from . import binary_type
         return scandir (binary_type (self))
 
+
     def ensure_parent (self, mode=0o777, parents=False):
         """Ensure that this path's *parent* directory exists. Returns a boolean
         indicating whether the directory already existed. Will attempt to
@@ -254,6 +257,7 @@ class Path (_ParentPath):
             raise # other exceptions are not fine
         return False
 
+
     def rmtree (self):
         import shutil
         from pwkit.cli import warn
@@ -265,6 +269,7 @@ class Path (_ParentPath):
         shutil.rmtree (str (self), ignore_errors=False, onerror=on_error)
         return self
 
+
     def try_open (self, **kwargs):
         try:
             return self.open (**kwargs)
@@ -272,6 +277,7 @@ class Path (_ParentPath):
             if e.errno == 2:
                 return None
             raise
+
 
     def readlines (self, mode='rt', noexistok=False, **kwargs):
         try:
@@ -282,11 +288,13 @@ class Path (_ParentPath):
             if e.errno != 2 or not noexistok:
                 raise
 
+
     def unpickle_one (self):
         gen = self.unpickle_many ()
         value = gen.next ()
         gen.close ()
         return value
+
 
     def unpickle_many (self):
         import cPickle as pickle
@@ -298,14 +306,17 @@ class Path (_ParentPath):
                     break
                 yield obj
 
+
     def pickle_one (self, obj):
         self.pickle_many ((obj, ))
+
 
     def pickle_many (self, objs):
         import cPickle as pickle
         with self.open (mode='wb') as f:
             for obj in objs:
                 pickle.dump (obj, f)
+
 
     def read_pandas (self, format='table', **kwargs):
         import pandas
@@ -317,6 +328,12 @@ class Path (_ParentPath):
 
         with self.open ('rb') as f:
             return reader (f, **kwargs)
+
+
+    def read_hdf (self, key, **kwargs):
+        # This one needs special handling because of the "key" and path input.
+        import pandas
+        return pandas.read_hdf (text_type (self), key, **kwargs)
 
 
     def read_fits (self, **kwargs):
