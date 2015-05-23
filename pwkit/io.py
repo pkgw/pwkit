@@ -318,4 +318,25 @@ class Path (_ParentPath):
         with self.open ('rb') as f:
             return reader (f, **kwargs)
 
+
+    def read_fits (self, **kwargs):
+        """Open this path as a FITS file with Astropy. Keywords:
+
+        mode='readonly' ('update', 'append', 'denywrite', 'ostream')
+        memmap=None (boolean)
+        save_backup=False
+        cache=True
+        uint=False or uint16=False
+        ignore_missing_end=False
+        checksum=False (boolean or 'remove')
+        disable_image_compression=False
+        do_not_scale_image_data=False
+        ignore_blank=False
+        scale_back=False
+
+        """
+        from astropy.io import fits
+        return fits.open (str (self), **kwargs)
+
+
 del _ParentPath
