@@ -12,7 +12,7 @@ install:
 	$(python) setup.py install $(install_args) >build/install.log
 
 clean:
-	-rm -rf *.egg-info *.pyc build dist
+	-rm -rf *.egg-info *.pyc build dist docs/build
 
 pristine: clean
 	-rm -f Makefile config.status
@@ -20,10 +20,13 @@ pristine: clean
 dist:
 	$(python) setup.py sdist
 
+docs:
+	$(MAKE) -C docs html
+
 Makefile: Makefile.in
 	./config.status
 
 
-.PHONY: default install clean pristine dist
+.PHONY: clean default dist docs install pristine
 .SECONDARY: # no deleting intermediate targets
 .SUFFIXES: # no implicit rules

@@ -2,25 +2,16 @@
    This file licensed under the Creative Commons Attribution-ShareAlike 3.0
    Unported License (CC-BY-SA).
 
-pwkit
-=====
+Data input and output
+==============================================================================
 
 This documentation is currently just a stub.
 
 .. toctree::
    :maxdepth: 2
 
-   section-science.rst
-   section-cli.rst
-   section-viz.rst
-   section-io.rst
-   section-environments.rst
-   section-foundations.rst
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   pwkit/inifile.rst
+   pwkit/latex.rst
+   pwkit/tabfile.rst
+   pwkit/tinifile.rst
+   pwkit/unicode_to_latex.rst

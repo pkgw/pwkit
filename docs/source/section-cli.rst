@@ -2,25 +2,16 @@
    This file licensed under the Creative Commons Attribution-ShareAlike 3.0
    Unported License (CC-BY-SA).
 
-pwkit
-=====
+Command-line tools
+==============================================================================
 
 This documentation is currently just a stub.
 
 .. toctree::
    :maxdepth: 2
 
-   section-science.rst
-   section-cli.rst
-   section-viz.rst
-   section-io.rst
-   section-environments.rst
-   section-foundations.rst
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   pwkit/cli/astrotool.rst
+   pwkit/cli/imtool.rst
+   pwkit/cli/latexdriver.rst
+   pwkit/cli/multitool.rst
+   pwkit/cli/wrapout.rst
