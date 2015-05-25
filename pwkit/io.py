@@ -269,6 +269,7 @@ class Path (_ParentPath):
         shutil.rmtree (str (self), ignore_errors=False, onerror=on_error)
         return self
 
+    # I/O
 
     def try_open (self, **kwargs):
         try:
@@ -279,7 +280,7 @@ class Path (_ParentPath):
             raise
 
 
-    def readlines (self, mode='rt', noexistok=False, **kwargs):
+    def read_lines (self, mode='rt', noexistok=False, **kwargs):
         try:
             with self.open (mode=mode, **kwargs) as f:
                 for line in f:
@@ -289,14 +290,14 @@ class Path (_ParentPath):
                 raise
 
 
-    def unpickle_one (self):
-        gen = self.unpickle_many ()
+    def read_pickle (self):
+        gen = self.read_pickles ()
         value = gen.next ()
         gen.close ()
         return value
 
 
-    def unpickle_many (self):
+    def read_pickles (self):
         import cPickle as pickle
         with self.open (mode='rb') as f:
             while True:
@@ -307,15 +308,20 @@ class Path (_ParentPath):
                 yield obj
 
 
-    def pickle_one (self, obj):
-        self.pickle_many ((obj, ))
+    def write_pickle (self, obj):
+        self.write_pickles ((obj, ))
 
 
-    def pickle_many (self, objs):
+    def write_pickles (self, objs):
         import cPickle as pickle
         with self.open (mode='wb') as f:
             for obj in objs:
                 pickle.dump (obj, f)
+
+
+    def as_hdf_store (self, mode='r', **kwargs):
+        from pandas import HDFStore
+        return HDFStore (str (self), mode=mode, **kwargs)
 
 
     def read_pandas (self, format='table', **kwargs):
