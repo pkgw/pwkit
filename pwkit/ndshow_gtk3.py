@@ -501,7 +501,10 @@ class Viewer (object):
 
 
 def view (array, title='Array Viewer', colormap='black_to_blue', toworld=None,
-          drawoverlay=None, yflip=False):
+          drawoverlay=None, yflip=False, tostatus=None):
+    if toworld is not None and tostatus is not None:
+        raise ValueError ('only one of "toworld" and "tostatus" may be given')
+
     clipper = Clipper ()
     clipper.alloc_buffer (array)
     clipper.set_tile_size ()
@@ -550,34 +553,31 @@ def view (array, title='Array Viewer', colormap='black_to_blue', toworld=None,
 
     nomask = not np.ma.is_masked (array) or array.mask is np.ma.nomask
 
-    if toworld is None:
-        def fmtstatus (x, y):
-            s = ''
-            row = int (np.floor (y + 0.5))
-            col = int (np.floor (x + 0.5))
-            if row >= 0 and col >= 0 and row < h and col < w:
-                if nomask or not array.mask[row,col]:
-                    s += '%g ' % array[row,col]
-            if yflip:
-                y = h - 1 - y
-                row = h - 1 - row
-            return s + '[%d,%d] x=%.1f y=%.1f' % (row, col, x, y)
-    else:
-        from .astutil import fmthours, fmtdeglat
-        def fmtstatus (x, y):
-            s = ''
-            row = int (np.floor (y + 0.5))
-            col = int (np.floor (x + 0.5))
-            if row >= 0 and col >= 0 and row < h and col < w:
-                if nomask or not array.mask[row,col]:
-                    s += '%g ' % array[row,col]
-            if yflip:
-                y = h - 1 - y
-                row = h - 1 - row
-            lat, lon = toworld ([y, x])
-            s += '[%d,%d] x=%.1f y=%.1f lat=%s lon=%s' % \
-                (row, col, x, y, fmtdeglat (lat), fmthours (lon))
-            return s
+    if tostatus is None:
+        if toworld is None:
+            tostatus = lambda t: ''
+        else:
+            from .astutil import fmthours, fmtdeglat
+
+            def tostatus (y_and_x):
+                lat, lon = toworld (y_and_x)
+                return 'lat=%s lon=%s' % (fmtdeglat (lat), fmthours (lon))
+
+
+    def fmtstatus (x, y):
+        s = ''
+        row = int (np.floor (y + 0.5))
+        col = int (np.floor (x + 0.5))
+        if row >= 0 and col >= 0 and row < h and col < w:
+            if nomask or not array.mask[row,col]:
+                s += '%g ' % array[row,col]
+        if yflip:
+            y = h - 1 - y
+            row = h - 1 - row
+
+        s += '[%d,%d] x=%.1f y=%.1f %s' % \
+            (row, col, x, y, tostatus (np.array ([y, x])))
+        return s
 
     viewer = Viewer (title=title)
     viewer.set_shape_getter (getshape)
@@ -773,9 +773,12 @@ class Cycler (Viewer):
 
 
 def cycle (arrays, descs=None, cadence=0.6, toworlds=None,
-           drawoverlay=None, yflip=False):
+           drawoverlay=None, yflip=False, tostatuses=None):
     n = len (arrays)
     amin = amax = h = w = None
+
+    if toworlds is not None and tostatuses is not None:
+        raise ValueError ('only one of "toworlds" and "tostatuses" may be given')
 
     if descs is None:
         descs = [''] * n
@@ -856,10 +859,20 @@ def cycle (arrays, descs=None, cadence=0.6, toworlds=None,
     nomasks = [not np.ma.is_masked (a) or a.mask is np.ma.nomask
                for a in arrays]
 
-    if toworlds is None:
-        toworlds = [None] * n
+    if tostatuses is None:
+        if toworlds is None:
+            tostatuses = [None] * n
+        else:
+            from .astutil import fmthours, fmtdeglat
 
-    from .astutil import fmthours, fmtdeglat
+            def make_status_func (toworld):
+                def status (y_and_x):
+                    lat, lon = toworld (y_and_x)
+                    return 'lat=%s lon=%s' % (fmtdeglat (lat),
+                                              fmthours (lon))
+
+            tostatuses = [make_status_func (toworlds[i]) for i in xrange (n)]
+
     def fmtstatusi (i, x, y):
         s = ''
         row = int (np.floor (y + 0.5))
@@ -871,10 +884,8 @@ def cycle (arrays, descs=None, cadence=0.6, toworlds=None,
             y = h - 1 - y
             row = h - 1 - row
         s += '[%d,%d] x=%.1f y=%.1f' % (row, col, x, y)
-        if toworlds[i] is not None:
-            lat, lon = toworlds[i] ([y, x])
-            s += ' lat=%s lon=%s' % (fmtdeglat (lat),
-                                     fmthours (lon))
+        if tostatuses[i] is not None:
+            s += ' ' + tostatuses[i] (np.array ([y, x]))
         return s
 
     cycler = Cycler ()
