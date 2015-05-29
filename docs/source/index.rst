@@ -10,12 +10,12 @@ This documentation is currently just a stub.
 .. toctree::
    :maxdepth: 2
 
+   section-foundations.rst
    section-science.rst
    section-cli.rst
    section-viz.rst
    section-io.rst
    section-environments.rst
-   section-foundations.rst
 
 
 Indices and tables
