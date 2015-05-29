@@ -68,3 +68,21 @@ htmlhelp_basename = 'pwkitdoc'
 # .htaccess) here, relative to this directory. These files are copied
 # directly to the root of the documentation.
 #html_extra_path = []
+
+
+# Tomfoolery to fake modules that readthedocs.org doesn't know
+
+import sys
+from mock import Mock as MagicMock
+
+class Mock (MagicMock):
+    @classmethod
+    def __getattr__ (cls, name):
+        return Mock ()
+
+sys.modules.update ((m, Mock ()) for m in [
+    'gtk',
+    'numpy',
+    'pandas',
+    'scipy',
+])
