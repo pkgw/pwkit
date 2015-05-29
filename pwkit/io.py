@@ -280,7 +280,7 @@ class Path (_ParentPath):
         try:
             self.unlink ()
             return True
-        except IOError as e:
+        except OSError as e:
             if e.errno == 2:
                 return False # ENOENT
             raise
