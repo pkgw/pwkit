@@ -5,3 +5,7 @@ code {
   color: #000;
   font-size: 90%;
 }
+
+.rst-content dl:not(.docutils) dt {
+  font-size: 100%;
+}
