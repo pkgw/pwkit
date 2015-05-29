@@ -411,7 +411,7 @@ on :class:`Path` objects.
 
 .. _other-functions:
 
-Other functions in :mod:``pwkit.io``
+Other functions in :mod:`pwkit.io`
 ------------------------------------------------------------------------
 
 These are generally superseded by operations on :class:`Path`.
