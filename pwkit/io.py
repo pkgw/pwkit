@@ -192,6 +192,7 @@ class Path (_ParentPath):
     symlink_to(targ)  - Make this path a symbolic link to to `targ`.
     touch             - Touch this file.
     try_open (*)      - Like open(), but return None if the file doesn't exist.
+    try_unlink (*)    - Attempt to remove the file or symlink; no error if nonexistent.
     unlink            - Remove this file or symbolic link.
     unpickle_one (*)  - Unpickle an object from this path.
     unpickle_many (*) - Generate a series of objects unpickled from this path.
@@ -268,6 +269,21 @@ class Path (_ParentPath):
 
         shutil.rmtree (str (self), ignore_errors=False, onerror=on_error)
         return self
+
+
+    def try_unlink (self):
+        """Attempt to unlink this path, but do not raise an exception if it
+        didn't exist. Returns a boolean indicating whether it was really
+        unlinked.
+
+        """
+        try:
+            self.unlink ()
+            return True
+        except IOError as e:
+            if e.errno == 2:
+                return False # ENOENT
+            raise
 
     # I/O
 
