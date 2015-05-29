@@ -10,7 +10,7 @@ This documentation is currently just a stub.
 .. toctree::
    :maxdepth: 2
 
-   section-foundations.rst
+   foundations/toplevel.rst
    section-science.rst
    section-cli.rst
    section-viz.rst

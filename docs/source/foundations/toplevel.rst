@@ -10,11 +10,11 @@ This documentation is currently just a stub.
 .. toctree::
    :maxdepth: 2
 
-   pwkit/toplevel.rst
-   pwkit/environments/toplevel.rst
-   pwkit/io.rst
-   pwkit/method_decorator.rst
-   pwkit/numutil.rst
-   pwkit/parallel.rst
-   pwkit/cli/toplevel.rst
-   pwkit/kwargv.rst
+   pwkit-toplevel.rst
+   pwkit-environments-toplevel.rst
+   io.rst
+   pwkit-method_decorator.rst
+   pwkit-numutil.rst
+   pwkit-parallel.rst
+   pwkit-cli-toplevel.rst
+   pwkit-kwargv.rst
