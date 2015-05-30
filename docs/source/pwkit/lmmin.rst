@@ -5,5 +5,4 @@
 Nonlinear least-squares minimization with Levenberg-Marquardt (``pwkit.lmmin``)
 ========================================================================
 
-.. automodule:: pwkit.lmmin
-   :members:
+No autodoc since non-pure-Python imports make ReadTheDocs sad.

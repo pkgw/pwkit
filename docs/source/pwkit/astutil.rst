@@ -5,5 +5,4 @@
 Basic astronomical calculations (``pwkit.astutil``)
 ========================================================================
 
-.. automodule:: pwkit.astutil
-   :members:
+No autodoc since non-pure-Python imports make ReadTheDocs sad.

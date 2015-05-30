@@ -5,5 +5,4 @@
 Bayesian confidence intervals for count rates  (``pwkit.kbn_conf``)
 ========================================================================
 
-.. automodule:: pwkit.kbn_conf
-   :members:
+No autodoc since non-pure-Python imports make ReadTheDocs sad.

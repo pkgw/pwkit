@@ -5,5 +5,4 @@
 Quick astronomical calculations (``astrotool``)
 ========================================================================
 
-.. automodule:: pwkit.cli.astrotool
-   :members:
+No autodoc since non-pure-Python imports make ReadTheDocs sad.

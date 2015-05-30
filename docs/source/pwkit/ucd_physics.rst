@@ -5,5 +5,4 @@
 Scaling relations for physical properties of ultra-cool dwarfs (``pwkit.ucd_physics``)
 ==============================================================================
 
-.. automodule:: pwkit.ucd_physics
-   :members:
+No autodoc since non-pure-Python imports make ReadTheDocs sad.

@@ -5,5 +5,4 @@
 Synthetic photometry (``pwkit.synphot``)
 ==============================================================================
 
-.. automodule:: pwkit.synphot
-   :members:
+No autodoc since non-pure-Python imports make ReadTheDocs sad.
