@@ -2,16 +2,14 @@ code, .rst-content code {
   background: inherit;
   padding: 0px 1px;
   border: 0px;
-  color: #000;
+  color: #404040;
   font-size: 90%;
+}
+
+.rst-content a code {
+  color: #404040;
 }
 
 .rst-content dl:not(.docutils) dt {
   font-size: 100%;
-}
-
-/* For the readthedocs.org incarnation, which is slightly different: */
-
-.rst-content a code {
-  color: #000;
 }
