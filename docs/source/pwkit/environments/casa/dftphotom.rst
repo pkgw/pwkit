@@ -5,5 +5,4 @@
 Compact-source photometry with discrete Fourier transformations (``pwkit.environments.casa.dftphotom``)
 ========================================================================
 
-.. automodule:: pwkit.environments.casa.dftphotom
-   :members:
+No autodoc since non-pure-Python imports make ReadTheDocs sad.
