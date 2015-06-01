@@ -501,7 +501,7 @@ class Viewer (object):
 
 
 def view (array, title='Array Viewer', colormap='black_to_blue', toworld=None,
-          drawoverlay=None, yflip=False, tostatus=None):
+          drawoverlay=None, yflip=False, tostatus=None, run_main=True):
     if toworld is not None and tostatus is not None:
         raise ValueError ('only one of "toworld" and "tostatus" may be given')
 
@@ -586,8 +586,12 @@ def view (array, title='Array Viewer', colormap='black_to_blue', toworld=None,
     viewer.set_status_formatter (fmtstatus)
     viewer.set_overlay_drawer (drawoverlay)
     viewer.win.show_all ()
-    viewer.win.connect ('destroy', Gtk.main_quit)
-    Gtk.main ()
+
+    if run_main:
+        viewer.win.connect ('destroy', Gtk.main_quit)
+        Gtk.main ()
+    else:
+        viewer.win.connect ('destroy', lambda e: viewer.win.destroy ())
 
 
 class Cycler (Viewer):
@@ -773,7 +777,7 @@ class Cycler (Viewer):
 
 
 def cycle (arrays, descs=None, cadence=0.6, toworlds=None,
-           drawoverlay=None, yflip=False, tostatuses=None):
+           drawoverlay=None, yflip=False, tostatuses=None, run_main=True):
     n = len (arrays)
     amin = amax = h = w = None
 
@@ -897,6 +901,9 @@ def cycle (arrays, descs=None, cadence=0.6, toworlds=None,
     cycler.set_status_formatter (fmtstatusi)
     cycler.set_overlay_drawer (drawoverlay)
     cycler.win.show_all ()
-    cycler.win.connect ('destroy', Gtk.main_quit)
 
-    Gtk.main ()
+    if run_main:
+        cycler.win.connect ('destroy', Gtk.main_quit)
+        Gtk.main ()
+    else:
+        cycler.win.connect ('destroy', lambda e: cycler.win.destroy ())
