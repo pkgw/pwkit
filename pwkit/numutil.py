@@ -50,11 +50,31 @@ import numpy as np
 
 from .method_decorator import method_decorator
 
+
+def _broadcastize_spec_to_scalar_filter (s):
+    if s is None:
+        # This return value is independent of the inputs altogether.
+        return lambda x: x
+    if s == 0:
+        # This return value has the same shape as the input(s). If we
+        # promoted to a 1-element vector, we need to demote.
+        return np.asscalar
+    if s == 1:
+        # This return value is a larger vector of the input(s). If we promoted
+        # from a scalar, we drop the final axis. We asarray() the result for
+        # convenience/robustness.
+        return lambda x: np.asarray (x)[...,0]
+
+    raise ValueError ('unrecognized @broadcastize ret_spec value %r' % s)
+
+
 class _Broadcaster (method_decorator):
-    # _BroadcasterDecorator must set self._n_arr on creation.
+    # _BroadcasterDecorator must set self._n_arr and _scalar_ret_filter on creation.
 
     def fixup (self, newobj):
+        # This function is used by the method_decorator superclass.
         newobj._n_arr = object.__getattribute__ (self, '_n_arr')
+        newobj._scalar_ret_filter = object.__getattribute__ (self, '_scalar_ret_filter')
 
     def __call__ (self, *args, **kwargs):
         n_arr = object.__getattribute__ (self, '_n_arr')
@@ -69,7 +89,11 @@ class _Broadcaster (method_decorator):
         result = super (_Broadcaster, self).__call__ (*(bc_1d + rest), **kwargs)
 
         if bc_raw[0].ndim == 0:
-            return np.asscalar (result)
+            # Inputs were all scalars. We need to filter the output(s) to
+            # remove extra axes.
+            scalar_ret_filter = object.__getattribute__ (self, '_scalar_ret_filter')
+            result = scalar_ret_filter (result)
+
         return result
 
 
@@ -92,7 +116,7 @@ class _BroadcasterDecorator (object):
     broadcasting behavior without having to special case the actual inputs.
 
     """
-    def __init__ (self, n_arr):
+    def __init__ (self, n_arr, ret_spec=0):
         """Decorator for making a auto-broadcasting function. Arguments:
 
         n_arr - The number of array arguments accepted by the decorated function.
@@ -104,9 +128,17 @@ class _BroadcasterDecorator (object):
             raise ValueError ('broadcastiz\'ed function must take at least 1 '
                               'array argument')
 
+        if isinstance (ret_spec, tuple):
+            filters = tuple (_broadcastize_spec_to_scalar_filter (s) for s in ret_spec)
+            self._scalar_ret_filter = lambda r: tuple (f (v) for f, v in zip (filters, r))
+        else:
+            self._scalar_ret_filter = _broadcastize_spec_to_scalar_filter (ret_spec)
+
+
     def __call__ (self, subfunc):
         b = _Broadcaster (subfunc)
         b._n_arr = self._n_arr
+        b._scalar_ret_filter = self._scalar_ret_filter
         return b
 
 broadcastize = _BroadcasterDecorator
