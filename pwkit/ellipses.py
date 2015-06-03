@@ -1,8 +1,12 @@
 # -*- mode: python; coding: utf-8 -*-
-# Copyright 2012-2014 Peter Williams <peter@newton.cx> and collaborators.
+# Copyright 2012-2015 Peter Williams <peter@newton.cx> and collaborators.
 # Licensed under the MIT License.
 
 """pwkit.ellipses - utilities for manipulating 2D Gaussians and ellipses
+
+XXXXXXX
+XXX this code is in an incomplete state of being vectorized!!!
+XXXXXXX
 
 Useful for sources and bivariate error distributions. We can express the shape
 of the function in several ways, which have different strengths and
@@ -19,11 +23,6 @@ Note that when considering astronomical position angles, conventionally
 defined as East from North, the Dec/lat axis should be considered the X axis
 and the RA/long axis should be considered the Y axis.
 
-Possible TODO: make more array-friendly. All of the bounds-checking becomes a
-pain (e.g. need to wrap in np.any()) to make array-friendly while still
-providing useful debug output. np.vectorize() might save the day here, or my
-@numutil.broadcastize.
-
 NOTE: Pineau et al 2011A&A...527A.126P has some relevant equations, including
 ones for computing the overlap of two error ellipses, which is something I've
 had trouble figuring out in the past.
@@ -31,13 +30,13 @@ had trouble figuring out in the past.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'F2S S2F sigmascale clscale '
-           b'bivell bivnorm bivabc databiv bivrandom bivplot '
-           b'ellnorm ellpoint elld2 ellbiv ellabc ellplot '
-           b'abcell abcd2 abcplot').split ()
+__all__ = b'''F2S S2F sigmascale clscale bivell bivnorm bivabc databiv bivrandom bivplot
+           ellnorm ellpoint elld2 ellbiv ellabc ellplot abcell abcd2
+           abcplot'''.split ()
 
 import numpy as np
 
+from .numutil import broadcastize
 
 # Some utilities for scaling ellipse axis lengths
 
@@ -45,19 +44,21 @@ F2S = 1 / np.sqrt (8 * np.log (2)) # FWHM to sigma; redundant w/ astutil
 S2F = np.sqrt (8 * np.log (2))
 
 
+@broadcastize(1)
 def sigmascale (nsigma):
     """Say we take a Gaussian bivariate and convert the parameters of the
     distribution to an ellipse (major, minor, PA). By what factor should we
     scale those axes to make the area of the ellipse correspond to the n-sigma
     confidence interval?
 
+    Negative or zero values result in NaN.
+
     """
     from scipy.special import erfc
-    if nsigma <= 0:
-        raise ValueError ('nsigma must be positive (%.10e)' % nsigma)
     return np.sqrt (-2 * np.log (erfc (nsigma / np.sqrt (2))))
 
 
+@broadcastize(1)
 def clscale (cl):
     """Say we take a Gaussian bivariate and convert the parameters of the
     distribution to an ellipse (major, minor, PA). By what factor should we
@@ -65,9 +66,9 @@ def clscale (cl):
     confidence interval CL? (I.e. 0 < CL < 1)
 
     """
-    if cl <= 0 or cl >= 1:
-        raise ValueError ('must have 0 < cl < 1 (%.10e)' % cl)
-    return np.sqrt (-2 * np.log (1 - cl))
+    rv = np.sqrt (-2 * np.log (1 - cl))
+    rv[np.where (cl <= 0)] = np.nan
+    return rv
 
 
 # Bivariate form: sigma x, sigma y, cov(x,y)
@@ -264,23 +265,24 @@ def _ellcheck (mjr, mnr, pa):
     return mjr, mnr, pa
 
 
+@broadcastize (3, ret_spec=(0, 0, 0))
 def ellnorm (mjr, mnr, pa):
-    if mjr <= 0:
-        raise ValueError ('mjr must be positive (%.10e)' % mjr)
-    if mnr <= 0:
-        raise ValueError ('mnr must be positive (%.10e)' % mnr)
+    bad = (mjr <= 0) | (mnr <= 0)
+    half_pi = 0.5 * np.pi
 
-    from numpy import pi
-    hp = 0.5 * pi
+    # swap major and minor if minor is bigger
+    swap = np.where (mnr > mjr)
+    temp = mnr[swap]
+    mnr[swap] = mjr[swap]
+    mjr[swap] = temp
+    pa[swap] += half_pi
 
-    if mnr > mjr:
-        mjr, mnr = mnr, mjr
-        pa += hp
+    # center PA in [-pi/2, +pi/2]
+    pa = ((pa + half_pi) % np.pi) - half_pi
 
-    while pa < -hp:
-        pa += pi
-    while pa >= hp:
-        pa -= pi
+    mjr[bad] = np.nan
+    mnr[bad] = np.nan
+    pa[bad] = np.nan
 
     return mjr, mnr, pa
 
@@ -407,18 +409,13 @@ def ellplot (mjr, mnr, pa):
 
 # "ABC" form (maybe better called polynomial form): exp (Ax² + Bxy + Cy²)
 
+@broadcastize (3)
 def _abccheck (a, b, c):
-    if a >= 0:
-        raise ValueError ('a must be negative (%.10e)' % a)
-    if c >= 0:
-        raise ValueError ('c must be negative (%.10e)' % c)
-    if b**2 >= 4 * a * c:
-        raise ValueError ('must have b² < 4ac (a=%.10e, c=%.10e, '
-                          'b=%.10e, b²/4ac=%.10e)' % (a, c, b, b**2/(4*a*c)))
-    return a, b, c
+    "This returns a boolean array; True indicates bad values."
+    return (a >= 0) | (c >= 0) | (b**2 >= 4 * a * c)
 
 
-
+@broadcastize (3, ret_spec=(0, 0, 0))
 def abcell (a, b, c):
     """Given the nontrivial parameters for evaluation a 2D Gaussian as a
     polynomial, compute the equivalent ellipse parameters (major, minor, pa)
@@ -432,26 +429,24 @@ def abcell (a, b, c):
     * pa: position angle (from +x to +y) of the Gaussian, radians
 
     """
-    _abccheck (a, b, c)
-
     from numpy import arctan2, sqrt
 
+    bad = _abccheck (a, b, c)
     pa = 0.5 * arctan2 (b, a - c)
 
     t1 = np.sqrt ((a - c)**2 + b**2)
     t2 = -t1 - a - c
-    if t2 <= 0:
-        raise ValueError ('abc parameters just barely illegal [1] '
-                          '(a=%.10e, c=%.10e, b=%.10e, b²/4ac=%.10e)'
-                          % (a, c, b, b**2 / (4 * a * c)))
+    bad |= (t2 <= 0)
     mjr = t2**-0.5
 
     t2 = t1 - a - c
-    if t2 <= 0: # should never be a problem but ...
-        raise ValueError ('abc parameters just barely illegal [2] '
-                          '(a=%.10e, c=%.10e, b=%.10e, b²/4ac=%.10e)'
-                          % (a, c, b, b**2 / (4 * a * c)))
+    bad |= (t2 <= 0)
     mnr = t2**-0.5
+
+    w = np.where (bad)
+    mjr[w] = np.nan
+    mnr[w] = np.nan
+    pa[w] = np.nan
 
     return ellnorm (mjr, mnr, pa)
 
