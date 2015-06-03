@@ -5,7 +5,7 @@ install_args = @install_args@
 python = python
 
 default:
-	@echo make targets are: install, clean, dist, pristine
+	@echo make targets are: install, clean, dist, docs, pristine
 
 install:
 	@mkdir -p build

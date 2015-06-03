@@ -14,7 +14,7 @@ This documentation is currently just a stub.
    pwkit-environments-toplevel.rst
    io.rst
    pwkit-method_decorator.rst
-   pwkit-numutil.rst
+   numerical.rst
    pwkit-parallel.rst
    pwkit-cli-toplevel.rst
    pwkit-kwargv.rst
