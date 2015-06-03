@@ -74,16 +74,20 @@ class _Broadcaster (method_decorator):
     def fixup (self, newobj):
         # This function is used by the method_decorator superclass.
         newobj._n_arr = object.__getattribute__ (self, '_n_arr')
+        newobj._force_float = object.__getattribute__ (self, '_force_float')
         newobj._scalar_ret_filter = object.__getattribute__ (self, '_scalar_ret_filter')
 
     def __call__ (self, *args, **kwargs):
         n_arr = object.__getattribute__ (self, '_n_arr')
+        force_float = object.__getattribute__ (self, '_force_float')
 
         if len (args) < n_arr:
             raise TypeError ('expected at least %d arguments, got %d'
                              % (n_arr, len (args)))
 
         bc_raw = np.broadcast_arrays (*args[:n_arr])
+        if force_float:
+            bc_raw = tuple (np.asfarray (a) for a in bc_raw)
         bc_1d = tuple (np.atleast_1d (a) for a in bc_raw)
         rest = args[n_arr:]
         result = super (_Broadcaster, self).__call__ (*(bc_1d + rest), **kwargs)
@@ -116,7 +120,7 @@ class _BroadcasterDecorator (object):
     broadcasting behavior without having to special case the actual inputs.
 
     """
-    def __init__ (self, n_arr, ret_spec=0):
+    def __init__ (self, n_arr, ret_spec=0, force_float=True):
         """Decorator for making a auto-broadcasting function. Arguments:
 
         n_arr - The number of array arguments accepted by the decorated function.
@@ -128,6 +132,8 @@ class _BroadcasterDecorator (object):
             raise ValueError ('broadcastiz\'ed function must take at least 1 '
                               'array argument')
 
+        self._force_float = bool (force_float)
+
         if isinstance (ret_spec, tuple):
             filters = tuple (_broadcastize_spec_to_scalar_filter (s) for s in ret_spec)
             self._scalar_ret_filter = lambda r: tuple (f (v) for f, v in zip (filters, r))
@@ -138,6 +144,7 @@ class _BroadcasterDecorator (object):
     def __call__ (self, subfunc):
         b = _Broadcaster (subfunc)
         b._n_arr = self._n_arr
+        b._force_float = self._force_float
         b._scalar_ret_filter = self._scalar_ret_filter
         return b
 

@@ -24,7 +24,7 @@ provides several useful additions:
 Making functions that auto-broadcast their arguments
 ------------------------------------------------------------------------------
 
-.. decorator:: broadcastize(n_arr, ret_spec=0)
+.. decorator:: broadcastize(n_arr, ret_spec=0, force_float=True)
 
    Wrap a function to automatically broadcast :class:`numpy.ndarray` arguments.
 
@@ -67,6 +67,13 @@ Making functions that auto-broadcast their arguments
    - A tuple ``t`` indicates that the return value is also a tuple. The
      elements of the *ret_spec* tuple should contain the values listed above,
      and each element of the return value will be handled accordingly.
+
+   The default *ret_spec* is ``0``, i.e. the return value is expected to be an
+   array of the same shape as the argument(s).
+
+   If *force_float* is true (the default), the input arrays will be converted to
+   floating-point types if necessary (with :func:`numpy.asfarray`) before being
+   passed to the function.
 
    Example::
 
