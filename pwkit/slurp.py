@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 __all__ = b'Event Redirection Slurper'.split ()
 
 import fcntl, os, signal, subprocess, sys
-from select import select
+from select import select, error as selecterror
 
 from . import Holder
 
@@ -175,7 +175,16 @@ class Slurper (object):
         if len (self._other_events):
             return self._other_events.pop ()
 
-        rd, wr, er = select (self._files, [], [], self.timeout)
+        while True:
+            try:
+                rd, wr, er = select (self._files, [], [], self.timeout)
+                break
+            except selecterror as e:
+                # if EINTR or EAGAIN, try again; we won't get EINTR unless
+                # we're forwarding signals, since otherwise it'll show up as a
+                # KeyboardInterrupt. "e.args[0]" is the only way to get errno.
+                if e.args[0] not in (4, 11):
+                    raise
 
         for fd in rd:
             chunk = fd.read (self._chunksize)
