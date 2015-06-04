@@ -35,6 +35,7 @@ Modules in this package:
   pdm              - Finding periods in data with Phase Dispersion Minimization.
   phoenix          - Working with Phoenix-based model atmospheres.
   radio_cal_models - Models of radio-wavelength calibrator flux densities.
+  slurp            - Streaming output from sub-programs.
   synphot          - Synthetic photometry and database of instrumental bandpasses.
   tabfile          - I/O on typed tabular files containing uncertain measurements.
   tinifile         - I/O on typed ini-format files containing uncertain measurements.

@@ -15,7 +15,7 @@ This documentation is currently just a stub.
    section-science.rst
    section-cli.rst
    section-viz.rst
-   section-io.rst
+   io/index.rst
    section-environments.rst
 
 

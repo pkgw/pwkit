@@ -10,8 +10,9 @@ This documentation is currently just a stub.
 .. toctree::
    :maxdepth: 2
 
-   pwkit/inifile.rst
-   pwkit/latex.rst
-   pwkit/tabfile.rst
-   pwkit/tinifile.rst
-   pwkit/unicode_to_latex.rst
+   slurp.rst
+   pwkit-inifile.rst
+   pwkit-latex.rst
+   pwkit-tabfile.rst
+   pwkit-tinifile.rst
+   pwkit-unicode_to_latex.rst
