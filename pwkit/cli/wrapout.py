@@ -1,5 +1,5 @@
 # -*- mode: python; coding: utf-8 -*-
-# Copyright 2014 Peter Williams <peter@newton.cx> and collaborators
+# Copyright 2014-2015 Peter Williams <peter@newton.cx> and collaborators
 # Licensed under the MIT License.
 
 """pwkit.cli.wrapout - the 'wrapout' program."""
@@ -8,10 +8,10 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 __all__ = [b'commandline']
 
-import os, signal, subprocess, sys, threading, time, Queue
+import os, signal, sys, time
 
 from . import die, propagate_sigint
-
+from ..slurp import Slurper
 
 usage = """usage: wrapout [-ces] [-a name] <command> [command args...]
 
@@ -63,14 +63,6 @@ ansi_reset = '\033[m'
 
 OUTKIND_STDOUT, OUTKIND_STDERR, OUTKIND_EXTRA = 0, 1, 2
 
-signals_for_child = [
-    signal.SIGHUP,
-    signal.SIGINT,
-    signal.SIGQUIT,
-    signal.SIGTERM,
-    signal.SIGUSR1,
-    signal.SIGUSR2,
-]
 
 class Wrapper (object):
     # I like !! for errors and ** for info, but those are nigh-un-grep-able.
@@ -78,7 +70,6 @@ class Wrapper (object):
     use_colors = False
     echo_stderr = False
     propagate_signals = False
-    poll_timeout = 0.2
     destination = None
 
     _red = ''
@@ -88,24 +79,10 @@ class Wrapper (object):
     _kind_prefixes = ['', '', '']
 
     def __init__ (self, destination=None):
-        # Python print output isn't threadsafe (!) so we have to communicate
-        # lines from the readers back to the main thread for things to come
-        # out correctly.
-        self._lines = Queue.Queue ()
-
         if destination is None:
             self.destination = sys.stdout
         else:
             self.destination = destination
-
-
-    def monitor (self, fd, outkind):
-        while True:
-            # NOTE: 'for line in fd' queues up a lot of lines before yielding anything.
-            line = fd.readline ()
-            if not len (line):
-                break
-            self._lines.put ((outkind, line))
 
 
     def output (self, kind, line):
@@ -118,6 +95,16 @@ class Wrapper (object):
                self._reset,
                sep='', end='', file=self.destination)
         self.destination.flush ()
+
+
+    def output_stderr (self, text):
+        print (self._red,
+               't=%07d' % (time.time () - self._t0),
+               self._reset,
+               ' ',
+               text,
+               sep='', end='', file=sys.stderr)
+        sys.stderr.flush ()
 
 
     def outpar (self, name, value):
@@ -138,87 +125,102 @@ class Wrapper (object):
         self.outpar ('exec', cmd)
         self.outpar ('argv', ' '.join (repr (s) for s in argv))
 
-        proc = subprocess.Popen (argv,
-                                 executable=cmd,
-                                 env=env,
-                                 cwd=cwd,
-                                 stdin=open (os.devnull, 'r'),
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE,
-                                 shell=False)
+        midline_kind = None
+        stderr_midline = False
 
-        if self.propagate_signals:
-            prev_handlers = {}
+        with Slurper (argv=argv, executable=cmd, env=env, cwd=cwd,
+                      propagate_signals=self.propagate_signals) as slurp:
+            # Here's where we get tricky since we want to output partially
+            # complete lines, but we may have to switch between different
+            # types of output or informational messages.
 
-            def handle (signum, frame):
-                self.output (OUTKIND_EXTRA, 'received signal %d; propagating to child\n' % signum)
-                proc.send_signal (signum)
+            for etype, data in slurp:
+                if etype == 'forwarded-signal':
+                    if self.midline_kind is not None:
+                        self.destination.write (b'\n')
+                        midline_kind = None
+                    self.output (OUTKIND_EXTRA, 'forwarded signal %d to child\n' % data)
+                elif etype in ('stdout', 'stderr'):
+                    if not len (data):
+                        continue # EOF, nothing for us to do.
 
-            for signum in signals_for_child:
-                prev_handlers[signum] = signal.signal (signum, handle)
+                    kind = OUTKIND_STDERR if etype == 'stderr' else OUTKIND_STDOUT
 
-        tout = threading.Thread (target=self.monitor,
-                                 name='stdout-monitor',
-                                 args=(proc.stdout, OUTKIND_STDOUT))
-        tout.daemon = True
-        tout.start ()
+                    if midline_kind is not None and midline_kind != kind:
+                        self.destination.write (b'\n')
+                        midline_kind = None
 
-        terr = threading.Thread (target=self.monitor,
-                                 name='stderr-monitor',
-                                 args=(proc.stderr, OUTKIND_STDERR))
-        terr.daemon = True
-        terr.start ()
+                    lines = data.split (b'\n')
 
-        while True:
-            keepgoing = proc.poll () is None
-            keepgoing = keepgoing or tout.is_alive ()
-            keepgoing = keepgoing or terr.is_alive ()
-            keepgoing = keepgoing or not self._lines.empty ()
-            if not keepgoing:
-                break
+                    if midline_kind is None:
+                        self.output (kind, lines[0]) # start a new line
+                    else:
+                        # If we're here, we must be continuing a line
+                        self.destination.write (lines[0])
 
-            try:
-                kind, line = self._lines.get (timeout=self.poll_timeout)
-            except Queue.Empty:
-                continue
+                    for line in lines[1:-1]:
+                        # mid-lines are straightforward
+                        self.destination.write (b'\n')
+                        self.output (kind, line)
 
-            self.output (kind, line)
+                    if len (lines) == 1:
+                        self.destination.flush ()
+                        midline_kind = kind
+                    elif not len (lines[-1]):
+                        # We ended right on a newline, which is convenient.
+                        self.destination.write (b'\n')
+                        self.destination.flush ()
+                        midline_kind = None
+                    else:
+                        # We ended with a partial line.
+                        self.destination.write (b'\n')
+                        self.output (kind, lines[-1])
+                        midline_kind = kind
 
-            if self.echo_stderr and kind == OUTKIND_STDERR:
-                # We use a different format since the intended usage is that
-                # the main output is being logged elsewhere; this should be
-                # terser and distinguishable from the stdout output.
-                print (self._red,
-                       't=%07d' % (time.time () - self._t0),
-                       self._reset,
-                       ' ',
-                       line,
-                       sep='', end='', file=sys.stderr)
-                sys.stderr.flush ()
+                    if self.echo_stderr and kind == OUTKIND_STDERR:
+                        # We use a different format since the intended usage
+                        # is that the main output is being logged elsewhere;
+                        # this should be terser and distinguishable from the
+                        # stdout output.
+                        if stderr_midline:
+                            sys.stderr.write (lines[0])
+                        else:
+                            self.output_stderr (lines[0])
+
+                        for line in lines[1:-1]:
+                            sys.stderr.write (b'\n')
+                            self.output_stderr (line)
+
+                        if len (lines) == 1:
+                            sys.stderr.flush ()
+                            stderr_midline = True
+                        elif not len (lines[-1]):
+                            sys.stderr.write (b'\n')
+                            sys.stderr.flush ()
+                        else:
+                            sys.stderr.write (b'\n')
+                            self.output_stderr (lines[-1])
+                            stderr_midline = True
 
         self.outpar ('finish_time', time.strftime (rfc3339_fmt))
         self.outpar ('elapsed_seconds', int (round (time.time () - self._t0)))
-        self.outpar ('exitcode', proc.returncode)
+        self.outpar ('exitcode', slurp.proc.returncode)
 
         # note: subprocess pre-processes exit codes, so shouldn't use
         # os.WIFSIGNALED, os.WTERMSIG, etc.
 
-        if proc.returncode < 0:
-            signum = -proc.returncode
+        if slurp.proc.returncode < 0:
+            signum = -slurp.proc.returncode
             self.output (OUTKIND_STDERR,
                          'process killed by signal %d\n' % signum)
 
             if self.propagate_signals:
                 signal.signal (signum, signal.SIG_DFL)
                 os.kill (os.getpid (), signum) # sayonara
-        elif proc.returncode != 0:
+        elif slurp.proc.returncode != 0:
             self.output (OUTKIND_STDERR, 'process exited with error code\n')
 
-        if self.propagate_signals:
-            for signum, prev_handler in prev_handlers.iteritems ():
-                signal.signal (signum, prev_handler)
-
-        return proc.returncode
+        return slurp.proc.returncode
 
 
 def commandline (argv=None):

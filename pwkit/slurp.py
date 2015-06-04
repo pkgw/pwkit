@@ -106,7 +106,7 @@ class Slurper (object):
     def __init__ (self, argv=None, env=None, cwd=None, propagate_signals=True,
                   timeout=10, linebreak=False, encoding=None,
                   stdin=Redirection.DevNull, stdout=Redirection.Pipe,
-                  stderr=Redirection.Pipe):
+                  stderr=Redirection.Pipe, executable=None):
         self.proc = None
         self.argv = argv
         self.env = env
@@ -118,6 +118,7 @@ class Slurper (object):
         self.stdin = stdin
         self.stdout = stdout
         self.stderr = stderr
+        self.executable = executable
 
 
     def __enter__ (self):
@@ -140,6 +141,7 @@ class Slurper (object):
 
         self.proc = subprocess.Popen (self.argv,
                                       env=self.env,
+                                      executable=self.executable,
                                       cwd=self.cwd,
                                       stdin=stdin,
                                       stdout=stdout,

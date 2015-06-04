@@ -67,12 +67,13 @@ decoding is enabled; see below.)
    disable buffering on both streams, run ``stdbuf -o0 -e0 foo bar``.
 
 
-.. class:: Slurper(argv=None, env=None, cwd=None, propagate_signals=True, timeout=10, linebreak=False, encoding=None, stdin=slurp.Redirection.DevNull, stdout=slurp.Redirection.Pipe, stderr=slurp.Redirection.Pipe)
+.. class:: Slurper(argv=None, env=None, cwd=None, propagate_signals=True, timeout=10, linebreak=False, encoding=None, stdin=slurp.Redirection.DevNull, stdout=slurp.Redirection.Pipe, stderr=slurp.Redirection.Pipe, executable=None)
 
    Construct a context manager used to read output from a subprogram. *argv*
    is used to launch the subprogram using :class:`subprocess.Popen` with the
-   *shell* keyword set to False. *env*, *cwd*, *stdin*, *stdout*, and *stderr*
-   are forwarded to the :class:`subprocess.Popen` constructor as well.
+   *shell* keyword set to False. *env*, *cwd*, *executable*, *stdin*,
+   *stdout*, and *stderr* are forwarded to the :class:`subprocess.Popen`
+   constructor as well.
 
    Regarding the redirection parameters *stdin*, *stdout*, and *stderr*, the
    constants in the :data:`Redirection` object gives more user-friendly names
@@ -104,9 +105,9 @@ decoding is enabled; see below.)
    to check for output from the subprogram. It is measured in seconds.
 
    :class:`Slurper` instances have attributes :attr:`argv`, :attr:`env`,
-   :attr:`cwd`, :attr:`propagate_signals`, :attr:`timeout`, :attr:`linebreak`,
-   :attr:`encoding`, :attr:`stdin`, :attr:`stdout`, and :attr:`stderr`
-   recording the construction parameters.
+   :attr:`cwd`, :attr:`executable`, :attr:`propagate_signals`,
+   ::attr:`timeout`, :attr:`linebreak`, attr:`encoding`, :attr:`stdin`,
+   ::attr:`stdout`, and :attr:`stderr` recording the construction parameters.
 
 
 .. data:: Redirection
@@ -151,6 +152,12 @@ decoding is enabled; see below.)
 .. attribute:: Slurper.cwd
 
    The working directory for the program to be launched.
+
+
+.. attribute:: Slurper.executable
+
+   The name of the executable to launch (``argv[0]`` is allowed to differ from
+   this).
 
 
 .. attribute:: Slurper.propagate_signals
