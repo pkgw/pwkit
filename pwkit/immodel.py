@@ -421,6 +421,24 @@ class Fitter (object):
         imdata[y0:y0+h,x0:x0+w] -= postage.reshape ((h, w))
 
 
+    def display (self, run_main=True):
+        from .ndshow_gtk3 import cycle
+
+        arrays = [self.data[::-1,]]
+        descs = ['Data']
+
+        model = np.empty (self.data.size)
+        self.model (self.soln.params, model, sourcesonly=False)
+        arrays.append (model.reshape (self.data.shape)[::-1,])
+        descs.append ('Model')
+
+        arrays.append (arrays[0] - arrays[1])
+        descs.append ('Residual')
+
+        cycle (arrays, descs, run_main=run_main, yflip=True)
+        return self
+
+
 def _guess_background_point_flux (im, imdata, xmid, ymid, patchhalfsize=16):
     imh, imw = imdata.shape
 
