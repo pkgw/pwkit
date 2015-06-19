@@ -30,6 +30,7 @@ unit_tophat_ie    - Tophat function on [0,1).
 unit_tophat_ii    - Tophat function on [0,1].
 usmooth           - Convolve data series with a window, with uncertainties.
 weighted_mean     - Compute a weighted mean from values and their uncertainties.
+weighted_mean_df  - Convenience wrapper to call weighted_mean on a DataFrame.
 weighted_variance - Estimate the variance of a weighted sampled.
 
 Decorators:
@@ -42,8 +43,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 __all__ = (b'''broadcastize dfsmooth fits_recarray_to_data_frame make_step_lcont
            make_step_rcont make_tophat_ee make_tophat_ei make_tophat_ie
            make_tophat_ii parallel_newton parallel_quad rms unit_tophat_ee
-           unit_tophat_ei unit_tophat_ie unit_tophat_ii usmooth
-           weighted_variance''').split ()
+           unit_tophat_ei unit_tophat_ie unit_tophat_ii usmooth weighted_mean
+           weighted_mean_df weighted_variance''').split ()
 
 import functools
 import numpy as np
@@ -564,6 +565,15 @@ def weighted_mean (values, uncerts, **kwargs):
     weights = uncerts ** -2
     wt_mean, wt_sum = np.average (values, weights=weights, returned=True, **kwargs)
     return wt_mean, wt_sum ** -0.5
+
+
+def weighted_mean_df (df, **kwargs):
+    """Compute a weighted mean from a two-column Pandas DataFrame, where the first
+    column gives values and the second gives their uncertainties. Returns
+    (weighted_mean, uncertainty_in_mean).
+
+    """
+    return weighted_mean (df[df.columns[0]], df[df.columns[1]], **kwargs)
 
 
 def weighted_variance (x, weights):

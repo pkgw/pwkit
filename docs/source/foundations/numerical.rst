@@ -101,6 +101,14 @@ Convenience functions for statistics
    Placeholder.
 
 
+.. function:: weighted_mean_df(df, **kwargs)
+
+   The same as :func:`weighted_mean`, except the argument is expected to be a
+   two-column :class:`pandas.DataFrame` whose first column gives the data
+   values and second column gives their uncertainties. Returns
+   ``(weighted_mean, uncertainty_in_mean)``.
+
+
 .. function:: weighted_variance(x, weights)
 
    Placeholder.
