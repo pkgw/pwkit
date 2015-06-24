@@ -65,7 +65,7 @@ def bck_from_spt (spt):
     Returns: the correction `bck` such that `m_bol = k_abs + bck`, or NaN if
     `spt` is out of range.
 
-    Valid values of `spt` are between 0 and 30.
+    Valid values of `spt` are between 2 and 30.
 
     """
 
@@ -81,12 +81,84 @@ def bck_from_spt (spt):
                           spt < 19,
                           spt <= 14,
                           spt < 10,
-                          (spt < 0) | (spt >= 30)],
+                          (spt < 2) | (spt >= 30)],
                          [lambda s: 3.41 - 0.21 * (s - 20), # Nakajima
                           lambda s: 3.42 - 0.075 * (s - 14), # Dahn, Nakajima
                           lambda s: 3.42 + 0.075 * (s - 14), # Dahn, Nakajima
                           lambda s: 2.43 + 0.0895 * s, # Wilking; only ok for spt >= M2!
                           np.nan])
+
+
+Mbol_sun = 4.7554
+"""Absolute bolometric luminosity of the Sun. Copied from Eric Mamajek's star
+notes:
+https://sites.google.com/site/mamajeksstarnotes/basic-astronomical-data-for-the-sun
+
+Quoted uncertainty is 0.0004.
+
+Note that this bit isn't UCD-specific and could/should go elsewhere, say,
+astutil.
+
+NOTE! I haven't verified if this value is consistent with the one implicitly
+adopted by the various relations that I use above! This could result in errors
+of up to ~0.1 mag. Cf. Torres, 2010AJ....140.1158T.
+
+"""
+def lbol_from_mbol (mbol, format='cgs'):
+    from .cgs import lsun
+
+    x = 0.4 * (Mbol_sun - mbol)
+
+    if format == 'cgs':
+        return lsun * 10**x
+    elif format == 'logsun':
+        return x
+    elif format == 'logcgs':
+        return np.log10 (lsun) + x
+
+    raise ValueError ('unrecognized output format %r' % format)
+
+
+@numutil.broadcastize (4)
+def lbol_from_spt_dist_mag (sptnum, dist_pc, jmag, kmag, format='cgs'):
+    """Estimate a UCD's bolometric luminosity given some basic parameters.
+
+    sptnum: the spectral type as a number; 8 -> M8; 10 -> L0 ; 20 -> T0
+      Valid values range between 0 and 30, ie M0 to Y0.
+    dist_pc: distance to the object in parsecs
+    jmag: object's J-band magnitude or NaN (*not* None) if unavailable
+    kmag: same with K-band magnitude
+    format: either 'cgs', 'logcgs', or 'logsun', defining the form of the
+      outputs. Logarithmic quantities are base 10.
+
+    This routine can be used with vectors of measurements. The result will be
+    NaN if a value cannot be computed. This routine implements the method
+    documented in the Appendix of Williams et al., 2014ApJ...785....9W
+    (doi:10.1088/0004-637X/785/1/9).
+
+    """
+    bcj = bcj_from_spt (sptnum)
+    bck = bck_from_spt (sptnum)
+
+    n = np.zeros (sptnum.shape, dtype=np.int)
+    app_mbol = np.zeros (sptnum.shape)
+
+    w = np.isfinite (bcj) & np.isfinite (jmag)
+    app_mbol[w] += jmag[w] + bcj[w]
+    n[w] += 1
+
+    w = np.isfinite (bck) & np.isfinite (kmag)
+    app_mbol[w] += kmag[w] + bck[w]
+    n[w] += 1
+
+    w = (n != 0)
+    abs_mbol = (app_mbol[w] / n[w]) - 5 * (np.log10 (dist_pc[w]) - 1)
+    # note: abs_mbol is filtered by `w`
+
+    lbol = np.empty (sptnum.shape)
+    lbol.fill (np.nan)
+    lbol[w] = lbol_from_mbol (abs_mbol, format=format)
+    return lbol
 
 
 # Mass estimation.
