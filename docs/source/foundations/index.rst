@@ -10,7 +10,7 @@ This documentation is currently just a stub.
 .. toctree::
    :maxdepth: 2
 
-   pwkit-toplevel.rst
+   core.rst
    pwkit-environments-toplevel.rst
    io.rst
    pwkit-method_decorator.rst

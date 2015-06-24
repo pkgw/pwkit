@@ -11,7 +11,7 @@ This documentation is currently just a stub.
    :maxdepth: 2
 
    about.rst
-   foundations/toplevel.rst
+   foundations/index.rst
    section-science.rst
    section-cli.rst
    section-viz.rst
