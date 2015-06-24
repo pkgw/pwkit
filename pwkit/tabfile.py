@@ -71,7 +71,7 @@ def read (path, tabwidth=8, **kwargs):
                     v = parser (text[cslice].strip ())
                 except:
                     reraise_context ('while parsing "%s"', text[cslice].strip ())
-                h.setone (name, v)
+                h.set_one (name, v)
             yield h
         elif text[0] != '@':
             # fixed column
@@ -275,6 +275,6 @@ def vizread (descpath, descsection, tabpath, tabwidth=8, **kwargs):
                 v = parser (text[cslice].strip ())
             except:
                 reraise_context ('while parsing "%s"', text[cslice].strip ())
-            h.setone (name, v)
+            h.set_one (name, v)
 
         yield h

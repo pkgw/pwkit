@@ -125,7 +125,7 @@ class Holder (object):
     Provides nice str/unicode/repr representations, and basic manipulations:
 
     set(**kwargs)            - Set named keys as a group
-    setone (name, value)     - Set a specific key
+    set_one (name, value)    - Set a specific key
     get (name, defval=None)  - Retrieve a key with an optional default
     has (name)               - Test whether a key is in the Holder
                                (can also test `name in holderobj`)
@@ -194,7 +194,7 @@ class Holder (object):
     def get (self, name, defval=None):
         return self.__dict__.get (name, defval)
 
-    def setone (self, name, value):
+    def set_one (self, name, value):
         self.__dict__[name] = value
         return self
 

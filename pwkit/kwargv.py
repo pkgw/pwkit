@@ -93,7 +93,7 @@ def basic (args=None):
     for arg in args:
         if arg[0] == '+':
             for kw in arg[1:].split (','):
-                parsed.setone (kw, True)
+                parsed.set_one (kw, True)
             # avoid analogous -a,b,c syntax because it gets confused with -a --help, etc.
         else:
             t = arg.split ('=', 1)
@@ -101,7 +101,7 @@ def basic (args=None):
                 raise KwargvError ('don\'t know what to do with argument "%s"', arg)
             if not len (t[1]):
                 raise KwargvError ('empty value for keyword argument "%s"', t[0])
-            parsed.setone (t[0], t[1])
+            parsed.set_one (t[0], t[1])
 
     return parsed
 
@@ -273,7 +273,7 @@ class ParseKeywords (Holder):
         # Apply defaults, save parse info, done
 
         for kw, ki in kwinfos.iteritems ():
-            self.setone (ki.attrname, ki.default)
+            self.set_one (ki.attrname, ki.default)
 
         self._kwinfos = kwinfos
 
@@ -323,7 +323,7 @@ class ParseKeywords (Holder):
                 pval = ki.fixupfunc (pval)
 
             seen.add (kw)
-            self.setone (ki.attrname, pval)
+            self.set_one (ki.attrname, pval)
 
         for kw, ki in self._kwinfos.iteritems ():
             if ki.required and kw not in seen:

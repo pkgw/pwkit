@@ -49,7 +49,7 @@ def read_stream (stream):
             # New section
             if section is not None:
                 if key is not None:
-                    section.setone (key, data.strip ().decode ('utf8'))
+                    section.set_one (key, data.strip ().decode ('utf8'))
                     key = data = None
                 yield section
 
@@ -59,7 +59,7 @@ def read_stream (stream):
 
         if len (line.strip ()) == 0:
             if key is not None:
-                section.setone (key, data.strip ().decode ('utf8'))
+                section.set_one (key, data.strip ().decode ('utf8'))
                 key = data = None
             continue
 
@@ -68,10 +68,10 @@ def read_stream (stream):
             if section is None:
                 raise InifileError ('key seen without section!')
             if key is not None:
-                section.setone (key, data.strip ().decode ('utf8'))
+                section.set_one (key, data.strip ().decode ('utf8'))
             key = m.group (1)
             data = m.group (2).replace (r'\"', '"').replace (r'\n', '\n').replace (r'\\', '\\')
-            section.setone (key, data.decode ('utf8'))
+            section.set_one (key, data.decode ('utf8'))
             key = data = None
             continue
 
@@ -80,7 +80,7 @@ def read_stream (stream):
             if section is None:
                 raise InifileError ('key seen without section!')
             if key is not None:
-                section.setone (key, data.strip ().decode ('utf8'))
+                section.set_one (key, data.strip ().decode ('utf8'))
             key = m.group (1)
             data = m.group (2)
             if not len (data):
@@ -97,7 +97,7 @@ def read_stream (stream):
 
     if section is not None:
         if key is not None:
-            section.setone (key, data.strip ().decode ('utf8'))
+            section.set_one (key, data.strip ().decode ('utf8'))
         yield section
 
 
@@ -230,7 +230,7 @@ def mutate_stream (instream, outstream):
             # New chunk
             if chunk is not None:
                 if key is not None:
-                    chunk.data.setone (key, data.strip ().decode ('utf8'))
+                    chunk.data.set_one (key, data.strip ().decode ('utf8'))
                     key = data = None
                 yield chunk
                 chunk.emit (outstream)
@@ -245,7 +245,7 @@ def mutate_stream (instream, outstream):
 
         if len (line.strip ()) == 0:
             if key is not None:
-                chunk.data.setone (key, data.strip ().decode ('utf8'))
+                chunk.data.set_one (key, data.strip ().decode ('utf8'))
                 key = data = None
             if chunk is not None:
                 chunk._addLine (fullline, None)
@@ -258,10 +258,10 @@ def mutate_stream (instream, outstream):
             if chunk is None:
                 raise InifileError ('key seen without section!')
             if key is not None:
-                chunk.data.setone (key, data.strip ().decode ('utf8'))
+                chunk.data.set_one (key, data.strip ().decode ('utf8'))
             key = m.group (1)
             data = m.group (2).replace (r'\"', '"').replace (r'\n', '\n').replace (r'\\', '\\')
-            chunk.data.setone (key, data.decode ('utf8'))
+            chunk.data.set_one (key, data.decode ('utf8'))
             chunk._addLine (fullline, key)
             key = data = None
             continue
@@ -271,7 +271,7 @@ def mutate_stream (instream, outstream):
             if chunk is None:
                 raise InifileError ('key seen without section!')
             if key is not None:
-                chunk.data.setone (key, data.strip ().decode ('utf8'))
+                chunk.data.set_one (key, data.strip ().decode ('utf8'))
             key = m.group (1)
             data = m.group (2)
             if not data[-1].isspace ():
@@ -288,7 +288,7 @@ def mutate_stream (instream, outstream):
 
     if chunk is not None:
         if key is not None:
-            chunk.data.setone (key, data.strip ().decode ('utf8'))
+            chunk.data.set_one (key, data.strip ().decode ('utf8'))
         yield chunk
         chunk.emit (outstream)
 
