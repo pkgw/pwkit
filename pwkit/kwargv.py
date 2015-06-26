@@ -57,11 +57,13 @@ fixupfunc (callable or None, None): after all other parsing/transform
 uiname (str or None, None): the name of the keyword as presented in the UI.
   I.e., "foo = Custom (0, uiname='bar')" parses keyword "bar=..." but
   sets attribute "foo" in the Python object.
+repeatable (bool, False): if true, the keyword value(s) will be contained
+  in a list. If the keyword is specified multiple times (ie
+  "./program kw=1 kw=2") the list will have multiple items
+  ("cfg.kw = [1,2]").
+
 
 TODO: --help, etc.
-
-TODO: 'multival' or something; if true, foo=1 foo=2 -> foo=[1,2]
-(would be useful for omegamap locator=...)
 
 TODO: +bool, -bool for ParseKeywords parser (but careful about allowing
 --help at least)
@@ -116,6 +118,7 @@ class KeywordInfo (object):
     maxvals = None
     minvals = 0 # note: maxvals and minvals are used in different ways
     scale = None
+    repeatable = False
     printexc = False
     fixupfunc = None
     attrname = None
@@ -263,8 +266,9 @@ class ParseKeywords (Holder):
                 # makes sense, and prevents trying to call fixupfunc on
                 # weird default values of fixed lists.
                 ki.default = None
-
-            if ki.fixupfunc is not None and ki.default is not None:
+            elif ki.repeatable:
+                ki.default = []
+            elif ki.fixupfunc is not None and ki.default is not None:
                 # kinda gross structure here, oh well.
                 ki.default = ki.fixupfunc (ki.default)
 
@@ -321,6 +325,17 @@ class ParseKeywords (Holder):
 
             if ki.fixupfunc is not None:
                 pval = ki.fixupfunc (pval)
+
+            if ki.repeatable:
+                # We can't just unilaterally append to the preexisting
+                # list, since if we did that starting with the default value
+                # we'd mutate the default list.
+                cur = self.get (ki.attrname)
+                if not len (cur):
+                    pval = [pval]
+                else:
+                    cur.append (pval)
+                    pval = cur
 
             seen.add (kw)
             self.set_one (ki.attrname, pval)
