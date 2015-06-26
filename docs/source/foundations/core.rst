@@ -35,6 +35,11 @@ future extension.
    The *__decorating* keyword is used to implement the :class:`Holder`
    decorator functionality, described below.
 
+While the :class:`Holder` is primarily meant for bare-bones namespace
+management, it does provide several convenience functions: :meth:`Holder.get`,
+:meth:`Holder.set`, :meth:`Holder.set_one`, :meth:`Holder.has`,
+:meth:`Holder.copy`, :meth:`Holder.to_dict`, and :meth:`Holder.to_pretty`.
+
 
 .. method:: Holder.__unicode__()
 
