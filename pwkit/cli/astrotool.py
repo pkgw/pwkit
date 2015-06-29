@@ -432,7 +432,7 @@ class Summfits (multitool.Command):
             else:
                 kind = '???'
 
-            output (1, 'HDU %*d = %*s: kind=%s size=%d ver=%d level=%d',
+            output (1, 'HDU %*d = %*s: kind=%s size=%d ver=%s level=%s',
                     hduidxwidth, hduidx, hdunamewidth, hdu.name, kind, hdu.size,
                     hdu.ver, hdu.level)
 
