@@ -216,6 +216,106 @@ set.'''
         env.execvpe (progargv)
 
 
+class MakeEPICAliases (multitool.Command):
+    name = 'make-epic-aliases'
+    argspec = '<srcdir> <destdir>'
+    summary = 'Generate user-friendly aliases to XMM-Newton EPIC data files.'
+    more_help = '''destdir should already not exist and will be created. <srcdir> should
+be the ODF directory, containing a file named MANIFEST.<numbers> and many others.'''
+
+    INSTRUMENT = slice (16, 18)
+    EXPFLAG = slice (18, 19) # 'S': sched, 'U': unsched; 'X': N/A
+    EXPNO = slice (19, 22)
+    CCDNO = slice (22, 24)
+    DTYPE = slice (24, 27)
+    EXTENSION = slice (28, None)
+
+    instrmap = {
+        'M1': 'mos1',
+        'M2': 'mos2',
+        'PN': 'pn',
+        'RM': 'radmon',
+    }
+
+    extmap = {
+        'FIT': 'fits',
+    }
+
+    dtypemap = {
+        'aux': 'aux',
+        'bue': 'burst',
+        'ccx': 'counting_cycle',
+        'cte': 'compressed_timing',
+        'dii': 'diagnostic',
+        'dli': 'discarded_lines',
+        'ecx': 'hk_extraheating_config', # or radiation mon count rate
+        'esx': 'spectra', # radiation monitor spectra, that is
+        'hbh': 'hk_hbr_buffer',
+        'hch': 'hk_hbr_config',
+        'hdi': 'high_rate_offset_data',
+        'hth': 'hk_hbr_threshold',
+        'ime': 'imaging',
+        'noi': 'noise',
+        'odi': 'offset_data',
+        'ove': 'offset_variance',
+        'pah': 'hk_additional',
+        'peh': 'hk_periodic',
+        'pmh': 'hk_main',
+        'pth': 'hk_bright_pixels',
+        'rie': 'reduced_imaging',
+        'tmh': 'hk_thermal_limits',
+        'tie': 'timing',
+    }
+
+    def invoke (self, args, **kwargs):
+        if len (args) != 2:
+            raise multitool.UsageError ('make-epic-aliases requires exactly 2 arguments')
+
+        srcdir = Path (args[0])
+        destdir = Path (args[1])
+
+        srcfiles = [x for x in srcdir.iterdir () if len (x.name) > 28]
+
+        # Do it.
+
+        idents = set ()
+        destdir.mkdir () # intentionally crash if exists; easiest approach
+
+        for p in srcfiles:
+            instr = p.name[self.INSTRUMENT]
+            if instr not in self.instrmap:
+                continue
+
+            eflag = p.name[self.EXPFLAG]
+            expno = p.name[self.EXPNO]
+            ccdno = p.name[self.CCDNO]
+            dtype = p.name[self.DTYPE]
+            ext = p.name[self.EXTENSION]
+
+            instr = self.instrmap[instr]
+            dtype = self.dtypemap[dtype.lower ()]
+            ext = self.extmap[ext]
+
+            if instr == 'radmon' and dtype == 'hk_extraheating_config':
+                dtype = 'rates'
+
+            if instr == 'radmon':
+                ident = (instr, expno, dtype, ext)
+                stem = '%s_e%s_%s.%s' % ident
+            elif ccdno == '00':
+                ident = (instr, dtype, ext)
+                stem = '%s_%s.%s' % ident
+            else:
+                ident = (instr, expno, ccdno, dtype, ext)
+                stem = '%s_e%s_c%s_%s.%s' % ident
+
+            if ident in idents:
+                cli.die ('short identifier clash: %r', ident)
+            idents.add (ident)
+
+            (destdir / stem).rellink_to (p)
+
+
 class MakeOMAliases (multitool.Command):
     name = 'make-om-aliases'
     argspec = '<srcdir> <destdir>'
