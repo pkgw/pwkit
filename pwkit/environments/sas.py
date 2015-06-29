@@ -39,6 +39,32 @@ $ ./install.sh
 The CCF are like CALDB and need to be rsynced -- see the update-ccf
 subcommand.
 
+
+ODF data format notes
+=========================
+
+ODF files all have names in the format RRRR_NNNNNNNNNN_IIUEEECCMMM.ZZZ
+
+      RRRR - revolution (orbit) number
+NNNNNNNNNN - obs ID
+        II - instrument:
+                OM - optical monitor
+                R1 - RGS (reflection grating spectrometer) unit 1
+                R2 - RGS 2
+                M1 - EPIC (imaging camera) MOS 1 detector
+                M2 - EPIC (imaging camera) MOS 2 detector
+                PN - EPIC (imaging camera) PN detector
+                RM - EPIC radiation monitor
+                SC - spacecraft
+         U - scheduling status of exposure
+                 S - scheduled
+                 U - unscheduled
+                 X - N/A
+       EEE - exposure number
+        CC - CCD/OM-window ID
+       MMM - data type of file (many; not listed here)
+       ZZZ - file extension
+
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
@@ -48,6 +74,7 @@ import io, os.path
 
 from .. import PKError, cli
 from ..cli import multitool
+from ..io import Path
 from . import Environment, prepend_environ_path, user_data_path
 
 
@@ -272,6 +299,87 @@ class MakeOMAliases (multitool.Command):
             oldpath = os.path.join (srcdir, f)
             newpath = os.path.join (destdir, '%s.%02d.%s' % (dtype, seq, ext))
             os.symlink (os.path.relpath (oldpath, destdir), newpath)
+
+
+class MakeSCAliases (multitool.Command):
+    name = 'make-sc-aliases'
+    argspec = '<srcdir> <destdir>'
+    summary = 'Generate user-friendly aliases to XMM-Newton spacecraft (SC) data files.'
+    more_help = '''destdir should already not exist and will be created. <srcdir> should
+be the ODF directory, containing a file named MANIFEST.<numbers> and many others.'''
+
+    INSTRUMENT = slice (16, 18)
+    EXPFLAG = slice (18, 19) # 'S': sched, 'U': unsched; 'X': N/A
+    EXPNO = slice (19, 22)
+    CCDNO = slice (22, 24)
+    DTYPE = slice (24, 27)
+    EXTENSION = slice (28, None)
+
+    extmap = {
+        'ASC': 'txt',
+        'FIT': 'fits',
+        'SAS': 'txt',
+    }
+
+    dtypemap = {
+        'ats': 'attitude',
+        'das': 'dummy_attitude',
+        'pos': 'pred_orbit',
+        'p1s': 'phk_hk1',
+        'p2s': 'phk_hk2',
+        'p3s': 'phk_att1',
+        'p4s': 'phk_att2',
+        'p5s': 'phk_sid0',
+        'p6s': 'phk_sid1',
+        'p7s': 'phk_sid4',
+        'p8s': 'phk_sid5',
+        'p9s': 'phk_sid6',
+        'ras': 'raw_attitude',
+        'ros': 'recon_orbit',
+        'sum': 'summary',
+        'tcs': 'raw_time_corr',
+        'tcx': 'recon_time_corr',
+    }
+
+    def invoke (self, args, **kwargs):
+        if len (args) != 2:
+            raise multitool.UsageError ('make-sc-aliases requires exactly 2 arguments')
+
+        srcdir = Path (args[0])
+        destdir = Path (args[1])
+
+        srcfiles = [x for x in srcdir.iterdir () if len (x.name) > 28]
+
+        # Do it.
+
+        idents = set ()
+        destdir.mkdir () # intentionally crash if exists; easiest approach
+
+        for p in srcfiles:
+            instr = p.name[self.INSTRUMENT]
+            if instr != 'SC':
+                continue
+
+            # none of these are actually useful for SC files:
+            #eflag = p.name[self.EXPFLAG]
+            #expno = p.name[self.EXPNO]
+            #ccdno = p.name[self.CCDNO]
+            dtype = p.name[self.DTYPE]
+            ext = p.name[self.EXTENSION]
+
+            # One conflict, easy to resolve
+            if dtype == 'SUM' and ext == 'ASC':
+                continue
+
+            dtype = self.dtypemap[dtype.lower ()]
+            ext = self.extmap[ext]
+
+            ident = dtype
+            if ident in idents:
+                cli.die ('short identifier clash: %r', ident)
+            idents.add (ident)
+
+            (destdir / (dtype + '.' + ext)).rellink_to (p)
 
 
 class Shell (multitool.Command):
