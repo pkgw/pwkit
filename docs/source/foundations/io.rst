@@ -36,30 +36,32 @@ navigation of the filesystem.
    - :meth:`is_file`
    - :meth:`is_socket`
    - :meth:`is_symlink`
-   - :meth:`iterdir`
+   - :meth:`iterdir` — see also :meth:`scandir`
    - :meth:`joinpath`
+   - :meth:`make_relative`
    - :meth:`match`
    - :meth:`mkdir`
-   - :meth:`open`
+   - :meth:`open` — see also :meth:`try_open`
    - :meth:`read_lines`
    - :meth:`read_fits`
    - :meth:`read_hdf`
    - :meth:`read_pandas`
    - :meth:`read_pickle`
    - :meth:`read_pickles`
-   - :meth:`relative_to`
+   - :meth:`relative_to` — see also :meth:`make_relative`
+   - :meth:`rellink_to` — see also :meth:`symlink_to`
    - :meth:`rename`
    - :meth:`resolve`
    - :meth:`rglob`
-   - :meth:`rmdir`
-   - :meth:`rmtree`
-   - :meth:`scandir`
+   - :meth:`rmdir` — see also :meth:`rmtree`
+   - :meth:`rmtree` — see also :meth:`rmdir`
+   - :meth:`scandir` — see also :meth:`iterdir`
    - :meth:`stat`
-   - :meth:`symlink_to`
+   - :meth:`symlink_to` — see also :meth:`rellink_to`
    - :meth:`touch`
-   - :meth:`try_open`
-   - :meth:`try_unlink`
-   - :meth:`unlink`
+   - :meth:`try_open` — see also :meth:`open`
+   - :meth:`try_unlink` — see also :meth:`unlink`
+   - :meth:`unlink` — see also :meth:`try_unlink`
    - :meth:`with_name`
    - :meth:`with_suffix`
    - :meth:`write_pickle`
@@ -178,6 +180,17 @@ on :class:`Path` objects.
    absolute, all previous components are discarded.
 
 
+.. method:: Path.make_relative(other)
+
+   Return a new path that is the equivalent of this one relative to the path
+   *other*. Unlike :meth:`relative_to`, this will not throw an error if *self*
+   is not a sub-path of *other*; instead, it will use ``..`` to build a
+   relative path. This can result in invalid relative paths if *other* contains
+   a directory symbolic link.
+
+   If *self* is an absolute path, it is returned unmodified.
+
+
 .. method:: Path.match(pattern)
 
    Test whether this path matches the given shell glob pattern.
@@ -258,6 +271,25 @@ on :class:`Path` objects.
 
    Return this path as made relative to another path identified by *other*. If
    this is not possible, raise :exc:`ValueError`.
+
+
+.. method:: Path.rellink_to(target, force=False)
+
+   Make this path a symlink pointing to the given *target*, generating the
+   proper relative path using :meth:`make_relative`. This gives different
+   behavior than :meth:`symlink_to`. For instance, ``Path ('a/b').symlink_to
+   ('c')`` results in ``a/b`` pointing to the path ``c``, whereas
+   :meth:`rellink_to` results in it pointing to ``../c``. This can result in
+   broken relative paths if (continuing the example) ``a`` is a symbolic link
+   to a directory.
+
+   If either *target* or *self* is absolute, the symlink will point at the
+   absolute path to *target*. The intention is that if you’re trying to link
+   ``/foo/bar`` to ``bee/boo``, it probably makes more sense for the link to
+   point to ``/path/to/.../bee/boo`` rather than ``../../../../bee/boo``.
+
+   If *force* is true, :meth:`try_unlink` will be called on *self* before the
+   link is made, forcing its re-creation.
 
 
 .. method:: Path.rename(target)

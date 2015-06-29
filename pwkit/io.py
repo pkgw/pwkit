@@ -285,6 +285,47 @@ class Path (_ParentPath):
                 return False # ENOENT
             raise
 
+
+    def make_relative (self, other):
+        """A variant on relative_to() that allows computation of, e.g., "a" relative
+        to "b", yielding "../a". This can technically give improper results if
+        "b" is a directory symlink. If `self` is absolute, it is just
+        returned unmodified.
+
+        This might not work on Windows?
+
+        """
+        if self.is_absolute ():
+            return self
+
+        from os.path import relpath
+        other = self.__class__ (other)
+        return self.__class__ (relpath (str (self), str (other)))
+
+
+    def rellink_to (self, target, force=False):
+        """Like symlink_to(), but modify `target` to be relative to wherever
+        `self` points.
+
+        Path('a/b').symlink_to ('c') makes 'a/b' point to 'c', while
+        Path('a/b').rellink_to ('c') makes 'a/b' point to '../c'.
+
+        If `force`, the symlink will be forcibly created: if the `self`
+        already exists as a path, it will be unlinked, and ENOENT will
+        be ignored.
+
+        """
+        target = self.__class__ (target)
+
+        if force:
+            self.try_unlink ()
+
+        if self.is_absolute ():
+            target = target.absolute () # force absolute link
+
+        return self.symlink_to (target.make_relative (self.parent))
+
+
     # I/O
 
     def try_open (self, **kwargs):
