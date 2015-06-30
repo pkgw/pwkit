@@ -277,14 +277,34 @@ be the ODF directory, containing a file named MANIFEST.<numbers> and many others
         srcdir = Path (args[0])
         destdir = Path (args[1])
 
-        srcfiles = [x for x in srcdir.iterdir () if len (x.name) > 28]
+        srcpaths = [x for x in srcdir.iterdir () if len (x.name) > 28]
+
+        # Sorted list of exposure numbers.
+
+        expnos = dict ((i, set ()) for i in self.instrmap.iterkeys ())
+
+        for p in srcpaths:
+            instr = p.name[self.INSTRUMENT]
+            if instr not in self.instrmap:
+                continue
+
+            expno = int (p.name[self.EXPNO])
+            dtype = p.name[self.DTYPE]
+
+            if expno > 0 and dtype not in ('DLI', 'ODI'):
+                expnos[instr].add (expno)
+
+        expseqs = {}
+
+        for k, v in expnos.iteritems ():
+            expseqs[self.instrmap[k]] = dict ((n, i) for i, n in enumerate (sorted (v)))
 
         # Do it.
 
-        idents = set ()
+        stems = set ()
         destdir.mkdir () # intentionally crash if exists; easiest approach
 
-        for p in srcfiles:
+        for p in srcpaths:
             instr = p.name[self.INSTRUMENT]
             if instr not in self.instrmap:
                 continue
@@ -296,25 +316,28 @@ be the ODF directory, containing a file named MANIFEST.<numbers> and many others
             ext = p.name[self.EXTENSION]
 
             instr = self.instrmap[instr]
+            expno = int (expno)
             dtype = self.dtypemap[dtype.lower ()]
             ext = self.extmap[ext]
+
+            if expno > 0 and dtype not in ('discarded_lines', 'offset_data'):
+                expno = expseqs[instr][expno]
 
             if instr == 'radmon' and dtype == 'hk_extraheating_config':
                 dtype = 'rates'
 
-            if instr == 'radmon':
-                ident = (instr, expno, dtype, ext)
-                stem = '%s_e%s_%s.%s' % ident
+            if instr == 'radmon' or dtype == 'aux':
+                stem = '%s_e%03d_%s.%s' % (instr, expno, dtype, ext)
             elif ccdno == '00':
-                ident = (instr, dtype, ext)
-                stem = '%s_%s.%s' % ident
+                stem = '%s_%s.%s' % (instr, dtype, ext)
+            elif dtype in ('discarded_lines', 'offset_data'):
+                stem = '%s_%s_e%03d_c%s.%s' % (instr, dtype, expno, ccdno, ext)
             else:
-                ident = (instr, expno, ccdno, dtype, ext)
-                stem = '%s_e%s_c%s_%s.%s' % ident
+                stem = '%s_e%03d_c%s_%s.%s' % (instr, expno, ccdno, dtype, ext)
 
-            if ident in idents:
-                cli.die ('short identifier clash: %r', ident)
-            idents.add (ident)
+            if stem in stems:
+                cli.die ('short identifier clash: %r', stem)
+            stems.add (stem)
 
             (destdir / stem).rellink_to (p)
 
