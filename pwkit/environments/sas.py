@@ -99,23 +99,23 @@ class SasEnvironment (Environment):
         self._installdir = os.path.abspath (installdir)
         self._heaenv = heaenv
 
-        with io.open (manifest, 'rt') as f:
-            for line in f:
-                if not line.startswith ('File '):
-                    continue
+        manifest = Path (manifest)
 
-                bits = line.split ()[1].split ('_')
-                if len (bits) < 3:
-                    continue
+        for line in manifest.read_lines ():
+            if not line.startswith ('File '):
+                continue
 
-                self._revnum = bits[0] # note: kept as a string; not an int
-                self._obsid = bits[1]
-                break
+            bits = line.split ()[1].split ('_')
+            if len (bits) < 3:
+                continue
 
-        self._odfdir = os.path.abspath (os.path.dirname (manifest))
-        self._sumsas = os.path.join (self._odfdir,
-                                     '%s_%s_SCX00000SUM.SAS' % (self._revnum,
-                                                                self._obsid))
+            self._revnum = bits[0] # note: kept as a string; not an int
+            self._obsid = bits[1]
+            break
+
+        self._odfdir = manifest.resolve ().parent
+        self._sumsas = self._odfdir / ('%s_%s_SCX00000SUM.SAS' % (self._revnum,
+                                                                  self._obsid))
 
 
     def _default_installdir (self):
@@ -135,8 +135,8 @@ class SasEnvironment (Environment):
         env[b'SAS_DIR'] = path ()
         env[b'SAS_PATH'] = env[b'SAS_DIR']
         env[b'SAS_CCFPATH'] = path ('ccf')
-        env[b'SAS_ODF'] = self._sumsas # but see _preexec
-        env[b'SAS_CCF'] = os.path.join (self._odfdir, 'ccf.cif')
+        env[b'SAS_ODF'] = str (self._sumsas) # but see _preexec
+        env[b'SAS_CCF'] = str (self._odfdir / 'ccf.cif')
 
         prepend_environ_path (env, b'PATH', path ('bin'))
         prepend_environ_path (env, b'LD_LIBRARY_PATH', path ('libextra'))
@@ -165,10 +165,10 @@ class SasEnvironment (Environment):
             if printbuilds:
                 print ('[building %s]' % cif)
 
-            log = os.path.join (self._odfdir, 'cifbuild.log')
-            env['SAS_ODF'] = self._odfdir
+            env['SAS_ODF'] = str (self._odfdir)
+            log = self._odfdir / 'cifbuild.log'
 
-            with open (log, 'wb') as f:
+            with log.open ('wb') as f:
                 w = wrapout.Wrapper (f)
                 w.use_colors = True
                 if w.launch ('cifbuild', ['cifbuild'], env=env, cwd=self._odfdir):
@@ -178,24 +178,24 @@ class SasEnvironment (Environment):
                 # cifbuild can exit with status 0 whilst still having failed
                 raise PKError ('failed to build CIF; see %s', log)
 
-            env['SAS_ODF'] = self._sumsas
+            env['SAS_ODF'] = str (self._sumsas)
 
         # Need to generate SUM.SAS file?
 
-        if not os.path.exists (self._sumsas):
+        if not self._sumsas.exists ():
             if printbuilds:
                 print ('[building %s]' % self._sumsas)
 
-            log = os.path.join (self._odfdir, 'odfingest.log')
-            env['SAS_ODF'] = self._odfdir
+            env['SAS_ODF'] = str (self._odfdir)
+            log = self._odfdir / 'odfingest.log'
 
-            with open (log, 'wb') as f:
+            with log.open ('wb') as f:
                 w = wrapout.Wrapper (f)
                 w.use_colors = True
                 if w.launch ('odfingest', ['odfingest'], env=env, cwd=self._odfdir):
                     raise PKError ('failed to build CIF; see %s', log)
 
-            env['SAS_ODF'] = self._sumsas
+            env['SAS_ODF'] = str (self._sumsas)
 
 
 # Command-line interface
