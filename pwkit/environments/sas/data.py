@@ -173,6 +173,25 @@ class GTIData (BaseSASData):
             super (GTIData, self)._process_hdu (hdu)
 
 
+    def _plot_add_gtis (self, p, ccdnum, tunit='dmjd'):
+        import omega as om
+
+        gti = self.gti[ccdnum]
+        ngti = gti.shape[0]
+        gti0 = gti.at[0,'start_'+tunit]
+        gti1 = gti.at[ngti-1,'stop_'+tunit]
+        smallofs = (gti1 - gti0) * 0.03
+
+        start = gti0 - smallofs
+
+        for i in xrange (ngti):
+            p.add (om.rect.XBand (start, gti.at[i,'start_'+tunit], keyText=None), zheight=-1, dsn=1)
+            start = gti.at[i,'stop_'+tunit]
+
+        p.add (om.rect.XBand (start, start + smallofs, keyText=None), zheight=-1, dsn=1)
+        p.setBounds (gti0 - smallofs, gti1 + smallofs)
+
+
 class RegionData (BaseSASData):
     regions = None
     """Dict mapping identifier to DataFrames of selection region info. Identifiers
@@ -306,23 +325,8 @@ class Events (GTIData, RegionData):
         p = om.quickDF (self.events[self.events.ccdnr == ccdnum][['dmjd', 'pi']],
                         self.targ_name,
                         lines=False)
-
-        gti = self.gti[ccdnum]
-        ngti = gti.shape[0]
-        gti0 = gti.at[0,'start_dmjd']
-        gti1 = gti.at[ngti-1,'stop_dmjd']
-        smallofs = (gti1 - gti0) * 0.03
-
-        start = gti0 - smallofs
-
-        for i in xrange (ngti):
-            p.add (om.rect.XBand (start, gti.at[i,'start_dmjd'], keyText=None), zheight=-1, dsn=1)
-            start = gti.at[i,'stop_dmjd']
-
-        p.add (om.rect.XBand (start, start + smallofs, keyText=None), zheight=-1, dsn=1)
+        self._plot_add_gtis (p, ccdnum)
         p.setLabels ('MJD - %.0f' % self.mjd0, 'PI')
-        p.setBounds (gti0 - smallofs, gti1 + smallofs)
-
         return p
 
 
@@ -418,3 +422,15 @@ class Lightcurve (GTIData, RegionData):
             pass
         else:
             super (Lightcurve, self)._process_hdu (hdu)
+
+
+    def plot_curve (self, ccdnum=None):
+        import omega as om
+
+        p = om.quickDF (self.lc[['dmjd', 'rate', 'u_rate']],
+                        self.targ_name,
+                        lines=False)
+        if ccdnum is not None:
+            self._plot_add_gtis (p, ccdnum)
+        p.setLabels ('MJD - %.0f' % self.mjd0, 'PI')
+        return p
