@@ -197,6 +197,7 @@ class Wrapper (object):
                         elif not len (lines[-1]):
                             sys.stderr.write (b'\n')
                             sys.stderr.flush ()
+                            stderr_midline = False
                         else:
                             sys.stderr.write (b'\n')
                             self.output_stderr (lines[-1])
