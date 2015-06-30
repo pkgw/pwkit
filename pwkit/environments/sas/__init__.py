@@ -93,7 +93,7 @@ class SasEnvironment (Environment):
         if installdir is None:
             installdir = self._default_installdir ()
         if heaenv is None:
-            from . import heasoft
+            from .. import heasoft
             heaenv = heasoft.HeasoftEnvironment ()
 
         self._installdir = os.path.abspath (installdir)
@@ -156,7 +156,7 @@ class SasEnvironment (Environment):
 
 
     def _preexec (self, env, printbuilds=True):
-        from pwkit.cli import wrapout
+        from ...cli import wrapout
 
         # Need to compile the CCF info?
 
@@ -171,7 +171,7 @@ class SasEnvironment (Environment):
             with log.open ('wb') as f:
                 w = wrapout.Wrapper (f)
                 w.use_colors = True
-                if w.launch ('cifbuild', ['cifbuild'], env=env, cwd=self._odfdir):
+                if w.launch ('cifbuild', ['cifbuild'], env=env, cwd=str (self._odfdir)):
                     raise PKError ('failed to build CIF; see %s', log)
 
             if not os.path.exists (cif):
@@ -192,7 +192,7 @@ class SasEnvironment (Environment):
             with log.open ('wb') as f:
                 w = wrapout.Wrapper (f)
                 w.use_colors = True
-                if w.launch ('odfingest', ['odfingest'], env=env, cwd=self._odfdir):
+                if w.launch ('odfingest', ['odfingest'], env=env, cwd=str (self._odfdir)):
                     raise PKError ('failed to build CIF; see %s', log)
 
             env['SAS_ODF'] = str (self._sumsas)
