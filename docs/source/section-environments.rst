@@ -17,4 +17,5 @@ This documentation is currently just a stub.
    pwkit/environments/casa/tasks.rst
    pwkit/environments/casa/util.rst
    pwkit/environments/heasoft.rst
-   pwkit/environments/sas.rst
+   pwkit/environments/sas/index.rst
+   pwkit/environments/sas/data.rst
