@@ -65,6 +65,9 @@ NNNNNNNNNN - obs ID
        MMM - data type of file (many; not listed here)
        ZZZ - file extension
 
+See the 'make-*-aliases' commands for tools that generate symlinks with saner
+names.
+
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
@@ -399,6 +402,107 @@ class MakeOMAliases (multitool.Command):
             oldpath = os.path.join (srcdir, f)
             newpath = os.path.join (destdir, '%s.%02d.%s' % (dtype, seq, ext))
             os.symlink (os.path.relpath (oldpath, destdir), newpath)
+
+
+class MakeRGSAliases (multitool.Command):
+    name = 'make-rgs-aliases'
+    argspec = '<srcdir> <destdir>'
+    summary = 'Generate user-friendly aliases to XMM-Newton RGS data files.'
+    more_help = '''destdir should already not exist and will be created. <srcdir> should
+be the ODF directory, containing a file named MANIFEST.<numbers> and many others.'''
+
+    INSTRUMENT = slice (16, 18)
+    EXPFLAG = slice (18, 19) # 'S': sched, 'U': unsched; 'X': N/A
+    EXPNO = slice (19, 22)
+    CCDNO = slice (22, 24)
+    DTYPE = slice (24, 27)
+    EXTENSION = slice (28, None)
+
+    instrmap = {
+        'R1': 'rgs1',
+        'R2': 'rgs2',
+    }
+
+    extmap = {
+        'FIT': 'fits',
+    }
+
+    dtypemap = {
+        'aux': 'aux',
+        'd1h': 'hk_dpp1',
+        'd2h': 'hk_dpp2',
+        'dii': 'diagnostic',
+        'hte': 'high_time_res',
+        'ofx': 'offset',
+        'pch': 'hk_ccd_temp',
+        'pfh': 'hk_periodic',
+        'spe': 'spectra',
+    }
+
+    def invoke (self, args, **kwargs):
+        if len (args) != 2:
+            raise multitool.UsageError ('make-rgs-aliases requires exactly 2 arguments')
+
+        srcdir = Path (args[0])
+        destdir = Path (args[1])
+        srcpaths = [x for x in srcdir.iterdir () if len (x.name) > 28]
+
+        # Sorted list of exposure numbers.
+
+        expnos = dict ((i, set ()) for i in self.instrmap.iterkeys ())
+
+        for p in srcpaths:
+            instr = p.name[self.INSTRUMENT]
+            if instr not in self.instrmap:
+                continue
+
+            expno = int (p.name[self.EXPNO])
+            if expno > 0 and expno < 900:
+                expnos[instr].add (expno)
+
+        expseqs = {}
+
+        for k, v in expnos.iteritems ():
+            expseqs[self.instrmap[k]] = dict ((n, i) for i, n in enumerate (sorted (v)))
+
+        # Do it.
+
+        stems = set ()
+        destdir.mkdir () # intentionally crash if exists; easiest approach
+
+        for p in srcpaths:
+            instr = p.name[self.INSTRUMENT]
+            if instr not in self.instrmap:
+                continue
+
+            eflag = p.name[self.EXPFLAG]
+            expno = p.name[self.EXPNO]
+            ccdno = p.name[self.CCDNO]
+            dtype = p.name[self.DTYPE]
+            ext = p.name[self.EXTENSION]
+
+            instr = self.instrmap[instr]
+            expno = int (expno)
+            dtype = self.dtypemap[dtype.lower ()]
+            ext = self.extmap[ext]
+
+            if expno > 0 and expno < 900:
+                expno = expseqs[instr][expno]
+
+            if ccdno == '00' and dtype != 'aux':
+                stem = '%s_%s.%s' % (instr, dtype, ext)
+            elif dtype == 'aux':
+                stem = '%s_e%03d_%s.%s' % (instr, expno, dtype, ext)
+            elif dtype == 'diagnostic':
+                stem = '%s_%s_e%03d_c%s.%s' % (instr, dtype, expno, ccdno, ext)
+            else:
+                stem = '%s_e%03d_c%s_%s.%s' % (instr, expno, ccdno, dtype, ext)
+
+            if stem in stems:
+                cli.die ('short identifier clash: %r', stem)
+            stems.add (stem)
+
+            (destdir / stem).rellink_to (p)
 
 
 class MakeSCAliases (multitool.Command):
