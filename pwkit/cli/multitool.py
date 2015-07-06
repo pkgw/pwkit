@@ -45,7 +45,7 @@ __all__ = (b'invoke_tool Command DelegatingCommand HelpCommand Multitool '
            b'UsageError').split ()
 
 from .. import PKError
-from . import check_usage, propagate_sigint, unicode_stdio, wrong_usage
+from . import check_usage, wrong_usage
 
 
 class UsageError (PKError):
@@ -314,8 +314,10 @@ def invoke_tool (namespace, tool_class=None):
 
     """
     import sys
-    propagate_sigint ()
-    unicode_stdio ()
+    from .. import cli
+    cli.propagate_sigint ()
+    cli.unicode_stdio ()
+    cli.backtrace_on_usr1 ()
 
     if tool_class is None:
         for value in namespace.itervalues ():
