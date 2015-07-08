@@ -145,9 +145,22 @@ Convenience functions for :class:`pandas.DataFrame` objects
    Placeholder.
 
 
-.. function:: fits_recarray_to_data_frame (recarray)
+.. function:: fits_recarray_to_data_frame (recarray, drop_nonscalar_ok=True)
 
-   Placeholder.
+    Convert a FITS data table, stored as a Numpy record array, into a Pandas
+    DataFrame object. By default, non-scalar columns are discarded, but if
+    *drop_nonscalar_ok* is False then a :exc:`ValueError` is raised. Column
+    names are lower-cased. Example::
+
+      from pwkit import io, numutil
+      hdu_list = io.Path ('my-table.fits').read_fits ()
+      # assuming the first FITS extension is a binary table:
+      df = numutil.fits_recarray_to_data_frame (hdu_list[1].data)
+
+    FITS data are big-endian, whereas nowadays almost everything is
+    little-endian. This seems to be an issue for Pandas DataFrames, where
+    ``df[['col1', 'col2']]`` triggers an assertion for me if the underlying
+    data are not native-byte-ordered.
 
 
 .. function:: usmooth (window, uncerts, *data, **kwargs)

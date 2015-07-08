@@ -154,9 +154,9 @@ broadcastize = _BroadcasterDecorator
 
 # Very misc.
 
-def fits_recarray_to_data_frame (recarray):
+def fits_recarray_to_data_frame (recarray, drop_nonscalar_ok=True):
     """Convert a FITS data table, stored as a Numpy record array, into a Pandas
-    DataFrame object.
+    DataFrame object. Non-scalar columns are discarded.
 
     FITS data are big-endian, whereas nowadays almost everything is
     little-endian. This seems to be an issue for Pandas DataFrames, where
@@ -167,13 +167,22 @@ def fits_recarray_to_data_frame (recarray):
     """
     from pandas import DataFrame
 
-    def normalize (col):
-        n = col.name
-        if recarray[n].dtype.isnative:
-            return (n.lower (), recarray[n])
-        return (n.lower (), recarray[n].byteswap (True).newbyteorder ())
+    def normalize ():
+        for column in recarray.columns:
+            n = column.name
+            d = recarray[n]
 
-    return DataFrame (dict (normalize (c) for c in recarray.columns))
+            if d.ndim != 1:
+                if not drop_nonscalar_ok:
+                    raise ValueError ('input must have only scalar columns')
+                continue
+
+            if d.dtype.isnative:
+                yield (n.lower (), d)
+            else:
+                yield (n.lower (), d.byteswap (True).newbyteorder ())
+
+    return DataFrame (dict (normalize ()))
 
 
 # Chunked averaging of data tables
