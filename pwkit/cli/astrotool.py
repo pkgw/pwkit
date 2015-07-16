@@ -385,7 +385,8 @@ class Summfits (multitool.Command):
 
     _commentary_card_names = frozenset (('HISTORY', 'COMMENT'))
     _skip_headers = frozenset (('XTENSION', 'BITPIX', 'SIMPLE', 'EXTEND',
-                                'EXTNAME'))
+                                'EXTNAME', 'PCOUNT', 'GCOUNT', 'TFIELDS'))
+    _skip_prefixes = frozenset (('NAXIS', 'TTYPE', 'TFORM', 'TDIM'))
 
     def invoke (self, args, **kwargs):
         if len (args) != 1:
@@ -441,8 +442,12 @@ class Summfits (multitool.Command):
             for k in hdu.header.keys ():
                 if k in self._commentary_card_names or k in self._skip_headers:
                     continue
-
-                output (3, '%-8s = %r # %s', k, hdu.header[k], hdu.header.comments[k])
+                for pfx in self._skip_prefixes:
+                    if k.startswith (pfx):
+                        break
+                else:
+                    # We did not break out of the loop -> shouldn't be skipped.
+                    output (3, '%-8s = %r # %s', k, hdu.header[k], hdu.header.comments[k])
 
             for ck in self._commentary_card_names:
                 # hacky linewrapping logic here
