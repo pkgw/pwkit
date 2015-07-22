@@ -419,4 +419,12 @@ class Path (_ParentPath):
         return fits.open (str (self), **kwargs)
 
 
+    def read_fits_bintable (self, hdu=1, drop_nonscalar_ok=True, **kwargs):
+        from astropy.io import fits
+        from .numutil import fits_recarray_to_data_frame as frtdf
+
+        with fits.open (str (self), mode='readonly', **kwargs) as hdulist:
+            return frtdf (hdulist[hdu].data, drop_nonscalar_ok=drop_nonscalar_ok)
+
+
 del _ParentPath

@@ -43,7 +43,8 @@ navigation of the filesystem.
    - :meth:`mkdir`
    - :meth:`open` — see also :meth:`try_open`
    - :meth:`read_lines`
-   - :meth:`read_fits`
+   - :meth:`read_fits` — see also :meth:`read_fits_bintable`
+   - :meth:`read_fits_bintable` — see also :meth:`read_fits`
    - :meth:`read_hdf`
    - :meth:`read_pandas`
    - :meth:`read_pickle`
@@ -236,6 +237,20 @@ on :class:`Path` objects.
    - ``do_not_scale_image_data = False``
    - ``ignore_blank = False``
    - ``scale_back = False``
+
+
+.. method:: Path.read_fits_bintable(hdu=1, drop_nonscalar_ok=True, **kwargs)
+
+   Open as a FITS file, read in a binary table, and return it as a
+   :class:`pandas.DataFrame`, converted with
+   :func:`pkwit.numutil.fits_recarray_to_data_frame`. The *hdu* argument
+   specifies which HDU to read, with its default 1 indicating the first FITS
+   extension. The *drop_nonscalar_ok* argument specifies if non-scalar table
+   values (which are inexpressible in :class:`pandas.DataFrame`s) should be
+   silently ignored (``True``) or cause a :exc:`ValueError` to be raised
+   (``False``). Other **kwargs** are passed to :func:`astropy.io.fits.open`,
+   (see :meth:`Path.read_fits`) although the open mode is hardcoded to be
+   ``"readonly"``.
 
 
 .. method:: Path.read_hdf(key, **kwargs)
