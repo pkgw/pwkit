@@ -432,5 +432,5 @@ class Lightcurve (GTIData, RegionData):
                         lines=False)
         if ccdnum is not None:
             self._plot_add_gtis (p, ccdnum)
-        p.setLabels ('MJD - %.0f' % self.mjd0, 'PI')
+        p.setLabels ('MJD - %.0f' % self.mjd0, 'Count rate')
         return p
