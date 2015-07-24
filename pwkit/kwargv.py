@@ -1,91 +1,129 @@
 # -*- mode: python; coding: utf-8 -*-
-# Copyright 2012-2014 Peter Williams <peter@newton.cx> and collaborators.
+# Copyright 2012-2015 Peter Williams <peter@newton.cx> and collaborators.
 # Licensed under the MIT License.
 
-""" kwargv - keyword-style command-line arguments
+"""The :mod:`pwkit.kwargv` module provides a framework for parsing
+keyword-style arguments to command-line programs. It’s designed so that you
+can easily make a routine with complex, structured configuration parameters
+that can also be driven from the command line.
 
-Keywords are defined by declaring a subclass of ParseKeywords. Within
-that:
+Keywords are defined by declaring a subclass of the
+:class:`ParseKeywords` class with fields corresponding to the
+support keywords::
 
-- "foo = 1" defines a keyword with a default value, type inferred as
-  int. Likewise for str, bool, float.
+  from pwkit.kwargv import ParseKeywords, Custom
 
-- "foo = int" defines an int keyword, default value of None. Likewise
-  for str, bool, float.
+  class MyConfig (ParseKeywords):
+      foo = 1
+      bar = str
+      multi = [int]
+      extra = Custom (float, required=True)
 
-- "foo = [int]" parses as a list of integers of any length, default []
-  (I call these "flexible" lists.)
+      @Custom (str)
+      def declination (value):
+          from pwkit.astutil import parsedeglat
+          return parsedeglat (value)
 
-- "foo = [3.0, int]" parses as a 2-element list, default [3.0, None].
-  If 1 value is given, the first array item is parsed, and the second
-  is left as its default. (I call these "fixed" lists.)
+Instantiating the subclass fills in all defaults. Calling the
+:meth:`ParseKeywords.parse` method parses a list of strings (defaulting to
+``sys.argv[1:]``) and updates the instance’s properties. This framework is
+designed so that you can provide complex configuration to an algorithm either
+programmatically, or on the command line. A typical use would be::
 
-- "foo = Custom(bar, a=b)" parses like "bar" and then customizes
-  keyword properties as defined below.
+  from pwkit.kwargv import ParseKeywords, Custom
 
-- "@Custom(bar, a=b) \n def foo (value): ..." defines a keyword "foo"
-  that parses like "bar", with custom properties as defined below, and
-  has its value fixed up by calling the foo() function after the basic
-  parsing.  That is, the final value is "foo (intermediate_value)". A
-  common pattern is to use a fixup function for a fixed list where the
-  first few values are mandatory (see 'minvals' below) but later
-  values can be guessed or defaulted.
+  class MyConfig (ParseKeywords):
+      niter = 1
+      input = str
+      scales = [int]
+      # ...
 
-Instantiating the subclass fills in all defaults, and calling the
-"parse()" method parses a list of strings (defaulting to
-sys.argv[1:]). See scibin/omegamap for a somewhat complex example.
+  def my_complex_algorithm (cfg):
+     from pwkit.io import Path
+     data = Path (cfg.input).read_fits ()
 
-Properties for keyword customization:
+     for i in xrange (cfg.niter):
+         # ....
 
-parser (callable): function to parse basic textual value
-default (anything): the default value if keyword is unspecified
-required (bool, False): whether to raise an error if keyword is not
-  seen when parsing
-sep (str, ','): separator for parsing the keyword as a list
-maxvals (int or None, None): maximum number of values **in flexible
-  lists only**
-minvals (int, 0): minimum number of values **in fixed lists only**,
-  **if the keyword is specified at all**. If you want minvals=1, use
-  required=True.
-scale (numeric or None, None): multiply the value by this after
-  parsing
-printexc (bool, False): if there's an exception when parsing the
-  keyword value, whether the exception message should be printed.
-  (Otherwise, just prints "cannot parse value <val> for keyword <kw>".)
-fixupfunc (callable or None, None): after all other parsing/transform
-  steps, the final value is the return value of fixupfunc(intermediateval)
-uiname (str or None, None): the name of the keyword as presented in the UI.
-  I.e., "foo = Custom (0, uiname='bar')" parses keyword "bar=..." but
-  sets attribute "foo" in the Python object.
-repeatable (bool, False): if true, the keyword value(s) will be contained
-  in a list. If the keyword is specified multiple times (ie
-  "./program kw=1 kw=2") the list will have multiple items
-  ("cfg.kw = [1,2]").
+  def call_algorithm_in_code ():
+      cfg = MyConfig ()
+      cfg.input = 'testfile.fits'
+      # ...
+      my_complex_algorithm (cfg)
+
+  if __name__ == '__main__':
+      cfg = MyConfig ().parse ()
+      my_complex_algorithm (cfg)
+
+You could then execute the module as a program and specify arguments in the
+form ``./program niter=5 input=otherfile.fits``.
 
 
-TODO: --help, etc.
+Keyword Specification Format
+----------------------------
 
-TODO: +bool, -bool for ParseKeywords parser (but careful about allowing
---help at least)
+Arguments are specified in the following ways:
 
-TODO: positive, nonzero options for easy bounds-checking of numerics
+- ``foo = 1`` defines a keyword with a default value, type inferred as
+  ``int``. Likewise for ``str``, ``bool``, ``float``.
+
+- ``bar = str`` defines an string keyword with default value of None.
+  Likewise for ``int``, ``bool``, ``float``.
+
+- ``multi = [int]`` parses as a list of integers of any length, defaulting to
+  the empty list ``[]`` (I call these "flexible" lists.). List items are
+  separated by commas on the command line.
+
+- ``other = [3.0, int]`` parses as a 2-element list, defaulting to ``[3.0,
+  None]``. If one value is given, the first array item is parsed, and the
+  second is left as its default. (I call these "fixed" lists.)
+
+- ``extra = Custom(float, required=True)`` parses like ``float`` and then
+  customizes keyword properties. Supported properties are the attributes of
+  the :class:`KeywordInfo` class.
+
+- Use :class:`Custom` as a decorator (``@Custom``) on a function ``foo``
+  defines a keyword ``foo`` that’s parsed according to the :class:`Custom`
+  specification, then has its value fixed up by calling the ``foo()`` function
+  after the basic parsing. That is, the final value is ``foo
+  (intermediate_value)``. A common pattern is to use a fixup function for a
+  fixed list where the first few values are mandatory (see
+  :attr:`KeywordInfo.minvals` below) but later values can be guessed or
+  defaulted.
+
+See the :class:`KeywordInfo` documentation for specification of additional
+keyword properties that may be specified. The ``Custom`` name is simply an
+alias for :class:`KeywordInfo`.
+
 """
-
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'Custom KwargvError ParseError ParseKeywords basic').split ()
+__all__ = (b'Custom KwargvError ParseError KeywordInfo ParseKeywords basic').split ()
 
 from . import Holder, PKError, text_type
 
 
 class KwargvError (PKError):
-    pass
+    """Raised when invalid arguments have been provided."""
+
 
 class ParseError (KwargvError):
-    pass
+    """Raised when the structure of the arguments appears legitimate, but a
+    particular value cannot be parsed into its expected type.
+
+    """
 
 
 def basic (args=None):
+    """Parse the string list *args* as a set of keyword arguments in a very
+    simple-minded way, splitting on equals signs. Returns a
+    :class:`pwkit.Holder` instance with attributes set to strings. The form
+    ``+foo`` is mapped to setting ``foo = True`` on the :class:`pwkit.Holder`
+    instance. If *args* is ``None``, ``sys.argv[1:]`` is used. Raises
+    :exc:`KwargvError` on invalid arguments (i.e., ones without an equals sign
+    or a leading plus sign).
+
+    """
     if args is None:
         import sys
         args = sys.argv[1:]
@@ -111,17 +149,66 @@ def basic (args=None):
 # The fancy, full-featured system.
 
 class KeywordInfo (object):
+    """Properties that a keyword argument may have.
+
+    """
     parser = None
+    """A callable used to convert the argument text to a Python value.
+    This attribute is assigned automatically upon setup."""
+
     default = None
+    """The default value for the keyword if it’s left unspecified."""
+
     required = False
+    """Whether an error should be raised if the keyword is not seen while
+    parsing."""
+
     sep = ','
+    """The textual separator between items for list-valued keywords."""
+
     maxvals = None
+    """The maximum number of values allowed. This only applies for flexible lists;
+    fixed lists have predetermined sizes.
+
+    """
     minvals = 0 # note: maxvals and minvals are used in different ways
+    """The minimum number of values allowed in a flexible list, *if the keyword is
+    specified at all*. If you want ``minvals = 1``, use ``required = True``.
+
+    """
     scale = None
+    """If not ``None``, multiply numeric values by this number after parsing."""
+
     repeatable = False
+    """If true, the keyword value(s) will always be contained in a list. If they
+    keyword is specified multiple times (i.e. ``./program kw=1 kw=2``), the
+    list will have multiple items (``cfg.kw = [1, 2]``). If the keyword is
+    list-valued, using this will result in a list of lists.
+
+    """
     printexc = False
+    """Print the exception as normal if there’s an exception when parsing the
+    keyword value. Otherwise there’s just a message along the lines of “cannot
+    parse value <val> for keyword <kw>”.
+
+    """
     fixupfunc = None
-    attrname = None
+    """If not ``None``, the final value of the keyword is set to the return value
+    of ``fixupfunc(intermediate_value)``.
+
+    """
+    _attrname = None
+
+    # This isn't used on Keyword*Info* instances, but adding a dummy here makes
+    # the docs much saner:
+    uiname = None
+    """The name of the keyword as parsed from the command-line. For instance,
+    ``some_value = Custom (int, uiname="some-value")`` will result in a
+    keyword that the user sets by calling ``./program some-value=3``. This
+    provides a mechanism to support keyword names that are not legal Python
+    identifiers.
+
+    """
 
 
 class KeywordOptions (Holder):
@@ -174,7 +261,9 @@ def _val_or_func_to_default (v):
         return None
     if isinstance (v, (int, float, bool, text_type)):
         return v
-    raise ValueError ('can\'t figure out a default for %r' % v)
+    raise ValueError
+
+    ('can\'t figure out a default for %r' % v)
 
 
 def _handle_flex_list (ki, ks):
@@ -217,6 +306,11 @@ def _handle_fixed_list (ki, ks):
 
 
 class ParseKeywords (Holder):
+    """The template class for defining your keyword arguments. A subclass of
+    :class:`pwkit.Holder`. Declare attributes in a subclass following the
+    scheme described above, then call the :meth:`ParseKeywords.parse` method.
+
+    """
     def __init__ (self):
         kwspecs = self.__class__.__dict__
         kwinfos = {}
@@ -255,7 +349,7 @@ class ParseKeywords (Holder):
                 parser = _val_to_parser (ks)
                 default = _val_or_func_to_default (ks)
 
-            ki.attrname = attrname
+            ki._attrname = attrname
             ki.parser = parser
             ki.default = default
 
@@ -277,12 +371,21 @@ class ParseKeywords (Holder):
         # Apply defaults, save parse info, done
 
         for kw, ki in kwinfos.iteritems ():
-            self.set_one (ki.attrname, ki.default)
+            self.set_one (ki._attrname, ki.default)
 
         self._kwinfos = kwinfos
 
 
     def parse (self, args=None):
+        """Parse textual keywords as described by this class’s attributes, and update
+        this instance’s attributes with the parsed values. *args* is a list of
+        strings; if ``None``, it defaults to ``sys.argv[1:]``. Returns *self*
+        for convenience. Raises :exc:`KwargvError` if invalid keywords are
+        encountered.
+
+        See also :meth:`ParseKeywords.parse_or_die`.
+
+        """
         if args is None:
             import sys
             args = sys.argv[1:]
@@ -330,7 +433,7 @@ class ParseKeywords (Holder):
                 # We can't just unilaterally append to the preexisting
                 # list, since if we did that starting with the default value
                 # we'd mutate the default list.
-                cur = self.get (ki.attrname)
+                cur = self.get (ki._attrname)
                 if not len (cur):
                     pval = [pval]
                 else:
@@ -338,7 +441,7 @@ class ParseKeywords (Holder):
                     pval = cur
 
             seen.add (kw)
-            self.set_one (ki.attrname, pval)
+            self.set_one (ki._attrname, pval)
 
         for kw, ki in self._kwinfos.iteritems ():
             if ki.required and kw not in seen:
@@ -349,6 +452,11 @@ class ParseKeywords (Holder):
 
 
     def parse_or_die (self, args=None):
+        """Like :meth:`ParseKeywords.parse`, but calls :func:`pkwit.cli.die` if a
+        :exc:`KwargvError` is raised, printing the exception text. Returns
+        *self* for convenience.
+
+        """
         from .cli import die
 
         try:

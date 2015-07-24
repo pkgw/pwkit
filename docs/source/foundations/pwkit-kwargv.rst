@@ -6,4 +6,5 @@ Parsing keyword-style program arguments (``pwkit.kwargv``)
 ========================================================================
 
 .. automodule:: pwkit.kwargv
+   :synopsis: Parse keyword-style arguments to command-line programs
    :members:
