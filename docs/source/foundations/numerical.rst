@@ -160,7 +160,10 @@ Convenience functions for :class:`pandas.DataFrame` objects
     FITS data are big-endian, whereas nowadays almost everything is
     little-endian. This seems to be an issue for Pandas DataFrames, where
     ``df[['col1', 'col2']]`` triggers an assertion for me if the underlying
-    data are not native-byte-ordered.
+    data are not native-byte-ordered. This function normalizes the read-in
+    data to native endianness to avoid this.
+
+    See also :meth:`pwkit.io.Path.read_fits_bintable`.
 
 
 .. function:: data_frame_to_astropy_table (dataframe)
