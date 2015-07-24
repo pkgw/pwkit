@@ -12,7 +12,7 @@ This documentation is currently just a stub.
 
    about.rst
    foundations/index.rst
-   section-science.rst
+   science/index.rst
    section-cli.rst
    section-viz.rst
    io/index.rst
