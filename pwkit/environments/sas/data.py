@@ -105,29 +105,33 @@ class BaseSASData (object):
 
 
     def _process_main (self, hdulist, header):
-        self.telescope = header['TELESCOP']
-        self.instrument = header['INSTRUME']
-        self.obsid = header['OBS_ID']
-        self.expid = header['EXP_ID']
-        self.revnum = header['REVOLUT']
-        self.filter = header['FILTER']
-        self.obs_start = Time (header['DATE-OBS'], format='isot')
-        self.obs_stop = Time (header['DATE-END'], format='isot')
-        self.targ_name = header['OBJECT']
-        self.targ_ra = header['RA_OBJ'] * astutil.D2R
-        self.targ_dec = header['DEC_OBJ'] * astutil.D2R
+        self.telescope = header.get ('TELESCOP')
+        self.instrument = header.get ('INSTRUME')
+        self.obsid = header.get ('OBS_ID')
+        self.expid = header.get ('EXP_ID')
+        self.revnum = header.get ('REVOLUT')
+        self.filter = header.get ('FILTER')
+        self.targ_name = header.get ('OBJECT')
+        if 'DATE-OBS' in header:
+            self.obs_start = Time (header['DATE-OBS'], format='isot')
+        if 'DATE-END' in header:
+            self.obs_stop = Time (header['DATE-END'], format='isot')
+        if 'RA_OBJ' in header:
+            self.targ_ra = header['RA_OBJ'] * astutil.D2R
+            self.targ_dec = header['DEC_OBJ'] * astutil.D2R
 
-        if header['REFYCUNI'] != 'deg' or header['REFXCUNI'] != 'deg':
-            raise ValueError ('expect projection to be in degree units')
+        if 'RADECSYS' in header:
+            if header['REFYCUNI'] != 'deg' or header['REFXCUNI'] != 'deg':
+                raise ValueError ('expect projection to be in degree units')
 
-        self.proj_csys = header['RADECSYS']
-        self.proj_equinox = header['EQUINOX']
-        self.proj_types = [header['REFYCTYP'], header['REFXCTYP']]
-        self.proj_crpix = np.asarray ([header['REFYCRPX'], header['REFXCRPX']])
-        self.proj_crval = np.asarray ([header['REFYCRVL'], header['REFXCRVL']])
-        self.proj_crval *= astutil.D2R
-        self.proj_cdelt = np.asarray ([header['REFYCDLT'], header['REFXCDLT']])
-        self.proj_cdelt *= astutil.D2R
+            self.proj_csys = header['RADECSYS']
+            self.proj_equinox = header['EQUINOX']
+            self.proj_types = [header['REFYCTYP'], header['REFXCTYP']]
+            self.proj_crpix = np.asarray ([header['REFYCRPX'], header['REFXCRPX']])
+            self.proj_crval = np.asarray ([header['REFYCRVL'], header['REFXCRVL']])
+            self.proj_crval *= astutil.D2R
+            self.proj_cdelt = np.asarray ([header['REFYCDLT'], header['REFXCDLT']])
+            self.proj_cdelt *= astutil.D2R
 
 
     def _process_hdu (self, hdu):
