@@ -1,3 +1,4 @@
+astropy
 mock
 numpy
 pathlib
