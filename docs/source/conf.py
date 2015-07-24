@@ -82,7 +82,4 @@ class Mock (MagicMock):
 
 sys.modules.update ((m, Mock ()) for m in [
     'gtk',
-    'numpy',
-    'pandas',
-    'scipy',
 ])
