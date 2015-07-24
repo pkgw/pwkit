@@ -5,7 +5,7 @@
 Command-line tools
 ==============================================================================
 
-This documentation is currently just a stub.
+This documentation has a lot of stubs.
 
 .. toctree::
    :maxdepth: 2
