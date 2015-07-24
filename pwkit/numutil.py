@@ -185,6 +185,46 @@ def fits_recarray_to_data_frame (recarray, drop_nonscalar_ok=True):
     return DataFrame (dict (normalize ()))
 
 
+def data_frame_to_astropy_table (dataframe):
+    """This is basically a copy of astropy.tables.table.Table.from_pandas();
+    Anaconda currently only has astropy 1.0 which doesn't contain this.
+
+    """
+    from astropy.utils import OrderedDict
+    from astropy.table import Table, Column, MaskedColumn
+    from astropy.extern import six
+
+    out = OrderedDict()
+
+    for name in dataframe.columns:
+        column = dataframe[name]
+        mask = np.array (column.isnull ())
+        data = np.array (column)
+
+        if data.dtype.kind == 'O':
+            # If all elements of an object array are string-like or np.nan
+            # then coerce back to a native numpy str/unicode array.
+            string_types = six.string_types
+            if six.PY3:
+                string_types += (bytes,)
+            nan = np.nan
+            if all(isinstance(x, string_types) or x is nan for x in data):
+                # Force any missing (null) values to b''.  Numpy will
+                # upcast to str/unicode as needed.
+                data[mask] = b''
+
+                # When the numpy object array is represented as a list then
+                # numpy initializes to the correct string or unicode type.
+                data = np.array([x for x in data])
+
+        if np.any(mask):
+            out[name] = MaskedColumn(data=data, name=name, mask=mask)
+        else:
+            out[name] = Column(data=data, name=name)
+
+    return Table(out)
+
+
 # Chunked averaging of data tables
 
 def slice_around_gaps (values, maxgap):

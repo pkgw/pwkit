@@ -163,6 +163,14 @@ Convenience functions for :class:`pandas.DataFrame` objects
     data are not native-byte-ordered.
 
 
+.. function:: data_frame_to_astropy_table (dataframe)
+
+   This is a backport of the Astropy method
+   :meth:`astropy.table.table.Table.from_pandas`. It converts a Pandas
+   :class:`pandas.DataFrame` object to an Astropy
+   :class:`astropy.table.Table`.
+
+
 .. function:: usmooth (window, uncerts, *data, **kwargs)
 
    Placeholder.
