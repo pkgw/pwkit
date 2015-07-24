@@ -387,8 +387,8 @@ class Lightcurve (GTIData, RegionData):
 
         # Straighten out timekeeping
 
-        self.mjdref = hdu.header['MJDREF']
-        self.timesys = hdu.header['TIMESYS']
+        self.mjdref = float (hdu.header['MJDREF'])
+        self.timesys = hdu.header.get ('TIMESYS')
 
         if self.t0 is None:
             self.t0 = self.lc.time.min ()
@@ -398,8 +398,8 @@ class Lightcurve (GTIData, RegionData):
 
         # Fill in the rest
 
-        self.filter = hdu.header['FILTER']
-        self.binsize = hdu.header['TIMEDEL']
+        self.filter = hdu.header.get ('FILTER')
+        self.binsize = hdu.header.get ('TIMEDEL')
         self.start_met = hdu.header['TSTART']
         self.start_mjd = self.start_met / 86400 + self.mjdref
         self.start_dks = 1e-3 * (self.start_met - self.t0)
@@ -408,10 +408,10 @@ class Lightcurve (GTIData, RegionData):
         self.stop_mjd = self.stop_met / 86400 + self.mjdref
         self.stop_dks = 1e-3 * (self.stop_met - self.t0)
         self.stop_dmjd = self.stop_mjd - self.mjd0
-        self.energy_min = hdu.header['CHANMIN']
-        self.energy_max = hdu.header['CHANMAX']
-        self.energy_type = hdu.header['CHANTYPE']
-        self.exposure = hdu.header['EXPOSURE']
+        self.energy_min = hdu.header.get ('CHANMIN')
+        self.energy_max = hdu.header.get ('CHANMAX')
+        self.energy_type = hdu.header.get ('CHANTYPE')
+        self.exposure = hdu.header.get ('EXPOSURE')
 
         self.lc['counts'] = (self.lc.rate * self.binsize).astype (np.int)
         self.lc['mjd'] = self.lc.time / 86400 + self.mjdref
