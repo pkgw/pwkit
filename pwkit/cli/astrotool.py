@@ -386,7 +386,7 @@ class Summfits (multitool.Command):
     _commentary_card_names = frozenset (('HISTORY', 'COMMENT'))
     _skip_headers = frozenset (('XTENSION', 'BITPIX', 'SIMPLE', 'EXTEND',
                                 'EXTNAME', 'PCOUNT', 'GCOUNT', 'TFIELDS'))
-    _skip_prefixes = frozenset (('NAXIS', 'TTYPE', 'TFORM', 'TDIM'))
+    _skip_prefixes = frozenset (('NAXIS', 'TTYPE', 'TFORM', 'TDIM', 'TUNIT'))
 
     def invoke (self, args, **kwargs):
         if len (args) != 1:
