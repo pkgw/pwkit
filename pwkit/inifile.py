@@ -103,7 +103,7 @@ def read_stream (stream):
 
 def read (stream_or_path):
     if isinstance (stream_or_path, basestring):
-        return read_stream (io.open (stream_or_path, 'rb'))
+        return read_stream (io.open (stream_or_path, 'rt'))
     return read_stream (stream_or_path)
 
 
