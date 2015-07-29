@@ -431,7 +431,7 @@ class Lightcurve (GTIData, RegionData):
     def plot_curve (self, ccdnum=None):
         import omega as om
 
-        p = om.quickDF (self.lc[['dmjd', 'rate', 'u_rate']],
+        p = om.quickDF (self.lc[['dmjd', 'rate', 'u_rate']].dropna (),
                         self.targ_name,
                         lines=False)
         if ccdnum is not None:
