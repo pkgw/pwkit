@@ -413,7 +413,7 @@ class Lightcurve (GTIData, RegionData):
         self.energy_type = hdu.header.get ('CHANTYPE')
         self.exposure = hdu.header.get ('EXPOSURE')
 
-        self.lc['counts'] = (self.lc.rate * self.binsize).astype (np.int)
+        self.lc['counts'] = self.lc.rate * self.binsize
         self.lc['mjd'] = self.lc.time / 86400 + self.mjdref
         self.lc['dks'] = 1e-3 * (self.lc.time - self.t0)
         self.lc['dmjd'] = self.lc.mjd - self.mjd0
