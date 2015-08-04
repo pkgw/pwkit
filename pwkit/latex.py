@@ -40,7 +40,7 @@ __all__ = (b'AlignedNumberFormatter BasicFormatter BoolFormatter LimitFormatter 
            b'MaybeNumberFormatter Referencer TableBuilder UncertFormatter '
            b'WideHeader latexify_l3col latexify_n2col latexify_u3col latexify').split ()
 
-from . import Holder, PKError, binary_type, msmt, text_type
+from . import Holder, PKError, binary_type, msmt, reraise_context, text_type
 
 
 def _reftext (key):
@@ -512,7 +512,12 @@ class TableBuilder (object):
 
             for ci in colinfo:
                 write (sep)
-                write (ci.wdatafunc (item, ci.formatter, self))
+                formatted = ci.wdatafunc (item, ci.formatter, self)
+                try:
+                    write (formatted)
+                except Exception:
+                    reraise_context ('while writing %r (from %r with %r)',
+                                     formatted, item, ci.formatter)
                 sep = b' & '
 
             cr = b' \\\\\n'
