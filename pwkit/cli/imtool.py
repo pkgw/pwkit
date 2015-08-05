@@ -65,8 +65,8 @@ class BlinkCommand (multitool.Command):
         return data, toworld
 
     def invoke (self, args, **kwargs):
-        fft = pop_option ('f', [''] + args)
-        maxnorm = pop_option ('m', [''] + args)
+        fft = pop_option ('f', args)
+        maxnorm = pop_option ('m', args)
         ndshow = load_ndshow ()
 
         images = []
@@ -114,7 +114,7 @@ class FitsrcCommand (multitool.Command):
 
     def invoke (self, args, **kwargs):
         from ..immodel import fit_one_source
-        forcepoint = pop_option ('p', [''] + args)
+        forcepoint = pop_option ('p', args)
 
         if len (args) != 3:
             raise multitool.UsageError ('expect exactly three arguments')
