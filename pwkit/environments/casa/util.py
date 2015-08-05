@@ -222,11 +222,12 @@ class _Tools (object):
     underlying library provides them.
 
     """
-    _builtinNames = ('agentflagger atmosphere calanalysis calibrater calplot componentlist '
-                     'coordsys deconvolver fitter flagger functional image imagepol '
-                     'imager logsink measures msmetadata ms msplot plotms regionmanager '
-                     'simulator spectralline quanta table tableplot utils vlafiller '
-                     'vpmanager').split ()
+    _builtinNames = '''agentflagger atmosphere calanalysis calibrater calplot
+                     componentlist coordsys deconvolver fitter flagger
+                     functional image imagepol imager logsink measures
+                     msmetadata ms msplot mstransformer plotms regionmanager
+                     simulator spectralline quanta table tableplot utils
+                     vlafiller vpmanager'''.split ()
 
     def __getattribute__ (self, n):
         """Returns factories, not instances."""
