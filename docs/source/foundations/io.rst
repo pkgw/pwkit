@@ -46,6 +46,7 @@ navigation of the filesystem.
    - :meth:`read_fits` — see also :meth:`read_fits_bintable`
    - :meth:`read_fits_bintable` — see also :meth:`read_fits`
    - :meth:`read_hdf`
+   - :meth:`read_numpy_text`
    - :meth:`read_pandas`
    - :meth:`read_pickle`
    - :meth:`read_pickles`
@@ -258,6 +259,34 @@ on :class:`Path` objects.
 
    Open as an HDF5 file using :mod:`pandas` and return the item stored under
    the key *key*. *kwargs* are passed to :func:`pandas.read_hdf`.
+
+
+.. method:: Path.read_numpy_text(**kwargs)
+
+   Read this path into a :class:`numpy.ndarray` as a text file using
+   :func:`numpy.loadtxt`. In normal conditions the returned array is
+   two-dimensional, with the first axis spanning the rows in the file and the
+   second axis columns (but see the *unpack* keyword). *kwargs* are passed to
+   :func:`numpy.loadtxt`; they likely are:
+
+   dtype : data type
+     The data type of the resulting array.
+   comments : str
+     If specific, a character indicating the start of a comment.
+   delimiter : str
+     The string that separates values. If unspecified, any span of whitespace works.
+   converters : dict
+     A dictionary mapping zero-based column *number* to a function that will
+     turn the cell text into a number.
+   skiprows : int (default=0)
+     Skip this many lines at the top of the file
+   usecols : sequence
+     Which columns keep, by number, starting at zero.
+   unpack : bool (default=False)
+     If true, the return value is transposed to be of shape ``(cols, rows)``.
+   ndmin : int (default=0)
+     The returned array will have at least this many dimensions; otherwise
+     mono-dimensional axes will be squeezed.
 
 
 .. method:: Path.read_pandas(format='table', **kwargs)

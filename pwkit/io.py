@@ -188,6 +188,8 @@ class Path (_ParentPath):
     read_pickle (*)   - Read a single pickled object.
     read_pickles (*)  - Read a series of pickled objects.
     read_tabfile (*)  - Read this path as a pwkit typed data table.
+    read_numpy_text (*)
+                      - Read this path into a Numpy array.
     relative_to       - Compute a version of this path relative to another.
     rellink_to (*)    - Make a relative symlink.
     rename(targ)      - Rename this file or directory into `targ`.
@@ -440,6 +442,11 @@ class Path (_ParentPath):
     def read_tabfile (self, **kwargs):
         from .tabfile import read
         return read (text_type (self), **kwargs)
+
+
+    def read_numpy_text (self, **kwargs):
+        import numpy as np
+        return np.loadtxt (text_type (self), **kwargs)
 
 
 del _ParentPath
