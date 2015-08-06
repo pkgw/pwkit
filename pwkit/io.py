@@ -170,6 +170,7 @@ class Path (_ParentPath):
     chmod             - Change file mode.
     ensure_parent (*) - Ensure the path's parent directory exists.
     exists            - Test whether path exists.
+    expand            - Expand constructions like "~" or $VAR.
     glob              - Glob for files at this path (assumes it's a directory).
     is_absolute       - Test whether the path is absolute.
     is_*              - for: block_device, char_device, dir, fifo, file, socket symlink.
@@ -225,6 +226,52 @@ class Path (_ParentPath):
     suffixes          - A list of all extensions; 'foo.tar.gz' -> ['.tar', '.gz'].
 
     """
+
+    # Manipulations
+
+    def expand (self, user=False, vars=False, glob=False, resolve=False):
+        from os import path
+        from glob import glob
+
+        text = text_type (self)
+        if user:
+            text = path.expanduser (text)
+        if vars:
+            text = path.expandvars (text)
+        if glob:
+            results = glob (text)
+            if len (results) == 1:
+                text = results[0]
+            elif len (results) > 1:
+                raise IOError ('glob of %r should\'ve returned 0 or 1 matches; got %d'
+                               % (text, len (results)))
+
+        other = self.__class__ (text)
+        if resolve:
+            other = other.resolve ()
+
+        return other
+
+
+    def make_relative (self, other):
+        """A variant on relative_to() that allows computation of, e.g., "a" relative
+        to "b", yielding "../a". This can technically give improper results if
+        "b" is a directory symlink. If `self` is absolute, it is just
+        returned unmodified.
+
+        This might not work on Windows?
+
+        """
+        if self.is_absolute ():
+            return self
+
+        from os.path import relpath
+        other = self.__class__ (other)
+        return self.__class__ (relpath (text_type (self), text_type (other)))
+
+
+    # Non-data I/O operations
+
     def scandir (self):
         """This uses the `scandir` module or `os.scandir` to generate a listing of
         this path's contents, assuming it's a directory.
@@ -298,23 +345,6 @@ class Path (_ParentPath):
             raise
 
 
-    def make_relative (self, other):
-        """A variant on relative_to() that allows computation of, e.g., "a" relative
-        to "b", yielding "../a". This can technically give improper results if
-        "b" is a directory symlink. If `self` is absolute, it is just
-        returned unmodified.
-
-        This might not work on Windows?
-
-        """
-        if self.is_absolute ():
-            return self
-
-        from os.path import relpath
-        other = self.__class__ (other)
-        return self.__class__ (relpath (text_type (self), text_type (other)))
-
-
     def rellink_to (self, target, force=False):
         """Like symlink_to(), but modify `target` to be relative to wherever
         `self` points.
@@ -338,7 +368,7 @@ class Path (_ParentPath):
         return self.symlink_to (target.make_relative (self.parent))
 
 
-    # I/O
+    # Data I/O
 
     def try_open (self, **kwargs):
         try:

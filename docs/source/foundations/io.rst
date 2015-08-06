@@ -27,6 +27,7 @@ navigation of the filesystem.
    - :meth:`chmod`
    - :meth:`ensure_parent`
    - :meth:`exists`
+   - :meth:`expand`
    - :meth:`glob`
    - :meth:`is_absolute`
    - :meth:`is_block_device`
@@ -123,6 +124,27 @@ on :class:`Path` objects.
 .. method:: Path.exists()
 
    Returns whether the path exists.
+
+
+.. method:: Path.expand(user=False, vars=False, glob=False, resolve=False)
+
+   Return a new :class:`Path` with various expansions performed. All
+   expansions are disabled by default but can be enabled by passing in true
+   values in the keyword arguments.
+
+   user : bool (default False)
+     Expand ``~`` and ``~user`` home-directory constructs. If a username is
+     unmatched or ``$HOME`` is unset, no change is made. Calls
+     :func:`os.path.expanduser`.
+   vars : bool (default False)
+     Expand ``$var`` and ``${var}`` environment variable constructs. Unknown
+     variables are not substituted. Calls :func:`os.path.expandvars`.
+   glob : bool (default False)
+     Evaluate the path as a :mod:`glob` expression and use the matched path.
+     If the glob does not match anything, do not change anything. If the
+     glob matches more than one path, raise an :exc:`IOError`.
+   resolve : bool (default False)
+     Call :meth:`resolve` on the return value before returning it.
 
 
 .. method:: Path.glob(pattern)
