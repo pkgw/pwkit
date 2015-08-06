@@ -270,7 +270,7 @@ class Path (_ParentPath):
         return self.__class__ (relpath (text_type (self), text_type (other)))
 
 
-    # Non-data I/O operations
+    # Filesystem I/O operations
 
     def scandir (self):
         """This uses the `scandir` module or `os.scandir` to generate a listing of
@@ -370,11 +370,14 @@ class Path (_ParentPath):
 
     # Data I/O
 
-    def try_open (self, **kwargs):
+    def try_open (self, null_if_noexist=False, **kwargs):
         try:
             return self.open (**kwargs)
         except IOError as e:
             if e.errno == 2:
+                if null_if_noexist:
+                    import io, os
+                    return io.open (os.devnull, **kwargs)
                 return None
             raise
 
