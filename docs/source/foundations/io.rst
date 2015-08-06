@@ -22,9 +22,11 @@ navigation of the filesystem.
 
    The key methods on :class:`Path` instances are:
 
+   - :meth:`absolute` — see also :meth:`resolve`
    - :meth:`as_hdf_store`
    - :meth:`as_uri`
    - :meth:`chmod`
+   - :staticmeth:`cwd`
    - :meth:`ensure_parent`
    - :meth:`exists`
    - :meth:`expand`
@@ -55,7 +57,7 @@ navigation of the filesystem.
    - :meth:`relative_to` — see also :meth:`make_relative`
    - :meth:`rellink_to` — see also :meth:`symlink_to`
    - :meth:`rename`
-   - :meth:`resolve`
+   - :meth:`resolve` — see also :meth:`absolute`
    - :meth:`rglob`
    - :meth:`rmdir` — see also :meth:`rmtree`
    - :meth:`rmtree` — see also :meth:`rmdir`
@@ -92,6 +94,12 @@ on :class:`Path` objects.
 
 :class:`Path` methods
 ------------------------------------------------------------------------
+
+.. method:: Path.absolute()
+
+   Return an absolute version of the path. Unlike :meth:`resolve`, does not
+   normalize the path or resolve symlinks.
+
 
 .. method:: Path.as_hdf_store(mode='r', **kwargs)
 
@@ -469,6 +477,12 @@ on :class:`Path` objects.
 
    *objs* must be iterable. Write each of its values to this path in sequence
    using :mod:`cPickle`.
+
+
+.. staticmethod:: Path.cwd()
+
+   Returns a new path containing the absolute path of the current working
+   directory.
 
 
 :class:`Path` attributes
