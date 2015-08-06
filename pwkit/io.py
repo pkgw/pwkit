@@ -165,6 +165,7 @@ class Path (_ParentPath):
     """Extended version of the pathlib.Path object. Methods (asterisk denotes
     pwkit-specific methods):
 
+    as_hdf_store      - Open as a Pandas HDFStore.
     as_uri            - Return as a file:/// URI.
     chmod             - Change file mode.
     ensure_parent (*) - Ensure the path's parent directory exists.
@@ -174,14 +175,21 @@ class Path (_ParentPath):
     is_*              - for: block_device, char_device, dir, fifo, file, socket symlink.
     iterdir           - Generate list of paths in a directory.
     joinpath(*rest)   - Create sub-paths.
+    make_relative (*) - Generate a relative path.
     match(glob)       - Test whether this path matches a given glob.
     mkdir             - Create directory here; set parents=True to create parents.
     open              - Open as a file.
-    pickle_many (*)   - Pickle multiple objects into this path.
-    pickle_one (*)    - Pickle an object into this path.
-    readlines (*)     - Generate lines from a text file.
+    read_fits (*)     - Open as a FITS file with Astropy.
+    read_fits_bintable (*)
+                      - Read a FITS-format binary table into a Pandas DataFrame.
+    read_hdf (*)      - Read as HDF format into a Pandas DataFrame.
+    read_lines (*)    - Generate lines from a text file.
     read_pandas (*)   - Read this path into a Pandas DataFrame.
+    read_pickle (*)   - Read a single pickled object.
+    read_pickles (*)  - Read a series of pickled objects.
+    read_tabfile (*)  - Read this path as a pwkit typed data table.
     relative_to       - Compute a version of this path relative to another.
+    rellink_to (*)    - Make a relative symlink.
     rename(targ)      - Rename this file or directory into `targ`.
     resolve           - Make path absolute and remove symlinks.
     rglob             - Glob for files at this path, recursively.
@@ -198,6 +206,8 @@ class Path (_ParentPath):
     unpickle_many (*) - Generate a series of objects unpickled from this path.
     with_name         - Return a new path with a different "basename".
     with_suffix       - Return a new path with a different suffix on the basename.
+    write_pickle (*)  - Pickle an object into this path.
+    write_pickles (*) - Pickle multiple objects into this path.
 
     Properties:
 
@@ -267,7 +277,7 @@ class Path (_ParentPath):
             warn ('couldn\'t rmtree %s: in %s of %s: %s', self, func.__name__,
                   path, exc_info[1])
 
-        shutil.rmtree (str (self), ignore_errors=False, onerror=on_error)
+        shutil.rmtree (text_type (self), ignore_errors=False, onerror=on_error)
         return self
 
 
@@ -300,7 +310,7 @@ class Path (_ParentPath):
 
         from os.path import relpath
         other = self.__class__ (other)
-        return self.__class__ (relpath (str (self), str (other)))
+        return self.__class__ (relpath (text_type (self), text_type (other)))
 
 
     def rellink_to (self, target, force=False):
@@ -378,7 +388,7 @@ class Path (_ParentPath):
 
     def as_hdf_store (self, mode='r', **kwargs):
         from pandas import HDFStore
-        return HDFStore (str (self), mode=mode, **kwargs)
+        return HDFStore (text_type (self), mode=mode, **kwargs)
 
 
     def read_pandas (self, format='table', **kwargs):
@@ -416,15 +426,20 @@ class Path (_ParentPath):
 
         """
         from astropy.io import fits
-        return fits.open (str (self), **kwargs)
+        return fits.open (text_type (self), **kwargs)
 
 
     def read_fits_bintable (self, hdu=1, drop_nonscalar_ok=True, **kwargs):
         from astropy.io import fits
         from .numutil import fits_recarray_to_data_frame as frtdf
 
-        with fits.open (str (self), mode='readonly', **kwargs) as hdulist:
+        with fits.open (text_type (self), mode='readonly', **kwargs) as hdulist:
             return frtdf (hdulist[hdu].data, drop_nonscalar_ok=drop_nonscalar_ok)
+
+
+    def read_tabfile (self, **kwargs):
+        from .tabfile import read
+        return read (text_type (self), **kwargs)
 
 
 del _ParentPath

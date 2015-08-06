@@ -49,6 +49,7 @@ navigation of the filesystem.
    - :meth:`read_pandas`
    - :meth:`read_pickle`
    - :meth:`read_pickles`
+   - :meth:`read_tabfile`
    - :meth:`relative_to` — see also :meth:`make_relative`
    - :meth:`rellink_to` — see also :meth:`symlink_to`
    - :meth:`rename`
@@ -280,6 +281,25 @@ on :class:`Path` objects.
 
    Generate a sequence of objects by opening the path and unpickling items
    until EOF is reached.
+
+
+.. method:: Path.read_tabfile(tabwidth=8, mode='rt', noexistok=False, **kwargs)
+
+   Read this path as a table of typed measurements via
+   :func:`pwkit.tabfile.read`. Returns a generator for a sequence of
+   :class:`pwkit.Holder` objects, one for each row in the table, with
+   attributes for each of the columns.
+
+   tabwidth : int (default=8)
+       The tab width to assume. Defaults to 8 and should not be changed unless
+       absolutely necessary.
+   mode : str (default='rt')
+       The file open mode, passed to :func:`io.open`.
+   noexistok : bool (default=False)
+       If true, a nonexistent file will result in no items being generated, as
+       opposed to an :exc:`IOError`.
+   kwargs : keywords
+       Additional arguments are passed to :func:`io.open`.
 
 
 .. method:: Path.relative_to(*other)
