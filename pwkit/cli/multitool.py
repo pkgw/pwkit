@@ -231,7 +231,8 @@ Commands are:
 
 
     def _usage_keys (self, argv0):
-        scmds = sorted ((cmd for cmd in self.commands.itervalues ()),
+        scmds = sorted ((cmd for cmd in self.commands.itervalues ()
+                         if cmd.name[0] != '_'),
                         key=lambda c: c.name)
         maxlen = 0
 
