@@ -49,6 +49,7 @@ image2fits image2fits_cli
 importevla importevla_cli
 listobs listobs_cli
 mfsclean mfsclean_cli MfscleanConfig
+mstransform mstransform_cli MstransformConfig
 plotants plotants_cli
 plotcal plotcal_cli plotcal_multipage_page PlotcalConfig
 setjy setjy_cli SetjyConfig
@@ -2061,6 +2062,130 @@ def mfsclean (cfg):
 
 
 mfsclean_cli = makekwcli (mfsclean_doc, MfscleanConfig, mfsclean)
+
+
+# mstransform
+
+mstransform_doc = \
+"""
+casatask mstransform vis=[] [keywords]
+
+vis=
+  Input visibility MS
+
+out=
+  Output visibility MS
+
+datacolumn=corrected
+  The data column on which to operate. Comma-separated list of:
+    data, model, corrected, float_data, lag_data, all
+
+realmodelcol=False
+  If true, turn a virtual model column into a real one.
+
+keepflags=True
+  If false, discard completely-flagged rows.
+
+usewtspectrum=False
+  If true, fill in a WEIGHT_SPECTRUM column in the output data set.
+
+combinespws=False
+  If true, combine spectral windows
+
+chanaverage=False
+  If true, average the data in frequency. NOT WIRED UP.
+
+hanning=False
+  If true, Hanning smooth the data spectrally to remove Gibbs ringing.
+
+regridms=False
+  If true, put the data on a new spectral window structure or reference frame.
+
+timebin=<seconds>
+  If specified, time-average the visibilities with the specified binning.
+
+timespan=<undefined>
+  Allow averaging to span over potential discontinuities in the data set.
+  Comma-separated list of options; allowed values are:
+    scan, state
+
+""" + stdsel_doc + loglevel_doc
+
+class MstransformConfig (ParseKeywords):
+    vis = Custom (str, required=True)
+    out = Custom (str, required=True)
+
+    datacolumn = 'corrected'
+    realmodelcol = False
+    keepflags = True
+    usewtspectrum = False
+    combinespws = False
+    chanaverage = False
+    hanning = False
+    regridms = False
+
+    timebin = float # seconds
+    timespan = [str] # containing 'scan', 'state'
+
+    antenna = str
+    array = str
+    correlation = str
+    field = str
+    intent = str
+    observation = str
+    scan = str
+    spw = str
+    timerange = str
+    uvrange = str
+    taql = str
+
+    loglevel = 'warn'
+
+
+def mstransform (cfg):
+    mt = util.tools.mstransformer ()
+    qa = util.tools.quanta ()
+
+    mtconfig = extractmsselect (cfg, havearray=True, havecorr=True, taqltomsselect=False)
+    mtconfig['inputms'] = cfg.vis
+    mtconfig['outputms'] = cfg.out
+
+    if not cfg.keepflags:
+        if len (mtconfig.get ('taql', '')):
+            mtconfig['taql'] += 'AND NOT (FLAG_ROW OR ALL(FLAG))'
+        else:
+            mtconfig['taql'] = 'NOT (FLAG_ROW OR ALL(FLAG))'
+
+    mtconfig['datacolumn'] = cfg.datacolumn
+
+    if 'MODEL' in cfg.datacolumn.upper () or cfg.datacolumn.upper () == 'ALL':
+        mtconfig['realmodelcol'] = cfg.realmodelcol
+
+    mtconfig['combinespws'] = bool (cfg.combinespws)
+    mtconfig['hanning'] = bool (cfg.hanning)
+
+    if cfg.chanaverage:
+        raise NotImplementedError ('mstransform: chanaverage')
+
+    if cfg.regridms:
+        raise NotImplementedError ('mstransform: regridms')
+
+    if cfg.timebin is not None:
+        mtconfig['timeaverage'] = True
+        mtconfig['timebin'] = str (cfg.timebin) + 's'
+        mtconfig['timespan'] = ','.join (cfg.timespan)
+        # not implemented: maxuvwdistance
+
+    mt.config (b(mtconfig))
+    mt.open ()
+    mt.run ()
+    mt.done ()
+
+    # not implemented: updating FLAG_CMD table
+    # not implemented: updating history
+
+
+mstransform_cli = makekwcli (mstransform_doc, MstransformConfig, mstransform)
 
 
 # plotants
