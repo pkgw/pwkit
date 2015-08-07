@@ -26,7 +26,7 @@ navigation of the filesystem.
    - :meth:`as_hdf_store`
    - :meth:`as_uri`
    - :meth:`chmod`
-   - :staticmeth:`cwd`
+   - :meth:`cwd`
    - :meth:`ensure_parent`
    - :meth:`exists`
    - :meth:`expand`
