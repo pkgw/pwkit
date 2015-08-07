@@ -49,6 +49,7 @@ navigation of the filesystem.
    - :meth:`read_fits` — see also :meth:`read_fits_bintable`
    - :meth:`read_fits_bintable` — see also :meth:`read_fits`
    - :meth:`read_hdf`
+   - :meth:`read_inifile`
    - :meth:`read_numpy_text`
    - :meth:`read_pandas`
    - :meth:`read_pickle`
@@ -289,6 +290,16 @@ on :class:`Path` objects.
 
    Open as an HDF5 file using :mod:`pandas` and return the item stored under
    the key *key*. *kwargs* are passed to :func:`pandas.read_hdf`.
+
+
+.. method:: Path.read_inifile(noexistok=False, typed=False)
+
+   Open assuming an “ini-file” format and return a generator yielding data
+   records using either :func:`pwkit.inifile.read_stream` (if *typed* is
+   false) or :func:`pwkit.tinifile.read_stream` (if it’s true). The latter
+   version is designed to work with numerical data using the :mod:`pwkit.msmt`
+   subsystem. If *noexistok* is true, a nonexistent file will result in no
+   items being generated rather than an :exc:`IOError` being raised.
 
 
 .. method:: Path.read_numpy_text(**kwargs)

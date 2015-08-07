@@ -382,6 +382,21 @@ class Path (_ParentPath):
             raise
 
 
+    def read_inifile (self, noexistok=False, typed=False):
+        if typed:
+            from .tinifile import read_stream
+        else:
+            from .inifile import read_stream
+
+        try:
+            with self.open ('rb') as f:
+                for item in read_stream (f):
+                    yield item
+        except IOError as e:
+            if e.errno != 2 or not noexistok:
+                raise
+
+
     def read_lines (self, mode='rt', noexistok=False, **kwargs):
         try:
             with self.open (mode=mode, **kwargs) as f:
