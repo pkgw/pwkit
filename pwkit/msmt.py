@@ -51,6 +51,7 @@ typealign   - Return (x*, y*) cast to same algebra-friendly type: float, Uval, o
 
 Miscellaneous functions:
 
+is_measurement       - Check whether an object is numerical
 find_gamma_params    - Compute reasonable Γ distribution parameters given mode/stddev.
 pk_scoreatpercentile - Simplified version of scipy.stats.scoreatpercentile.
 sample_double_norm   - Sample from a quasi-normal distribution with asymmetric variances.
@@ -71,22 +72,13 @@ uval_unary_math            - Dict of unary math functions operating on Uvals.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (
-    # Classes:
-    b'LimitError Lval Textual Uval '
-    # Unary operations on measurements:
-    b'absolute arccos arcsin arctan cos errinfo expm1 exp fmtinfo isfinite '
-    b'liminfo limtype log10 log1p log2 log negative reciprocal repval sin sqrt '
-    b'square tan unwrap '
-    # Binary operations on measurements:
-    b'add divide multiply power subtract true_divide typealign '
-    # Misc. funcs:
-    b'find_gamma_params pk_scoreatpercentile sample_double_norm sample_gamma '
-    # Variables:
-    b'lval_unary_math parsers scalar_unary_math textual_unary_math '
-    b'UQUANT_UNCERT uval_default_repval_method uval_dtype uval_nsamples '
-    b'uval_unary_math'
-).split ()
+__all__ = b'''LimitError Lval Textual Uval absolute arccos arcsin arctan cos errinfo
+    expm1 exp fmtinfo isfinite is_measurement liminfo limtype log10 log1p log2
+    log negative reciprocal repval sin sqrt square tan unwrap add divide
+    multiply power subtract true_divide typealign find_gamma_params
+    pk_scoreatpercentile sample_double_norm sample_gamma lval_unary_math
+    parsers scalar_unary_math textual_unary_math UQUANT_UNCERT
+    uval_default_repval_method uval_dtype uval_nsamples uval_unary_math'''.split ()
 
 import operator
 
@@ -1843,6 +1835,10 @@ textual_unary_math = {
 
 # Now, a library of metadata-esque functions that will handle anything you
 # throw at them: scalars, Uvals, Lvals, and Textuals.
+
+def is_measurement (obj):
+    return np.isscalar (obj) or isinstance (obj, (Uval, Lval, Textual))
+
 
 def unwrap (msmt):
     """Convert the value into the most basic representation that we can do
