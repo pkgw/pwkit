@@ -36,7 +36,7 @@ def _parse_one (old):
     return Holder (**new)
 
 
-def read_stream (stream):
+def read_stream (stream, **kwargs):
     for unparsed in inifile.read_stream (stream, **kwargs):
         yield _parse_one (unparsed)
 
