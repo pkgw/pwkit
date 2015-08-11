@@ -804,7 +804,7 @@ class AstrometryInfo (object):
         return bestra, bestdec, maj, min, pa
 
 
-    def print_prediction (self, ptup):
+    def print_prediction (self, ptup, precision=2):
         """The argument is the tuple returned by predict(). Prints it to stdout."""
         from . import ellipses
         bestra, bestdec, maj, min, pa = ptup
@@ -814,8 +814,9 @@ class AstrometryInfo (object):
         min *= R2A
         pa *= R2D
 
-        print ('position =', fmtradec (bestra, bestdec))
-        print ('err(1σ)  = %.2f" × %.2f" @ %.0f°' % (maj * f, min * f, pa))
+        print ('position =', fmtradec (bestra, bestdec, precision=precision))
+        print ('err(1σ)  = %.*f" × %.*f" @ %.0f°' % (precision, maj * f, precision,
+                                                     min * f, pa))
 
 
     def fill_from_simbad (self, ident, debug=False):
