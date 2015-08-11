@@ -396,6 +396,38 @@ def ellabc (mjr, mnr, pa):
     return _abccheck (a, b, c)
 
 
+def double_ell_distance (mjr0, mnr0, pa0, mjr1, mnr1, pa1, dx, dy):
+    """Given two ellipses separated by *dx* and *dy*, compute their separation in
+    terms of σ. Based on Pineau et al (2011A&A...527A.126P).
+
+    The "0" ellipse is taken to be centered at (0, 0), while the "1"
+    ellipse is centered at (dx, dy).
+
+    """
+    # 1. We need to rotate the frame so that ellipse 1 lies on the X axis.
+    theta = -np.arctan2 (dy, dx)
+
+    # 2. We also need to express these rotated ellipses in "biv" format.
+    sx0, sy0, cxy0 = ellbiv (mjr0, mnr0, pa0 + theta)
+    sx1, sy1, cxy1 = ellbiv (mjr1, mnr1, pa1 + theta)
+
+    # 3. The separation between the centers is still just:
+    d = np.sqrt (dx**2 + dy**2)
+
+    # 4. When convolving Gaussians, covariance matrices just sum, but we work
+    # with sigmas, not variances. Therefore the convolution of the two is:
+    sx = np.sqrt (sx0**2 + sx1**2)
+    sy = np.sqrt (sy0**2 + sy1**2)
+    cxy = cxy0 + cxy1
+
+    # 5. The effective sigma in the purely X direction, taking into account
+    # the covariance term, is:
+    sigma_eff = sx * np.sqrt (1 - (cxy / (sx * sy))**2)
+
+    # 6. Therefore the answer is:
+    return d / sigma_eff
+
+
 def ellplot (mjr, mnr, pa):
     """Utility for debugging."""
     _ellcheck (mjr, mnr, pa)
