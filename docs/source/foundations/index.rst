@@ -18,3 +18,4 @@ This documentation has a lot of stubs.
    pwkit-parallel.rst
    pwkit-cli-toplevel.rst
    pwkit-kwargv.rst
+   pwkit-simpleenum.rst
