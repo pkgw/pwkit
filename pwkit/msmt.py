@@ -279,26 +279,25 @@ def _make_uval_inpl_operator (opfunc):
 class Uval (object):
     """An empirical uncertain value, represented by samples.
 
-    Constructors:
+    Constructors are:
 
-    Uval.from_other (object)
-    Uval.from_fixed (v)
-    Uval.from_norm (mean, std)
-    Uval.from_unif (lower_incl, upper_excl)
-    Uval.from_double_norm (mean, std_upper, std_lower)
-    Uval.from_gamma (alpha, beta)
-    Uval.from_pcount (nevents)
+    - :meth:`Uval.from_other`
+    - :meth:`Uval.from_fixed`
+    - :meth:`Uval.from_norm`
+    - :meth:`Uval.from_unif`
+    - :meth:`Uval.from_double_norm`
+    - :meth:`Uval.from_gamma`
+    - :meth:`Uval.from_pcount`
 
-    Methods:
+    Key methods are:
 
-    repvals (method)                          - Return (best, best+1σ, best-1σ).
-                                                `method` is 'pct' or 'gauss'.
-    text_pieces (method, uplaces=2)           - Helper for stringification.
-    format (method, parenexp=True, uplaces=2) - Stringify.
-    debug_distribution ()                     - Returns an omegaplot Painter.
+    - :meth:`repvals`
+    - :meth:`text_pieces`
+    - :meth:`format`
+    - :meth:`debug_distribution`
 
-    Supported operations: unicode() str() repr() [latexification]
-    + -(sub) * // / % ** += -= *= //= %= /= **= -(neg) ~ abs()
+    Supported operations are:
+    ``unicode() str() repr() [latexification]  + -(sub) * // / % ** += -= *= //= %= /= **= -(neg) ~ abs()``
 
     """
     __slots__ = ('d', )
@@ -818,15 +817,14 @@ def _lval_add_towards_polarity (x, polarity):
 
 
 class Lval (object):
-    """A container for either precise values or upper/lower limits.
+    """A container for either precise values or upper/lower limits. Constructed as
+    ``Lval (kind, value)``, where *kind* is ``"exact"``, ``"uncertain"``,
+    ``"toinf"``, ``"tozero"``, ``"pastzero"``, or ``"undef"``. Most easily
+    constructed via :meth:`Textual.parse`. Can also be constructed with
+    :meth:`Lval.from_other`.
 
-    Lval (kind, value)  - where `kind` is 'exact', 'uncertain', 'toinf',
-                          'tozero', 'pastzero', or 'undef'. Most easily
-                          constructed via Textual.parse().
-    Lval.from_other (o)
-
-    Supported operations: unicode() str() repr() -(neg) abs() + -
-    * / ** += -= *= /= **=
+    Supported operations are
+    ``unicode() str() repr() -(neg) abs() + - * / ** += -= *= /= **=``.
 
     """
     __slots__ = ('kind', 'value')

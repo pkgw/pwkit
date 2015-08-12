@@ -30,36 +30,48 @@ def analytic_2d (f, df, x0, y0,
                  goright=False):
     """Sample a contour in a 2D analytic function. Arguments:
 
-    f  - A function, mapping (x, y) -> z.
-    df - The partial derivative: df (x, y) -> [dz/dx, dz/dy]. If None,
-         the derivative of f is approximated numerically with
-         scipy.derivative.
-    x0 - Initial x value. Should be of "typical" size for the problem;
-         avoid 0.
-    y0 - Initial y value. Should be of "typical" size for the problem;
-         avoid 0.
+    f
+      A function, mapping (x, y) -> z.
+    df
+      The partial derivative: df (x, y) -> [dz/dx, dz/dy]. If None,
+      the derivative of f is approximated numerically with
+      scipy.derivative.
+    x0
+      Initial x value. Should be of "typical" size for the problem;
+      avoid 0.
+    y0
+      Initial y value. Should be of "typical" size for the problem;
+      avoid 0.
 
     Optional arguments:
 
-    maxiters - Maximum number of points to create. Default 5000.
-    defeta   - Initially offset by distances of defeta*[df/dx, df/dy]
-               Default 0.05.
-    netastep - Number of steps between defeta and the machine resolution
-               in which we test eta values for goodness. (OMG FIXME doc).
-               Default 12.
-    vtol1    - Tolerance for constancy in the value of the function in the
-               initial offset step. The value is only allowed to vary by
-               f(x0,y0) * vtol1. Default 1e-3.
-    vtol2    - Tolerance for constancy in the value of the function in the
-               along the contour. The value is only allowed to vary by
-               f(x0,y0) * vtol2. Default 1e-8.
-    maxnewt  - Maximum number of Newton's method steps to take when
-               attempting to hone in on the desired function value. Default 20.
-    dorder   - Number of function evaluations to perform when evaluating
-               the derivative of f numerically. Must be an odd integer greater
-               than 1. Default 7.
-    goright  - If True, trace the contour rightward (as looking uphill),
-               rather than leftward (the default).
+    maxiters
+      Maximum number of points to create. Default 5000.
+    defeta
+      Initially offset by distances of defeta*[df/dx, df/dy]
+      Default 0.05.
+    netastep
+      Number of steps between defeta and the machine resolution
+      in which we test eta values for goodness. (OMG FIXME doc).
+      Default 12.
+    vtol1
+      Tolerance for constancy in the value of the function in the
+      initial offset step. The value is only allowed to vary by
+      ``f(x0,y0) * vtol1``. Default 1e-3.
+    vtol2
+      Tolerance for constancy in the value of the function in the
+      along the contour. The value is only allowed to vary by
+      ``f(x0,y0) * vtol2``. Default 1e-8.
+    maxnewt
+      Maximum number of Newton's method steps to take when
+      attempting to hone in on the desired function value. Default 20.
+    dorder
+      Number of function evaluations to perform when evaluating
+      the derivative of f numerically. Must be an odd integer greater
+      than 1. Default 7.
+    goright
+      If True, trace the contour rightward (as looking uphill),
+      rather than leftward (the default).
 
     """
     # Coerce argument types.

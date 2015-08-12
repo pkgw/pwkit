@@ -4,24 +4,34 @@
 
 """pwkit.environments.casa.util - core utilities for the CASA Python libraries
 
-Variables:
+Variables are:
 
-INVERSE_C_SM     - Inverse of C in s/m (useful for wavelength to time conversion)
-INVERSE_C_NSM    - Inverse of C in ns/m (ditto).
-pol_names        - Dict mapping CASA polarization codes to their string names.
-pol_to_miriad    - Dict mapping CASA polarization codes to their MIRIAD equivalents.
-msselect_keys    - A set of the keys supported by the CASA ms-select subsystem.
-tools            - An object for constructing CASA tools: ``ia = tools.image ()``.
+INVERSE_C_SM
+  Inverse of C in s/m (useful for wavelength to time conversion)
+INVERSE_C_NSM
+  Inverse of C in ns/m (ditto).
+pol_names
+  Dict mapping CASA polarization codes to their string names.
+pol_to_miriad
+  Dict mapping CASA polarization codes to their MIRIAD equivalents.
+msselect_keys
+  A set of the keys supported by the CASA ms-select subsystem.
+tools
+  An object for constructing CASA tools: ``ia = tools.image ()``.
 
-Functions:
+Functions are:
 
-datadir          - Return the CASA data directory.
-logger           - Create a CASA logger that prints to stderr without leaving a
-                   casapy.log file around.
-forkandlog       - Run a function in a subprocess, returning the text it outputs
-                   via the CASA logging subsystem.
-sanitize_unicode - Encode Unicode strings as bytes for interfacing with casac
-                   functions.
+datadir
+  Return the CASA data directory.
+logger
+  Create a CASA logger that prints to stderr without leaving a
+  casapy.log file around.
+forkandlog
+  Run a function in a subprocess, returning the text it outputs
+  via the CASA logging subsystem.
+sanitize_unicode
+  Encode Unicode strings as bytes for interfacing with casac
+  functions.
 
 """
 

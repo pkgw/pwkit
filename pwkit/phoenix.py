@@ -6,7 +6,7 @@
 
 Functions:
 
-  load_spectrum - Load a model spectrum into a Pandas DataFrame.
+- load_spectrum - Load a model spectrum into a Pandas DataFrame.
 
 Requires Pandas.
 
@@ -15,15 +15,13 @@ a million variations, so we do not consider bundling them with pwkit.
 Therefore, we can safely expect that the model will be accessible as a path on
 the filesystem.
 
-Current BT-Settl models may be downloaded from a SPECTRA directory within:
-
-  http://phoenix.ens-lyon.fr/Grids/BT-Settl/ (see the README)
-
-e.g.
+Current BT-Settl models may be downloaded from a SPECTRA directory within `the
+BT-Settl download site <http://phoenix.ens-lyon.fr/Grids/BT-Settl/>`_ (see the
+README). E.g.::
 
   http://phoenix.ens-lyon.fr/Grids/BT-Settl/CIFIST2011bc/SPECTRA/
 
-File names are generally:
+File names are generally::
 
   lte{Teff/100}-{Logg}{[M/H]}a[alpha/H].GRIDNAME.spec.7.[gz|bz2|xz]
 
@@ -46,16 +44,19 @@ import numpy as np, pandas as pd
 def load_spectrum (path, smoothing=181):
     """Load a Phoenix model atmosphere spectrum.
 
-    path      - The file path to load.
-    smoothing - Smoothing to apply. If None, do not smooth. If an
-                integer, smooth with a Hamming window. Otherwise, the variable
-                is assumed to be a different smoothing window, and the data will
-                be convolved with it.
+    path : string
+      The file path to load.
+    smoothing : integer
+      Smoothing to apply. If None, do not smooth. If an integer, smooth with a
+      Hamming window. Otherwise, the variable is assumed to be a different
+      smoothing window, and the data will be convolved with it.
 
     Returns a Pandas DataFrame containing the columns:
 
-    wlen - Sample wavelength in Angstrom.
-    flam - Flux density in erg/cm²/s/Å. See `pwkit.synphot` for related tools.
+    wlen
+      Sample wavelength in Angstrom.
+    flam
+      Flux density in erg/cm²/s/Å. See `pwkit.synphot` for related tools.
 
     Loading takes about 5 seconds on my current laptop. Un-smoothed spectra
     have about 630,000 samples.

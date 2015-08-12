@@ -7,28 +7,41 @@
 Classes
 -------
 
-Referencer   - Accumulate a numbered list of bibtex references, then output them.
-TableBuilder - Create awesome deluxetables programmatically.
+Referencer
+  Accumulate a numbered list of bibtex references, then output them.
+TableBuilder
+  Create awesome deluxetables programmatically.
 
 Functions
 ---------
 
-latexify_l3col - Format value in LaTeX, suitable for tables of limit values.
-latexify_n2col - Format a number in LaTeX in 2-column decimal-aligned formed.
-latexify_u3col - Format value in LaTeX, suitable for tables of uncertain values.
-latexify       - Format a value in LaTeX appropriately.
+latexify_l3col
+  Format value in LaTeX, suitable for tables of limit values.
+latexify_n2col
+  Format a number in LaTeX in 2-column decimal-aligned formed.
+latexify_u3col
+  Format value in LaTeX, suitable for tables of uncertain values.
+latexify
+  Format a value in LaTeX appropriately.
 
 Helpers for TableBuilder
 ------------------------
 
-AlignedNumberFormatter - Format numbers, aligning them at the decimal point.
-BasicFormatter         - Base class for formatters.
-BoolFormatter          - Format a boolean; default is True -> bullet, False -> nothing.
-LimitFormatter         - Format measurements for a table of limits.
-MaybeNumberFormatter   - Format numbers with a fixed number of decimal places, or
-                         objects with __pk_latex__().
-UncertFormatter        - Format measurements for a table of detailed uncertainties.
-WideHeader             - Helper for multi-column headers.
+AlignedNumberFormatter
+  Format numbers, aligning them at the decimal point.
+BasicFormatter
+  Base class for formatters.
+BoolFormatter
+  Format a boolean; default is True -> bullet, False -> nothing.
+LimitFormatter
+  Format measurements for a table of limits.
+MaybeNumberFormatter
+  Format numbers with a fixed number of decimal places, or
+  objects with __pk_latex__().
+UncertFormatter
+  Format measurements for a table of detailed uncertainties.
+WideHeader
+  Helper for multi-column headers.
 
 
 XXX: Barely tested!
@@ -36,9 +49,10 @@ XXX: Barely tested!
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'AlignedNumberFormatter BasicFormatter BoolFormatter LimitFormatter '
-           b'MaybeNumberFormatter Referencer TableBuilder UncertFormatter '
-           b'WideHeader latexify_l3col latexify_n2col latexify_u3col latexify').split ()
+__all__ = b'''AlignedNumberFormatter BasicFormatter BoolFormatter LimitFormatter
+              MaybeNumberFormatter Referencer TableBuilder UncertFormatter
+              WideHeader latexify_l3col latexify_n2col latexify_u3col
+              latexify'''.split ()
 
 from . import Holder, PKError, binary_type, msmt, reraise_context, text_type
 
@@ -52,16 +66,20 @@ def _reftext (key):
 class Referencer (object):
     """Accumulate a numbered list of bibtex references. Methods:
 
-    refkey (bibkey) - Return a string that should be used to give
-                      a numbered reference to the given bibtex
-                      key. "thiswork" is handled specially.
-    dump ()         - Return a string with \citet{} commands identifing
-                      all of the numbered references.
+    refkey (bibkey)
+      Return a string that should be used to give
+      a numbered reference to the given bibtex
+      key. "thiswork" is handled specially.
+    dump ()
+      Return a string with \citet{} commands identifing
+      all of the numbered references.
 
     Attributes:
 
-    thisworktext    - text referring to "this work"; defaults to that.
-    thisworkmarker  - special symbol used to denote "this work"; defaults to star.
+    thisworktext
+      text referring to "this work"; defaults to that.
+    thisworkmarker
+      special symbol used to denote "this work"; defaults to star.
 
     Bibtex keys beginning with asterisks have the rest of their value used for
     the citation text, rather than "\citet{<key>}".
@@ -230,8 +248,7 @@ class WideHeader (object):
 class TableBuilder (object):
     """Build and then emit a nice deluxetable.
 
-    Methods
-    =======
+    Methods:
 
     addcol (headings, datafunc, formatter=None, colspec=None, numbering='(%d)')
        Define a logical column.
@@ -247,23 +264,30 @@ class TableBuilder (object):
     If an item has an attribute `tb_row_preamble`, that text is written verbatim
     before that corresponding row is output.
 
-    Attributes
-    ==========
+    Attributes:
 
-    environment - The name of the latex environment to use, default "deluxetable".
-                  You may want to specify "deluxetable*", or "mydeluxetable" if
-                  using a hacked package.
-    label       - The latex reference label of the table. Mandatory.
-    note        - A note at the table footer ("\\tablecomments{}" in LaTeX).
-    preamble    - Commands for table preamble. See below.
-    refs        - Contents of the table References section.
-    title       - Table title. Default "Untitled table".
-    widthspec   - Passed to \\tablewidth{}; default "0em" = auto-widen.
-    numbercols  - If True, number each column. This can be disabled on a
-                  col-by-col basis by calling `addcol` with `numbering` set to
-                  False.
+    environment
+      The name of the latex environment to use, default "deluxetable".
+      You may want to specify "deluxetable*", or "mydeluxetable" if
+      using a hacked package.
+    label
+      The latex reference label of the table. Mandatory.
+    note
+      A note at the table footer ("\\tablecomments{}" in LaTeX).
+    preamble
+      Commands for table preamble. See below.
+    refs
+      Contents of the table References section.
+    title
+      Table title. Default "Untitled table".
+    widthspec
+      Passed to \\tablewidth{}; default "0em" = auto-widen.
+    numbercols
+      If True, number each column. This can be disabled on a
+      col-by-col basis by calling `addcol` with `numbering` set to
+      False.
 
-    Legal preamble commands are:
+    Legal preamble commands are::
 
         \\rotate
         \\tablenum{<manual table identifier>}
@@ -297,14 +321,19 @@ class TableBuilder (object):
     def addcol (self, headings, datafunc, formatter=None, colspec=None, numbering='(%d)'):
         """Define a logical column. Arguments:
 
-        headings  - A string, or list of strings and WideHeaders. The headings are stacked
-                    vertically in the table header section.
-        datafunc  - Return LaTeX for this cell. Call spec should be
-                    (item, [formatter, [tablebuilder]]).
-        formatter - The formatter to use; defaults to a new BasicFormatter.
-        colspec   - The LaTeX column specification letters to use; defaults to 'c's.
-        numbering - If non-False, a format for writing this column's number; if False,
-                    no number is written.
+        headings
+          A string, or list of strings and WideHeaders. The headings are stacked
+          vertically in the table header section.
+        datafunc
+          Return LaTeX for this cell. Call spec should be
+          (item, [formatter, [tablebuilder]]).
+        formatter
+          The formatter to use; defaults to a new BasicFormatter.
+        colspec
+          The LaTeX column specification letters to use; defaults to 'c's.
+        numbering
+          If non-False, a format for writing this column's number; if False,
+          no number is written.
 
         """
         if formatter is None:

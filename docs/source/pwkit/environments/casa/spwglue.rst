@@ -3,7 +3,7 @@
    Unported License (CC-BY-SA).
 
 Merging spectral windows in visibility data (``pwkit.environments.casa.spwglue``)
-========================================================================
+=================================================================================
 
 .. automodule:: pwkit.environments.casa.spwglue
    :members:

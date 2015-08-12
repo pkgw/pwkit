@@ -3,7 +3,7 @@
    Unported License (CC-BY-SA).
 
 Structured scripting within ``casapy`` (``pwkit.environments.casa.scripting``)
-========================================================================
+==============================================================================
 
 .. automodule:: pwkit.environments.casa.scripting
    :members:

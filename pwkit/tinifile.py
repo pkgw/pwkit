@@ -6,10 +6,14 @@
 
 Functions:
 
-read            - Generate `pwkit.Holder`s of measurements from an ini-format file.
-write           - Write `pwkit.Holder`s of measurements to an ini-format file.
-read_stream     - Lower-level version; only operates on streams, not path names.
-write_stream    - Lower-level version; only operates on streams, not path names.
+read
+  Generate :class:`pwkit.Holder` instances of measurements from an ini-format file.
+write
+  Write :class:`pwkit.Holder` instances of measurements to an ini-format file.
+read_stream
+  Lower-level version; only operates on streams, not path names.
+write_stream
+  Lower-level version; only operates on streams, not path names.
 
 """
 from __future__ import absolute_import, division, print_function, unicode_literals

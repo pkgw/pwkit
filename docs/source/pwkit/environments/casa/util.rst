@@ -3,7 +3,7 @@
    Unported License (CC-BY-SA).
 
 Utilities for Python invocation of CASA tools (``pwkit.environments.casa.util``)
-========================================================================
+================================================================================
 
 .. automodule:: pwkit.environments.casa.util
    :members:

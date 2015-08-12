@@ -49,19 +49,27 @@ class CasapyScript (object):
 
     Attributes:
 
-    args     - the arguments to passed to the script.
-    env      - the CasaEnvironment used to launch the casapy process.
-    exitcode - the exit code of the casapy process. 0 is success. 127 indicates
-               an intentional error exit by the script; additional diagnostics
-               don't need printing and the work directory doesn't need
-               preservation. Negative values indicate death from a signal.
-    proc     - the `subprocess.Popen` instance of casapy; inside the context
-               manager body it's already exited.
-    rmtree   - boolean; whether to delete the working tree upon context manager
-               exit.
-    script   - the path to the script to be invoked.
-    workdir  - the working directory in which casapy was started.
-    wrapped  - the path to the wrapper script run inside casapy.
+    args
+      the arguments to passed to the script.
+    env
+      the CasaEnvironment used to launch the casapy process.
+    exitcode
+      the exit code of the casapy process. 0 is success. 127 indicates
+      an intentional error exit by the script; additional diagnostics
+      don't need printing and the work directory doesn't need
+      preservation. Negative values indicate death from a signal.
+    proc
+      the `subprocess.Popen` instance of casapy; inside the context
+      manager body it's already exited.
+    rmtree
+      boolean; whether to delete the working tree upon context manager
+      exit.
+    script
+      the path to the script to be invoked.
+    workdir
+      the working directory in which casapy was started.
+    wrapped
+      the path to the wrapper script run inside casapy.
 
     There is a very large overhead to running casapy scripts. The outer Python
     code sleeps for at least 5 seconds to allow various cleanups to happen.

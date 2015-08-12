@@ -7,13 +7,20 @@ ConfigParser/configparser.
 
 Functions:
 
-read            - Generate a stream of `pwkit.Holder`s from an ini-format file.
-mutate          - Rewrite an ini file chunk by chunk.
-write           - Write a stream of `pwkit.Holder`s to an ini-format file.
-mutate_stream   - Lower-level version; only operates on streams, not path names.
-read_stream     - Lower-level version; only operates on streams, not path names.
-write_stream    - Lower-level version; only operates on streams, not path names.
-mutate_in_place - Rewrite an ini file specififed by its path name, in place.
+read
+  Generate a stream of `pwkit.Holder` instances from an ini-format file.
+mutate
+  Rewrite an ini file chunk by chunk.
+write
+  Write a stream of `pwkit.Holder` instances to an ini-format file.
+mutate_stream
+  Lower-level version; only operates on streams, not path names.
+read_stream
+  Lower-level version; only operates on streams, not path names.
+write_stream
+  Lower-level version; only operates on streams, not path names.
+mutate_in_place
+  Rewrite an ini file specififed by its path name, in place.
 
 """
 
@@ -112,16 +119,19 @@ def read (stream_or_path):
 def write_stream (stream, holders, defaultsection=None):
     """Very simple writing in ini format. The simple stringification of each value
     in each Holder is printed, and no escaping is performed. (This is most
-    relevant for multiline values or ones containing pound signs.) `None`s are
+    relevant for multiline values or ones containing pound signs.) `None` values are
     skipped.
 
     Arguments:
 
-    stream              - A text stream to write to.
-    holders             - An iterable of objects to write. Their fields will be
-                          written as sections.
-    defaultsection=None - Section name to use if a holder doesn't contain a
-                          `section` field.
+    stream
+      A text stream to write to.
+    holders
+      An iterable of objects to write. Their fields will be
+      written as sections.
+    defaultsection=None
+      Section name to use if a holder doesn't contain a
+      `section` field.
 
     """
     anybefore = False
@@ -148,16 +158,19 @@ def write_stream (stream, holders, defaultsection=None):
 def write (stream_or_path, holders, **kwargs):
     """Very simple writing in ini format. The simple stringification of each value
     in each Holder is printed, and no escaping is performed. (This is most
-    relevant for multiline values or ones containing pound signs.) `None`s are
+    relevant for multiline values or ones containing pound signs.) `None` values are
     skipped.
 
     Arguments:
 
-    stream              - A text stream to write to.
-    holders             - An iterable of objects to write. Their fields will be
-                          written as sections.
-    defaultsection=None - Section name to use if a holder doesn't contain a
-                          `section` field.
+    stream
+      A text stream to write to.
+    holders
+      An iterable of objects to write. Their fields will be
+      written as sections.
+    defaultsection=None
+      Section name to use if a holder doesn't contain a
+      `section` field.
 
     """
     if isinstance (stream_or_path, basestring):

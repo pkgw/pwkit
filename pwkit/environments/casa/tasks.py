@@ -33,7 +33,7 @@ bpplot bpplot_cli BpplotConfig
 clearcal clearcal_cli
 concat concat_cli
 delcal delcal_cli
-delmod delmod_cli
+delmod_cli
 dftphotom_cli
 extractbpflags extractbpflags_cli
 flagmanager_cli
@@ -51,12 +51,12 @@ listobs listobs_cli
 mfsclean mfsclean_cli MfscleanConfig
 mstransform mstransform_cli MstransformConfig
 plotants plotants_cli
-plotcal plotcal_cli plotcal_multipage_page PlotcalConfig
+plotcal plotcal_cli PlotcalConfig
 setjy setjy_cli SetjyConfig
 split split_cli SplitConfig
 spwglue_cli
 uvsub uvsub_cli UvsubConfig
-cmdline_driver
+commandline
 ''').split ()
 
 

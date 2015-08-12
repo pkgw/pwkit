@@ -10,8 +10,8 @@ significance test formally; Linnell Nemec & Nemec (1985AJ.....90.2317L)
 provide a Monte Carlo approach. Also, Stellingwerf has developed "PDM2" which
 attempts to improve a few aspects; see
 
-  http://www.stellingwerf.com/rfs-bin/index.cgi?action=PageView&id=29
-  http://en.wikipedia.org/wiki/Phase_dispersion_minimization
+- `Stellingwerf’s page <http://www.stellingwerf.com/rfs-bin/index.cgi?action=PageView&id=29>`_
+- `The Wikipedia article <http://en.wikipedia.org/wiki/Phase_dispersion_minimization>`_
 
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
@@ -62,38 +62,56 @@ def _map_one_theta (args):
 def pdm (t, x, u, periods, nbin, nshift=8, nsmc=256, numc=256, weights=False, parallel=True):
     """Perform phase dispersion minimization.
 
-    `t` - 1D array - time coordinate
-    `x` - 1D array, same size as `t` - observed value
-    `u` - 1D array, same size as `t` - uncertainty on observed value; same units as `x`
-    `periods` - 1D array - set of candidate periods to sample; same units as `t`
-    `nbin` - int - number of phase bins to construct
-    `nshift` - int=8 - number of shifted binnings to sample to combact statistical flukes
-    `nsmc` - int=256 - number of Monte Carlo shufflings to compute, to evaluate the
-       significance of the minimal theta value.
-    `numc` - int=256 - number of Monte Carlo added-noise datasets to compute, to evaluate
-       the uncertainty in the location of the minimal theta value.
-    `weights` - bool=False - if True, 'u' is actually weights, not uncertainties.
-       Usually weights = u**-2.
-    `parallel` - default True - Controls parallelization of the algorithm. Default
-       uses all available cores. See `pwkit.parallel.make_parallel_helper`.
+    t : 1D array
+      time coordinate
+    x : 1D array, same size as *t*
+      observed value
+    u : 1D array, same size as *t*
+      uncertainty on observed value; same units as `x`
+    periods : 1D array
+      set of candidate periods to sample; same units as `t`
+    nbin : int
+      number of phase bins to construct
+    nshift : int=8
+      number of shifted binnings to sample to combact statistical flukes
+    nsmc : int=256
+      number of Monte Carlo shufflings to compute, to evaluate the
+      significance of the minimal theta value.
+    numc : int=256
+      number of Monte Carlo added-noise datasets to compute, to evaluate
+      the uncertainty in the location of the minimal theta value.
+    weights : bool=False
+      if True, 'u' is actually weights, not uncertainties.
+      Usually weights = u**-2.
+    parallel : default True
+      Controls parallelization of the algorithm. Default
+      uses all available cores. See `pwkit.parallel.make_parallel_helper`.
 
     Returns named tuple of:
 
-    `thetas` - 1D array of values of theta statistic, same size as `periods`
-    `imin` - index of smallest (best) value in `thetas`
-    `pmin` - the `period` value with the smallest (best) `theta`
-    `mc_tmins` - 1D array of size `nsmc` with Monte Carlo samplings of minimal
-       theta values for shufflings of the data; assesses significance of the peak
-    `mc_pvalue` - probability (between 0 and 1) of obtaining the best theta value
-       in a randomly-shuffled dataset
-    `mc_pmins` - 1D array of size `numc` with Monte Carlo samplings of best
-       period values for noise-added data; assesses uncertainty of `pmin`
-    `mc_puncert` - standard deviation of `mc_pmins`; approximate uncertainty
-       on `pmin`.
+    thetas : 1D array
+      values of theta statistic, same size as `periods`
+    imin
+      index of smallest (best) value in `thetas`
+    pmin
+      the `period` value with the smallest (best) `theta`
+    mc_tmins
+      1D array of size `nsmc` with Monte Carlo samplings of minimal
+      theta values for shufflings of the data; assesses significance of the peak
+    mc_pvalue
+      probability (between 0 and 1) of obtaining the best theta value
+      in a randomly-shuffled dataset
+    mc_pmins
+      1D array of size `numc` with Monte Carlo samplings of best
+      period values for noise-added data; assesses uncertainty of `pmin`
+    mc_puncert
+      standard deviation of `mc_pmins`; approximate uncertainty
+      on `pmin`.
 
     We don't do anything clever, so runtime scales at least as
-      t.size * periods.size * nbin * nshift * (nsmc + numc + 1)."""
+    ``t.size * periods.size * nbin * nshift * (nsmc + numc + 1)``.
 
+    """
     t = np.asfarray (t)
     x = np.asfarray (x)
     u = np.asfarray (u)

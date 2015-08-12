@@ -12,12 +12,15 @@ We have iterative determination of the best number of blocks (using an ad-hoc
 routine described in Scargle+ 2013) and bootstrap-based determination of
 uncertainties on the block heights (ditto).
 
-Functions:
+Functions are:
 
-bin_bblock   - Bayesian Blocks analysis with counts and bins.
-tt_bblock    - BB analysis of time-tagged events.
-bs_tt_bblock - Like `tt_bblock` with bootstrap-based uncertainty assessment.
-               XXX: the uncertainties are not very reliable!
+:func:`bin_bblock`
+  Bayesian Blocks analysis with counts and bins.
+:func:`tt_bblock`
+  BB analysis of time-tagged events.
+:func:`bs_tt_bblock`
+  Like :func:`tt_bblock` with bootstrap-based uncertainty assessment. NOTE:
+  the uncertainties are not very reliable!
 
 """
 from __future__ import absolute_import, division, print_function, unicode_literals

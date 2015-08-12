@@ -10,17 +10,23 @@ interface works).
 
 Classes:
 
-  Command           - A command supported by the tool.
-  DelegatingCommand - A command that delegates to named sub-commands.
-  HelpCommand       - A command that prints the help for other commands.
-  Multitool         - The tool itself.
-  UsageError        - Raised if illegal command-line arguments are used.
+Command
+  A command supported by the tool.
+DelegatingCommand
+  A command that delegates to named sub-commands.
+HelpCommand
+  A command that prints the help for other commands.
+Multitool
+  The tool itself.
+UsageError
+  Raised if illegal command-line arguments are used.
 
 Functions:
 
-  invoke_tool - Run as a tool and exit.
+invoke_tool
+  Run as a tool and exit.
 
-Standard usage:
+Standard usage::
 
   class MyCommand (multitool.Command):
     name = 'info'
@@ -58,18 +64,24 @@ class Command (object):
 
     Attributes:
 
-      argspec         - One-line string summarizing the command-line arguments
-                        that should be passed to this command.
-      help_if_no_args - If True, usage help will automatically be displayed if
-                        no command-line arguments are given.
-      more_help       - Additional help text to be displayed below the summary
-                        (optional).
-      name            - The command's name, as should be specified at the CLI.
-      summary         - A one-line summary of this command's functionality.
+    argspec
+      One-line string summarizing the command-line arguments
+      that should be passed to this command.
+    help_if_no_args
+      If True, usage help will automatically be displayed if
+      no command-line arguments are given.
+    more_help
+      Additional help text to be displayed below the summary
+      (optional).
+    name
+      The command's name, as should be specified at the CLI.
+    summary
+      A one-line summary of this command's functionality.
 
     Functions:
 
-      invoke(self, args, **kwargs) - Execute this command.
+    ``invoke(self, args, **kwargs)``
+      Execute this command.
 
     'name' must be set; other attributes are optional, although at least
     'summary' and 'argspec' should be set. 'invoke()' must be implemented.
@@ -137,14 +149,18 @@ class DelegatingCommand (Command):
 
     Attributes:
 
-      cmd_desc   - The noun used to desribe the sub-commands.
-      usage_tmpl - A formatting template for long tool usage. The default
-                   is almost surely acceptable.
+    cmd_desc
+      The noun used to desribe the sub-commands.
+    usage_tmpl
+      A formatting template for long tool usage. The default
+      is almost surely acceptable.
 
     Functions:
 
-      register - Register a new sub-command.
-      populate - Register many sub-commands automatically.
+    register
+      Register a new sub-command.
+    populate
+      Register many sub-commands automatically.
 
     """
     argspec = '<command> [arguments...]'

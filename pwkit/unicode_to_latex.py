@@ -9,7 +9,8 @@ unicode_to_latex returns ASCII bytes that can be fed to LaTeX to
 reproduce the Unicode string 'u' as closely as possible.
 
 unicode_to_latex_string returns a Unicode string rather than bytes.
-That is,
+That is::
+
   unicode_to_latex(u) = unicode_to_latex_string(u).encode('ascii').
 """
 

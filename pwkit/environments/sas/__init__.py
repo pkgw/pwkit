@@ -32,9 +32,9 @@ ftp://legacy.gsfc.nasa.gov/xmm/software/sas/14.0.0/64/Linux/Fedora20/
 
 Tarball unpacks installation script and data into '.', and the installation
 script sets up a SAS install in a versioned subdirectory of '.', so curl|tar
-should be run from something like /a/sas.
+should be run from something like /a/sas::
 
-$ ./install.sh
+  $ ./install.sh
 
 The CCF are like CALDB and need to be rsynced -- see the update-ccf
 subcommand.
@@ -43,29 +43,50 @@ subcommand.
 ODF data format notes
 =========================
 
-ODF files all have names in the format RRRR_NNNNNNNNNN_IIUEEECCMMM.ZZZ
+ODF files all have names in the format RRRR_NNNNNNNNNN_IIUEEECCMMM.ZZZ where:
 
-      RRRR - revolution (orbit) number
-NNNNNNNNNN - obs ID
-        II - instrument:
-                OM - optical monitor
-                R1 - RGS (reflection grating spectrometer) unit 1
-                R2 - RGS 2
-                M1 - EPIC (imaging camera) MOS 1 detector
-                M2 - EPIC (imaging camera) MOS 2 detector
-                PN - EPIC (imaging camera) PN detector
-                RM - EPIC radiation monitor
-                SC - spacecraft
-         U - scheduling status of exposure
-                 S - scheduled
-                 U - unscheduled
-                 X - N/A
-       EEE - exposure number
-        CC - CCD/OM-window ID
-       MMM - data type of file (many; not listed here)
-       ZZZ - file extension
+RRRR
+  revolution (orbit) number
+NNNNNNNNNN
+  obs ID
+II
+  The instrument:
 
-See the 'make-*-aliases' commands for tools that generate symlinks with saner
+  OM
+    optical monitor
+  R1
+    RGS (reflection grating spectrometer) unit 1
+  R2
+    RGS 2
+  M1
+    EPIC (imaging camera) MOS 1 detector
+  M2
+    EPIC (imaging camera) MOS 2 detector
+  PN
+    EPIC (imaging camera) PN detector
+  RM
+    EPIC radiation monitor
+  SC
+    spacecraft
+U
+  Scheduling status of exposure:
+
+  S
+    scheduled
+  U
+    unscheduled
+  X
+    N/A
+EEE
+  exposure number
+CC
+  CCD/OM-window ID
+MMM
+  data type of file (many; not listed here)
+ZZZ
+  file extension
+
+See the ``make-*-aliases`` commands for tools that generate symlinks with saner
 names.
 
 """
