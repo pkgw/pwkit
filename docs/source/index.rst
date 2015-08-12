@@ -17,6 +17,8 @@ This documentation has a lot of stubs.
    section-viz.rst
    io/index.rst
    section-environments.rst
+   cli-tools/index.rst
+   infrastructure/index.rst
 
 
 Indices and tables

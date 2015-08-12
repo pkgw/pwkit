@@ -2,7 +2,7 @@
    This file licensed under the Creative Commons Attribution-ShareAlike 3.0
    Unported License (CC-BY-SA).
 
-Command-line tools
+Behind-the-scenes infrastructure
 ==============================================================================
 
 This documentation has a lot of stubs.
@@ -10,7 +10,5 @@ This documentation has a lot of stubs.
 .. toctree::
    :maxdepth: 2
 
-   pwkit/cli/astrotool.rst
-   pwkit/cli/imtool.rst
-   pwkit/cli/latexdriver.rst
-   pwkit/cli/wrapout.rst
+   pwkit-environments-toplevel.rst
+   pwkit-method_decorator.rst
