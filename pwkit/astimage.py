@@ -108,33 +108,58 @@ def _create_wcs (fitsheader):
 class AstroImage (object):
     """An astronomical image.
 
-    path            - The filesystem path of the image.
-    mode            - Its access mode: 'r' for read, 'rw' for read/write.
-    shape           - The data shape, like numpy.ndarray.shape.
-    bmaj            - If not None, the restoring beam FWHM major axis in radians.
-    bmin            - If not None, the restoring beam FWHM minor axis in radians.
-    bpa             - If not None, the restoring beam position angle (east from celestial
-                      north) in radians.
-    units           - Lower-case string describing image units (e.g., jy/beam, jy/pixel).
-                      Not standardized between formats.
-    pclat           - Latitude (usually dec) of the pointing center in radians.
-    pclon           - Longitude (usually RA) of the pointing center in radians.
-    charfreq        - Characteristic observing frequency of the image in GHz.
-    mjd             - Mean MJD of the observations.
-    axdescs         - If not None, list of strings describing the axis types.
-                      Not standardized.
-    size            - The number of pixels in the image (=shape.prod ()).
+    path
+      The filesystem path of the image.
+    mode
+      Its access mode: 'r' for read, 'rw' for read/write.
+    shape
+      The data shape, like numpy.ndarray.shape.
+    bmaj
+      If not None, the restoring beam FWHM major axis in radians.
+    bmin
+      If not None, the restoring beam FWHM minor axis in radians.
+    bpa
+      If not None, the restoring beam position angle (east from celestial
+      north) in radians.
+    units
+      Lower-case string describing image units (e.g., jy/beam, jy/pixel).
+      Not standardized between formats.
+    pclat
+      Latitude (usually dec) of the pointing center in radians.
+    pclon
+      Longitude (usually RA) of the pointing center in radians.
+    charfreq
+      Characteristic observing frequency of the image in GHz.
+    mjd
+      Mean MJD of the observations.
+    axdescs
+      If not None, list of strings describing the axis types.
+      Not standardized.
+    size
+      The number of pixels in the image (=shape.prod ()).
 
-    close ()        - Close the image.
-    read ()         - Read all of the data.
-    write ()        - Rewrite all of the data.
-    toworld ()      - Convert pixel coordinates to world coordinates.
-    topixel ()      - Convert world coordinates to pixel coordinates.
-    simple ()       - Convert to a 2D lat/lon image.
-    subimage ()     - Extract a sub-cube of the image.
-    save_copy ()    - Save a copy of the image.
-    save_as_fits () - Save a copy of the image in FITS format.
-    delete ()       - Delete the on-disk image.
+    Methods:
+
+    close
+      Close the image.
+    read
+      Read all of the data.
+    write
+      Rewrite all of the data.
+    toworld
+      Convert pixel coordinates to world coordinates.
+    topixel
+      Convert world coordinates to pixel coordinates.
+    simple
+      Convert to a 2D lat/lon image.
+    subimage
+      Extract a sub-cube of the image.
+    save_copy
+      Save a copy of the image.
+    save_as_fits
+      Save a copy of the image in FITS format.
+    delete
+      Delete the on-disk image.
 
     """
     path = None

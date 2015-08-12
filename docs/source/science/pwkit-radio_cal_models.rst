@@ -5,4 +5,6 @@
 Flux density models of radio calibrators (``pwkit.radio_cal_models``)
 ==============================================================================
 
-No autodoc since non-pure-Python imports make ReadTheDocs sad.
+.. automodule:: pwkit.radio_cal_models
+   :synopsis: Flux density models of radio calibrators
+   :members:

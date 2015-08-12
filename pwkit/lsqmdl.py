@@ -20,7 +20,7 @@ SeriesComponent        - Apply a set of subcomponents in series.
 MatMultComponent       - Combine subcomponents in a matrix multiplication.
 ScaleComponent         - Multiplies the data by a single value.
 
-Usage:
+Usage::
 
   m = Model (func, data, [invsigma], [args]).solve (guess).print_soln ()
       # func takes (p1, p2, p3[, *args]) and returns model data
@@ -30,11 +30,11 @@ Usage:
 
 The invsigma are *inverse sigmas*, NOT inverse *variances* (the usual
 statistical weights). Since most applications deal in sigmas, take care to
-write
+write::
 
   m = Model (func, data, 1./uncerts) # right!
 
-not
+not::
 
   m = Model (func, data, uncerts) # WRONG
 

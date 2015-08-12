@@ -5,4 +5,6 @@
 Representations of and computations with ellipses (``pwkit.ellipses``)
 ==============================================================================
 
-No autodoc since non-pure-Python imports make ReadTheDocs sad.
+.. automodule:: pwkit.ellipses
+   :synopsis: Representations of and computations with ellipses
+   :members:

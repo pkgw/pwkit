@@ -4,7 +4,7 @@
 
 """pwkit.radio_cal_models - models of radio calibrator flux densities.
 
-From the command line:
+From the command line::
 
     python -m pwkit.radio_cal_models [-f] <source> <freq[mhz]>
     python -m pwkit.radio_cal_models [-f] CasA     <freq[mhz]> <year>
@@ -14,13 +14,17 @@ in Janskys.
 
 Arguments:
 
-<source> is the source name (e.g., 3c348)
-<freq>   is the observing frequency in MHz (e.g., 1420)
-<year>   is the decimal year of the observation (e.g., 2007.8).
-         Only needed if <source> is CasA.
--f       activates "flux" mode, where a three-item string is
-         printed that can be passed to MIRIAD tasks that accept a
-         model flux and spectral index argument.
+<source>
+  the source name (e.g., 3c348)
+<freq>
+  the observing frequency in MHz (e.g., 1420)
+<year>
+  is the decimal year of the observation (e.g., 2007.8).
+  Only needed if <source> is CasA.
+``-f``
+  activates "flux" mode, where a three-item string is
+  printed that can be passed to MIRIAD tasks that accept a
+  model flux and spectral index argument.
 
 """
 from __future__ import absolute_import, division, print_function, unicode_literals

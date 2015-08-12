@@ -5,4 +5,6 @@
 Modeling sources in images (``pwkit.immodel``)
 ========================================================================
 
-No autodoc since non-pure-Python imports make ReadTheDocs sad.
+.. automodule:: pwkit.immodel
+   :synopsis: Modeling sources in images
+   :members:

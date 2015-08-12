@@ -5,4 +5,6 @@
 Easy visualization of matrices with GTK+ version 2 (``pwkit.ndshow_gtk2``)
 ==============================================================================
 
-Can’t use autodoc here since the module imports fail.
+.. automodule:: pwkit.ndshow_gtk2
+   :synopsis: Visualizing matrices with GTK+ version 2
+   :members:

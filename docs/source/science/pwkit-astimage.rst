@@ -5,4 +5,6 @@
 File-format-agnostic loading of astronomical images (``pwkit.astimage``)
 ==============================================================================
 
-No autodoc since non-pure-Python imports make ReadTheDocs sad.
+.. automodule:: pwkit.astimage
+   :synopsis: File-format-agnostic loading of astronomical images
+   :members:

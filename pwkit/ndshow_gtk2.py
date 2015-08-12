@@ -18,28 +18,28 @@ Cycler   - A GUI window for cycling through planes of a 3D array.
 
 UI features of the viewport:
 
-  click-drag to pan
-  scrollwheel to zoom in/out (Ctrl to do so more aggressively)
-    (Shift to change color scale adjustment sensitivity)
-  double-click to recenter
-  shift-click-drag to adjust color scale (prototype)
+- click-drag to pan
+- scrollwheel to zoom in/out (Ctrl to do so more aggressively)
+-   (Shift to change color scale adjustment sensitivity)
+- double-click to recenter
+- shift-click-drag to adjust color scale (prototype)
 
 Added by the toplevel window viewer:
 
-  Ctrl-A to autoscale data to fit window
-  Ctrl-E to center the data in the window
-  Ctrl-F to fullscreen the window
-  Escape to un-fullscreen it
-  Ctrl-W to close the window
-  Ctrl-1 to set scale to unity
-  Ctrl-S to save the data to "data.png" under the current rendering options
-    (but not zoomed to the current view of the data).
+- Ctrl-A to autoscale data to fit window
+- Ctrl-E to center the data in the window
+- Ctrl-F to fullscreen the window
+- Escape to un-fullscreen it
+- Ctrl-W to close the window
+- Ctrl-1 to set scale to unity
+- Ctrl-S to save the data to "data.png" under the current rendering options
+  (but not zoomed to the current view of the data).
 
 Added by cycler:
 
-  Ctrl-K to move to next plane
-  Ctrl-J to move to previous plane
-  Ctrl-C to toggle automatic cycling
+- Ctrl-K to move to next plane
+- Ctrl-J to move to previous plane
+- Ctrl-C to toggle automatic cycling
 
 """
 

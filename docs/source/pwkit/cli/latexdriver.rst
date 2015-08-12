@@ -5,4 +5,6 @@
 Single-command compilation of LaTeX documents (``latexdriver``)
 ========================================================================
 
-No autodoc since non-pure-Python imports make ReadTheDocs sad.
+.. automodule:: pwkit.cli.latexdriver
+   :synopsis: Just compile the document
+   :members:

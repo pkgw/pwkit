@@ -5,4 +5,6 @@
 Fitting generic models with least-squares minimization (``pwkit.lsqmdl``)
 ==============================================================================
 
-No autodoc since non-pure-Python imports make ReadTheDocs sad.
+.. automodule:: pwkit.lsqmdl
+   :synopsis: Fitting generic models with least-squares minimization
+   :members:

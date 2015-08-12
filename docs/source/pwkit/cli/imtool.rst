@@ -5,4 +5,6 @@
 Quick operations on astronomical images (``pwkit.cli.imtool``)
 ========================================================================
 
-No autodoc since non-pure-Python imports make ReadTheDocs sad.
+.. automodule:: pwkit.cli.imtool
+   :synopsis: Quick astronomical image operations from the command line
+   :members:

@@ -5,4 +5,6 @@
 Quick astronomical calculations (``astrotool``)
 ========================================================================
 
-No autodoc since non-pure-Python imports make ReadTheDocs sad.
+.. automodule:: pwkit.cli.astrotool
+   :synopsis: Quick astronomical calculations from the command line
+   :members:

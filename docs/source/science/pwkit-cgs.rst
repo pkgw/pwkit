@@ -5,4 +5,6 @@
 Constants in CGS units (``pwkit.cgs``)
 ==============================================================================
 
-No autodoc since non-pure-Python imports make ReadTheDocs sad.
+.. automodule:: pwkit.cgs
+   :synopsis: constants in cgs units
+   :members:

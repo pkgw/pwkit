@@ -2,7 +2,9 @@
    This file licensed under the Creative Commons Attribution-ShareAlike 3.0
    Unported License (CC-BY-SA).
 
-Bayesian confidence intervals for count rates  (``pwkit.kbn_conf``)
+Bayesian confidence intervals for count rates (``pwkit.kbn_conf``)
 ========================================================================
 
-No autodoc since non-pure-Python imports make ReadTheDocs sad.
+.. automodule:: pwkit.kbn_conf
+   :synopsis: Bayesian confidence intervals for count rates
+   :members:
