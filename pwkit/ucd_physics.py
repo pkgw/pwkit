@@ -9,12 +9,18 @@ published in the literature. See docstrings for references.
 
 Functions:
 
-bcj_from_spt               - J-band bolometric correction from SpT.
-bck_from_spt               - K-band bolometric correction from SpT.
-load_bcah98_mass_radius    - Load Baraffe+ 1998 mass/radius data.
-mass_from_j                - Mass from absolute J magnitude.
-mk_radius_from_mass_bcah98 - Radius from mass, using BCAH98 models.
-tauc_from_mass             - Convective turnover time from mass.
+bcj_from_spt
+  J-band bolometric correction from SpT.
+bck_from_spt
+  K-band bolometric correction from SpT.
+load_bcah98_mass_radius
+  Load Baraffe+ 1998 mass/radius data.
+mass_from_j
+  Mass from absolute J magnitude.
+mk_radius_from_mass_bcah98
+  Radius from mass, using BCAH98 models.
+tauc_from_mass
+  Convective turnover time from mass.
 
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
@@ -200,13 +206,18 @@ def load_bcah98_mass_radius (tablelines, metallicity=0, heliumfrac=0.275,
     """Load mass and radius from the main data table for the famous models of
     Baraffe+ (1998A&A...337..403B).
 
-    tablelines  - An iterable yielding lines from the table data file.
-                  I've named the file '1998A&A...337..403B_tbl1-3.dat'
-                  in some repositories (it's about 150K, not too bad).
-    metallicity - The metallicity of the model to select.
-    heliumfrac  - The helium fraction of the model to select.
-    age_gyr     - The age of the model to select, in Gyr.
-    age_tol     - The tolerance on the matched age, in Gyr.
+    tablelines
+      An iterable yielding lines from the table data file.
+      I've named the file '1998A&A...337..403B_tbl1-3.dat'
+      in some repositories (it's about 150K, not too bad).
+    metallicity
+      The metallicity of the model to select.
+    heliumfrac
+      The helium fraction of the model to select.
+    age_gyr
+      The age of the model to select, in Gyr.
+    age_tol
+      The tolerance on the matched age, in Gyr.
 
     Returns: (mass, radius), where both are Numpy arrays.
 
@@ -251,13 +262,18 @@ def mk_radius_from_mass_bcah98 (*args, **kwargs):
     """Create a function that maps (sub)stellar mass to radius, based on the
     famous models of Baraffe+ (1998A&A...337..403B).
 
-    tablelines  - An iterable yielding lines from the table data file.
-                  I've named the file '1998A&A...337..403B_tbl1-3.dat'
-                  in some repositories (it's about 150K, not too bad).
-    metallicity - The metallicity of the model to select.
-    heliumfrac  - The helium fraction of the model to select.
-    age_gyr     - The age of the model to select, in Gyr.
-    age_tol     - The tolerance on the matched age, in Gyr.
+    tablelines
+      An iterable yielding lines from the table data file.
+      I've named the file '1998A&A...337..403B_tbl1-3.dat'
+      in some repositories (it's about 150K, not too bad).
+    metallicity
+      The metallicity of the model to select.
+    heliumfrac
+      The helium fraction of the model to select.
+    age_gyr
+      The age of the model to select, in Gyr.
+    age_tol
+      The tolerance on the matched age, in Gyr.
 
     Returns: a function mtor(mass_g), return a radius in cm as a function of a
     mass in grams. The mass must be between 0.05 and 0.7 Msun.

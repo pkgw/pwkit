@@ -1203,37 +1203,62 @@ class Solution (object):
 class Problem (object):
     """A Levenberg-Marquardt problem to be solved. Attributes:
 
-    damp        - Tanh damping factor of extreme function values.
-    debug_calls - If true, information about function calls is printed.
-    debug_jac   - If true, information about jacobian calls is printed.
-    diag        - Scale factors for parameter derivatives, used to condition
-                  the problem.
-    epsilon     - The floating-point epsilon value, used to determine step
-                  sizes in automatic Jacobian computation.
-    factor      - The step bound is `factor` times the initial value times `diag`.
-    ftol        - The relative error desired in the sum of squares.
-    gtol        - The orthogonality desired between the function vector and
-                  the columns of the Jacobian.
-    maxiter     - The maximum number of iterations allowed.
-    normfunc    - A function to compute the norm of a vector.
-    solclass    - A factory for Solution instances.
-    xtol        - The relative error desired in the approximate solution.
+    damp
+      Tanh damping factor of extreme function values.
+    debug_calls
+      If true, information about function calls is printed.
+    debug_jac
+      If true, information about jacobian calls is printed.
+    diag
+      Scale factors for parameter derivatives, used to condition
+      the problem.
+    epsilon
+      The floating-point epsilon value, used to determine step
+      sizes in automatic Jacobian computation.
+    factor
+      The step bound is `factor` times the initial value times `diag`.
+    ftol
+      The relative error desired in the sum of squares.
+    gtol
+      The orthogonality desired between the function vector and
+      the columns of the Jacobian.
+    maxiter
+      The maximum number of iterations allowed.
+    normfunc
+      A function to compute the norm of a vector.
+    solclass
+      A factory for Solution instances.
+    xtol
+      The relative error desired in the approximate solution.
 
     Methods:
 
-    copy              - Duplicate this `Problem`.
-    get_ndof          - Get the number of degrees of freedom in the problem.
-    get_nfree         - Get the number of free parameters (fixed/tied/etc pars are not free).
-    p_value           - Set the initial or fixed value of a parameter.
-    p_limit           - Set limits on parameter values.
-    p_step            - Set the stepsize for a parameter.
-    p_side            - Set the sidedness with which auto-derivatives are computed for a par.
-    p_tie             - Set a parameter to be a function of other parameters.
-    set_func          - Set the function to be optimized.
-    set_npar          - Set the number of parameters; allows p_* to be called.
-    set_residual_func - Set the function to a standard model-fitting style.
-    solve             - Run the algorithm.
-    solve_scipy       - Run the algorithm using the Scipy implementation (for testing).
+    copy
+      Duplicate this `Problem`.
+    get_ndof
+      Get the number of degrees of freedom in the problem.
+    get_nfree
+      Get the number of free parameters (fixed/tied/etc pars are not free).
+    p_value
+      Set the initial or fixed value of a parameter.
+    p_limit
+      Set limits on parameter values.
+    p_step
+      Set the stepsize for a parameter.
+    p_side
+      Set the sidedness with which auto-derivatives are computed for a par.
+    p_tie
+      Set a parameter to be a function of other parameters.
+    set_func
+      Set the function to be optimized.
+    set_npar
+      Set the number of parameters; allows p_* to be called.
+    set_residual_func
+      Set the function to a standard model-fitting style.
+    solve
+      Run the algorithm.
+    solve_scipy
+      Run the algorithm using the Scipy implementation (for testing).
 
     """
     _yfunc = None

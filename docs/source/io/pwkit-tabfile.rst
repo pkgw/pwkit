@@ -3,6 +3,8 @@
    Unported License (CC-BY-SA).
 
 Reading and writing data tables with types and uncertainties (``pwkit.tabfile``)
-==============================================================================
+================================================================================
 
-No autodoc since non-pure-Python imports make ReadTheDocs sad.
+.. automodule:: pwkit.tabfile
+   :synopsis: Typed, tabular data
+   :members:

@@ -3,6 +3,8 @@
    Unported License (CC-BY-SA).
 
 Nonlinear least-squares minimization with Levenberg-Marquardt (``pwkit.lmmin``)
-========================================================================
+===============================================================================
 
-No autodoc since non-pure-Python imports make ReadTheDocs sad.
+.. automodule:: pwkit.lmmin
+   :synopsis: Levenberg-Marquardt minimization with a nice API
+   :members:

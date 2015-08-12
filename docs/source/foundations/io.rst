@@ -454,7 +454,7 @@ on :class:`Path` objects.
    Call :meth:`Path.open` on this path (passing *kwargs*) and return the
    result. If the file doesn't exist, the behavior depends on
    *null_if_noexist*. If it is false (the default), ``None`` is returned.
-   Otherwise, :var:`os.devnull` is opened and returned.
+   Otherwise, :data:`os.devnull` is opened and returned.
 
 
 .. method:: Path.try_unlink()

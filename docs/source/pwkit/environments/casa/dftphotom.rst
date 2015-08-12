@@ -3,6 +3,8 @@
    Unported License (CC-BY-SA).
 
 Compact-source photometry with discrete Fourier transformations (``pwkit.environments.casa.dftphotom``)
-========================================================================
+=======================================================================================================
 
-No autodoc since non-pure-Python imports make ReadTheDocs sad.
+.. automodule:: pwkit.environments.casa.dftphotom
+   :synopsis: Light curves from interferometric visibilities
+   :members:

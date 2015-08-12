@@ -46,11 +46,16 @@ def read (path, tabwidth=8, **kwargs):
 
     Arguments:
 
-    path            - The path of the file to read.
-    tabwidth=8      - The tab width to assume. Please don't monkey with it.
-    mode='rt'       - The file open mode (passed to io.open()).
-    noexistok=False - If True and the file is missing, treat it as empty.
-    **kwargs        - Passed to io.open ().
+    path
+      The path of the file to read.
+    tabwidth=8
+      The tab width to assume. Please don't monkey with it.
+    mode='rt'
+      The file open mode (passed to io.open()).
+    noexistok=False
+      If True and the file is missing, treat it as empty.
+    ``**kwargs``
+      Passed to io.open ().
 
     Returns a generator for a stream of `pwkit.Holder`s, each of which will
     contain ints, strings, or some kind of measurement (cf `pwkit.msmt`).
@@ -136,13 +141,17 @@ def write (stream, items, fieldnames, tabwidth=8):
 
     Arguments:
 
-    stream     - The destination stream.
-    items      - An iterable of items to write. Two passes have to
-                 be made over the items (to discover the needed column widths),
-                 so this will be saved into a list.
-    fieldnames - Either a list of field name strings, or a single string.
-                 If the latter, it will be split into a list with .split().
-    tabwidth=8 - The tab width to use. Please don't monkey with it.
+    stream
+      The destination stream.
+    items
+      An iterable of items to write. Two passes have to
+      be made over the items (to discover the needed column widths),
+      so this will be saved into a list.
+    fieldnames
+      Either a list of field name strings, or a single string.
+      If the latter, it will be split into a list with .split().
+    tabwidth=8
+      The tab width to use. Please don't monkey with it.
 
     Returns nothing.
 
@@ -222,13 +231,20 @@ def vizread (descpath, descsection, tabpath, tabwidth=8, **kwargs):
 
     Arguments:
 
-    descpath        - The path of the table description ini file.
-    descsection     - The section in the description file to use.
-    tabpath         - The path to the actual table data.
-    tabwidth=8      - The tab width to assume. Please don't monkey with it.
-    mode='rt'       - The table file open mode (passed to io.open()).
-    noexistok=False - If True and the file is missing, treat it as empty.
-    **kwargs        - Passed to io.open ().
+    descpath
+      The path of the table description ini file.
+    descsection
+      The section in the description file to use.
+    tabpath
+      The path to the actual table data.
+    tabwidth=8
+      The tab width to assume. Please don't monkey with it.
+    mode='rt'
+      The table file open mode (passed to io.open()).
+    noexistok=False
+      If True and the file is missing, treat it as empty.
+    ``**kwargs``
+      Passed to io.open ().
 
     Returns a generator of a stream of `pwkit.Holder`s, each of which will
     contain ints, strings, or some kind of measurement (cf `pwkit.msmt`). In

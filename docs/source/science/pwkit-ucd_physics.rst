@@ -3,6 +3,8 @@
    Unported License (CC-BY-SA).
 
 Scaling relations for physical properties of ultra-cool dwarfs (``pwkit.ucd_physics``)
-==============================================================================
+======================================================================================
 
-No autodoc since non-pure-Python imports make ReadTheDocs sad.
+.. automodule:: pwkit.ucd_physics
+   :synopsis: Physical models relating to low-mass stars and brown dwarfs
+   :members:
