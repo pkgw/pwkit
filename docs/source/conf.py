@@ -82,6 +82,8 @@ class Mock (MagicMock):
 
 sys.modules.update ((m, Mock ()) for m in [
     'cairo',
+    'gi',
+    'gi.repository',
     'glib',
     'gtk',
 ])
