@@ -2,8 +2,6 @@
 # Copyright 2014-2015 Peter Williams and collaborators
 # Licensed under the MIT License.
 
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 """The :mod:`pwkit.simpleenum` module contains a single decorator function for
 creating “enumerations”, by which we mean a group of named, un-modifiable
 values. For example::
@@ -39,6 +37,8 @@ of the properties of ``Constants`` once it is constructed.
    :class:`tuple`, :class:`frozenset`, :class:`int`, and so on.
 
 """
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 __all__ = [b'enumeration']
 
 
