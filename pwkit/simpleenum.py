@@ -4,17 +4,53 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+"""The :mod:`pwkit.simpleenum` module contains a single decorator function for
+creating “enumerations”, by which we mean a group of named, un-modifiable
+values. For example::
+
+  from pwkit.simpleenum import enumeration
+
+  @enumeration
+  class Constants (object):
+    period_days = 2.771
+    period_hours = period_days * 24
+    n_iters = 300
+    # etc
+
+  def myfunction ():
+    print ('the period is', Constants.period_hours, 'hours')
+
+The ``class`` declaration syntax is handy here because it lets you define new
+values in relation to old values. In the above example, you cannot change any
+of the properties of ``Constants`` once it is constructed.
+
+.. important:: If you populate an enumeration with a mutable data type,
+   however, we’re unable to prevent you from modifying it. For instance, if
+   you do this::
+
+     @enumeration
+     class Dangerous (object):
+       mutable = [1, 2]
+       immutable = (1, 2)
+
+   You can then do something like write ``Dangerous.mutable.append (3)`` and
+   modify the value stored in the enumeration. If you’re concerned about this,
+   make sure to populate the enumeration with immutable classes such as
+   :class:`tuple`, :class:`frozenset`, :class:`int`, and so on.
+
+"""
 __all__ = [b'enumeration']
+
 
 def enumeration (cls):
     """A very simple decorator for creating enumerations. Unlike Python 3.4
     enumerations, this just gives a way to use a class declaration to create
     an immutable object containing only the values specified in the class.
 
-    If __pickle_compat__ is set to True in the decorated class, the resulting
-    enumeration value will be callable such that EnumClass(x) = x. This is
-    needed to unpickle enumeration values that were previously implemented
-    using `enum.Enum`.
+    If the attribute ``__pickle_compat__`` is set to True in the decorated
+    class, the resulting enumeration value will be callable such that
+    ``EnumClass(x) = x``. This is needed to unpickle enumeration values that
+    were previously implemented using :class:`enum.Enum`.
 
     """
     from pwkit import unicode_to_str
