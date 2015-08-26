@@ -125,7 +125,7 @@ r_e = e**2 / (me * c**2) # cm
 ryd1 = e**2 / (2 * a0) # erg
 mu_e = e * hbar / (2 * me * c) # magnetic moment units, whatever those are
 sigma_T = 8 * pi * r_e**2 / 3 # cm^2
-ergperev = 1.60e-12 # erg / eV [dimensionless]
+ergperev = 1e8 * e / c # erg / eV [dimensionless]
 evpererg = 1. / ergperev
 conjaaev = 1e8 * c * h / ergperev # eV*Angstrom ; lambda(AA) = conjaaev/E(eV)
 cmperpc = 3.08568025e18 # cm / pc [dimensionless]
