@@ -225,6 +225,36 @@ def data_frame_to_astropy_table (dataframe):
     return Table(out)
 
 
+def page_data_frame (df, pager_argv=['less'], **kwargs):
+    """Render a DataFrame as text and send it to a terminal pager program (e.g.
+    `less`), so that one can browse a full table conveniently.
+
+    df
+      The DataFrame to view
+    pager_argv: default ``['less']``
+      A list of strings passed to :class:`subprocess.Popen` that launches
+      the pager program
+    kwargs
+      Additional keywords are passed to :meth:`pandas.DataFrame.to_string`.
+
+    Returns ``None``. Execution blocks until the pager subprocess exits.
+
+    """
+    import codecs, subprocess, sys
+
+    pager = subprocess.Popen (pager_argv, shell=False,
+                              stdin=subprocess.PIPE,
+                              close_fds=True)
+
+    try:
+        enc = codecs.getwriter (sys.stdout.encoding or 'utf8') (pager.stdin)
+        df.to_string (enc, **kwargs)
+    finally:
+        enc.close ()
+        pager.stdin.close ()
+        pager.wait ()
+
+
 # Chunked averaging of data tables
 
 def slice_around_gaps (values, maxgap):

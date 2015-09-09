@@ -179,6 +179,9 @@ Convenience functions for :class:`pandas.DataFrame` objects
    Placeholder.
 
 
+.. autofunction:: page_data_frame
+
+
 .. _parallelized:
 
 Parallelized versions of simple math algorithms
