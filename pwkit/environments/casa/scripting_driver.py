@@ -109,7 +109,7 @@ def _pkcs_inner ():
           '__name__': '__casascript__'}
 
     try:
-        exec code in ns
+        exec (code, ns)
     except Exception as e:
         raise
 

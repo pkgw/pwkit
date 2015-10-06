@@ -320,7 +320,7 @@ class StatsCommand (multitool.Command):
 
         try:
             img = img.simple ()
-        except Exception, e:
+        except Exception as e:
             print ('imstats: can\'t convert “%s” to simple 2D sky image; '
                    'taking first plane' % path, file=sys.stderr)
             data = img.read ()[tuple (np.zeros (img.shape.size - 2))]

@@ -135,7 +135,7 @@ def ensure_dir (path, parents=False):
 
     try:
         os.mkdir (path)
-    except OSError, e:
+    except OSError as e:
         if e.errno == 17: # EEXIST
             return True
         raise
@@ -149,7 +149,7 @@ def ensure_symlink (src, dst):
     """
     try:
         os.symlink (src, dst)
-    except OSError, e:
+    except OSError as e:
         if e.errno == 17: # EEXIST
             return True
         raise

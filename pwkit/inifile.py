@@ -329,9 +329,8 @@ def mutate_in_place (inpath):
                     yield item
                 rename (tmppath, inpath)
         except:
-            et, ev, etb = exc_info ()
             try:
                 os.unlink (tmppath)
             except Exception:
                 pass
-            raise et, ev, etb
+            raise
