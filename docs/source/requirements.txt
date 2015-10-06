@@ -3,4 +3,5 @@ mock
 numpy
 pandas
 pathlib
+six
 sphinx

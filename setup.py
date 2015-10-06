@@ -37,6 +37,7 @@ setup (
     # with 1.6.
     install_requires = [
         'numpy >= 1.6',
+        'six >= 1.9',
     ],
 
     entry_points = {
