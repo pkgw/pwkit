@@ -23,12 +23,15 @@ build:
 requirements:
   build:
     - numpy
+    - pathlib # [py2k]
     - python
     - setuptools
+    - six
 
   run:
     - numpy
     - python
+    - six
 
 test:
   imports:
