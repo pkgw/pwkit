@@ -25,6 +25,23 @@ install`` will do the trick.
 .. _binstar.org: https://binstar.org/pkgw/pwkit
 .. _setuptools: https://pypi.python.org/pypi/setuptools
 
+Some ``pwkit`` functionality requires additional Python modules such as
+`scipy`_; these issues should be very obvious as they manifest as
+``ImportErrors`` triggered for the relevant modules. Bare minimum
+functionality requires:
+
+* `numpy`_ >= 1.6
+* `six`_ >= 1.9
+* on Python 2.x only, `pathlib`_ >= 1.0
+
+If you install ``pwkit`` through standard means, these modules should be
+automatically installed too if they weren’t already available.
+
+.. _scipy: http://www.scipy.org/
+.. _numpy: http://www.numpy.org/
+.. _six: https://pythonhosted.org/six/
+.. _pathlib: https://pypi.python.org/pypi/pathlib/
+
 
 Authors
 =======
