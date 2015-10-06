@@ -7,6 +7,11 @@
 
 from setuptools import setup
 
+dynamic_requires = []
+import sys
+if sys.version_info[0] < 3:
+    dynamic_requires.append ('pathlib >= 1.0')
+
 setup (
     name = 'pwkit',
     version = '0.6.99', # also edit pwkit/__init__.py, docs/source/conf.py!
@@ -38,7 +43,7 @@ setup (
     install_requires = [
         'numpy >= 1.6',
         'six >= 1.9',
-    ],
+    ] + dynamic_requires,
 
     entry_points = {
         'console_scripts': [
