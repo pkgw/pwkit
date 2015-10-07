@@ -42,7 +42,8 @@ unwrap     - Get a version of x on which algebra can be performed.
 Generic binary mathematical-ish functions:
 
 add         - x + y
-divide      - x / y; floor-integer division should be respected but usually isn't.
+divide      - x / y, never with floor-integer division
+floor_divide- x // y
 multiply    - x * y
 power       - x ** y
 subtract    - x - y
@@ -74,7 +75,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 __all__ = str ('''LimitError Lval Textual Uval absolute arccos arcsin arctan cos errinfo
     expm1 exp fmtinfo isfinite is_measurement liminfo limtype log10 log1p log2
-    log negative reciprocal repval sin sqrt square tan unwrap add divide
+    log negative reciprocal repval sin sqrt square tan unwrap add divide floor_divide
     multiply power subtract true_divide typealign find_gamma_params
     pk_scoreatpercentile sample_double_norm sample_gamma lval_unary_math
     parsers scalar_unary_math textual_unary_math UQUANT_UNCERT
@@ -582,7 +583,7 @@ class Uval (object):
     __divmod__ = _make_uval_operator (divmod)
     __pow__ = _make_uval_operator (operator.pow)
     # skipped: lshift, rshift, and, xor, or
-    __div__ = _make_uval_operator (operator.div)
+    # used to do div too; Python 3 has no operator.div
     __truediv__ = _make_uval_operator (operator.truediv)
 
     __radd__ = _make_uval_rev_operator (operator.add)
@@ -593,7 +594,7 @@ class Uval (object):
     __rdivmod__ = _make_uval_rev_operator (divmod)
     __rpow__ = _make_uval_rev_operator (operator.pow)
     # skipped: rlshift, rrshift, rand, rxor, ror
-    __rdiv__ = _make_uval_rev_operator (operator.div)
+    # as above, used to do rdiv too
     __rtruediv__ = _make_uval_rev_operator (operator.truediv)
 
     __iadd__ = _make_uval_inpl_operator (operator.iadd)
@@ -603,7 +604,7 @@ class Uval (object):
     __imod__ = _make_uval_inpl_operator (operator.imod)
     __ipow__ = _make_uval_inpl_operator (operator.ipow)
     # skipped: ilshift, irshift, iand, ixor, ior
-    __idiv__ = _make_uval_inpl_operator (operator.idiv)
+    # as above, used to do idiv too
     __itruediv__ = _make_uval_inpl_operator (operator.itruediv)
 
     def __neg__ (self):
@@ -1975,9 +1976,10 @@ def _make_wrapped_unary_math (name):
 
 
 def _init_unary_math ():
+    from six import iterkeys
     g = globals ()
 
-    for name in scalar_unary_math.iterkeys ():
+    for name in iterkeys (scalar_unary_math):
         if name == 'isfinite':
             g[name] = lambda v: _dispatch_unary_math (name, True, v)
         else:
@@ -2010,11 +2012,12 @@ def _make_wrapped_binary_math (opfunc):
 
 
 add = _make_wrapped_binary_math (operator.add)
-divide = _make_wrapped_binary_math (operator.div)
+floor_divide = _make_wrapped_binary_math (operator.floordiv)
 multiply = _make_wrapped_binary_math (operator.mul)
 power = _make_wrapped_binary_math (operator.pow)
 subtract = _make_wrapped_binary_math (operator.sub)
 true_divide = _make_wrapped_binary_math (operator.truediv)
+divide = true_divide # are we supposed to respect Py2 plain-div semantics?
 
 
 # Parsing and formatting of measurements and other quantities.

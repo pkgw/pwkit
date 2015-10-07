@@ -158,10 +158,10 @@ class Holder (object):
 
         if __decorating is None:
             values = kwargs
-        elif isinstance (__decorating, (type, types.ClassType)):
+        elif isinstance (__decorating, six.class_types):
             # We're decorating a class definition. Transform the definition
             # into a Holder instance thusly:
-            values = dict (kv for kv in __decorating.__dict__.iteritems ()
+            values = dict (kv for kv in six.iteritems (__decorating.__dict__)
                            if not kv[0].startswith ('__'))
         else:
             # You could imagine allowing @Holder on a function and doing

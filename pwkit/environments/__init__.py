@@ -107,17 +107,20 @@ def prepend_environ_path (env, name, text, pathsep=os.pathsep):
     `os.pathsep`. The variable will be created if it is not already in `env`.
     Returns `env`.
 
-    Example:
+    Example::
 
-    prepend_environ_path (env, b'PATH', b'/mypackage/bin')
+      prepend_environ_path (env, str('PATH'), str('/mypackage/bin'))
+
+    The `str` calls are necessary for Python 2/3 compatibility.
+
     """
     env[name] = prepend_path (env.get (name), text, pathsep=pathsep)
     return env
 
 
 def _make_user_data_pather ():
-    datadir = os.environ.get (b'XDG_DATA_HOME',
-                              os.path.expanduser ('~/.local/share'))
+    datadir = os.environ.get (str('XDG_DATA_HOME'),
+                              str(os.path.expanduser ('~/.local/share')))
 
     def pathfunc (*args):
         return os.path.join (datadir, *args)

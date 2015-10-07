@@ -108,8 +108,13 @@ baars_parameters = {
     'NGC7027': (1.32, -0.127, 0., 10000., 31000.)
 }
 
-for src, info in baars_parameters.iteritems ():
-    _add_generic_baars (src, *info)
+def _init_generic_baars ():
+    from six import iteritems
+
+    for src, info in iteritems (baars_parameters):
+        _add_generic_baars (src, *info)
+
+_init_generic_baars ()
 
 
 # VLA models of calibrators: see
@@ -144,8 +149,13 @@ vla_parameters = {
     '3c295': (1.46744, -0.77350, -0.25912, +0.00752)
 }
 
-for src, info in vla_parameters.iteritems ():
-    _add_vla_model (src, *info)
+def _init_vla ():
+    from six import iteritems
+
+    for src, info in iteritems (vla_parameters):
+        _add_vla_model (src, *info)
+
+_init_vla ()
 
 
 # Crappier power-law modeling based on VLA Calibrator Manual catalog. It is
