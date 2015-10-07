@@ -13,7 +13,7 @@ Installation
 The most recent stable version of ``pwkit`` is available on the `Python
 package index`_, so you should be able to install this package simply by
 running ``pip install pwkit``. The package is also available in the `conda`_
-package manager by installing it from `binstar.org`_; the command ``conda
+package manager by installing it from `anaconda.org`_; the command ``conda
 install -c pkgw pwkit`` should suffice.
 
 If you want to download the source code and install ``pwkit`` manually, the
@@ -22,7 +22,7 @@ install`` will do the trick.
 
 .. _Python package index: https://pypi.python.org/pypi/pwkit/
 .. _conda: http://conda.pydata.org/docs/
-.. _binstar.org: https://binstar.org/pkgw/pwkit
+.. _anaconda.org: https://anaconda.org/pkgw/pwkit
 .. _setuptools: https://pypi.python.org/pypi/setuptools
 
 Some ``pwkit`` functionality requires additional Python modules such as
