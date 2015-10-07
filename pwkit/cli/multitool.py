@@ -50,6 +50,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 __all__ = str ('''invoke_tool Command DelegatingCommand HelpCommand Multitool
                   UsageError''').split ()
 
+from six import itervalues
 from .. import PKError
 from . import check_usage, wrong_usage
 
@@ -247,7 +248,7 @@ Commands are:
 
 
     def _usage_keys (self, argv0):
-        scmds = sorted ((cmd for cmd in self.commands.itervalues ()
+        scmds = sorted ((cmd for cmd in itervalues (self.commands)
                          if cmd.name[0] != '_'),
                         key=lambda c: c.name)
         maxlen = 0
@@ -337,7 +338,7 @@ def invoke_tool (namespace, tool_class=None):
     cli.backtrace_on_usr1 ()
 
     if tool_class is None:
-        for value in namespace.itervalues ():
+        for value in itervalues (namespace):
             if is_strict_subclass (value, Multitool):
                 if tool_class is not None:
                     raise PKError ('do not know which Multitool implementation to use')
@@ -347,7 +348,7 @@ def invoke_tool (namespace, tool_class=None):
         raise PKError ('no Multitool implementation to use')
 
     tool = tool_class ()
-    tool.populate (namespace.itervalues ())
+    tool.populate (itervalues (namespace))
     tool.commandline (sys.argv)
 
 

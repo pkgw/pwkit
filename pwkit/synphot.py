@@ -478,8 +478,9 @@ def get_std_registry ():
     telescopes.
 
     """
+    from six import itervalues
     reg = Registry ()
-    for fn in builtin_registrars.itervalues ():
+    for fn in itervalues (builtin_registrars):
         fn (reg)
     return reg
 

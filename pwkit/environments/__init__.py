@@ -186,6 +186,8 @@ class DefaultTool (multitool.Multitool):
 
 
 def _default_env_commandline (envname, module, argv):
+    from six import itervalues
+
     for name in dir (module):
         v = getattr (module, name)
         if v is not Environment and issubclass (v, Environment):
@@ -196,7 +198,7 @@ def _default_env_commandline (envname, module, argv):
                  envname)
 
     tool = DefaultTool (envname, envclass, module)
-    tool.populate (globals ().itervalues ())
+    tool.populate (itervalues (globals ()))
     tool.commandline (argv)
 
 

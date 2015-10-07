@@ -688,6 +688,7 @@ class SasTool (multitool.Multitool):
 
 
 def commandline (argv):
+    from six import itervalues
     tool = SasTool ()
-    tool.populate (globals ().itervalues ())
+    tool.populate (itervalues (globals ()))
     tool.commandline (argv)

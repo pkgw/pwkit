@@ -408,6 +408,7 @@ class TableBuilder (object):
 
 
     def emit (self, stream, items):
+        from six import itervalues
         write = stream.write
         colinfo = self._colinfo
 
@@ -563,7 +564,7 @@ class TableBuilder (object):
             write (self.refs)
             write (b'}\n')
 
-        for noteinfo in sorted ((ni for ni in self._notes.itervalues ()
+        for noteinfo in sorted ((ni for ni in itervalues (self._notes)
                                  if ni[0] is not None), key=lambda ni: ni[0]):
             write (b'\\tablenotetext{')
             write (chr (ord ('a') + noteinfo[0]).encode ('ascii'))
