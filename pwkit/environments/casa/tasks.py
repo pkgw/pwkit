@@ -27,7 +27,7 @@ from ...kwargv import ParseKeywords, Custom
 
 # Keep the tasks alphabetized!
 
-__all__ = (b'''
+__all__ = str ('''
 applycal applycal_cli ApplycalConfig
 bpplot bpplot_cli BpplotConfig
 clearcal clearcal_cli

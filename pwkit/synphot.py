@@ -83,8 +83,8 @@ docstrings.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'AlreadyDefinedError Bandpass NotDefinedError Registry '
-           b'builtin_registrars get_std_registry').split ()
+__all__ = str ('''AlreadyDefinedError Bandpass NotDefinedError Registry
+                  builtin_registrars get_std_registry''').split ()
 
 import numpy as np, pandas as pd, pkg_resources
 

@@ -12,7 +12,7 @@ Copyright (C) 2013 by Denis Ryzhkov <denisr@denisr.com>
 MIT License, see http://opensource.org/licenses/MIT
 '''
 
-__all__ = (b'method_decorator').split ()
+__all__ = str ('method_decorator').split ()
 
 #### method_decorator
 

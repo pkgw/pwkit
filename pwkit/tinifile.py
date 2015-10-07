@@ -18,7 +18,7 @@ write_stream
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'read_stream read write_stream write').split ()
+__all__ = str ('read_stream read write_stream write').split ()
 
 from . import Holder, inifile, msmt
 

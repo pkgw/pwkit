@@ -6,7 +6,7 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = [b'commandline']
+__all__ = str ('commandline').split ()
 
 import math, numpy as np, os, sys
 

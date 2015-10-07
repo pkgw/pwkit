@@ -6,7 +6,7 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = b'Event Redirection Slurper'.split ()
+__all__ = str ('Event Redirection Slurper').split ()
 
 import fcntl, os, signal, subprocess, sys
 from select import select, error as selecterror

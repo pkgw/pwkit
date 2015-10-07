@@ -26,8 +26,8 @@ mutate_in_place
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'FileChunk InifileError mutate_in_place mutate_stream '
-           b'mutate read_stream read write_stream write').split ()
+__all__ = str ('''FileChunk InifileError mutate_in_place mutate_stream
+                  mutate read_stream read write_stream write''').split ()
 
 import io, os, re
 from . import Holder, PKError

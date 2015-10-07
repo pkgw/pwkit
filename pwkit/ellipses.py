@@ -30,9 +30,9 @@ had trouble figuring out in the past.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = b'''F2S S2F sigmascale clscale bivell bivnorm bivabc databiv bivrandom bivplot
-           ellnorm ellpoint elld2 ellbiv ellabc ellplot abcell abcd2
-           abcplot'''.split ()
+__all__ = str ('''F2S S2F sigmascale clscale bivell bivnorm bivabc databiv bivrandom bivplot
+                  ellnorm ellpoint elld2 ellbiv ellabc ellplot abcell abcd2
+                  abcplot''').split ()
 
 import numpy as np
 

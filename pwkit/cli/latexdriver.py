@@ -10,7 +10,7 @@ do this in Python.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = [b'commandline']
+__all__ = str ('commandline').split ()
 
 import io, os.path, signal, subprocess, sys
 

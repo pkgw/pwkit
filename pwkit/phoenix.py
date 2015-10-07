@@ -36,7 +36,7 @@ The files do not come sorted!
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'load_spectrum').split ()
+__all__ = str ('load_spectrum').split ()
 
 import numpy as np, pandas as pd
 

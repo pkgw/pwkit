@@ -25,8 +25,8 @@ tauc_from_mass
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'bcj_from_spt bck_from_spt load_bcah98_mass_radius mass_from_j '
-           b'mk_radius_from_mass_bcah98 tauc_from_mass').split ()
+__all__ = str ('''bcj_from_spt bck_from_spt load_bcah98_mass_radius mass_from_j
+                  mk_radius_from_mass_bcah98 tauc_from_mass''').split ()
 
 # Implementation note: we use the numutil.broadcastize() decorator to be able
 # to handle both scalar and vector arguments semi-transparently. I'd also like

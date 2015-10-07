@@ -22,7 +22,7 @@ are highly variable and annoying.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'CasaEnvironment CasaTool commandline').split ()
+__all__ = str ('CasaEnvironment CasaTool commandline').split ()
 
 import glob, io, os.path
 

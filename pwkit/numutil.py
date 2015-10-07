@@ -40,7 +40,7 @@ broadcastize - Make a Python function automatically broadcast arguments.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'''broadcastize dfsmooth fits_recarray_to_data_frame make_step_lcont
+__all__ = str ('''broadcastize dfsmooth fits_recarray_to_data_frame make_step_lcont
            make_step_rcont make_tophat_ee make_tophat_ei make_tophat_ie
            make_tophat_ii parallel_newton parallel_quad rms unit_tophat_ee
            unit_tophat_ei unit_tophat_ie unit_tophat_ii usmooth weighted_mean

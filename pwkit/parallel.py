@@ -38,7 +38,7 @@ Pickle-related limitations in the `multiprocessing` library. See the docs for
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'make_parallel_helper').split ()
+__all__ = str ('make_parallel_helper').split ()
 
 import functools, signal
 from multiprocessing.pool import Pool

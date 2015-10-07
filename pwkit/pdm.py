@@ -20,7 +20,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 # TODO: ditto for nr periods to try?
 # TODO: confidence in peak value or something
 
-__all__ = (b'PDMResult pdm').split ()
+__all__ = str ('PDMResult pdm').split ()
 
 import numpy as np
 from collections import namedtuple

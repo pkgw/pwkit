@@ -46,10 +46,10 @@ AstrometryInfo      - Hold astrometric parameters and predict a source location
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = b'''np pi twopi halfpi R2A A2R R2D D2R R2H H2R F2S S2F J2000 angcen orientcen
-           fmthours fmtdeglon fmtdeglat fmtradec parsehours parsedeglat
-           parsedeglon sphdist sphbear sphofs parang gaussian_convolve
-           gaussian_deconvolve AstrometryInfo'''.split ()
+__all__ = str ('''np pi twopi halfpi R2A A2R R2D D2R R2H H2R F2S S2F J2000 angcen orientcen
+                  fmthours fmtdeglon fmtdeglat fmtradec parsehours parsedeglat
+                  parsedeglon sphdist sphbear sphofs parang gaussian_convolve
+                  gaussian_deconvolve AstrometryInfo''').split ()
 
 import numpy as np
 

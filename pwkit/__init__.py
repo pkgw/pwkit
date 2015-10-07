@@ -60,20 +60,25 @@ Functions in the toplevel module:
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'Holder PKError binary_type reraise_context text_type '
-           b'unicode_to_str').split ()
+# In Python 2, the items in __all__ should be bytes strings. In Python 3, they
+# should be Unicode. (http://stackoverflow.com/a/19913680/3760486) If you
+# don't use __future__.unicode_literals, you can just write `__all__ =
+# ["foo"]` and it's fine, but we do, which causes problems on Py 2.
+# Fortunately, to work on both cases we just need to do this:
+__all__ = str ('''Holder PKError binary_type reraise_context text_type unicode_to_str''').split ()
 
 __version__ = '0.6.99' # also edit ../setup.py, ../docs/source/conf.py!
 
-# Lightly-exercised simultaneous Python 2 and 3 compat.
-import sys
-if sys.version < '3':
-    text_type = unicode
-    binary_type = str
+# Simultaneous Python 2/3 compatibility through the 'six' module. I started
+# out hoping that I could do this all "in-house" without adding the dep, but
+# it became clear that 'six' was going to end up being helpful.
+
+import six
+from six import binary_type, text_type
+
+if six.PY2:
     unicode_to_str = lambda s: s.__unicode__ ().encode ('utf8')
 else:
-    text_type = str
-    binary_type = bytes
     unicode_to_str = lambda s: s.__unicode__ ()
 
 

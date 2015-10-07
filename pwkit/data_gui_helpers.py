@@ -18,7 +18,7 @@ data_to_imagesurface - Turn arbitrary data values into a Cairo ImageSurface.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'data_to_argb32 Clipper ColorMapper LazyComputer Stretcher').split ()
+__all__ = str ('data_to_argb32 Clipper ColorMapper LazyComputer Stretcher').split ()
 
 import numpy as np
 

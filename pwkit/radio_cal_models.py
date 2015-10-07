@@ -29,7 +29,7 @@ Arguments:
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'cas_a commandline init_cas_a models spindexes').split ()
+__all__ = str ('cas_a commandline init_cas_a models spindexes').split ()
 
 
 import numpy as np

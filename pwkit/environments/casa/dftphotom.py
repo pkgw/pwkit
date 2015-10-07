@@ -9,7 +9,7 @@ CASA doesn't yet have a task to do this.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'Config dftphotom dftphotom_cli').split ()
+__all__ = str ('Config dftphotom dftphotom_cli').split ()
 
 import sys, os.path, numpy as np
 

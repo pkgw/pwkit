@@ -98,7 +98,7 @@ alias for :class:`KeywordInfo`.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'Custom KwargvError ParseError KeywordInfo ParseKeywords basic').split ()
+__all__ = str ('Custom KwargvError ParseError KeywordInfo ParseKeywords basic').split ()
 
 from . import Holder, PKError, text_type
 

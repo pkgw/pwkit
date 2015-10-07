@@ -216,9 +216,9 @@ see comments in the module source code.)
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'enorm_fast enorm_mpfit_careful enorm_minpack '
-           b'Problem Solution ResidualProblem '
-           b'check_derivative').split ()
+__all__ = str ('''enorm_fast enorm_mpfit_careful enorm_minpack
+                  Problem Solution ResidualProblem
+                  check_derivative''').split ()
 
 
 import numpy as np

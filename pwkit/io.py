@@ -24,8 +24,8 @@ Functions:
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = b'''djoin ensure_dir ensure_symlink make_path_func rellink pathlines pathwords
-           try_open words Path'''.split ()
+__all__ = str ('''djoin ensure_dir ensure_symlink make_path_func rellink
+                  pathlines pathwords try_open words Path''').split ()
 
 import io, os, pathlib
 

@@ -49,10 +49,10 @@ XXX: Barely tested!
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = b'''AlignedNumberFormatter BasicFormatter BoolFormatter LimitFormatter
-              MaybeNumberFormatter Referencer TableBuilder UncertFormatter
-              WideHeader latexify_l3col latexify_n2col latexify_u3col
-              latexify'''.split ()
+__all__ = str ('''AlignedNumberFormatter BasicFormatter BoolFormatter LimitFormatter
+                  MaybeNumberFormatter Referencer TableBuilder UncertFormatter
+                  WideHeader latexify_l3col latexify_n2col latexify_u3col
+                  latexify''').split ()
 
 from . import Holder, PKError, binary_type, msmt, reraise_context, text_type
 

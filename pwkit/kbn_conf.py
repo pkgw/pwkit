@@ -22,7 +22,7 @@ TODO: tests!
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'kbn_conf vec_kbn_conf').split ()
+__all__ = str ('kbn_conf vec_kbn_conf').split ()
 
 from numpy import exp, log, vectorize
 from scipy.special import gammaln

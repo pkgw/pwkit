@@ -60,7 +60,7 @@ magnetic field have g^(1/2) cm^(-1/2) s^-1. [esu * field] = dyne.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = b'''
+__all__ = str ('''
 a0
 alpha
 arad
@@ -104,7 +104,7 @@ spersyr
 sqrt
 syrpers
 tsun
-'''.split ()
+''').split ()
 
 # make e the electron charge
 from numpy import pi, e as euler, exp, sqrt, log, log10

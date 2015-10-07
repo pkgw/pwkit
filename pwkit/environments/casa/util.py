@@ -37,8 +37,8 @@ sanitize_unicode
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'''INVERSE_C_MS INVERSE_C_MNS pol_names pol_to_miriad msselect_keys
-datadir logger forkandlog sanitize_unicode tools''').split ()
+__all__ = str ('''INVERSE_C_MS INVERSE_C_MNS pol_names pol_to_miriad msselect_keys
+                  datadir logger forkandlog sanitize_unicode tools''').split ()
 
 from ... import binary_type, text_type
 

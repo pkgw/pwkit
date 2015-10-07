@@ -25,8 +25,8 @@ TODO: axis types (ugh standardizing these would be a bear)
 TODO: image units (ie, "set units to Jy/px"; standardization also a pain)
 
 """
-__all__ = (b'UnsupportedError AstroImage MIRIADImage PyrapImage '
-           b'FITSImage SimpleImage open').split ()
+__all__ = str ('''UnsupportedError AstroImage MIRIADImage PyrapImage FITSImage SimpleImage
+                  open''').split ()
 
 import numpy as np
 from numpy import pi

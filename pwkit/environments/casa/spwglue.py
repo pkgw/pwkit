@@ -10,7 +10,7 @@ procesing step is very slow, however.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'Progress Config spwglue spwglue_cli').split ()
+__all__ = str ('Progress Config spwglue spwglue_cli').split ()
 
 import numpy as np
 from ... import binary_type, text_type

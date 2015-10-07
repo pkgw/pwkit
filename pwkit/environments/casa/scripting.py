@@ -17,7 +17,7 @@ argument, so if we're using "env" we can't take a multitool approach.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'CasapyScript commandline').split ()
+__all__ = str ('CasapyScript commandline').split ()
 
 import os.path, shutil, signal, sys, tempfile
 from ... import PKError, cli, reraise_context

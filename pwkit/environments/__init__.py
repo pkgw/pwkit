@@ -32,7 +32,7 @@ Unicode environment variables as UTF-8 on non-Windows, so we don't need to be
 crazy about bytes-ifying values.
 
 """
-__all__ = (b'Environment prepend_environ_path prepend_path user_data_path').split ()
+__all__ = str ('Environment prepend_environ_path prepend_path user_data_path').split ()
 
 import os, subprocess, sys
 

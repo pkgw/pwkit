@@ -76,7 +76,7 @@ I made up the pkgw map myself (who'd have guessed?).
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'base_factory_names factory_map').split ()
+__all__ = str ('base_factory_names factory_map').split ()
 
 
 import numpy as np

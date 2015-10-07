@@ -27,8 +27,8 @@ multitool - Framework for command-line programs with sub-commands.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'''check_usage die pop_option print_tracebacks propagate_sigint show_usage
-unicode_stdio warn wrong_usage''').split ()
+__all__ = str ('''check_usage die pop_option print_tracebacks propagate_sigint show_usage
+                  unicode_stdio warn wrong_usage''').split ()
 
 import codecs, os, signal, sys, traceback
 from .. import text_type

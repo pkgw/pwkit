@@ -12,8 +12,8 @@ than the currently exposed UI really needs.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'FitComponent Fitter GaussianComponent beam_volume '
-           b'fit_one_source').split ()
+__all__ = str ('''FitComponent Fitter GaussianComponent beam_volume
+                  fit_one_source''').split ()
 
 
 import sys, numpy as np

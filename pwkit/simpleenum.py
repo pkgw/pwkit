@@ -39,7 +39,7 @@ of the properties of ``Constants`` once it is constructed.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = [b'enumeration']
+__all__ = str ('enumeration').split ()
 
 
 def enumeration (cls):

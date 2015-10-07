@@ -18,7 +18,7 @@ Subsequent lines are data rows.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'read vizread write').split ()
+__all__ = str ('read vizread write').split ()
 
 from . import Holder, PKError, io, msmt, reraise_context
 

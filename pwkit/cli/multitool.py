@@ -47,8 +47,8 @@ Standard usage::
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = (b'invoke_tool Command DelegatingCommand HelpCommand Multitool '
-           b'UsageError').split ()
+__all__ = str ('''invoke_tool Command DelegatingCommand HelpCommand Multitool
+                  UsageError''').split ()
 
 from .. import PKError
 from . import check_usage, wrong_usage
