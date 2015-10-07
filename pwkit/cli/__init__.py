@@ -30,33 +30,37 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 __all__ = str ('''check_usage die pop_option print_tracebacks propagate_sigint show_usage
                   unicode_stdio warn wrong_usage''').split ()
 
-import codecs, os, signal, sys, traceback
+import codecs, os, signal, six, sys, traceback
 from .. import text_type
 
 
 def unicode_stdio ():
     """Make sure that the standard I/O streams accept Unicode.
 
-    The standard I/O streams accept bytes, not Unicode characters. This means
-    that in principle every Unicode string that we want to output should be
-    encoded to utf-8 before print()ing. But Python 2.X has a hack where, if
-    the output is a terminal, it will automatically encode your strings, using
-    UTF-8 in most cases.
+    In Python 2, the standard I/O streams accept bytes, not Unicode
+    characters. This means that in principle every Unicode string that we want
+    to output should be encoded to utf-8 before print()ing. But Python 2.X has
+    a hack where, if the output is a terminal, it will automatically encode
+    your strings, using UTF-8 in most cases.
 
     BUT this hack doesn't kick in if you pipe your program's output to another
     program. So it's easy to write a tool that works fine in most cases but then
     blows up when you log its output to a file.
 
     The proper solution is just to do the encoding right. This function sets
-    things up to do this in the most sensible way I can devise. This approach
-    sets up compatibility with Python 3, which has the stdio streams be in
-    text mode rather than bytes mode to begin with.
+    things up to do this in the most sensible way I can devise, if we're
+    running on Python 2. This approach sets up compatibility with Python 3,
+    which has the stdio streams be in text mode rather than bytes mode to
+    begin with.
 
     Basically, every command-line Python program should call this right at
     startup. I'm tempted to just invoke this code whenever this module is
     imported since I foresee many accidentally omissions of the call.
 
     """
+    if six.PY3:
+        return
+
     enc = sys.stdin.encoding or 'utf-8'
     sys.stdin = codecs.getreader (enc) (sys.stdin)
     enc = sys.stdout.encoding or enc
