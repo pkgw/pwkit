@@ -79,7 +79,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 __all__ = str ('base_factory_names factory_map').split ()
 
 
-import numpy as np
+import numpy as np, six
 
 base_factory_names = ('moreland_bluered cubehelix_dagreen cubehelix_blue '
                       'pkgw black_to_white black_to_red '
@@ -595,7 +595,7 @@ def showdemo (factoryname, **kwargs):
 def printmaps ():
     print ('Available color maps:')
 
-    for m in sorted (factory_map.iterkeys ()):
+    for m in sorted (six.iterkeys (factory_map)):
         print ('\t' + m)
 
 

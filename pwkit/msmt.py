@@ -81,7 +81,7 @@ __all__ = str ('''LimitError Lval Textual Uval absolute arccos arcsin arctan cos
     parsers scalar_unary_math textual_unary_math UQUANT_UNCERT
     uval_default_repval_method uval_dtype uval_nsamples uval_unary_math''').split ()
 
-import operator
+import operator, six
 
 import numpy as np
 
@@ -1976,10 +1976,9 @@ def _make_wrapped_unary_math (name):
 
 
 def _init_unary_math ():
-    from six import iterkeys
     g = globals ()
 
-    for name in iterkeys (scalar_unary_math):
+    for name in six.iterkeys (scalar_unary_math):
         if name == 'isfinite':
             g[name] = lambda v: _dispatch_unary_math (name, True, v)
         else:

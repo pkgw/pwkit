@@ -17,7 +17,7 @@ it, we make them available on the command line.
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import os.path, sys
+import os.path, six, sys
 import numpy as np
 
 from . import util
@@ -386,7 +386,7 @@ def bpplot (cfg):
 
     # normalize phases to avoid distracting wraps
 
-    for iant, ipol in sorted (antpols.iterkeys ()):
+    for iant, ipol in sorted (six.iterkeys (antpols)):
         for ispw, isoln in antpols[iant,ipol]:
             f = flags[ipol,:,isoln]
             meanph = np.angle (vals[ipol,~f,isoln].mean ())
@@ -416,7 +416,7 @@ def bpplot (cfg):
 
     # plot away
 
-    for iant, ipol in sorted (antpols.iterkeys ()):
+    for iant, ipol in sorted (six.iterkeys (antpols)):
         p_am = om.RectPlot ()
         p_ph = om.RectPlot ()
 
@@ -2599,7 +2599,7 @@ def cmdline_usage (stream, exitcode):
     print ('Supported tasks:', file=stream)
     print (file=stream)
 
-    for name in sorted (globals ().iterkeys ()):
+    for name in sorted (six.iterkeys (globals ())):
         if name.endswith ('_cli'):
             print (name[:-4], file=stream)
 

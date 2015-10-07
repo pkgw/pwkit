@@ -29,7 +29,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 __all__ = str ('''FileChunk InifileError mutate_in_place mutate_stream
                   mutate read_stream read write_stream write''').split ()
 
-import io, os, re
+import io, os, re, six
 from . import Holder, PKError
 
 sectionre = re.compile (r'^\[(.*)]\s*$')
@@ -145,7 +145,7 @@ def write_stream (stream, holders, defaultsection=None):
             raise ValueError ('cannot determine section name for item <%s>' % h)
         print ('[%s]' % s, file=stream)
 
-        for k in sorted (x for x in h.__dict__.iterkeys () if x != 'section'):
+        for k in sorted (x for x in six.iterkeys (h.__dict__) if x != 'section'):
             v = h.get (k)
             if v is None:
                 continue

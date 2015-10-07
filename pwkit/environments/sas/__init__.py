@@ -94,7 +94,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 __all__ = str ('').split ()
 
-import io, os.path
+import io, os.path, six
 
 from ... import PKError, cli
 from ...cli import multitool
@@ -302,7 +302,7 @@ be the ODF directory, containing a file named MANIFEST.<numbers> and many others
 
         # Sorted list of exposure numbers.
 
-        expnos = dict ((i, set ()) for i in self.instrmap.iterkeys ())
+        expnos = dict ((i, set ()) for i in six.iterkeys (self.instrmap))
 
         for p in srcpaths:
             instr = p.name[self.INSTRUMENT]
@@ -493,7 +493,7 @@ be the ODF directory, containing a file named MANIFEST.<numbers> and many others
 
         # Sorted list of exposure numbers.
 
-        expnos = dict ((i, set ()) for i in self.instrmap.iterkeys ())
+        expnos = dict ((i, set ()) for i in six.iterkeys (self.instrmap))
 
         for p in srcpaths:
             instr = p.name[self.INSTRUMENT]

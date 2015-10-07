@@ -175,14 +175,14 @@ class Holder (object):
 
     def __unicode__ (self):
         d = self.__dict__
-        s = sorted (d.iterkeys ())
+        s = sorted (six.iterkeys (d))
         return '{' + ', '.join ('%s=%s' % (k, d[k]) for k in s) + '}'
 
     __str__ = unicode_to_str
 
     def __repr__ (self):
         d = self.__dict__
-        s = sorted (d.iterkeys ())
+        s = sorted (six.iterkeys (d))
         return b'%s(%s)' % (self.__class__.__name__,
                             b', '.join (b'%s=%r' % (k, d[k]) for k in s))
 
@@ -225,8 +225,8 @@ class Holder (object):
         d = self.__dict__
         maxlen = 0
 
-        for k in d.iterkeys ():
+        for k in six.iterkeys (d):
             maxlen = max (maxlen, len (k))
 
         return '\n'.join (template % (maxlen, k, d[k])
-                          for k in sorted (d.iterkeys ()))
+                          for k in sorted (six.iterkeys (d)))

@@ -20,6 +20,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 __all__ = str ('read_stream read write_stream write').split ()
 
+import six
+
 from . import Holder, inifile, msmt
 
 
@@ -64,7 +66,7 @@ def _format_many (holders, defaultsection, extrapos, digest):
             digest.update ('s')
             digest.update (s)
 
-        for name in sorted (x for x in old.__dict__.iterkeys () if x != 'section'):
+        for name in sorted (x for x in six.iterkeys (old.__dict__) if x != 'section'):
             value = old.get (name)
             if value is None:
                 continue

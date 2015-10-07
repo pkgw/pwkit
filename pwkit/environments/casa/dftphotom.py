@@ -11,7 +11,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 __all__ = str ('Config dftphotom dftphotom_cli').split ()
 
-import sys, os.path, numpy as np
+import six, sys, os.path, numpy as np
 
 from ... import binary_type, text_type
 from ...astutil import *
@@ -302,7 +302,7 @@ def dftphotom (cfg):
     ms.close ()
 
     # Could gain some efficiency by using a better data structure than a dict().
-    smjd = sorted (tbins.iterkeys ())
+    smjd = sorted (six.iterkeys (tbins))
     cfg.format.header (cfg)
 
     for mjd in smjd:
