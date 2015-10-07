@@ -51,6 +51,7 @@ __all__ = str ('''np pi twopi halfpi R2A A2R R2D D2R R2H H2R F2S S2F J2000 angce
                   parsedeglon sphdist sphbear sphofs parang gaussian_convolve
                   gaussian_deconvolve AstrometryInfo''').split ()
 
+import six
 import numpy as np
 
 from . import text_type, unicode_to_str
@@ -631,7 +632,7 @@ class AstrometryInfo (object):
         if simbadident is not None:
             self.fill_from_simbad (simbadident)
 
-        for k, v in kwargs.iteritems ():
+        for k, v in six.iteritems (kwargs):
             setattr (self, k, v)
 
 
@@ -827,7 +828,7 @@ class AstrometryInfo (object):
         info = get_simbad_astrometry_info (ident, debug=debug)
         posref = 'unknown'
 
-        for k, v in info.iteritems ():
+        for k, v in six.iteritems (info):
             if '~' in v:
                 continue # no info
 

@@ -20,6 +20,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 __all__ = str ('read vizread write').split ()
 
+import six
 from . import Holder, PKError, io, msmt, reraise_context
 
 
@@ -264,7 +265,7 @@ def vizread (descpath, descsection, tabpath, tabwidth=8, **kwargs):
         if i.section != descsection:
             continue
 
-        for field, desc in i.__dict__.iteritems ():
+        for field, desc in six.iteritems (i.__dict__):
             if field == 'section':
                 continue
 

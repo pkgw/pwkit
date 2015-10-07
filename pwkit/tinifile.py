@@ -28,7 +28,7 @@ from . import Holder, inifile, msmt
 def _parse_one (old):
     new = {}
 
-    for name, value in old.__dict__.iteritems ():
+    for name, value in six.iteritems (old.__dict__):
         if name == 'section':
             new[name] = value
             continue

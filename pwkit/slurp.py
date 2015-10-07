@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 __all__ = str ('Event Redirection Slurper').split ()
 
-import fcntl, os, signal, subprocess, sys
+import fcntl, os, signal, six, subprocess, sys
 from select import select, error as selecterror
 
 from . import Holder
@@ -212,7 +212,7 @@ class Slurper (object):
     def __exit__ (self, etype, evalue, etb):
         self.proc.wait ()
 
-        for signum, prev_handler in self._prev_handlers.iteritems ():
+        for signum, prev_handler in six.iteritems (self._prev_handlers):
             signal.signal (signum, prev_handler)
 
         return False

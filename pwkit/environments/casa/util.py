@@ -40,6 +40,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 __all__ = str ('''INVERSE_C_MS INVERSE_C_MNS pol_names pol_to_miriad msselect_keys
                   datadir logger forkandlog sanitize_unicode tools''').split ()
 
+import six
 from ... import binary_type, text_type
 
 # Some constants that can be useful.
@@ -92,7 +93,7 @@ def sanitize_unicode (item):
     if isinstance (item, text_type):
         return item.encode ('utf8')
     if isinstance (item, dict):
-        return dict ((sanitize_unicode (k), sanitize_unicode (v)) for k, v in item.iteritems ())
+        return dict ((sanitize_unicode (k), sanitize_unicode (v)) for k, v in six.iteritems (item))
     if isinstance (item, (list, tuple)):
         return item.__class__ (sanitize_unicode (x) for x in item)
     return item

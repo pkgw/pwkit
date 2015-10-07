@@ -187,7 +187,7 @@ class Holder (object):
                             b', '.join (b'%s=%r' % (k, d[k]) for k in s))
 
     def __iter__ (self):
-        return self.__dict__.iteritems ()
+        return six.iteritems (self.__dict__)
 
     def __contains__ (self, key):
         return key in self.__dict__

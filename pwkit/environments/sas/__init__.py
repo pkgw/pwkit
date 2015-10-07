@@ -317,7 +317,7 @@ be the ODF directory, containing a file named MANIFEST.<numbers> and many others
 
         expseqs = {}
 
-        for k, v in expnos.iteritems ():
+        for k, v in six.iteritems (expnos):
             expseqs[self.instrmap[k]] = dict ((n, i) for i, n in enumerate (sorted (v)))
 
         # Do it.
@@ -506,7 +506,7 @@ be the ODF directory, containing a file named MANIFEST.<numbers> and many others
 
         expseqs = {}
 
-        for k, v in expnos.iteritems ():
+        for k, v in six.iteritems (expnos):
             expseqs[self.instrmap[k]] = dict ((n, i) for i, n in enumerate (sorted (v)))
 
         # Do it.

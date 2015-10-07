@@ -32,6 +32,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 __all__ = str ('cas_a commandline init_cas_a models spindexes').split ()
 
 
+import six
 import numpy as np
 
 from . import PKError
@@ -109,9 +110,7 @@ baars_parameters = {
 }
 
 def _init_generic_baars ():
-    from six import iteritems
-
-    for src, info in iteritems (baars_parameters):
+    for src, info in six.iteritems (baars_parameters):
         _add_generic_baars (src, *info)
 
 _init_generic_baars ()
@@ -150,9 +149,7 @@ vla_parameters = {
 }
 
 def _init_vla ():
-    from six import iteritems
-
-    for src, info in iteritems (vla_parameters):
+    for src, info in six.iteritems (vla_parameters):
         _add_vla_model (src, *info)
 
 _init_vla ()

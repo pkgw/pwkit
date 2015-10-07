@@ -100,6 +100,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 __all__ = str ('Custom KwargvError ParseError KeywordInfo ParseKeywords basic').split ()
 
+import six
 from . import Holder, PKError, text_type
 
 
@@ -320,7 +321,7 @@ class ParseKeywords (Holder):
         # understand. 'kw' is the keyword name exposed to the user; 'attrname'
         # is the name of the attribute to set on the resulting object.
 
-        for kw, ks in kwspecs.iteritems ():
+        for kw, ks in six.iteritems (kwspecs):
             if kw[0] == '_':
                 continue
 
@@ -370,7 +371,7 @@ class ParseKeywords (Holder):
 
         # Apply defaults, save parse info, done
 
-        for kw, ki in kwinfos.iteritems ():
+        for kw, ki in six.iteritems (kwinfos):
             self.set_one (ki._attrname, ki.default)
 
         self._kwinfos = kwinfos
@@ -443,7 +444,7 @@ class ParseKeywords (Holder):
             seen.add (kw)
             self.set_one (ki._attrname, pval)
 
-        for kw, ki in self._kwinfos.iteritems ():
+        for kw, ki in six.iteritems (self._kwinfos):
             if ki.required and kw not in seen:
                 raise KwargvError ('required keyword argument "%s" was not '
                                    'provided', kw)
