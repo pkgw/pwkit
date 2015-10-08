@@ -342,10 +342,14 @@ class TableBuilder (object):
         if isinstance (headings, basestring):
             headings = (headings, )
 
-        if not hasattr (datafunc, 'func_code'):
+        if hasattr (datafunc, 'func_code'):
+            nargs = datafunc.func_code.co_argcount
+        elif hasattr (datafunc, '__call__'):
+            # This is pretty hacky ...
+            nargs = datafunc.__call__.func_code.co_argcount - 1
+        else:
             raise ValueError ('datafunc must have a "func_code" field')
 
-        nargs = datafunc.func_code.co_argcount
         if nargs == 3:
             wrapped = datafunc # (item, formatter, builder)
         elif nargs == 2:
