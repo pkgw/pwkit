@@ -221,6 +221,7 @@ __all__ = str ('''enorm_fast enorm_mpfit_careful enorm_minpack
                   check_derivative''').split ()
 
 
+from six.moves import range
 import numpy as np
 
 # Quickie testing infrastructure
@@ -245,7 +246,7 @@ from numpy.testing import assert_array_almost_equal as Taaae
 from numpy.testing import assert_almost_equal as Taae
 
 def _timer_helper (n=100):
-    for i in xrange (n):
+    for i in range (n):
         for f in _testfuncs:
             f ()
 
@@ -319,7 +320,7 @@ def enorm_minpack (v, finfo):
 
     s1 = s2 = s3 = x1max = x3max = 0.
 
-    for i in xrange (v.size):
+    for i in range (v.size):
         xabs = abs (v[i])
 
         if xabs > rdwarf and xabs < agiant:
@@ -418,14 +419,14 @@ appeared in Linpack."""
         raise ValueError ('"a" must be at least as tall as it is wide')
 
     acnorm = np.empty (n, finfo.dtype)
-    for j in xrange (n):
+    for j in range (n):
         acnorm[j] = enorm (a[j], finfo)
 
     rdiag = acnorm.copy ()
     wa = acnorm.copy ()
     pmut = np.arange (n)
 
-    for i in xrange (n):
+    for i in range (n):
         # Find the row of a with the i'th largest norm, and note it in
         # the pivot vector.
 
@@ -462,7 +463,7 @@ appeared in Linpack."""
         # Apply the transformation to the remaining rows and update
         # the norms.
 
-        for j in xrange (i + 1, n):
+        for j in range (i + 1, n):
             a[j,i:] -= a[i,i:] * np.dot (a[i,i:], a[j,i:]) / a[i,i]
 
             if rdiag[j] != 0:
@@ -526,7 +527,7 @@ pmut[i]'th row of 'a' has the i'th biggest norm."""
 
     r = np.zeros ((n, m))
 
-    for i in xrange (n):
+    for i in range (n):
         r[i,:i] = packed[i,:i]
         r[i,i] = rdiag[i]
 
@@ -539,7 +540,7 @@ pmut[i]'th row of 'a' has the i'th biggest norm."""
     q = np.eye (m)
     v = np.empty (m)
 
-    for i in xrange (n):
+    for i in range (n):
         v[:] = packed[i]
         v[:i] = 0
 
@@ -595,7 +596,7 @@ def _qr_examples ():
     q, r, pmut = _qr_factor_full (a)
 
     r *= np.sign (q[0,0])
-    for i in xrange (3):
+    for i in range (3):
         # Normalize signs.
         q[i] *= (-1)**i * np.sign (q[i,0])
 
@@ -663,7 +664,7 @@ P^T (A^T A + D D) P = S^T S. (transpose?)
     # on input only the full lower triangle of R is meaningful, so we
     # can mirror that into the upper triangle without issues.
 
-    for i in xrange (n):
+    for i in range (n):
         r[i,i:] = r[i:,i]
 
     x = r.diagonal ().copy ()
@@ -671,7 +672,7 @@ P^T (A^T A + D D) P = S^T S. (transpose?)
 
     # "Eliminate the diagonal matrix d using a Givens rotation."
 
-    for i in xrange (n):
+    for i in range (n):
         # "Prepare the row of D to be eliminated, locating the
         # diagonal element using P from the QR factorization."
 
@@ -690,7 +691,7 @@ P^T (A^T A + D D) P = S^T S. (transpose?)
 
         bqtpi = 0.
 
-        for j in xrange (i, n):
+        for j in range (i, n):
             # "Determine a Givens rotation which eliminates the
             # appropriate element in the current row of D."
 
@@ -729,7 +730,7 @@ P^T (A^T A + D D) P = S^T S. (transpose?)
 
     nsing = n
 
-    for i in xrange (n):
+    for i in range (n):
         if sdiag[i] == 0.:
             nsing = i
             zwork[i:] = 0
@@ -738,7 +739,7 @@ P^T (A^T A + D D) P = S^T S. (transpose?)
     if nsing > 0:
         zwork[nsing-1] /= sdiag[nsing-1] # Degenerate case
         # "Reverse loop"
-        for i in xrange (nsing - 2, -1, -1):
+        for i in range (nsing - 2, -1, -1):
             s = np.dot (zwork[i+1:nsing], r[i,i+1:nsing])
             zwork[i] = (zwork[i] - s) / sdiag[i]
 
@@ -764,7 +765,7 @@ def _manual_qrd_solve (r, pmut, ddiag, bqt, dtype=np.float, build_s=False):
     # Rebuild s.
 
     swork = swork.T
-    for i in xrange (r.shape[1]):
+    for i in range (r.shape[1]):
         swork[i,i:] = 0
         swork[i,i] = sdiag[i]
 
@@ -910,13 +911,13 @@ are needed, but no more than 10 are performed.
     nnonsingular = n
     wa1 = bqt.copy ()
 
-    for i in xrange (n):
+    for i in range (n):
         if r[i,i] == 0:
             nnonsingular = i
             wa1[i:] = 0
             break
 
-    for j in xrange (nnonsingular - 1, -1, -1):
+    for j in range (nnonsingular - 1, -1, -1):
         wa1[j] /= r[j,j]
         wa1[:j] -= r[j,:j] * wa1[j]
 
@@ -941,7 +942,7 @@ are needed, but no more than 10 are performed.
         wa1 = ddiag[pmut] * wa2[pmut] / dxnorm
         wa1[0] /= r[0,0] # "Degenerate case"
 
-        for j in xrange (1, n):
+        for j in range (1, n):
             wa1[j] = (wa1[j] - np.dot (wa1[:j], r[j,:j])) / r[j,j]
 
         temp = enorm (wa1, finfo)
@@ -949,7 +950,7 @@ are needed, but no more than 10 are performed.
 
     # We can always find an upper bound.
 
-    for j in xrange (n):
+    for j in range (n):
         wa1[j] = np.dot (bqt[:j+1], r[j,:j+1]) / ddiag[pmut[j]]
 
     gnorm = enorm (wa1, finfo)
@@ -990,7 +991,7 @@ are needed, but no more than 10 are performed.
 
         wa1 = ddiag[pmut] * wa2[pmut] / dxnorm
 
-        for j in xrange (n - 1):
+        for j in range (n - 1):
             wa1[j] /= sdiag[j]
             wa1[j+1:n] -= r[j,j+1:n] * wa1[j]
         wa1[n-1] /= sdiag[n-1] # degenerate case
@@ -1110,13 +1111,13 @@ the corresponding covariance entries (pmut[k]) are set to zero.
     jrank = -1
     abstol = tol * abs(r[0,0])
 
-    for i in xrange (n):
+    for i in range (n):
         if abs (r[i,i]) <= abstol:
             break
 
         r[i,i] **= -1
 
-        for j in xrange (i):
+        for j in range (i):
             temp = r[i,i] * r[i,j]
             r[i,j] = 0.
             r[i,:j+1] -= temp * r[j,:j+1]
@@ -1126,8 +1127,8 @@ the corresponding covariance entries (pmut[k]) are set to zero.
     # Form the full lower triangle of the inverse(R^T R) in the full
     # lower triangle of R.
 
-    for i in xrange (jrank + 1):
-        for j in xrange (i):
+    for i in range (jrank + 1):
+        for j in range (i):
             r[j,:j+1] += r[i,j] * r[i,:j+1]
         r[i,:i+1] *= r[i,i]
 
@@ -1137,11 +1138,11 @@ the corresponding covariance entries (pmut[k]) are set to zero.
     wa = np.empty (n)
     wa.fill (r[0,0])
 
-    for i in xrange (n):
+    for i in range (n):
         pi = pmut[i]
         sing = i > jrank
 
-        for j in xrange (i + 1):
+        for j in range (i + 1):
             if sing:
                 r[i,j] = 0.
 
@@ -1155,7 +1156,7 @@ the corresponding covariance entries (pmut[k]) are set to zero.
 
     # Symmetrize.
 
-    for i in xrange (n):
+    for i in range (n):
         r[i,:i+1] = r[:i+1,i]
         r[i,i] = wa[i]
 
@@ -1436,7 +1437,7 @@ class Problem (object):
         if np.any (p[PI_F_LLIMIT] > p[PI_F_ULIMIT]):
             raise ValueError ('some param lower limits > upper limits')
 
-        for i in xrange (p.shape[1]):
+        for i in range (p.shape[1]):
             v = p[PI_F_VALUE,i]
 
             if np.isnan (v):
@@ -1741,11 +1742,11 @@ class Problem (object):
 
                 if nlpeg:
                     # Check total derivative of sum wrt lower-pegged params
-                    for i in xrange (nlpeg):
+                    for i in range (nlpeg):
                         if dot (fjac[whlpeg[i]], fvec) > 0:
                             fjac[whlpeg[i]] = 0
                 if nupeg:
-                    for i in xrange (nupeg):
+                    for i in range (nupeg):
                         if dot (fjac[whupeg[i]], fvec) < 0:
                             fjac[whupeg[i]] = 0
 
@@ -1774,7 +1775,7 @@ class Problem (object):
 
             wa4 = fvec.copy ()
 
-            for j in xrange (n):
+            for j in range (n):
                 temp3 = fjac[j,j]
                 if temp3 != 0:
                     fj = fjac[j,j:]
@@ -1793,7 +1794,7 @@ class Problem (object):
 
             gnorm = 0.
             if fnorm != 0:
-                for j in xrange (n):
+                for j in range (n):
                     l = pmut[j]
                     if wa2[l] != 0:
                         s = dot (fqt[:j+1], fjac[j,:j+1]) / fnorm
@@ -1882,7 +1883,7 @@ class Problem (object):
                 # Compute scaled predicted reduction and scaled directional
                 # derivative
 
-                for j in xrange (n):
+                for j in range (n):
                     wa3[j] = 0
                     wa3[:j+1] = wa3[:j+1] + fjac[j,:j+1] * wa1[pmut[j]]
 
@@ -1991,7 +1992,7 @@ class Problem (object):
                 cv = _calc_covariance (fjac[:,:n], pmut[:n])
                 cv.shape = (n, n)
 
-                for i in xrange (n): # can't do 2D fancy indexing
+                for i in range (n): # can't do 2D fancy indexing
                     covar[ifree[i],ifree] = cv[i]
 
         # Errors in parameters from the diagonal of covar.
@@ -2038,7 +2039,7 @@ class Problem (object):
         ifree = self._ifree
 
         if ifree.size < self._npar:
-            for i in xrange (ifree.size):
+            for i in range (ifree.size):
                 fjacfull[i] = fjacfull[ifree[i]]
 
 
@@ -2079,7 +2080,7 @@ class Problem (object):
         fp = np.empty (self._nout, dtype=finfo.dtype)
         fm = np.empty (self._nout, dtype=finfo.dtype)
 
-        for i in xrange (n):
+        for i in range (n):
             xp = params.copy ()
             xp[ifree[i]] += h[i]
             self._ycall (xp, fp)
@@ -2094,7 +2095,7 @@ class Problem (object):
                 fjacfull[i] = (fp - fm) / (2 * h[i])
 
         if self.debug_jac:
-            for i in xrange (n):
+            for i in range (n):
                 print ('Jac :', fjacfull[i])
 
 
@@ -2124,7 +2125,7 @@ class Problem (object):
     def _apply_ties (self, params):
         funcs = self._pinfoo[PI_O_TIEFUNC]
 
-        for i in xrange (self._npar):
+        for i in range (self._npar):
             if funcs[i] is not None:
                 params[i] = funcs[i] (params)
 
@@ -2405,7 +2406,7 @@ def _lmder1_linear_full_rank (n, m, factor, target_fnorm1, target_fnorm2):
     def jac (params, jac):
         # jac.shape = (n, m) by LMDER standards
         jac.fill (-2. / m)
-        for i in xrange (n):
+        for i in range (n):
             jac[i,i] += 1
 
     guess = np.ones (n) * factor
@@ -2438,14 +2439,14 @@ def _lmder1_linear_rank1 (n, m, factor, target_fnorm1, target_fnorm2, target_par
 
     def func (params, vec):
         s = 0
-        for j in xrange (n):
+        for j in range (n):
             s += (j + 1) * params[j]
-        for i in xrange (m):
+        for i in range (m):
             vec[i] = (i + 1) * s - 1
 
     def jac (params, jac):
-        for i in xrange (n):
-            for j in xrange (m):
+        for i in range (n):
+            for j in range (m):
                 jac[i,j] = (i + 1) * (j + 1)
 
     guess = np.ones (n) * factor
@@ -2475,17 +2476,17 @@ def _lmder1_linear_r1zcr (n, m, factor, target_fnorm1, target_fnorm2, target_par
 
     def func (params, vec):
         s = 0
-        for j in xrange (1, n - 1):
+        for j in range (1, n - 1):
             s += (j + 1) * params[j]
-        for i in xrange (m):
+        for i in range (m):
             vec[i] = i * s - 1
         vec[m-1] = -1
 
     def jac (params, jac):
         jac.fill (0)
 
-        for i in xrange (1, n - 1):
-            for j in xrange (1, m - 1):
+        for i in range (1, n - 1):
+            for j in range (1, m - 1):
                 jac[i,j] = j * (i + 1)
 
     guess = np.ones (n) * factor
@@ -2525,7 +2526,7 @@ def _lmder1_rosenbrock ():
     guess = np.asfarray ([-1.2, 1])
     norm1s = [0.491934955050e+01, 0.134006305822e+04, 0.1430000511923e+06]
 
-    for i in xrange (3):
+    for i in range (3):
         _lmder1_driver (2, func, jac, guess * 10**i,
                         norm1s[i], 0, [1, 1])
 
@@ -2640,7 +2641,7 @@ def _lmder1_bard ():
                        0.73, 0.96, 1.34, 2.10, 4.39])
 
     def func (params, vec):
-        for i in xrange (15):
+        for i in range (15):
             tmp2 = 15 - i
 
             if i > 7:
@@ -2651,7 +2652,7 @@ def _lmder1_bard ():
             vec[i] = y1[i] - (params[0] + (i + 1) / (params[1] * tmp2 + params[2] * tmp3))
 
     def jac (params, jac):
-        for i in xrange (15):
+        for i in range (15):
             tmp2 = 15 - i
 
             if i > 7:
@@ -2761,14 +2762,14 @@ def _lmder1_watson ():
         s1 = 0
         dx = 1
 
-        for j in xrange (1, params.size):
+        for j in range (1, params.size):
             s1 += j * dx * params[j]
             dx *= div
 
         s2 = 0
         dx = 1
 
-        for j in xrange (params.size):
+        for j in range (params.size):
             s2 += dx * params[j]
             dx *= div
 
@@ -2782,14 +2783,14 @@ def _lmder1_watson ():
         s2 = 0
         dx = 1
 
-        for j in xrange (params.size):
+        for j in range (params.size):
             s2 += dx * params[j]
             dx *= div
 
         temp = 2 * div * s2
         dx = 1. / div
 
-        for j in xrange (params.size):
+        for j in range (params.size):
             jac[j,:29] = dx * (j - temp)
             dx *= div
 

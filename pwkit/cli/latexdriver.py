@@ -13,6 +13,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 __all__ = str ('commandline').split ()
 
 import io, os.path, signal, subprocess, sys
+from six.moves import range
 
 from .. import PKError
 from ..io import ensure_dir, ensure_symlink
@@ -101,7 +102,7 @@ def commandline (argv=None):
     do_xetex = pop_option ('x', argv)
     do_letterpaper = pop_option ('l', argv)
 
-    for i in xrange (1, len (argv)):
+    for i in range (1, len (argv)):
         if argv[i].startswith ('-e'):
             bib_style = argv[i][2:]
             del argv[i]
@@ -159,7 +160,7 @@ def commandline (argv=None):
             # force at least one extra run:
             logrun (engine, engine_args, base, tlog)
 
-        for _ in xrange (max_iterations):
+        for _ in range (max_iterations):
             keepgoing = False
 
             # longtables seem to always tell you to rerun latex. Stripping out

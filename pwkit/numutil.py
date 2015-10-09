@@ -47,6 +47,7 @@ __all__ = str ('''broadcastize dfsmooth fits_recarray_to_data_frame make_step_lc
            weighted_mean_df weighted_variance''').split ()
 
 import functools
+from six.moves import range
 import numpy as np
 
 from .method_decorator import method_decorator
@@ -311,7 +312,7 @@ def slice_evenly_with_gaps (values, target_len, maxgap):
         offset = 0.
         prev = start
 
-        for _ in xrange (nsegments):
+        for _ in range (nsegments):
             offset += segment_len
             next = start + int (round (offset))
             if next > prev:
@@ -528,7 +529,7 @@ def parallel_newton (func, x0, fprime=None, par_args=(), simple_args=(), tol=1.4
     bc_1d = tuple (np.atleast_1d (a) for a in bc_raw)
 
     def gen_var_args ():
-        for i in xrange (bc_1d[0].size):
+        for i in range (bc_1d[0].size):
             yield tuple (x.flat[i] for x in bc_1d)
 
     def helper (i, _, var_args):
@@ -612,7 +613,7 @@ def parallel_quad (func, a, b, par_args=(), simple_args=(), parallel=True, **kwa
     bc_1d = tuple (np.atleast_1d (a) for a in bc_raw)
 
     def gen_var_args ():
-        for i in xrange (bc_1d[0].size):
+        for i in range (bc_1d[0].size):
             yield tuple (x.flat[i] for x in bc_1d)
 
     def helper (i, _, var_args):
@@ -626,7 +627,7 @@ def parallel_quad (func, a, b, par_args=(), simple_args=(), parallel=True, **kwa
         return np.asarray (result_list[0])
 
     result_arr = np.empty ((2,) + bc_raw[0].shape)
-    for i in xrange (bc_1d[0].size):
+    for i in range (bc_1d[0].size):
         result_arr[0].flat[i], result_arr[1].flat[i] = result_list[i]
     return result_arr
 

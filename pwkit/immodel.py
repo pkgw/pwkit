@@ -17,6 +17,7 @@ __all__ = str ('''FitComponent Fitter GaussianComponent beam_volume
 
 
 import sys, numpy as np
+from six.moves import range
 
 from . import ellipses, lmmin
 from .astutil import *
@@ -266,7 +267,7 @@ class Fitter (object):
             p = self.guess[comp.pofs:comp.pofs+comp.npar]
             cbounds = comp.lat_lon_bounds (p, noise * smallvalfactor)
 
-            for i in xrange (2):
+            for i in range (2):
                 cb = cbounds[i]
 
                 if cb is None:
@@ -345,8 +346,8 @@ class Fitter (object):
         x[X_DX] -= 0.5 * (patchw - 1)
         x[X_DY] -= 0.5 * (patchh - 1)
 
-        for i in xrange (patchh):
-            for j in xrange (patchw):
+        for i in range (patchh):
+            for j in range (patchw):
                 x[X_LAT,i,j], x[X_LON,i,j] = self.im.toworld ([i + y0, j + x0])
 
         x = self.x = x.reshape ((NX, patchh * patchw))

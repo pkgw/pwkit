@@ -52,6 +52,7 @@ __all__ = str ('''np pi twopi halfpi R2A A2R R2D D2R R2H H2R F2S S2F J2000 angce
                   gaussian_deconvolve AstrometryInfo''').split ()
 
 import six
+from six.moves import range
 import numpy as np
 
 from . import text_type, unicode_to_str
@@ -787,7 +788,7 @@ class AstrometryInfo (object):
 
         results = np.empty ((n, 2))
 
-        for i in xrange (n):
+        for i in range (n):
             o.ra = ras[i]
             o.dec = decs[i]
             o.promora = pmras[i]

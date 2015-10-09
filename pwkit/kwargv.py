@@ -42,7 +42,7 @@ programmatically, or on the command line. A typical use would be::
      from pwkit.io import Path
      data = Path (cfg.input).read_fits ()
 
-     for i in xrange (cfg.niter):
+     for i in range (cfg.niter):
          # ....
 
   def call_algorithm_in_code ():
@@ -101,6 +101,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 __all__ = str ('Custom KwargvError ParseError KeywordInfo ParseKeywords basic').split ()
 
 import six
+from six.moves import range
 from . import Holder, PKError, text_type
 
 
@@ -299,7 +300,7 @@ def _handle_fixed_list (ki, ks):
                               ki.minvals, ntot, ngot)
 
         result = list (defaults) # make a copy
-        for i in xrange (ngot):
+        for i in range (ngot):
             result[i] = parsers[i] (items[i])
         return result
 

@@ -10,6 +10,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 __all__ = str ('commandline').split ()
 
 import numpy as np, sys
+from six.moves import range
 
 from .. import PKError
 from . import multitool
@@ -93,7 +94,7 @@ class BlinkCommand (multitool.Command):
 
         jointmask = np.ma.nomask
 
-        for i in xrange (len (images)):
+        for i in range (len (images)):
             if jointmask is np.ma.nomask:
                 if images[i].mask is not np.ma.nomask:
                     jointmask = images[i].mask

@@ -24,6 +24,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 __all__ = str ('kbn_conf vec_kbn_conf').split ()
 
+from six.moves import range
 from numpy import exp, log, vectorize
 from scipy.special import gammaln
 from scipy.integrate import quad
@@ -34,7 +35,7 @@ def _cconst (N, B):
     s = 0.
     lnb = log (B)
 
-    for n in xrange (N + 1):
+    for n in range (N + 1):
         s += exp (-B + n * lnb - gammaln (n + 1))
 
     return 1. / s

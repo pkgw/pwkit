@@ -13,6 +13,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 __all__ = str ('Progress Config spwglue spwglue_cli').split ()
 
 import six
+from six.moves import range
 import numpy as np
 from ... import binary_type, text_type
 from ...kwargv import ParseKeywords, Custom
@@ -296,20 +297,20 @@ def _spwglue (cfg, prog, thisout, thisfield, nfields, fieldidx):
     tb = util.tools.table ()
     tb.open (b(os.path.join (cfg.vis, 'SPECTRAL_WINDOW')))
     spwcols = tb.colnames ()
-    spwout = [dict () for i in xrange (nout)]
+    spwout = [dict () for i in range (nout)]
 
     for col in spwcols:
         if col in _spw_match_cols:
-            for i in xrange (nout):
+            for i in range (nout):
                 _spwproc_match (tb, col, cfg.mapping[i], spwout[i])
         elif col in _spw_first_cols:
-            for i in xrange (nout):
+            for i in range (nout):
                 _spwproc_first (tb, col, cfg.mapping[i], spwout[i])
         elif col in _spw_scsum_cols:
-            for i in xrange (nout):
+            for i in range (nout):
                 _spwproc_scsum (tb, col, cfg.mapping[i], spwout[i])
         elif col in _spw_concat_cols:
-            for i in xrange (nout):
+            for i in range (nout):
                 _spwproc_concat (tb, col, cfg.mapping[i], spwout[i])
         elif col in _spw_empty_cols:
             pass
@@ -321,7 +322,7 @@ def _spwglue (cfg, prog, thisout, thisfield, nfields, fieldidx):
     tb.close ()
     inspw2outspw = {}
 
-    for i in xrange (nout):
+    for i in range (nout):
         ofs = 0
 
         for inspw in cfg.mapping[i]:
@@ -337,9 +338,9 @@ def _spwglue (cfg, prog, thisout, thisfield, nfields, fieldidx):
     ddspws = np.asarray (tb.getcol (b'SPECTRAL_WINDOW_ID'))
     tb.close ()
     indd2outdd = {}
-    ddout = [{'SPECTRAL_WINDOW_ID': i} for i in xrange (nout)]
+    ddout = [{'SPECTRAL_WINDOW_ID': i} for i in range (nout)]
 
-    for i in xrange (ddspws.size):
+    for i in range (ddspws.size):
         inspw = ddspws[i]
 
         if inspw not in inspw2outspw:
@@ -371,7 +372,7 @@ def _spwglue (cfg, prog, thisout, thisfield, nfields, fieldidx):
     srckeys = set ()
     srcout = []
 
-    for i in xrange (tb.nrows ()):
+    for i in range (tb.nrows ()):
         data = dict ((c, tb.getcell (b(c), i)) for c in srccols)
         m = inspw2outspw.get (data['SPECTRAL_WINDOW_ID'])
         if m is None:
@@ -439,7 +440,7 @@ def _spwglue (cfg, prog, thisout, thisfield, nfields, fieldidx):
     dt.open (b(thisout), nomodify=False)
     outrow = 0
 
-    for outspw in xrange (nout):
+    for outspw in range (nout):
         q = ' or '.join ('DATA_DESC_ID == %d' % t[0] for t in six.iteritems (indd2outdd)
                          if t[1][0] == outspw)
         if cfg.hackfield is not None:
@@ -500,7 +501,7 @@ def _spwglue (cfg, prog, thisout, thisfield, nfields, fieldidx):
             if cfg.hackfield is not None:
                 vdata['FIELD_ID'].fill (thisfield)
 
-            for i in xrange (nread):
+            for i in range (nread):
                 outspw, outofs = indd2outdd[vdata['DATA_DESC_ID'][i]]
                 newident = tuple (vdata[c][i] for c in _vis_ident_cols)
 

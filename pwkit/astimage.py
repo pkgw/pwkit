@@ -29,6 +29,7 @@ __all__ = str ('''UnsupportedError AstroImage MIRIADImage PyrapImage FITSImage S
                   open''').split ()
 
 import six
+from six.moves import range
 import numpy as np
 from numpy import pi
 
@@ -318,7 +319,7 @@ def _get_wcs_scale (wcs, naxis):
     if not is_pywcs:
         from astropy.units import UnitsError, rad
 
-    for i in xrange (naxis):
+    for i in range (naxis):
         u = wcs.wcs.cunit[wcscale.size - 1 - i]
 
         if is_pywcs:
@@ -415,7 +416,7 @@ class MIRIADImage (AstroImage):
         self.shape = np.empty (naxis, dtype=np.int)
         self.axdescs = []
 
-        for i in xrange (naxis):
+        for i in range (naxis):
             q = naxis - i
             self.shape[i] = h.getScalarItem ('naxis%d' % q, 1)
             self.axdescs.append (h.getScalarItem ('ctype%d' % q, '???'))
@@ -474,7 +475,7 @@ class MIRIADImage (AstroImage):
             n = np.prod (nonplane)
             fdata = data.reshape ((n, self.shape[-2], self.shape[-1]))
 
-            for i in xrange (n):
+            for i in range (n):
                 # Must convert from C to Fortran indexing convention
                 axes = np.unravel_index (i, nonplane)[::-1]
                 self._handle.readPlane (axes, fdata[i], topIsZero=flip)
@@ -502,7 +503,7 @@ class MIRIADImage (AstroImage):
             n = np.prod (nonplane)
             fdata = data.reshape ((n, self.shape[-2], self.shape[-1]))
 
-            for i in xrange (n):
+            for i in range (n):
                 axes = np.unravel_index (i, nonplane)
                 self._handle.writePlane (fdata[i], axes)
 
@@ -844,7 +845,7 @@ class CasaCImage (AstroImage):
 
         self.axdescs = [None] * naxis
         names = cs.names ()
-        for i in xrange (naxis):
+        for i in range (naxis):
             self.axdescs[i] = names[p2w[i]]
 
         self.charfreq = _casac_convert (cs.referencevalue (format=b'm', type=b'spectral')
@@ -922,7 +923,7 @@ class CasaCImage (AstroImage):
 
         naxis = self.shape.size
         world = np.empty (naxis)
-        for i in xrange (naxis):
+        for i in range (naxis):
             s = '*%d' % (self._pax2wax[i] + 1)
             world[i] = qtys[s]['value']
 
@@ -935,7 +936,7 @@ class CasaCImage (AstroImage):
         ncwa = self._wax2pax.size # num of CASA world axes
         casaworld = np.zeros (ncwa)
 
-        for i in xrange (ncwa):
+        for i in range (ncwa):
             casaworld[self._pax2wax[i]] = myworld[i]
 
         casapixel = self._handle.topixel (casaworld)['numeric']
@@ -1017,7 +1018,7 @@ class FITSImage (AstroImage):
         self.shape = np.empty (naxis, dtype=np.int)
         self.axdescs = []
 
-        for i in xrange (naxis):
+        for i in range (naxis):
             q = naxis - i
             self.shape[i] = header.get ('naxis%d' % q, 1)
             self.axdescs.append (header.get ('ctype%d' % q, '???'))
@@ -1140,7 +1141,7 @@ class SimpleImage (AstroImage):
         checkworld2 = parent.toworld (parent.shape - 1.) # (for pyrap)
         self._topixelok = True
 
-        for i in xrange (parent.shape.size):
+        for i in range (parent.shape.size):
             # Two things to check. Firstly, that all non-lat/lon axes have
             # only one pixel; this limitation can be relaxed if we add a
             # mechanism for choosing which non-spatial pixels to work with.
@@ -1315,7 +1316,7 @@ class NaiveSubImage (AstroImage):
         self._checkOpen ()
         data = self._handle.read (flip=flip)
         slices = tuple (slice (self._pixofs[i], self._pixofs[i] + self.shape[i])
-                        for i in xrange (self.shape.size))
+                        for i in range (self.shape.size))
         data = data[slices]
 
         if squeeze:

@@ -9,6 +9,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 __all__ = str ('commandline').split ()
 
 import math, numpy as np, os, sys
+from six.moves import range
 
 from .. import PKError
 from ..astutil import *
@@ -458,7 +459,7 @@ class Summfits (multitool.Command):
                 h = hdu.header[ck]
                 output (2, '%s commentary', ck)
 
-                for ccidx in xrange (len (h)):
+                for ccidx in range (len (h)):
                     s = h[ccidx]
                     buf += s
 

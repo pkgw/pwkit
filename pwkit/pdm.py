@@ -24,6 +24,7 @@ __all__ = str ('PDMResult pdm').split ()
 
 import numpy as np
 from collections import namedtuple
+from six.moves import range
 
 from .numutil import weighted_variance
 from .parallel import make_parallel_helper
@@ -36,11 +37,11 @@ def one_theta (t, x, wt, period, nbin, nshift, v_all):
     phase0 = t / period
     numer = denom = 0.
 
-    for i in xrange (nshift):
+    for i in range (nshift):
         phase = (phase0 + float (i) / (nshift * nbin)) % 1.
         binloc = np.floor (phase * nbin).astype (np.int)
 
-        for j in xrange (nbin):
+        for j in range (nbin):
             wh = np.where (binloc == j)[0]
             if wh.size < 3:
                 continue
@@ -170,7 +171,7 @@ def pdm (t, x, u, periods, nbin, nshift=8, nsmc=256, numc=256, weights=False, pa
         mc_thetas = np.empty (periods.shape)
         mc_tmins = np.empty (nsmc)
 
-        for i in xrange (nsmc):
+        for i in range (nsmc):
             shuf = np.random.permutation (x.size)
             # Note that what we do here is very MapReduce-y. I'm not aware of
             # an easy way to implement this computation in that model, though.
@@ -185,7 +186,7 @@ def pdm (t, x, u, periods, nbin, nshift=8, nsmc=256, numc=256, weights=False, pa
 
         mc_pmins = np.empty (numc)
 
-        for i in xrange (numc):
+        for i in range (numc):
             noised = np.random.normal (x, u)
             mc_thetas = get_thetas ((t, noised, wt, p, nbin, nshift, v_all)
                                     for p in periods)

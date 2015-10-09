@@ -52,6 +52,7 @@ try:
 except ImportError:
     import numpy.polynomial as npoly
 
+from six.moves import range
 from . import binary_type, text_type
 
 
@@ -352,7 +353,7 @@ class PolynomialModel (_ModelBase):
 
 
     def solve (self):
-        self.pnames = ['a%d' % i for i in xrange (self.maxexponent + 1)]
+        self.pnames = ['a%d' % i for i in range (self.maxexponent + 1)]
         # Based on my reading of the polyfit() docs, I think w=invsigma**2 is right...
         self.params = npoly.polyfit (self.x, self.data, self.maxexponent,
                                      w=self.invsigma**2)
@@ -538,7 +539,7 @@ class ComposedModel (_ModelBase):
         else:
             guess = np.array (guess, dtype=np.float, ndmin=1, copy=True)
 
-            for i in xrange (self.force_guess.size):
+            for i in range (self.force_guess.size):
                 if np.isfinite (self.force_guess[i]):
                     guess[i] = self.force_guess[i]
 
@@ -616,7 +617,7 @@ class AddValuesComponent (ModelComponent):
         self.npar = nvals
 
     def _param_names (self):
-        for i in xrange (self.npar):
+        for i in range (self.npar):
             yield 'v%d' % i
 
     def model (self, pars, mdata):
@@ -647,7 +648,7 @@ class AddPolynomialComponent (ModelComponent):
         self.x = np.array (x, dtype=np.float, ndmin=1, copy=False, subok=True)
 
     def _param_names (self):
-        for i in xrange (self.npar):
+        for i in range (self.npar):
             yield 'c%d' % i
 
     def model (self, pars, mdata):
@@ -656,7 +657,7 @@ class AddPolynomialComponent (ModelComponent):
     def deriv (self, pars, jac):
         w = np.ones_like (self.x)
 
-        for i in xrange (self.npar):
+        for i in range (self.npar):
             jac[i] = w
             w *= self.x
 
@@ -682,7 +683,7 @@ def _broadcast_shapes (s1, s2):
     n = max (n1, n2)
     res = [1] * n
 
-    for i in xrange (n):
+    for i in range (n):
         if i >= n1:
             c1 = 1
         else:
@@ -953,7 +954,7 @@ class MatMultComponent (ModelComponent):
             c.deriv (p, jb[pofs:pofs+c.npar,i,:])
             pofs += c.npar
 
-        for i in xrange (self.npar):
+        for i in range (self.npar):
             jac[i] = (np.dot (ja[i], mb) + np.dot (ma, jb[i])).reshape (k * nd)
 
 

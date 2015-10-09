@@ -43,6 +43,7 @@ __all__ = str ('make_parallel_helper').split ()
 import functools, signal
 from multiprocessing.pool import Pool
 from multiprocessing import Process, Queue, TimeoutError
+from six.moves import range
 
 
 def _initializer_wrapper (actual_initializer, *rest):
@@ -284,7 +285,7 @@ class MultiprocessingPoolHelper (ParallelHelper):
         out_queue = Queue ()
         procs = [Process (target=multiprocessing_ppmap_worker,
                           args=(in_queue, out_queue, func, fixed_arg))
-                 for _ in xrange (n_procs)]
+                 for _ in range (n_procs)]
 
         for p in procs:
             p.daemon = True
@@ -301,7 +302,7 @@ class MultiprocessingPoolHelper (ParallelHelper):
         for p in procs:
             in_queue.put ((None, None))
 
-        for _ in xrange (n_items):
+        for _ in range (n_items):
             i, value = out_queue.get ()
             result[i] = value
 

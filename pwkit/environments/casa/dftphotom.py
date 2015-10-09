@@ -12,6 +12,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 __all__ = str ('Config dftphotom dftphotom_cli').split ()
 
 import six, sys, os.path, numpy as np
+from six.moves import range
 
 from ... import binary_type, text_type
 from ...astutil import *
@@ -242,7 +243,7 @@ def dftphotom (cfg):
                 # convert to m^-1 so we can multiply against UVW directly:
                 freqs = freqs[:,0] * util.INVERSE_C_MS
 
-            for i in xrange (cols['time'].size): # all records
+            for i in range (cols['time'].size): # all records
                 time = cols['time'][i]
                 # get out of UTC as fast as we can! For some reason
                 # giving 'unit=s' below doesn't do what one might hope it would.
@@ -261,7 +262,7 @@ def dftphotom (cfg):
                     uvw = cols['uvw'][:,i]
                     ph = np.exp ((0-2j) * np.pi * np.dot (lmn, uvw) * freqs)
 
-                for j in xrange (cols['flag'].shape[0]): # all polns
+                for j in range (cols['flag'].shape[0]): # all polns
                     # We just average together all polarizations right now!
                     # (Not actively, but passively by just iterating over them.)
                     data = cols[cfg.datacol][j,:,i]

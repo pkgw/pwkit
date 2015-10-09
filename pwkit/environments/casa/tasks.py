@@ -18,6 +18,7 @@ it, we make them available on the command line.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import os.path, six, sys
+from six.moves import range
 import numpy as np
 
 from . import util
@@ -369,8 +370,8 @@ def bpplot (cfg):
     antpols = {}
     seenspws = set ()
 
-    for ipol in xrange (npol):
-        for isoln in xrange (nsoln):
+    for ipol in range (npol):
+        for isoln in range (nsoln):
             if not flags[ipol,:,isoln].all ():
                 k = (ants[isoln], ipol)
                 byspw = antpols.get (k)
@@ -715,7 +716,7 @@ def extractbpflags (calpath, deststream):
         print ("antenna='%s&*' spw='%d:%d~%d' reason='BANDPASS_FLAGGED'" % \
                (antnames[antidx], spwidx, chanstart, chanend), file=deststream)
 
-    for row in xrange (tb.nrows ()):
+    for row in range (tb.nrows ()):
         ant = tb.getcell (b'ANTENNA1', row)
         spw = tb.getcell (b'SPECTRAL_WINDOW_ID', row)
         flag = tb.getcell (b'FLAG', row)
@@ -726,7 +727,7 @@ def extractbpflags (calpath, deststream):
 
         runstart = None
 
-        for i in xrange (sqflag.size):
+        for i in range (sqflag.size):
             if sqflag[i]:
                 # This channel is flagged. Start a run if not already in one.
                 if runstart is None:
@@ -1556,7 +1557,7 @@ def gpplot (cfg):
     # normalize phases to avoid distracting wraps
 
     for iant in seenants:
-        for ipol in xrange (npol):
+        for ipol in range (npol):
             filter = (ants == iant) & ~flags[ipol]
 
             for ispw in seenspws:
@@ -1601,7 +1602,7 @@ def gpplot (cfg):
     maxtimegap = 10. / 1440 # 10 minutes, in units of days
 
     for iant in seenants:
-        for ipol in xrange (npol):
+        for ipol in range (npol):
             filter = (ants == iant) & ~flags[ipol]
             p_am = om.RectPlot ()
             p_ph = om.RectPlot ()
@@ -1932,7 +1933,7 @@ def mfsclean (cfg):
         # here.
         models, restoreds, resids, psfs = [], [], [], []
 
-        for i in xrange (cfg.nterms):
+        for i in range (cfg.nterms):
             models.append (cfg.imbase + 'model.tt%d' % i)
             restoreds.append (cfg.imbase + 'image.tt%d' % i)
             resids.append (cfg.imbase + 'residual.tt%d' % i)

@@ -50,6 +50,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 __all__ = str ('Cycler Viewer Viewport cycle view').split ()
 
 import sys, time
+from six.moves import range
 import numpy as np
 import cairo
 # There is a gi.repository.cairo but it barely exposes any API, and it seems
@@ -875,7 +876,7 @@ def cycle (arrays, descs=None, cadence=0.6, toworlds=None,
                     return 'lat=%s lon=%s' % (fmtdeglat (lat),
                                               fmthours (lon))
 
-            tostatuses = [make_status_func (toworlds[i]) for i in xrange (n)]
+            tostatuses = [make_status_func (toworlds[i]) for i in range (n)]
 
     def fmtstatusi (i, x, y):
         s = ''

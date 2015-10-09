@@ -55,6 +55,7 @@ __all__ = str ('''AlignedNumberFormatter BasicFormatter BoolFormatter LimitForma
                   latexify''').split ()
 
 import six
+from six.moves import range
 from . import Holder, PKError, binary_type, msmt, reraise_context, text_type
 
 
@@ -113,7 +114,7 @@ class Referencer (object):
 
     def dump (self):
         s = b', '.join (b'[%d] %s' % (i + 1, _reftext (self.bibkeys[i]))
-                       for i in xrange (len (self.bibkeys)))
+                       for i in range (len (self.bibkeys)))
 
         if self.seenthiswork:
             s = (b'[%s]: %s, ' % (self.thisworkmarker, self.thisworktext)) + s
@@ -459,7 +460,7 @@ class TableBuilder (object):
 
         cr = b''
 
-        for i in xrange (nheadrows):
+        for i in range (nheadrows):
             write (cr)
 
             for hidx, cidx, lds, lde in self._hclines:
@@ -488,7 +489,7 @@ class TableBuilder (object):
                             nlefttoskip = h.nlogcols
 
                             nlatex = 0
-                            for j in xrange (h.nlogcols):
+                            for j in range (h.nlogcols):
                                 nlatex += colinfo[cidx + j].nlcol
 
                             write (b'\\multicolumn{')

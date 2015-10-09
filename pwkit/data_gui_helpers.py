@@ -21,6 +21,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 __all__ = str ('data_to_argb32 Clipper ColorMapper LazyComputer Stretcher').split ()
 
 import numpy as np
+from six.moves import range
 
 from . import colormaps
 
@@ -69,11 +70,11 @@ class LazyComputer (object):
         tyofs = tilei
         pyofs = tilei * ts
 
-        for i in xrange (nyt):
+        for i in range (nyt):
             txofs = tilej
             pxofs = tilej * ts
 
-            for j in xrange (nxt):
+            for j in range (nxt):
                 if not valid[tyofs,txofs]:
                     func (data[pyofs:pyofs+ts,pxofs:pxofs+ts],
                           buf[pyofs:pyofs+ts,pxofs:pxofs+ts])

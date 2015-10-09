@@ -28,6 +28,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 __all__ = str ('nlogn bin_bblock tt_bblock bs_tt_bblock').split ()
 
 
+from six.moves import range
 import numpy as np
 
 from . import Holder
@@ -88,11 +89,11 @@ def bin_bblock (widths, counts, p0=0.05):
     best = np.zeros (ncells, dtype=np.float)
     last = np.zeros (ncells, dtype=np.int)
 
-    for _ in xrange (10):
+    for _ in range (10):
         # Pluggable num-change-points prior-weight expression:
         ncp_prior = 4 - np.log (p0 / (0.0136 * ncells**0.478))
 
-        for r in xrange (ncells):
+        for r in range (ncells):
             tk = block_remainders[:r+1] - block_remainders[r+1]
             nk = count_remainders[:r+1] - count_remainders[r+1]
 
@@ -148,7 +149,7 @@ def bin_bblock (widths, counts, p0=0.05):
     info.counts = np.empty (nblocks, dtype=np.int)
     info.widths = np.empty (nblocks)
 
-    for iblk in xrange (nblocks):
+    for iblk in range (nblocks):
         cellstart = blockstarts[iblk]
         if iblk == nblocks - 1:
             cellend = ncells - 1
@@ -212,7 +213,7 @@ def tt_bblock (tstarts, tstops, times, p0=0.05):
         raise ValueError ('no times may be smaller than first tstart')
     if times.max () > tstops[-1]:
         raise ValueError ('no times may be larger than last tstop')
-    for i in xrange (1, ngti):
+    for i in range (1, ngti):
         if np.where ((times > tstops[i-1]) & (times < tstarts[i]))[0].size:
             raise ValueError ('no times may fall in goodtime gap #%d' % i)
     if p0 < 0 or p0 >= 1.:
@@ -232,7 +233,7 @@ def tt_bblock (tstarts, tstops, times, p0=0.05):
     ledges = np.empty (0)
     redges = np.empty (0)
 
-    for i in xrange (ngti):
+    for i in range (ngti):
         tstart, tstop = tstarts[i], tstops[i]
 
         w = np.where ((utimes >= tstart) & (utimes <= tstop))[0]
@@ -316,7 +317,7 @@ def bs_tt_bblock (times, tstarts, tstops, p0=0.05, nbootstrap=512):
     bsrsums = np.zeros (info.nblocks)
     bsrsumsqs = np.zeros (info.nblocks)
 
-    for _ in xrange (nbootstrap):
+    for _ in range (nbootstrap):
         bstimes = times[np.random.randint (0, times.size, times.size)]
         bstimes.sort ()
         bsinfo = tt_bblock (tstarts, tstops, bstimes, p0)

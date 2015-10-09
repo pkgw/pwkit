@@ -30,6 +30,7 @@ __all__ = str ('''FileChunk InifileError mutate_in_place mutate_stream
                   mutate read_stream read write_stream write''').split ()
 
 import io, os, re, six
+from six.moves import range
 from . import Holder, PKError
 
 sectionre = re.compile (r'^\[(.*)]\s*$')
@@ -198,7 +199,7 @@ class FileChunk (object):
         newline = ((u'%s = %s' % (name, value)) + os.linesep).encode ('utf8')
         first = True
 
-        for i in xrange (len (self._lines)):
+        for i in range (len (self._lines)):
             assoc, line = self._lines[i]
 
             if assoc != name:
@@ -213,7 +214,7 @@ class FileChunk (object):
 
         if first:
             # Need to append the line to the last block
-            for i in xrange (len (self._lines) - 1, -1, -1):
+            for i in range (len (self._lines) - 1, -1, -1):
                 if self._lines[i][0] is not None:
                     break
 

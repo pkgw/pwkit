@@ -82,6 +82,7 @@ __all__ = str ('''LimitError Lval Textual Uval absolute arccos arcsin arctan cos
     uval_default_repval_method uval_dtype uval_nsamples uval_unary_math''').split ()
 
 import operator, six
+from six.moves import range
 
 import numpy as np
 
@@ -1158,7 +1159,7 @@ class Lval (object):
             # multiplies. Not the most efficient, but reduces the chance for
             # bugs.
             rv = Lval.from_other (self)
-            for _ in xrange (i - 1):
+            for _ in range (i - 1):
                 rv *= self
 
         if reciprocate:
