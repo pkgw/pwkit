@@ -28,6 +28,7 @@ TODO: image units (ie, "set units to Jy/px"; standardization also a pain)
 __all__ = str ('''UnsupportedError AstroImage MIRIADImage PyrapImage FITSImage SimpleImage
                   open''').split ()
 
+import six
 import numpy as np
 from numpy import pi
 
@@ -640,7 +641,7 @@ class PyrapImage (AstroImage):
         radian = quantity (1., 'rad')
 
         for item in c.get_axes ():
-            if isinstance (item, basestring):
+            if isinstance (item, six.string_types):
                 self.axdescs.append (item.replace (' ', '_'))
             else:
                 for subitem in item:
@@ -655,7 +656,7 @@ class PyrapImage (AstroImage):
         i = 0
 
         for item in c.get_unit ():
-            if isinstance (item, basestring):
+            if isinstance (item, six.string_types):
                 wcscale[i] = getconversion (item)
                 i += 1
             elif len (item) == 0:

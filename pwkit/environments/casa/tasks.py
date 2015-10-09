@@ -1288,7 +1288,7 @@ def gaincal (cfg):
     else:
         solkws['t'] = str (cfg.solint)
 
-    if isinstance (cfg.refant, basestring):
+    if isinstance (cfg.refant, six.string_types):
         solkws['refant'] = cfg.refant
     else:
         solkws['refant'] = ','.join (cfg.refant)

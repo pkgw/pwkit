@@ -109,7 +109,7 @@ def read_stream (stream):
 
 
 def read (stream_or_path):
-    if isinstance (stream_or_path, basestring):
+    if isinstance (stream_or_path, six.string_types):
         return read_stream (io.open (stream_or_path, 'rt'))
     return read_stream (stream_or_path)
 
@@ -173,7 +173,7 @@ def write (stream_or_path, holders, **kwargs):
       `section` field.
 
     """
-    if isinstance (stream_or_path, basestring):
+    if isinstance (stream_or_path, six.string_types):
         return write_stream (io.open (stream_or_path, 'wt'), holders, **kwargs)
     else:
         return write_stream (stream_or_path, holders, **kwargs)
@@ -307,10 +307,10 @@ def mutate_stream (instream, outstream):
 
 
 def mutate (instream_or_path, outstream_or_path, outmode='wb'):
-    if isinstance (instream_or_path, basestring):
+    if isinstance (instream_or_path, six.string_types):
         instream_or_path = io.open (instream_or_path, 'rb')
 
-    if isinstance (outstream_or_path, basestring):
+    if isinstance (outstream_or_path, six.string_types):
         outstream_or_path = io.open (outstream_or_path, outmode)
 
     return mutate_stream (instream_or_path, outstream_or_path)

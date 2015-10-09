@@ -157,7 +157,7 @@ def write (stream, items, fieldnames, tabwidth=8):
     Returns nothing.
 
     """
-    if isinstance (fieldnames, basestring):
+    if isinstance (fieldnames, six.string_types):
         fieldnames = fieldnames.split ()
 
     maxlens = [0] * len (fieldnames)

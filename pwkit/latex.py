@@ -54,6 +54,7 @@ __all__ = str ('''AlignedNumberFormatter BasicFormatter BoolFormatter LimitForma
                   WideHeader latexify_l3col latexify_n2col latexify_u3col
                   latexify''').split ()
 
+import six
 from . import Holder, PKError, binary_type, msmt, reraise_context, text_type
 
 
@@ -339,7 +340,7 @@ class TableBuilder (object):
         if formatter is None:
             formatter = BasicFormatter ()
 
-        if isinstance (headings, basestring):
+        if isinstance (headings, six.string_types):
             headings = (headings, )
 
         if hasattr (datafunc, 'func_code'):
