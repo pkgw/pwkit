@@ -50,10 +50,12 @@ class SlurperIterator (object):
     def __iter__ (self):
         return self
 
-    def next (self):
+    def __next__ (self): # Python 3
         if not len (self.parent._files):
             raise StopIteration ()
         return self.parent._next_lowlevel ()
+
+    next = __next__ # Python 2
 
 
 def _decode_streams (event_source, which_events, encoding):
