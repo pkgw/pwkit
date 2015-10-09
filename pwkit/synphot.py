@@ -780,7 +780,11 @@ class SdssBandpass (Bandpass):
         h = bandpass_data_fits ('sdss3_filter_responses.fits')
         section = 'ugriz'.index (band[0]) + 1
         d = h[section].data
-        df = pd.DataFrame ({'wlen': d.wavelength, 'resp': d.respt})
+        if d.wavelength.dtype.isnative:
+            df = pd.DataFrame ({'wlen': d.wavelength, 'resp': d.respt})
+        else:
+            df = pd.DataFrame ({'wlen': d.wavelength.byteswap (True).newbyteorder (),
+                                'resp': d.respt.byteswap (True).newbyteorder ()})
         df.resp *= df.wlen # QE to equal-energy response.
         return df
 
