@@ -9,6 +9,7 @@ Functions:
 backtrace_on_usr1 - Make it so that a Python backtrace is printed on SIGUSR1.
 check_usage       - Print usage and exit if --help is in argv.
 die               - Print an error and exit.
+fork_detached_process - Fork a detached process.
 pop_option        - Check for a single command-line option.
 propagate_sigint  - Ensure that calling shells know when we die from SIGINT.
 show_usage        - Print a usage message.
@@ -27,8 +28,9 @@ multitool - Framework for command-line programs with sub-commands.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = str ('''check_usage die pop_option print_tracebacks propagate_sigint show_usage
-                  unicode_stdio warn wrong_usage''').split ()
+__all__ = str ('''check_usage die fork_detached_process pop_option print_tracebacks
+                  propagate_sigint show_usage unicode_stdio warn
+                  wrong_usage''').split ()
 
 import codecs, os, signal, six, sys, traceback
 from .. import text_type
@@ -254,6 +256,93 @@ class print_tracebacks (object):
         from traceback import print_exception
         print_exception (etype, evalue, etb, file=self.file)
         return True # swallow this exception
+
+
+def fork_detached_process ():
+    """Fork this process, creating a subprocess detached from the current context.
+
+    Returns a :class:`pwkit.Holder` instance with information about what
+    happened. Its fields are:
+
+    whoami
+      A string, either "original" or "forked" depending on which process we are.
+    pipe
+      An open binary file descriptor. It is readable by the original process
+      and writable by the forked one. This can be used to pass information
+      from the forked process to the one that launched it.
+    forkedpid
+      The PID of the forked process. Note that this process is *not* a child of
+      the original one, so waitpid() and friends may not be used on it.
+
+    Example::
+
+      from pwkit import cli
+
+      info = cli.fork_detached_process ()
+      if info.whoami == 'original':
+          message = info.pipe.readline ().decode ('utf-8')
+          if not len (message):
+              cli.die ('forked process (PID %d) appears to have died', info.forkedpid)
+          info.pipe.close ()
+          print ('forked process said:', message)
+      else:
+          info.pipe.write ('hello world'.encode ('utf-8'))
+          info.pipe.close ()
+
+    As always, the *vital* thing to understand is that immediately after a
+    call to this function, you have **two** nearly-identical but **entirely
+    independent** programs that are now both running simultaneously. Until you
+    execute some kind of ``if`` statement, the only difference between the two
+    processes is the value of the ``info.whoami`` field and whether
+    ``info.pipe`` is readable or writeable.
+
+    This function uses :func:`os.fork` twice and also calls :func:`os.setsid`
+    in between the two invocations, which creates new session and process
+    groups for the forked subprocess. It does *not* perform other operations
+    that you might want, such as changing the current directory, dropping
+    privileges, closing file descriptors, and so on. For more discussion of
+    best practices when it comes to “daemonizing” processes, see (stalled)
+    `PEP 3143`_.
+
+    .. _PEP 3143: https://www.python.org/dev/peps/pep-3143/
+
+    """
+    import os, struct
+    from .. import Holder
+    payload = struct.Struct ('L')
+
+    info = Holder ()
+    readfd, writefd = os.pipe ()
+
+    pid1 = os.fork ()
+    if pid1 > 0:
+        info.whoami = 'original'
+        info.pipe = os.fdopen (readfd, 'rb')
+        os.close (writefd)
+
+        retcode = os.waitpid (pid1, 0)[1]
+        if retcode:
+            raise Exception ('child process exited with error code %d' % retcode)
+
+        (info.forkedpid,) = payload.unpack (info.pipe.read (payload.size))
+    else:
+        # We're the intermediate child process. Start new session and process
+        # groups, detaching us from TTY signals and whatnot.
+        os.setsid ()
+
+        pid2 = os.fork ()
+        if pid2 > 0:
+            # We're the intermediate process; we're all done
+            os._exit (0)
+
+        # If we get here, we're the detached child process.
+        info.whoami = 'forked'
+        info.pipe = os.fdopen (writefd, 'wb')
+        os.close (readfd)
+        info.forkedpid = os.getpid ()
+        info.pipe.write (payload.pack (info.forkedpid))
+
+    return info
 
 
 # Simple-minded argument handling -- see also kwargv.
