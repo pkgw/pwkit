@@ -221,7 +221,7 @@ Where acceptable "args" depend on the environment in question.''')
 
     try:
         envmod = import_module ('.' + envname, package=__package__)
-    except StandardError:
+    except Exception:
         cli.die ('unable to load module for environment %r', envname)
 
     modargv = ['pkenvtool ' + argv[1]] + argv[2:]

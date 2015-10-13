@@ -263,7 +263,7 @@ def fillsmall (path, rows):
         for i, data in enumerate (rows):
             for col, val in six.iteritems (data):
                 tb.putcell (b(col), i, val)
-    except StandardError as e:
+    except Exception as e:
         raise Exception ('error putting: %d %s %s (%s): %s' % (i, col, val, val.__class__, e))
 
     tb.close ()

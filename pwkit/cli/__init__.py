@@ -147,7 +147,7 @@ def _print_backtrace_signal_handler (signum, frame):
         print ('*** End of traceback (innermost call is last)',
                file=sys.stderr)
         assert False
-    except StandardError as e:
+    except Exception as e:
         print ('*** Failed to print traceback on receipt of signal #%d: %s (%s)'
                % (signum, e, e.__class__.__name__), file=sys.stderr)
 
@@ -168,7 +168,7 @@ def backtrace_on_usr1 ():
     import signal
     try:
         signal.signal (signal.SIGUSR1, _print_backtrace_signal_handler)
-    except StandardError as e:
+    except Exception as e:
         warn ('failed to set up Python backtraces on SIGUSR1: %s', e)
 
 
