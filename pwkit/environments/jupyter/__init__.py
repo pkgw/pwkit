@@ -149,6 +149,22 @@ the exit code is 1.'''
             print ('(no notebook server is currently running)', file=sys.stderr)
             sys.exit (1)
 
+        # Not sure what Jupyter does when it gets SIGTERM, but to be safe let's
+        # shut down everything
+        from requests import request
+        from notebook.utils import url_path_join as ujoin
+
+        def command (verb, *paths):
+            resp = request (verb, ujoin (info['url'], *paths))
+            resp.raise_for_status ()
+            return resp
+
+        for sessinfo in command ('GET', 'api/sessions').json ():
+            command ('DELETE', 'api/sessions', sessinfo['id'])
+
+        for kerninfo in command ('GET', 'api/kernels').json ():
+            command ('DELETE', 'api/kernels', kerninfo['id'])
+
         import os, signal
         os.kill (info['pid'], signal.SIGTERM)
 
