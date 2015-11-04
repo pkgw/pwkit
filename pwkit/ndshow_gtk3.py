@@ -839,7 +839,8 @@ def cycle (arrays, descs=None, cadence=0.6, toworlds=None,
     def getdesci (i):
         return descs[i]
 
-    clipped = np.zeros ((h, w), dtype=np.int32) # scratch array
+    clipped = np.zeros ((h, w), dtype=np.int32) # scratch arrays -- two needed
+    clipped2 = np.zeros ((h, w), dtype=np.uint32) # to make numpy ufunc casting happy
 
     def settuningi (i, tunerx, tunery):
         np.bitwise_and (imgdata[i], 0xFF000000, imgdata[i])
@@ -852,8 +853,8 @@ def cycle (arrays, descs=None, cadence=0.6, toworlds=None,
         else:
             np.clip (fixed[i], fmin, fmax, clipped)
             np.subtract (clipped, fmin, clipped)
-            np.multiply (clipped, 255. / (fmax - fmin), clipped)
-            np.add (imgdata[i], clipped, imgdata[i])
+            np.multiply (clipped, 255. / (fmax - fmin), clipped2, casting='unsafe')
+            np.add (imgdata[i], clipped2, imgdata[i])
 
         np.multiply (imgdata[i], antimask[i], imgdata[i])
 
