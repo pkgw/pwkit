@@ -150,6 +150,7 @@ def commandline (argv=None):
             if bib_style is not None:
                 bib_export (bib_style, job + '.aux', base + '.bib')
 
+            ensure_symlink (os.path.join (os.path.pardir, base + '.bib'), job + '.bib')
             logrun ('bibtex', [], job, blog)
 
             with io.open (blog, 'rt') as f:
