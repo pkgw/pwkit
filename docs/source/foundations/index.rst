@@ -13,5 +13,5 @@ This documentation has a lot of stubs.
    core.rst
    io.rst
    numerical.rst
-   pwkit-parallel.rst
+   parallel.rst
    pwkit-simpleenum.rst
