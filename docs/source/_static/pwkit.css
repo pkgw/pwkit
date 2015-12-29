@@ -13,3 +13,9 @@ code, .rst-content code {
 .rst-content dl:not(.docutils) dt {
   font-size: 100%;
 }
+
+/* Make autosummary tables not go off the right edge of the screen by allowing
+ * the textual columns to linewrap. */
+.wy-table-responsive table.docutils tr td:last-child {
+  white-space: normal;
+}
