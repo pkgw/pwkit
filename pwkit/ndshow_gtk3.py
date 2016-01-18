@@ -55,6 +55,9 @@ import numpy as np
 import cairo
 # There is a gi.repository.cairo but it barely exposes any API, and it seems
 # like you're not really supposed to use it.
+import gi
+gi.require_version ('Gdk', '3.0')
+gi.require_version ('Gtk', '3.0')
 from gi.repository import GLib, GObject, Gdk, Gtk
 
 from . import PKError
