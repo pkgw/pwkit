@@ -103,6 +103,8 @@ def reraise_context (fmt, *args):
     context.
 
     """
+    import sys
+
     if len (args):
         cstr = fmt % args
     else:
