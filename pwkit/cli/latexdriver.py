@@ -19,7 +19,7 @@ from .. import PKError
 from ..io import ensure_dir, ensure_symlink
 from . import *
 
-usage = """latexdriver [-x] [-b] [-l] [-eSTYLE] input.tex output.pdf
+usage = """latexdriver [-x] [-b] [-l] [-eSTYLE] [-R] input.tex output.pdf
 
 Drive (xe)latex sensibly. Create output.pdf from input.tex, rerunning as
 necessary, silencing chatter, and hiding intermediate files in the directory
@@ -29,6 +29,8 @@ necessary, silencing chatter, and hiding intermediate files in the directory
 -b      - Use bibtex.
 -l      - Add "-papersize letter" argument.
 -eSTYLE - Use 'bib' tool with bibtex style STYLE.
+-R      - Be reckless and ignore errors from tools.
+
 """
 
 default_args = ['-interaction', 'nonstopmode',
@@ -38,7 +40,7 @@ default_args = ['-interaction', 'nonstopmode',
 max_iterations = 10
 
 
-def logrun (command, boring_args, interesting_arg, logpath):
+def logrun (command, boring_args, interesting_arg, logpath, reckless=False):
     if len (boring_args):
         print ('+', command, '...', interesting_arg)
     else:
@@ -57,14 +59,20 @@ def logrun (command, boring_args, interesting_arg, logpath):
                 print (line, end='', file=sys.stderr)
         print (file=sys.stderr)
 
-        if e.returncode > 0:
-            die ('command "%s" failed with exit status %d',
-                 ' '.join (argv), e.returncode)
-        elif e.returncode == -signal.SIGINT:
+        if e.returncode == -signal.SIGINT:
             raise KeyboardInterrupt () # make sure to propagate SIGINT
+
+        if e.returncode > 0:
+            msg = 'command "%s" failed with exit status %d' % (' '.join (argv),
+                                                               e.returncode)
         else:
-            die ('command "%s" killed by signal %d',
-                 ' '.join (argv), -e.returncode)
+            msg = 'command "%s" killed by signal %d' % (' '.join (argv),
+                                                        -e.returncode)
+
+        if reckless:
+            warn (msg + '; ignoring')
+        else:
+            die (msg)
 
 
 def bib_export (style, auxpath, bibpath):
@@ -101,6 +109,7 @@ def commandline (argv=None):
     do_bibtex = pop_option ('b', argv)
     do_xetex = pop_option ('x', argv)
     do_letterpaper = pop_option ('l', argv)
+    do_reckless = pop_option ('R', argv)
 
     for i in range (1, len (argv)):
         if argv[i].startswith ('-e'):
@@ -151,7 +160,7 @@ def commandline (argv=None):
                 bib_export (bib_style, job + '.aux', base + '.bib')
 
             ensure_symlink (os.path.join (os.path.pardir, base + '.bib'), job + '.bib')
-            logrun ('bibtex', [], job, blog)
+            logrun ('bibtex', [], job, blog, reckless=do_reckless)
 
             with io.open (blog, 'rt') as f:
                 for line in f:
