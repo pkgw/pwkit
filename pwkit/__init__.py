@@ -1,5 +1,5 @@
 # -*- mode: python; coding: utf-8 -*-
-# Copyright 2014-2015 Peter Williams <peter@newton.cx> and collaborators.
+# Copyright 2014-2016 Peter Williams <peter@newton.cx> and collaborators.
 # Licensed under the MIT License.
 
 """
@@ -67,7 +67,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 # Fortunately, to work on both cases we just need to do this:
 __all__ = str ('''Holder PKError binary_type reraise_context text_type unicode_to_str''').split ()
 
-__version__ = '0.7' # also edit ../setup.py, ../docs/source/conf.py!
+__version__ = '0.7.99' # also edit ../setup.py, ../docs/source/conf.py!
 
 # Simultaneous Python 2/3 compatibility through the 'six' module. I started
 # out hoping that I could do this all "in-house" without adding the dep, but
