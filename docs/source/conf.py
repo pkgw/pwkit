@@ -11,10 +11,10 @@ extensions = [
 ]
 
 project = u'pwkit'
-version = '0.6.99' # also edit /setup.py, /pwkit/__init__.py!
-release = '0.6.99'
+version = '0.7' # also edit /setup.py, /pwkit/__init__.py!
+release = '0.7'
 
-copyright = u'2015, Peter K. G. Williams and collaborators'
+copyright = u'2015-2016, Peter K. G. Williams and collaborators'
 author = u'Peter K. G. Williams and collaborators'
 
 templates_path = ['_templates']
