@@ -1,34 +1,183 @@
 # -*- mode: python; coding: utf-8 -*-
-# Copyright 2014 Peter Williams <peter@newton.cx> and collaborators.
+# Copyright 2014-2016 Peter Williams <peter@newton.cx> and collaborators.
 # Licensed under the MIT License.
 
 """pwkit.cli.latexdriver - the 'latexdriver' program.
 
 This used to be a nice little shell script, but for portability it's better to
-do this in Python.
+do this in Python. And now we can optionally provide some BibTeX-related
+magic.
 
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 __all__ = str ('commandline').split ()
 
-import io, os.path, signal, subprocess, sys
+import signal, six, subprocess, sys
 from six.moves import range
 
 from .. import PKError
-from ..io import ensure_dir, ensure_symlink
+from ..io import Path
 from . import *
 
-usage = """latexdriver [-x] [-b] [-l] [-eSTYLE] [-R] input.tex output.pdf
+
+# This batch of code implements the magic BibTeX merging feature.
+
+def cited_names_from_aux_file (stream):
+    """Parse a LaTeX ".aux" file and generate a list of names cited according to
+    LaTeX ``\\citation`` commands. Repeated names are generated only once. The
+    argument should be a opened I/O stream.
+
+    """
+    cited = set ()
+
+    for line in stream:
+        if not line.startswith (r'\citation{'):
+            continue
+
+        line = line.rstrip ()
+        if line[-1] != '}':
+            continue # should issue a warning or something
+
+        entries = line[10:-1]
+
+        for name in entries.split (','):
+            name = name.strip ()
+
+            if name not in cited:
+                yield name
+                cited.add (name)
+
+
+def merge_bibtex_collections (citednames, maindict, extradicts, allow_missing=False):
+    """There must be a way to be efficient and stream output instead of loading
+    everything into memory at once, but, meh.
+
+    Note that we augment `citednames` with all of the names in `maindict`. The
+    intention is that if we've gone to the effort of getting good data for
+    some record, we don't want to trash it if the citation is temporarily
+    removed (even if it ought to be manually recoverable from version
+    control). Seems better to err on the side of preservation; I can write a
+    quick pruning tool later if needed.
+
+    """
+    allrecords = {}
+
+    for ed in extradicts:
+        allrecords.update (ed)
+
+    allrecords.update (maindict)
+
+    missing = []
+    from collections import OrderedDict
+    records = OrderedDict ()
+    from itertools import chain
+    wantednames = sorted (chain (citednames, six.viewkeys (maindict)))
+
+    for name in wantednames:
+        rec = allrecords.get (name)
+        if rec is None:
+            missing.append (name)
+        else:
+            records[name] = rec
+
+    if len (missing) and not allow_missing:
+        # TODO: custom exception so caller can actually see what's missing;
+        # could conceivably stub out missing records or something.
+        raise PKError ('missing BibTeX records: %s', ' '.join (missing))
+
+    return records
+
+
+def get_bibtex_dict (stream):
+    from bibtexparser.bparser import BibTexParser
+    parser = BibTexParser ()
+    parser.ignore_nonstandard_types = False
+    parser.homogenise_fields = False
+
+    # TODO: one bit of homogenization that might be nice: it seems that
+    # newlines get preserved, in `author` records at least. Those should be
+    # replaced with spaces (and multiple spaces collapsed if needed).
+
+    return parser.parse_file (stream).get_entry_dict ()
+
+
+def write_bibtex_dict (stream, entries):
+    """bibtexparser.write converts the entire database to one big string and
+    writes it out in one go. I'm sure it will always all fit in RAM but some
+    things just will not stand.
+
+    """
+    from bibtexparser.bwriter import BibTexWriter
+
+    writer = BibTexWriter ()
+    writer.indent = '  '
+    writer.entry_separator = ''
+    first = True
+
+    for rec in entries:
+        if first:
+            first = False
+        else:
+            stream.write ('\n')
+        stream.write (writer._entry_to_bibtex (rec))
+
+
+def merge_bibtex_with_aux (auxpath, mainpath, extradir, parse=get_bibtex_dict, allow_missing=False):
+    """Merge multiple BibTeX files into a single homogeneously-formatted output,
+    using a LaTeX .aux file to know which records are worth paying attention
+    to.
+
+    The file identified by `mainpath` will be overwritten with the new .bib
+    contents. This function is intended to be used in a version-control
+    context.
+
+    Files matching the glob "*.bib" in `extradir` will be read in to
+    supplement the information in `mainpath`. Records already in the file in
+    `mainpath` always take precedence.
+
+    """
+    auxpath = Path (auxpath)
+    mainpath = Path (mainpath)
+    extradir = Path (extradir)
+
+    with auxpath.open ('rt') as aux:
+        citednames = sorted (cited_names_from_aux_file (aux))
+
+    with mainpath.open ('rt') as main:
+        maindict = parse (main)
+
+    def gen_extra_dicts ():
+        # If extradir does not exist, Path.glob() will return an empty list,
+        # which seems acceptable to me.
+        for item in sorted (extradir.glob ('*.bib')):
+            with item.open ('rt') as extra:
+                yield parse (extra)
+
+    merged = merge_bibtex_collections (citednames, maindict, gen_extra_dicts (),
+                                       allow_missing=allow_missing)
+    newpath = mainpath.with_suffix ('.bib.new')
+
+    with newpath.open ('wt') as newbib:
+        write_bibtex_dict (newbib, six.viewvalues (merged))
+
+    newpath.rename (mainpath)
+
+
+# The actual command-line program
+
+usage = """latexdriver [-x] [-b] [-B] [-l] [-eSTYLE] [-R] input.tex output.pdf
 
 Drive (xe)latex sensibly. Create output.pdf from input.tex, rerunning as
 necessary, silencing chatter, and hiding intermediate files in the directory
 .latexwork/.
 
+-l      - Add "-papersize letter" argument.
 -x      - Use xetex.
 -b      - Use bibtex.
--l      - Add "-papersize letter" argument.
+-B      - Use bibtex with auto-merging and homogenization; requires `bibtexparser`.
 -eSTYLE - Use 'bib' tool with bibtex style STYLE.
+-ESTYLE - Optionally use the 'bib' tool in conjunction with '-B' option.
 -R      - Be reckless and ignore errors from tools.
 
 """
@@ -49,12 +198,12 @@ def logrun (command, boring_args, interesting_arg, logpath, reckless=False):
     argv = [command] + boring_args + [interesting_arg]
 
     try:
-        with io.open (logpath, 'wb') as f:
+        with logpath.open ('wb') as f:
             print ('## running:', ' '.join (argv), file=f)
             f.flush ()
             subprocess.check_call (argv, stdout=f, stderr=f)
     except subprocess.CalledProcessError as e:
-        with io.open (logpath, 'rt') as f:
+        with logpath.open ('rt') as f:
             for line in f:
                 print (line, end='', file=sys.stderr)
         print (file=sys.stderr)
@@ -75,13 +224,18 @@ def logrun (command, boring_args, interesting_arg, logpath, reckless=False):
             die (msg)
 
 
-def bib_export (style, auxpath, bibpath):
-    args = ['bib', 'btexport', style, auxpath]
-    print ('+', ' '.join (args), '>' + bibpath)
+def bib_export (style, auxpath, bibpath, no_tool_ok=False):
+    args = ['bib', 'btexport', style, str(auxpath)]
+    print ('+', ' '.join (args), '>' + str(bibpath))
 
     try:
-        with io.open (bibpath, 'wb') as f:
+        with bibpath.open ('wb') as f:
             subprocess.check_call (args, stdout=f)
+    except OSError as e:
+        if e.errno == 2 and no_tool_ok:
+            bibpath.try_unlink ()
+            return
+        raise
     except subprocess.CalledProcessError as e:
         if e.returncode > 0:
             die ('command "%s >%s" failed with exit status %d',
@@ -104,15 +258,17 @@ def commandline (argv=None):
     bib_style = None
     engine_args = default_args
     engine = 'pdflatex'
-    workdir = '.latexwork'
 
     do_bibtex = pop_option ('b', argv)
+    do_smart_bibtex = pop_option ('B', argv)
     do_xetex = pop_option ('x', argv)
     do_letterpaper = pop_option ('l', argv)
     do_reckless = pop_option ('R', argv)
+    do_smart_bibtools = False
 
     for i in range (1, len (argv)):
-        if argv[i].startswith ('-e'):
+        if argv[i].startswith ('-e') or argv[i].startswith ('-E'):
+            do_smart_bibtools = argv[i].startswith ('-E')
             bib_style = argv[i][2:]
             del argv[i]
             break
@@ -120,20 +276,22 @@ def commandline (argv=None):
     if len (argv) != 3:
         wrong_usage (usage, 'expect exactly 2 non-option arguments')
 
-    input = argv[1]
-    output = argv[2]
+    input = Path (argv[1])
+    output = Path (argv[2])
 
-    if bib_style is not None:
+    if do_smart_bibtools:
+        do_smart_bibtex = True
+    if bib_style is not None or do_smart_bibtex:
         do_bibtex = True
     if do_xetex:
         engine = 'xelatex'
     if do_letterpaper:
         engine_args += ['-papersize', 'letter']
 
-    if not os.path.exists (input):
+    if not input.exists ():
         die ('input "%s" does not exist', input)
 
-    base = os.path.splitext (os.path.basename (input))[0]
+    base = input.stem
     if not len (base):
         die ('failed to strip extension from input path "%s"', input)
 
@@ -142,27 +300,40 @@ def commandline (argv=None):
     # paths by default. I figured out how to hack the configuration, but
     # that's not a scalable solution. Instead I just create a temporary
     # symlink with an acceptable name -- good jorb security.
-    workalias = '_' + workdir
+    workdir = input.with_name ('.latexwork')
+    workalias = input.with_name ('_latexwork')
 
-    ensure_dir (workdir)
-    ensure_symlink (workdir, workalias)
+    (workdir / 'foo').ensure_parent (parents=True)
+    workalias.rellink_to (workdir, force=True)
 
-    job = os.path.join (workalias, base)
-    tlog = os.path.join (workalias, base + '.hllog')
-    blog = os.path.join (workalias, base + '.hlblg')
-    engine_args += ['-jobname', job]
+    job = workalias / base
+    tlog = workalias / (base + '.hllog')
+    blog = workalias / (base + '.hlblg')
+    engine_args += ['-jobname', str(job)]
 
     try:
         logrun (engine, engine_args, base, tlog)
 
         if do_bibtex:
-            if bib_style is not None:
-                bib_export (bib_style, job + '.aux', base + '.bib')
+            bib = input.with_suffix ('.bib')
+            aux = job.with_suffix ('.aux')
 
-            ensure_symlink (os.path.join (os.path.pardir, base + '.bib'), job + '.bib')
-            logrun ('bibtex', [], job, blog, reckless=do_reckless)
+            if do_smart_bibtex:
+                extradir = input.with_name ('.bibtex')
 
-            with io.open (blog, 'rt') as f:
+                if bib_style is not None:
+                    (extradir / 'foo').ensure_parent (parents=True)
+                    bib_export (bib_style, aux, extradir / 'ZZ_bibtools.bib', no_tool_ok=True)
+
+                print ('+', '(generate and normalize)', bib)
+                merge_bibtex_with_aux (aux, bib, extradir)
+            elif bib_style is not None:
+                bib_export (bib_style, aux, bib)
+
+            job.with_suffix ('.bib').rellink_to (bib, force=True)
+            logrun ('bibtex', [], str(job), blog, reckless=do_reckless)
+
+            with blog.open ('rt') as f:
                 for line in f:
                     if 'Warning' in line:
                         print (line, end='', file=sys.stderr)
@@ -175,7 +346,7 @@ def commandline (argv=None):
 
             # longtables seem to always tell you to rerun latex. Stripping out
             # lines containing "longtable" makes us ignore these prompts.
-            with io.open (tlog, 'rt') as f:
+            with tlog.open ('rt') as f:
                 for line in f:
                     if 'longtable' in line:
                         continue
@@ -191,6 +362,6 @@ def commandline (argv=None):
             # we didn't break out of the loop -- ie hit max_iterations
             die ('too many iterations; check "%s"', tlog)
 
-        os.rename (job + '.pdf', output)
+        job.with_suffix ('.pdf').rename (output)
     finally:
-        os.unlink (workalias)
+        workalias.unlink ()
