@@ -166,7 +166,7 @@ def merge_bibtex_with_aux (auxpath, mainpath, extradir, parse=get_bibtex_dict, a
 
 # The actual command-line program
 
-usage = """latexdriver [-x] [-b] [-B] [-l] [-eSTYLE] [-R] input.tex output.pdf
+usage = """latexdriver [-lxbBRq] [-eSTYLE] [-ESTYLE] input.tex output.pdf
 
 Drive (xe)latex sensibly. Create output.pdf from input.tex, rerunning as
 necessary, silencing chatter, and hiding intermediate files in the directory
@@ -179,6 +179,7 @@ necessary, silencing chatter, and hiding intermediate files in the directory
 -eSTYLE - Use 'bib' tool with bibtex style STYLE.
 -ESTYLE - Optionally use the 'bib' tool in conjunction with '-B' option.
 -R      - Be reckless and ignore errors from tools.
+-q      - Be quiet and avoid printing anything on success.
 
 """
 
@@ -189,11 +190,12 @@ default_args = ['-interaction', 'nonstopmode',
 max_iterations = 10
 
 
-def logrun (command, boring_args, interesting_arg, logpath, reckless=False):
-    if len (boring_args):
-        print ('+', command, '...', interesting_arg)
-    else:
-        print ('+', command, interesting_arg)
+def logrun (command, boring_args, interesting_arg, logpath, quiet=False, reckless=False):
+    if not quiet:
+        if len (boring_args):
+            print ('+', command, '...', interesting_arg)
+        else:
+            print ('+', command, interesting_arg)
 
     argv = [command] + boring_args + [interesting_arg]
 
@@ -203,6 +205,9 @@ def logrun (command, boring_args, interesting_arg, logpath, reckless=False):
             f.flush ()
             subprocess.check_call (argv, stdout=f, stderr=f)
     except subprocess.CalledProcessError as e:
+        if quiet:
+            print ('ran:', ' '.join (argv), file=sys.stderr)
+
         with logpath.open ('rt') as f:
             for line in f:
                 print (line, end='', file=sys.stderr)
@@ -222,21 +227,30 @@ def logrun (command, boring_args, interesting_arg, logpath, reckless=False):
             warn (msg + '; ignoring')
         else:
             die (msg)
+    except Exception:
+        if quiet:
+            print ('ran:', ' '.join (argv), file=sys.stderr)
+        raise
 
 
-def bib_export (style, auxpath, bibpath, no_tool_ok=False):
+def bib_export (style, auxpath, bibpath, no_tool_ok=False, quiet=False):
     args = ['bib', 'btexport', style, str(auxpath)]
-    print ('+', ' '.join (args), '>' + str(bibpath))
+    if not quiet:
+        print ('+', ' '.join (args), '>' + str(bibpath))
 
     try:
         with bibpath.open ('wb') as f:
             subprocess.check_call (args, stdout=f)
     except OSError as e:
+        if quiet:
+            print ('ran:', ' '.join (args), file=sys.stderr)
         if e.errno == 2 and no_tool_ok:
             bibpath.try_unlink ()
             return
         raise
     except subprocess.CalledProcessError as e:
+        if quiet:
+            print ('ran:', ' '.join (args), file=sys.stderr)
         if e.returncode > 0:
             die ('command "%s >%s" failed with exit status %d',
                  ' '.join (args), bibpath, e.returncode)
@@ -264,6 +278,7 @@ def commandline (argv=None):
     do_xetex = pop_option ('x', argv)
     do_letterpaper = pop_option ('l', argv)
     do_reckless = pop_option ('R', argv)
+    quiet = pop_option ('q', argv)
     do_smart_bibtools = False
 
     for i in range (1, len (argv)):
@@ -312,7 +327,7 @@ def commandline (argv=None):
     engine_args += ['-jobname', str(job)]
 
     try:
-        logrun (engine, engine_args, base, tlog)
+        logrun (engine, engine_args, base, tlog, quiet=quiet)
 
         if do_bibtex:
             bib = input.with_suffix ('.bib')
@@ -323,15 +338,17 @@ def commandline (argv=None):
 
                 if bib_style is not None:
                     (extradir / 'foo').ensure_parent (parents=True)
-                    bib_export (bib_style, aux, extradir / 'ZZ_bibtools.bib', no_tool_ok=True)
+                    bib_export (bib_style, aux, extradir / 'ZZ_bibtools.bib',
+                                no_tool_ok=True, quiet=quiet)
 
-                print ('+', '(generate and normalize)', bib)
+                if not quiet:
+                    print ('+', '(generate and normalize)', bib)
                 merge_bibtex_with_aux (aux, bib, extradir)
             elif bib_style is not None:
-                bib_export (bib_style, aux, bib)
+                bib_export (bib_style, aux, bib, quiet=quiet)
 
             job.with_suffix ('.bib').rellink_to (bib, force=True)
-            logrun ('bibtex', [], str(job), blog, reckless=do_reckless)
+            logrun ('bibtex', [], str(job), blog, reckless=do_reckless, quiet=quiet)
 
             with blog.open ('rt') as f:
                 for line in f:
@@ -339,7 +356,7 @@ def commandline (argv=None):
                         print (line, end='', file=sys.stderr)
 
             # force at least one extra run:
-            logrun (engine, engine_args, base, tlog)
+            logrun (engine, engine_args, base, tlog, quiet=quiet)
 
         for _ in range (max_iterations):
             keepgoing = False
@@ -357,7 +374,7 @@ def commandline (argv=None):
             if not keepgoing:
                 break
 
-            logrun (engine, engine_args, base, tlog)
+            logrun (engine, engine_args, base, tlog, quiet=quiet)
         else:
             # we didn't break out of the loop -- ie hit max_iterations
             die ('too many iterations; check "%s"', tlog)
