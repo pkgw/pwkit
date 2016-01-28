@@ -242,11 +242,11 @@ def bib_export (style, auxpath, bibpath, no_tool_ok=False, quiet=False):
         with bibpath.open ('wb') as f:
             subprocess.check_call (args, stdout=f)
     except OSError as e:
-        if quiet:
-            print ('ran:', ' '.join (args), file=sys.stderr)
         if e.errno == 2 and no_tool_ok:
             bibpath.try_unlink ()
             return
+        if quiet:
+            print ('ran:', ' '.join (args), file=sys.stderr)
         raise
     except subprocess.CalledProcessError as e:
         if quiet:
