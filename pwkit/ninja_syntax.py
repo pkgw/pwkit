@@ -1,4 +1,4 @@
-#!/usr/bin/python
+# -*- mode: python; coding: utf-8 -*-
 
 """Python module for generating .ninja files.
 
@@ -6,6 +6,9 @@ Note that this is emphatically not a required piece of Ninja; it's
 just a helpful utility for build-file-generation systems that already
 use Python.
 """
+
+# pwkit addition:
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import re
 import textwrap
