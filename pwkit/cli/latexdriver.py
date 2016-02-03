@@ -164,9 +164,50 @@ def merge_bibtex_with_aux (auxpath, mainpath, extradir, parse=get_bibtex_dict, a
     newpath.rename (mainpath)
 
 
+# This batch of code implements the filename-recorder-to-Makefile magic.
+
+def convert_fls_to_makefile (flspath, finalpath, prefix, work, mfpath):
+    texpwd = None
+
+    with flspath.open ('rt') as fls, mfpath.open ('wt') as mf:
+        mf.write (six.text_type (finalpath))
+        mf.write (':')
+
+        for line in fls:
+            kind, path = line.strip ().split (None, 1)
+            path = Path (path)
+
+            if kind == 'PWD':
+                texpwd = path # this is always the first line
+                if prefix is not None:
+                    r_prefix = six.text_type ((texpwd / prefix).resolve ())
+                r_work = six.text_type ((texpwd / work).resolve ())
+
+            if kind != 'INPUT':
+                continue
+
+            # properly handles absolute and relative `path`:
+            r_full = six.text_type ((texpwd / path).resolve ())
+
+            if r_full.startswith (r_work):
+                continue # ignore .bbl, etc
+
+            if prefix is not None:
+                if r_full.startswith (r_prefix):
+                    r_full = r_full[len (r_prefix) + 1:]
+                else:
+                    warn ('unexpected dependent file path %r' % r_full)
+                    continue
+
+            mf.write (' ')
+            mf.write (r_full)
+
+        mf.write ('\n')
+
+
 # The actual command-line program
 
-usage = """latexdriver [-lxbBRq] [-eSTYLE] [-ESTYLE] input.tex output.pdf
+usage = """latexdriver [-lxbBRq] [-eSTYLE] [-ESTYLE] [-MPREFIX,DEST] input.tex output.pdf
 
 Drive (xe)latex sensibly. Create output.pdf from input.tex, rerunning as
 necessary, silencing chatter, and hiding intermediate files in the directory
@@ -178,6 +219,8 @@ necessary, silencing chatter, and hiding intermediate files in the directory
 -B      - Use bibtex with auto-merging and homogenization; requires `bibtexparser`.
 -eSTYLE - Use 'bib' tool with bibtex style STYLE.
 -ESTYLE - Optionally use the 'bib' tool in conjunction with '-B' option.
+-MPREFIX,DEST  - Use '-recorder' option to output Makefile-format dependency info
+          to DEST, stripping prefix PREFIX.
 -R      - Be reckless and ignore errors from tools.
 -q      - Be quiet and avoid printing anything on success.
 
@@ -270,8 +313,12 @@ def commandline (argv=None):
     check_usage (usage, argv, usageifnoargs='long')
 
     bib_style = None
+    makefile_prefix = None
+    makefile_dest = None
     engine_args = default_args
     engine = 'pdflatex'
+
+    # I should probably start using a real arg parser.
 
     do_bibtex = pop_option ('b', argv)
     do_smart_bibtex = pop_option ('B', argv)
@@ -285,6 +332,12 @@ def commandline (argv=None):
         if argv[i].startswith ('-e') or argv[i].startswith ('-E'):
             do_smart_bibtools = argv[i].startswith ('-E')
             bib_style = argv[i][2:]
+            del argv[i]
+            break
+
+    for i in range (1, len (argv)):
+        if argv[i].startswith ('-M'):
+            makefile_prefix, makefile_dest = argv[i][2:].split (',', 1)
             del argv[i]
             break
 
@@ -302,6 +355,8 @@ def commandline (argv=None):
         engine = 'xelatex'
     if do_letterpaper:
         engine_args += ['-papersize', 'letter']
+    if makefile_dest is not None:
+        engine_args += ['-recorder']
 
     if not input.exists ():
         die ('input "%s" does not exist', input)
@@ -380,5 +435,11 @@ def commandline (argv=None):
             die ('too many iterations; check "%s"', tlog)
 
         job.with_suffix ('.pdf').rename (output)
+
+        if makefile_dest is not None:
+            convert_fls_to_makefile (job.with_suffix ('.fls'), output,
+                                     Path (makefile_prefix),
+                                     workalias,
+                                     Path (makefile_dest))
     finally:
         workalias.unlink ()
