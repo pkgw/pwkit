@@ -220,7 +220,7 @@ class Path (_ParentPath):
         return self.__class__ (relpath (text_type (self), text_type (other)))
 
 
-    # Filesystem I/O operations
+    # Filesystem interrogation
 
     def scandir (self):
         """Iteratively scan this path, assuming it’s a directory. This requires and
@@ -247,6 +247,8 @@ class Path (_ParentPath):
         return scandir (binary_type (self))
 
 
+    # Filesystem modification
+
     def ensure_parent (self, mode=0o777, parents=False):
         """Ensure that this path's *parent* directory exists. Returns a boolean
         indicating whether the parent directory already existed. Will attempt
@@ -269,36 +271,6 @@ class Path (_ParentPath):
                 return True # that's fine
             raise # other exceptions are not fine
         return False
-
-
-    def rmtree (self):
-        """Recursively delete this directory and its contents. If any errors are
-        encountered, they will be printed to standard error.
-
-        """
-        import shutil
-        from pwkit.cli import warn
-
-        def on_error (func, path, exc_info):
-            warn ('couldn\'t rmtree %s: in %s of %s: %s', self, func.__name__,
-                  path, exc_info[1])
-
-        shutil.rmtree (text_type (self), ignore_errors=False, onerror=on_error)
-        return self
-
-
-    def try_unlink (self):
-        """Try to unlink this path. If it doesn't exist, no error is returned. Returns
-        a boolean indicating whether the path was really unlinked.
-
-        """
-        try:
-            self.unlink ()
-            return True
-        except OSError as e:
-            if e.errno == 2:
-                return False # ENOENT
-            raise
 
 
     def rellink_to (self, target, force=False):
@@ -331,6 +303,36 @@ class Path (_ParentPath):
         return self.symlink_to (target.make_relative (self.parent))
 
 
+    def rmtree (self):
+        """Recursively delete this directory and its contents. If any errors are
+        encountered, they will be printed to standard error.
+
+        """
+        import shutil
+        from pwkit.cli import warn
+
+        def on_error (func, path, exc_info):
+            warn ('couldn\'t rmtree %s: in %s of %s: %s', self, func.__name__,
+                  path, exc_info[1])
+
+        shutil.rmtree (text_type (self), ignore_errors=False, onerror=on_error)
+        return self
+
+
+    def try_unlink (self):
+        """Try to unlink this path. If it doesn't exist, no error is returned. Returns
+        a boolean indicating whether the path was really unlinked.
+
+        """
+        try:
+            self.unlink ()
+            return True
+        except OSError as e:
+            if e.errno == 2:
+                return False # ENOENT
+            raise
+
+
     # Data I/O
 
     def try_open (self, null_if_noexist=False, **kwargs):
@@ -351,89 +353,6 @@ class Path (_ParentPath):
             raise
 
 
-    def read_inifile (self, noexistok=False, typed=False):
-        """Open assuming an “ini-file” format and return a generator yielding data
-        records using either :func:`pwkit.inifile.read_stream` (if *typed* is
-        false) or :func:`pwkit.tinifile.read_stream` (if it’s true). The
-        latter version is designed to work with numerical data using the
-        :mod:`pwkit.msmt` subsystem. If *noexistok* is true, a nonexistent
-        file will result in no items being generated rather than an
-        :exc:`IOError` being raised.
-
-        """
-        if typed:
-            from .tinifile import read_stream
-        else:
-            from .inifile import read_stream
-
-        try:
-            with self.open ('rb') as f:
-                for item in read_stream (f):
-                    yield item
-        except IOError as e:
-            if e.errno != 2 or not noexistok:
-                raise
-
-
-    def read_lines (self, mode='rt', noexistok=False, **kwargs):
-        """Generate a sequence of lines from the file pointed to by this path, by
-        opening as a regular file and iterating over it. The lines therefore
-        contain their newline characters. If *noexistok*, a nonexistent file
-        will result in an empty sequence rather than an exception. *kwargs*
-        are passed to :meth:`Path.open`.
-
-        """
-        try:
-            with self.open (mode=mode, **kwargs) as f:
-                for line in f:
-                    yield line
-        except IOError as e:
-            if e.errno != 2 or not noexistok:
-                raise
-
-
-    def read_pickle (self):
-        """Open the file, unpickle one object from it using :mod:`cPickle`, and return
-        it.
-
-        """
-        gen = self.read_pickles ()
-        value = gen.next ()
-        gen.close ()
-        return value
-
-
-    def read_pickles (self):
-        """Generate a sequence of objects by opening the path and unpickling items
-        until EOF is reached.
-
-        """
-        import cPickle as pickle
-        with self.open (mode='rb') as f:
-            while True:
-                try:
-                    obj = pickle.load (f)
-                except EOFError:
-                    break
-                yield obj
-
-
-    def write_pickle (self, obj):
-        """Dump *obj* to this path using :mod:`cPickle`."""
-        self.write_pickles ((obj, ))
-
-
-    def write_pickles (self, objs):
-        """*objs* must be iterable. Write each of its values to this path in sequence
-        using :mod:`cPickle`.
-
-        """
-        import cPickle as pickle
-        with self.open (mode='wb') as f:
-            for obj in objs:
-                pickle.dump (obj, f)
-
-
     def as_hdf_store (self, mode='r', **kwargs):
         """Return the path as an opened :class:`pandas.HDFStore` object. Note that the
         :class:`HDFStore` constructor unconditionally prints messages to
@@ -444,38 +363,6 @@ class Path (_ParentPath):
         """
         from pandas import HDFStore
         return HDFStore (text_type (self), mode=mode, **kwargs)
-
-
-    def read_pandas (self, format='table', **kwargs):
-        """Read using :mod:`pandas`. The function ``pandas.read_FORMAT`` is called
-        where ``FORMAT`` is set from the argument *format*. *kwargs* are
-        passed to this function. Supported formats likely include
-        ``clipboard``, ``csv``, ``excel``, ``fwf``, ``gbq``, ``html``,
-        ``json``, ``msgpack``, ``pickle``, ``sql``, ``sql_query``,
-        ``sql_table``, ``stata``, ``table``. Note that ``hdf`` is not
-        supported because it requires a non-keyword argument; see
-        :meth:`Path.read_hdf`.
-
-        """
-        import pandas
-
-        reader = getattr (pandas, 'read_' + format, None)
-        if not callable (reader):
-            raise PKError ('unrecognized Pandas format %r: no function pandas.read_%s',
-                           format, format)
-
-        with self.open ('rb') as f:
-            return reader (f, **kwargs)
-
-
-    def read_hdf (self, key, **kwargs):
-        """Open as an HDF5 file using :mod:`pandas` and return the item stored under
-        the key *key*. *kwargs* are passed to :func:`pandas.read_hdf`.
-
-        """
-        # This one needs special handling because of the "key" and path input.
-        import pandas
-        return pandas.read_hdf (text_type (self), key, **kwargs)
 
 
     def read_fits (self, **kwargs):
@@ -521,26 +408,55 @@ class Path (_ParentPath):
             return frtdf (hdulist[hdu].data, drop_nonscalar_ok=drop_nonscalar_ok)
 
 
-    def read_tabfile (self, **kwargs):
-        """Read this path as a table of typed measurements via
-        :func:`pwkit.tabfile.read`. Returns a generator for a sequence of
-        :class:`pwkit.Holder` objects, one for each row in the table, with
-        attributes for each of the columns.
-
-        tabwidth : int (default=8)
-            The tab width to assume. Defaults to 8 and should not be changed unless
-            absolutely necessary.
-        mode : str (default='rt')
-            The file open mode, passed to :func:`io.open`.
-        noexistok : bool (default=False)
-            If true, a nonexistent file will result in no items being generated, as
-            opposed to an :exc:`IOError`.
-        kwargs : keywords
-            Additional arguments are passed to :func:`io.open`.
+    def read_hdf (self, key, **kwargs):
+        """Open as an HDF5 file using :mod:`pandas` and return the item stored under
+        the key *key*. *kwargs* are passed to :func:`pandas.read_hdf`.
 
         """
-        from .tabfile import read
-        return read (text_type (self), **kwargs)
+        # This one needs special handling because of the "key" and path input.
+        import pandas
+        return pandas.read_hdf (text_type (self), key, **kwargs)
+
+
+    def read_inifile (self, noexistok=False, typed=False):
+        """Open assuming an “ini-file” format and return a generator yielding data
+        records using either :func:`pwkit.inifile.read_stream` (if *typed* is
+        false) or :func:`pwkit.tinifile.read_stream` (if it’s true). The
+        latter version is designed to work with numerical data using the
+        :mod:`pwkit.msmt` subsystem. If *noexistok* is true, a nonexistent
+        file will result in no items being generated rather than an
+        :exc:`IOError` being raised.
+
+        """
+        if typed:
+            from .tinifile import read_stream
+        else:
+            from .inifile import read_stream
+
+        try:
+            with self.open ('rb') as f:
+                for item in read_stream (f):
+                    yield item
+        except IOError as e:
+            if e.errno != 2 or not noexistok:
+                raise
+
+
+    def read_lines (self, mode='rt', noexistok=False, **kwargs):
+        """Generate a sequence of lines from the file pointed to by this path, by
+        opening as a regular file and iterating over it. The lines therefore
+        contain their newline characters. If *noexistok*, a nonexistent file
+        will result in an empty sequence rather than an exception. *kwargs*
+        are passed to :meth:`Path.open`.
+
+        """
+        try:
+            with self.open (mode=mode, **kwargs) as f:
+                for line in f:
+                    yield line
+        except IOError as e:
+            if e.errno != 2 or not noexistok:
+                raise
 
 
     def read_numpy_text (self, **kwargs):
@@ -572,6 +488,92 @@ class Path (_ParentPath):
         """
         import numpy as np
         return np.loadtxt (text_type (self), **kwargs)
+
+
+    def read_pandas (self, format='table', **kwargs):
+        """Read using :mod:`pandas`. The function ``pandas.read_FORMAT`` is called
+        where ``FORMAT`` is set from the argument *format*. *kwargs* are
+        passed to this function. Supported formats likely include
+        ``clipboard``, ``csv``, ``excel``, ``fwf``, ``gbq``, ``html``,
+        ``json``, ``msgpack``, ``pickle``, ``sql``, ``sql_query``,
+        ``sql_table``, ``stata``, ``table``. Note that ``hdf`` is not
+        supported because it requires a non-keyword argument; see
+        :meth:`Path.read_hdf`.
+
+        """
+        import pandas
+
+        reader = getattr (pandas, 'read_' + format, None)
+        if not callable (reader):
+            raise PKError ('unrecognized Pandas format %r: no function pandas.read_%s',
+                           format, format)
+
+        with self.open ('rb') as f:
+            return reader (f, **kwargs)
+
+
+    def read_pickle (self):
+        """Open the file, unpickle one object from it using :mod:`cPickle`, and return
+        it.
+
+        """
+        gen = self.read_pickles ()
+        value = gen.next ()
+        gen.close ()
+        return value
+
+
+    def read_pickles (self):
+        """Generate a sequence of objects by opening the path and unpickling items
+        until EOF is reached.
+
+        """
+        import cPickle as pickle
+        with self.open (mode='rb') as f:
+            while True:
+                try:
+                    obj = pickle.load (f)
+                except EOFError:
+                    break
+                yield obj
+
+
+    def read_tabfile (self, **kwargs):
+        """Read this path as a table of typed measurements via
+        :func:`pwkit.tabfile.read`. Returns a generator for a sequence of
+        :class:`pwkit.Holder` objects, one for each row in the table, with
+        attributes for each of the columns.
+
+        tabwidth : int (default=8)
+            The tab width to assume. Defaults to 8 and should not be changed unless
+            absolutely necessary.
+        mode : str (default='rt')
+            The file open mode, passed to :func:`io.open`.
+        noexistok : bool (default=False)
+            If true, a nonexistent file will result in no items being generated, as
+            opposed to an :exc:`IOError`.
+        kwargs : keywords
+            Additional arguments are passed to :func:`io.open`.
+
+        """
+        from .tabfile import read
+        return read (text_type (self), **kwargs)
+
+
+    def write_pickle (self, obj):
+        """Dump *obj* to this path using :mod:`cPickle`."""
+        self.write_pickles ((obj, ))
+
+
+    def write_pickles (self, objs):
+        """*objs* must be iterable. Write each of its values to this path in sequence
+        using :mod:`cPickle`.
+
+        """
+        import cPickle as pickle
+        with self.open (mode='wb') as f:
+            for obj in objs:
+                pickle.dump (obj, f)
 
 
 del _ParentPath
