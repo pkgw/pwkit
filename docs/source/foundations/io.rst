@@ -78,8 +78,6 @@ And they have the following related methods:
    ~Path.as_uri
    ~Path.expand
    ~Path.glob
-   ~Path.iterdir
-   ~Path.scandir
    ~Path.joinpath
    ~Path.make_relative
    ~Path.relative_to
@@ -142,13 +140,6 @@ And they have the following related methods:
    contents and return sub-paths matching the given shell-style
    glob pattern.
 
-.. automethod:: Path.iterdir
-
-   Assuming the path is a directory, generate a sequence of
-   sub-paths corresponding to its contents.
-
-.. automethod:: Path.scandir
-
 .. method:: Path.joinpath(*args)
 
    Combine this path with several new components. If one of the
@@ -198,7 +189,9 @@ example, is a directory; but they do not modify the filesystem.
    ~Path.is_file
    ~Path.is_socket
    ~Path.is_symlink
+   ~Path.iterdir
    ~Path.match
+   ~Path.scandir
    ~Path.stat
 
 .. rubric:: Detailed descriptions
@@ -239,9 +232,16 @@ example, is a directory; but they do not modify the filesystem.
 
    Returns whether the path resolves to a symbolic link.
 
+.. automethod:: Path.iterdir
+
+   Assuming the path is a directory, generate a sequence of
+   sub-paths corresponding to its contents.
+
 .. method:: Path.match(pattern)
 
    Test whether this path matches the given shell glob pattern.
+
+.. automethod:: Path.scandir
 
 .. method:: Path.stat()
 
