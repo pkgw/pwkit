@@ -249,6 +249,45 @@ class Path (_ParentPath):
 
     # Filesystem modification
 
+    def copy_to (self, dest, preserve='mode'):
+        """Copy this path — as a file — to another *dest*.
+
+        The *preserve* argument specifies which meta-properties of the file
+        should be preserved:
+
+        ``none``
+          Only copy the file data.
+        ``mode``
+          Copy the data and the file mode (permissions, etc).
+        ``all``
+          Preserve as much as possible: mode, modification times, etc.
+
+        The destination *dest* may be a directory.
+
+        Returns the final destination path.
+
+        """
+        # shutil.copyfile() doesn't let the destination be a directory, so we
+        # have to manage that possibility ourselves.
+
+        import shutil
+        dest = Path (dest)
+
+        if dest.is_dir ():
+            dest = dest / self.name
+
+        if preserve == 'none':
+            shutil.copyfile (str(self), str(dest))
+        elif preserve == 'mode':
+            shutil.copy (str(self), str(dest))
+        elif preserve == 'all':
+            shutil.copy2 (str(self), str(dest))
+        else:
+            raise ValueError ('unrecognized "preserve" value %r' % (preserve,))
+
+        return dest
+
+
     def ensure_parent (self, mode=0o777, parents=False):
         """Ensure that this path's *parent* directory exists. Returns a boolean
         indicating whether the parent directory already existed. Will attempt

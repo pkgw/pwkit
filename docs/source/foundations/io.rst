@@ -258,6 +258,7 @@ These functions actually modify the filesystem.
 .. autosummary::
 
    ~Path.chmod
+   ~Path.copy_to
    ~Path.ensure_parent
    ~Path.mkdir
    ~Path.rellink_to
@@ -276,6 +277,7 @@ These functions actually modify the filesystem.
    Change the mode of the named path. Remember to use octal
    ``0o755`` notation!
 
+.. automethod:: Path.copy_to
 .. automethod:: Path.ensure_parent
 
 .. method:: Path.mkdir(mode=0o777, parents=False)
