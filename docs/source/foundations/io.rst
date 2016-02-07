@@ -101,6 +101,28 @@ And they have the following related methods:
    The final path component. The *name* of ``/foo/`` is ``"foo"``. The *name*
    of ``/foo/.`` is ``"foo"`` as well. The *name* of ``/foo/..`` is ``".."``.
 
+.. attribute:: Path.parent
+
+   This path's parent, in a textual sense: the *parent* of ``foo`` is ``.``,
+   but the parent of ``.`` is also ``.``. The parent of ``/bar`` is ``/``; the
+   parent of ``/`` is also ``/``.
+
+.. attribute:: Path.parents
+
+   An immutable, indexable sequence of this path’s parents. Here are some
+   examples showing the semantics::
+
+     >>> list(Path("/foo/bar").parents)
+     <<< [Path("/foo"), Path("/")]
+     >>> list(Path("/foo/bar/").parents)
+     <<< [Path("/foo"), Path("/")]
+     >>> list(Path("/foo/bar/.").parents)
+     <<< [Path("/foo"), Path("/")]
+     >>> list(Path("wib/wob").parents)
+     <<< [Path("wib"), Path(".")]
+     >>> list(Path("wib/../wob/.").parents)
+     <<< [Path("wib/.."), Path("wib"), Path(".")]
+
 .. attribute:: Path.parts
 
    A tuple of the path components. The *parts* of ``/a/b`` are ``("/", "a",
