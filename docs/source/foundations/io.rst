@@ -77,6 +77,7 @@ And they have the following related methods:
    ~Path.absolute
    ~Path.as_uri
    ~Path.expand
+   ~Path.get_parent
    ~Path.glob
    ~Path.joinpath
    ~Path.make_relative
@@ -107,6 +108,8 @@ And they have the following related methods:
    but the parent of ``.`` is also ``.``. The parent of ``/bar`` is ``/``; the
    parent of ``/`` is also ``/``.
 
+   .. seealso:: :meth:`Path.get_parent`
+
 .. attribute:: Path.parents
 
    An immutable, indexable sequence of this path’s parents. Here are some
@@ -124,6 +127,8 @@ And they have the following related methods:
      <<< [Path("wib"), Path(".")]
      >>> list(Path("wib/../wob/.").parents)
      <<< [Path("wib/.."), Path("wib"), Path(".")]
+
+   .. seealso:: :meth:`Path.get_parent`
 
 .. attribute:: Path.parts
 
@@ -180,6 +185,8 @@ And they have the following related methods:
    Return the path stringified as a ``file:///`` URI.
 
 .. automethod:: Path.expand
+
+.. automethod:: Path.get_parent
 
 .. method:: Path.glob(pattern)
 

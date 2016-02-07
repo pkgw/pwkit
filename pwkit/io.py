@@ -202,7 +202,49 @@ class Path (_ParentPath):
         return other
 
 
+    def get_parent (self, mode='naive'):
+        """Get the path of this path’s parent directory.
+
+        Unlike the :attr:`parent` attribute, this function can correctly
+        ascend into parent directories if *self* is ``"."`` or a sequence of
+        ``".."``. The precise way in which it handles these kinds of paths,
+        however, depends on the *mode* parameter:
+
+        ``"textual"``
+          Return the same thing as the :attr:`parent` attribute.
+        ``"resolved"``
+          As *textual*, but on the :meth:`resolve`-d version of the path. This
+          will always return the physical parent directory in the filesystem.
+          The path pointed to by *self* must exist for this call to succeed.
+        ``"naive"``
+          As *textual*, but the parent of ``"."`` is ``".."``, and the parent of
+          a sequence of ``".."`` is the same sequence with another ``".."``. Note
+          that this manipulation is still strictly textual, so results when called
+          on paths like ``"foo/../bar/../other"`` will likely not be what you want.
+          Furthermore, ``p.get_parent(mode="naive")`` never yields a path equal to
+          ``p``, so some kinds of loops will execute infinitely.
+
+        """
+        if mode == 'textual':
+            return self.parent
+
+        if mode == 'resolved':
+            return self.resolve ().parent
+
+        if mode == 'naive':
+            from os.path import pardir
+
+            if not len (self.parts):
+                return self.__class__ (pardir)
+            if all (p == pardir for p in self.parts):
+                return self / pardir
+            return self.parent
+
+        raise ValueError ('unhandled get_parent() mode %r' % (mode, ))
+
+
     def make_relative (self, other):
+
         """Return a new path that is the equivalent of this one relative to the path
         *other*. Unlike :meth:`relative_to`, this will not throw an error if *self* is
         not a sub-path of *other*; instead, it will use ``..`` to build a relative
