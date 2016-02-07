@@ -560,6 +560,19 @@ class Path (_ParentPath):
         return read (text_type (self), **kwargs)
 
 
+    def read_yaml (self, encoding=None, errors=None, newline=None, **kwargs):
+        """Read this path as a YAML document.
+
+        The *encoding*, *errors*, and *newline* keywords are passed to
+        :meth:`open`. The remaining *kwargs* are passed to :meth:`yaml.load`.
+
+        """
+        import yaml
+
+        with self.open (mode='rt', encoding=encoding, errors=errors, newline=newline) as f:
+            return yaml.load (f, **kwargs)
+
+
     def write_pickle (self, obj):
         """Dump *obj* to this path using :mod:`cPickle`."""
         self.write_pickles ((obj, ))
@@ -574,6 +587,19 @@ class Path (_ParentPath):
         with self.open (mode='wb') as f:
             for obj in objs:
                 pickle.dump (obj, f)
+
+
+    def write_yaml (self, data, encoding=None, errors=None, newline=None, **kwargs):
+        """Read *data* to this path as a YAML document.
+
+        The *encoding*, *errors*, and *newline* keywords are passed to
+        :meth:`open`. The remaining *kwargs* are passed to :meth:`yaml.dump`.
+
+        """
+        import yaml
+
+        with self.open (mode='wt', encoding=encoding, errors=errors, newline=newline) as f:
+            return yaml.dump (data, stream=f, **kwargs)
 
 
 del _ParentPath

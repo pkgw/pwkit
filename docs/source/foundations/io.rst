@@ -331,8 +331,10 @@ Data input and output
    ~Path.read_pickle
    ~Path.read_pickles
    ~Path.read_tabfile
+   ~Path.read_yaml
    ~Path.write_pickle
    ~Path.write_pickles
+   ~Path.write_yaml
 
 .. rubric:: Detailed descriptions
 
@@ -354,8 +356,10 @@ Data input and output
 .. automethod:: Path.read_pickle
 .. automethod:: Path.read_pickles
 .. automethod:: Path.read_tabfile
+.. automethod:: Path.read_yaml
 .. automethod:: Path.write_pickle
 .. automethod:: Path.write_pickles
+.. automethod:: Path.write_yaml
 
 
 
