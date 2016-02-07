@@ -127,13 +127,28 @@ And they have the following related methods:
 
 .. attribute:: Path.parts
 
-   A tuple of the path components. The *parts* of ``/a/b`` are ``("/", "a",
-   "b")``. The *parts* of ``a/b/.`` are ``("a", "b")``.
+   A tuple of the path components. Examples::
+
+     >>> Path('/a/b').parts
+     <<< ('/', 'a', 'b')
+     >>> Path('a/b').parts
+     <<< ('a', 'b')
+     >>> Path('/a/b/').parts
+     <<< ('/', 'a', 'b')
+     >>> Path('a/b/.').parts
+     <<< ('a', 'b')
+     >>> Path('/a/../b/./c').parts
+     <<< ('/', 'a', '..', 'b', 'c')
+     >>> Path('.').parts
+     <<< ()
+     >>> Path('').parts
+     <<< ()
 
 .. attribute:: Path.stem
 
    The :attr:`name` without its suffix. The stem of ``"foo.tar.gz"`` is
-   ``"foo.tar"``.
+   ``"foo.tar"``. The stem of ``"noext"`` is ``"noext"``. It is an invariant
+   that ``name = stem + suffix``.
 
 .. attribute:: Path.suffix
 
