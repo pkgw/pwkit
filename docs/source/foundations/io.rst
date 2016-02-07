@@ -321,6 +321,7 @@ These functions actually modify the filesystem.
    ~Path.copy_to
    ~Path.ensure_dir
    ~Path.ensure_parent
+   ~Path.make_tempfile
    ~Path.mkdir
    ~Path.rellink_to
    ~Path.rename
@@ -341,6 +342,7 @@ These functions actually modify the filesystem.
 .. automethod:: Path.copy_to
 .. automethod:: Path.ensure_dir
 .. automethod:: Path.ensure_parent
+.. automethod:: Path.make_tempfile
 
 .. method:: Path.mkdir(mode=0o777, parents=False)
 

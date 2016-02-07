@@ -378,6 +378,121 @@ class Path (_ParentPath):
         return self.parent.ensure_dir (mode, parents)
 
 
+    class _PathTempfileContextManager (object):
+        def __init__ (self, reference, want, resolution, suffix, kwargs):
+            self.reference = reference
+            self.want = want
+            self.resolution = resolution
+            self.suffix = suffix
+            self.kwargs = kwargs
+
+        def __enter__ (self):
+            from tempfile import NamedTemporaryFile
+
+            self.handle = NamedTemporaryFile (
+                dir = str(self.reference.parent),
+                prefix = (self.reference.name + '.'),
+                suffix = self.suffix,
+                delete = False,
+                **self.kwargs
+            )
+
+            self.temppath = self.reference.__class__ (self.handle.name)
+            self.handle.path = self.temppath
+
+            if self.want == 'handle':
+                return self.handle
+
+            if self.want == 'path':
+                self.handle.close ()
+                self.handle = None
+                return self.temppath
+
+            assert False, 'not reached'
+
+        def __exit__ (self, etype, evalue, etb):
+            if self.handle is not None:
+                self.handle.close ()
+
+            if etype is not None:
+                # On error, keep the tempfile
+                return False
+
+            if self.resolution == 'unlink':
+                self.temppath.unlink ()
+            elif self.resolution == 'try_unlink':
+                self.temppath.try_unlink ()
+            elif self.resolution == 'keep':
+                pass
+            elif self.resolution == 'overwrite':
+                self.temppath.rename (self.reference)
+            else:
+                assert False, 'not reached'
+
+            return False
+
+
+    def make_tempfile (self, want='handle', resolution='try_unlink', suffix='', **kwargs):
+        """Get a context manager that creates and cleans up a uniquely-named temporary
+        file with a name similar to this path.
+
+        This function returns a context manager that creates a secure
+        temporary file with a path similar to *self*. In particular, if
+        ``str(self)`` is something like ``foo/bar``, the path of the temporary
+        file will be something like ``foo/bar.ame8_2``.
+
+        The object returned by the context manager depends on the *want* argument:
+
+        ``"handle"``
+          An open file-like object is returned. This is the object returned by
+          :class:`tempfile.NamedTemporaryFile`. Its name on the filesystem is
+          accessible as a string as its `name` attribute, or (a customization here)
+          as a :class:`Path` instance as its `path` attribute.
+        ``"path"``
+          The temporary file is created as in ``"handle"``, but is then immediately
+          closed. A :class:`Path` instance pointing to the path of the temporary file is
+          instead returned.
+
+        If an exception occurs inside the context manager block, the temporary file is
+        left lying around. Otherwise, what happens to it upon exit from the context
+        manager depends on the *resolution* argument:
+
+        ``"try_unlink"``
+          Call :meth:`try_unlink` on the temporary file — no exception is raised if
+          the file did not exist.
+        ``"unlink"``
+          Call :meth:`unlink` on the temporary file — an exception is raised if
+          the file did not exist.
+        ``"keep"``
+          The temporary file is left lying around.
+        ``"overwrite"``
+          The temporary file is :meth:`rename`-d to overwrite *self*.
+
+        For instance, when rewriting important files, it’s typical to write
+        the new data to a temporary file, and only rename the temporary file
+        to the final destination at the end — that way, if a problem happens
+        while writing the new data, the original file is left unmodified;
+        otherwise you’d be stuck with a partially-written version of the file.
+        This pattern can be accomplished with::
+
+          p = Path ('path/to/important/file')
+          with p.make_tempfile (resolution='overwrite', mode='wt') as h:
+              print ('important stuff goes here', file=h)
+
+        The *suffix* argument is appended to the temporary file name after the
+        random portion. It defaults to the empty string. If you want it to
+        operate as a typical filename suffix, include a leading ``"."``.
+
+        Other **kwargs** are passed to :class:`tempfile.NamedTemporaryFile`.
+
+        """
+        if want not in ('handle', 'path'):
+            raise ValueError ('unrecognized make_tempfile() "want" mode %r' % (want,))
+        if resolution not in ('unlink', 'try_unlink', 'keep', 'overwrite'):
+            raise ValueError ('unrecognized make_tempfile() "resolution" mode %r' % (resolution,))
+        return Path._PathTempfileContextManager (self, want, resolution, suffix, kwargs)
+
+
     def rellink_to (self, target, force=False):
         """Make this path a symlink pointing to the given *target*, generating the
 	proper relative path using :meth:`make_relative`. This gives different
