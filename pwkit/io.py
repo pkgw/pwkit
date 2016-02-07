@@ -288,28 +288,52 @@ class Path (_ParentPath):
         return dest
 
 
-    def ensure_parent (self, mode=0o777, parents=False):
-        """Ensure that this path's *parent* directory exists. Returns a boolean
-        indicating whether the parent directory already existed. Will attempt
-        to create superior parent directories if *parents* is true. Unlike
-        :meth:`Path.mkdir`, will not raise an exception if parents already
-        exist.
+    def ensure_dir (self, mode=0o777, parents=False):
+        """Ensure that this path exists as a directory.
+
+        This function calls :meth:`mkdir` on this path, but does not raise an
+        exception if it already exists. It does raise an exception if this
+        path exists but is not a directory. If the directory is created,
+        *mode* is used to set the permissions of the resulting directory, with
+        the important caveat that the current :func:`os.umask` is applied.
+
+        It returns a boolean indicating if the directory was actually created.
+
+        If *parents* is true, parent directories will be created in the same
+        manner.
 
         """
-        p = self.parent
-        if p == self:
-            return True # can never create root; avoids loop when parents=True
-
         if parents:
-            p.ensure_parent (mode, True)
+            p = self.parent
+            if p == self:
+                return False # can never create root; avoids loop when parents=True
+            p.ensure_dir (mode, True)
+
+        made_it = False
 
         try:
-            p.mkdir (mode)
+            self.mkdir (mode)
+            made_it = True
         except OSError as e:
             if e.errno == 17: # EEXIST?
-                return True # that's fine
+                return False # that's fine
             raise # other exceptions are not fine
-        return False
+
+        if not self.is_dir ():
+            import errno
+            raise OSError (errno.ENOTDIR, 'Not a directory', str(self))
+
+        return made_it
+
+
+    def ensure_parent (self, mode=0o777, parents=False):
+        """Ensure that this path's *parent* directory exists.
+
+        Returns a boolean whether the parent directory was created. Will
+        attempt to create superior parent directories if *parents* is true.
+
+        """
+        return self.parent.ensure_dir (mode, parents)
 
 
     def rellink_to (self, target, force=False):
