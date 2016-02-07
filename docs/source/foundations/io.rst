@@ -118,6 +118,8 @@ And they have the following related methods:
      <<< [Path("/foo"), Path("/")]
      >>> list(Path("/foo/bar/.").parents)
      <<< [Path("/foo"), Path("/")]
+     >>> list(Path("/foo/./bar/.").parents)
+     <<< [Path("/foo"), Path("/")]
      >>> list(Path("wib/wob").parents)
      <<< [Path("wib"), Path(".")]
      >>> list(Path("wib/../wob/.").parents)
@@ -130,18 +132,26 @@ And they have the following related methods:
 
 .. attribute:: Path.stem
 
-   The final component without its suffix. The stem of ``"foo.tar.gz"`` is
+   The :attr:`name` without its suffix. The stem of ``"foo.tar.gz"`` is
    ``"foo.tar"``.
 
 .. attribute:: Path.suffix
 
-   The suffix of the final path component. The suffix of ``"foo.tar.gz"`` is
-   ``".gz"``.
+   The suffix of the :attr:`name`, including the period. If there is no
+   period, the empty string is returned::
+
+     >>> print (Path("foo.tar.gz").suffix)
+     <<< .gz
+     >>> print (Path("foo.dir/.").suffix)
+     <<< .dir
+     >>> print (repr (Path("noextension").suffix))
+     <<< ''
 
 .. attribute:: Path.suffixes
 
-   A list of all suffixes on the final component. The suffixes of
-   ``"foo.tar.gz"`` are ``[".tar", ".gz"]``.
+   A list of all suffixes on :attr:`name`, including the periods. The suffixes
+   of ``"foo.tar.gz"`` are ``[".tar", ".gz"]``. If :attr:`name` contains no
+   periods, the empty list is returned.
 
 .. rubric:: Detailed descriptions of methods
 
