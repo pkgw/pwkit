@@ -215,8 +215,12 @@ And they have the following related methods:
 
 .. method:: Path.with_suffix(suffix)
 
-   Return a new path with the file suffix changed, or a new suffix added if
-   there was none before. *suffix* should start with a ``"."``.
+   Return a new path with the file :attr:`suffix` changed, or a new suffix
+   added if there was none before. *suffix* must start with a ``"."``. The
+   semantics of the :attr:`suffix` attribute are maintained, so::
+
+     >>> print (Path ('foo.tar.gz').with_suffix ('.new'))
+     <<< foo.tar.new
 
 
 .. _path-filesystem-interrogation:
