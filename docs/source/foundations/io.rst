@@ -78,12 +78,11 @@ And they have the following related methods:
    ~Path.as_uri
    ~Path.expand
    ~Path.get_parent
-   ~Path.glob
+   ~Path.is_absolute
    ~Path.joinpath
    ~Path.make_relative
    ~Path.relative_to
    ~Path.resolve
-   ~Path.rglob
    ~Path.with_name
    ~Path.with_suffix
 
@@ -188,11 +187,9 @@ And they have the following related methods:
 
 .. automethod:: Path.get_parent
 
-.. method:: Path.glob(pattern)
+.. method:: Path.is_absolute()
 
-   Assuming that the path is a directory, iterate over its
-   contents and return sub-paths matching the given shell-style
-   glob pattern.
+   Returns whether the path is absolute.
 
 .. method:: Path.joinpath(*args)
 
@@ -208,12 +205,9 @@ And they have the following related methods:
 
 .. method:: Path.resolve()
 
-   Make this path absolute, resolving all symlinks and normalizing.
-
-.. method:: Path.rglob(pattern)
-
-   Recursively yield all files and directories matching the shell
-   glob pattern *pattern* below this path.
+   Make this path absolute, resolving all symlinks and normalizing away
+   ``".."`` and ``"."`` components. The path must exist for this function to
+   work.
 
 .. method:: Path.with_name(name)
 
@@ -235,7 +229,7 @@ example, is a directory; but they do not modify the filesystem.
 
 .. autosummary::
    ~Path.exists
-   ~Path.is_absolute
+   ~Path.glob
    ~Path.is_block_device
    ~Path.is_char_device
    ~Path.is_dir
@@ -245,6 +239,7 @@ example, is a directory; but they do not modify the filesystem.
    ~Path.is_symlink
    ~Path.iterdir
    ~Path.match
+   ~Path.rglob
    ~Path.scandir
    ~Path.stat
 
@@ -254,9 +249,11 @@ example, is a directory; but they do not modify the filesystem.
 
    Returns whether the path exists.
 
-.. method:: Path.is_absolute()
+.. method:: Path.glob(pattern)
 
-   Returns whether the path is absolute.
+   Assuming that the path is a directory, iterate over its
+   contents and return sub-paths matching the given shell-style
+   glob pattern.
 
 .. method:: Path.is_block_device()
 
@@ -294,6 +291,11 @@ example, is a directory; but they do not modify the filesystem.
 .. method:: Path.match(pattern)
 
    Test whether this path matches the given shell glob pattern.
+
+.. method:: Path.rglob(pattern)
+
+   Recursively yield all files and directories matching the shell
+   glob pattern *pattern* below this path.
 
 .. automethod:: Path.scandir
 
