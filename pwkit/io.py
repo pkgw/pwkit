@@ -2,26 +2,16 @@
 # Copyright 2012-2015 Peter Williams <peter@newton.cx> and collaborators.
 # Licensed under the MIT License.
 
-"""pwkit.io - Utilities for input and output.
+"""The ``pwkit`` package provides many tools to ease reading and writing data
+files. The most generic such tools are located in this module. The most
+important tool is the :class:`Path` class for object-oriented navigation of
+the filesystem.
 
-Classes:
-
-  Path           - Augmented Path object from pathlib.
-
-Functions:
-
-  djoin          - "Dotless" version of os.path.join.
-  ensure_dir     - Ensure that a directory exists.
-  ensure_symlink - Ensure that a symbolic link exists.
-  make_path_func - Make a function that conveniently constructs paths.
-  pathlines      - Yield lines from a text file at a specified path.
-  pathwords      - Yield lists of words from a text file at a specified path.
-  rellink        - Create a symbolic link to a relative path.
-  try_open       - Try opening a file; no exception if it doesn't exist.
-  words          - Split a list of lines into individual words.
+There are also some :ref:`free functions <other-functions>` in the
+:mod:`pwkit.io` module, but they are generally being superseded by operations
+on :class:`Path` objects.
 
 """
-
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 __all__ = str ('''djoin ensure_dir ensure_symlink make_path_func rellink
@@ -162,74 +152,33 @@ def ensure_symlink (src, dst):
 _ParentPath = pathlib.WindowsPath if os.name == 'nt' else pathlib.PosixPath
 
 class Path (_ParentPath):
-    """Extended version of the pathlib.Path object. Methods (asterisk denotes
-    pwkit-specific methods):
-
-    as_hdf_store      - Open as a Pandas HDFStore.
-    as_uri            - Return as a file:/// URI.
-    chmod             - Change file mode.
-    ensure_parent (*) - Ensure the path's parent directory exists.
-    exists            - Test whether path exists.
-    expand            - Expand constructions like "~" or $VAR.
-    glob              - Glob for files at this path (assumes it's a directory).
-    is_absolute       - Test whether the path is absolute.
-    is_*              - for: block_device, char_device, dir, fifo, file, socket symlink.
-    iterdir           - Generate list of paths in a directory.
-    joinpath(*rest)   - Create sub-paths.
-    make_relative (*) - Generate a relative path.
-    match(glob)       - Test whether this path matches a given glob.
-    mkdir             - Create directory here; set parents=True to create parents.
-    open              - Open as a file.
-    read_fits (*)     - Open as a FITS file with Astropy.
-    read_fits_bintable (*)
-                      - Read a FITS-format binary table into a Pandas DataFrame.
-    read_hdf (*)      - Read as HDF format into a Pandas DataFrame.
-    read_lines (*)    - Generate lines from a text file.
-    read_pandas (*)   - Read this path into a Pandas DataFrame.
-    read_pickle (*)   - Read a single pickled object.
-    read_pickles (*)  - Read a series of pickled objects.
-    read_tabfile (*)  - Read this path as a pwkit typed data table.
-    read_numpy_text (*)
-                      - Read this path into a Numpy array.
-    relative_to       - Compute a version of this path relative to another.
-    rellink_to (*)    - Make a relative symlink.
-    rename(targ)      - Rename this file or directory into `targ`.
-    resolve           - Make path absolute and remove symlinks.
-    rglob             - Glob for files at this path, recursively.
-    rmdir             - Remove this directory.
-    rmtree (*)        - Remove this directory and its contents recursively.
-    scandir (*)       - Generate information about directory contents.
-    stat              - Stat this path and return the result.
-    symlink_to(targ)  - Make this path a symbolic link to to `targ`.
-    touch             - Touch this file.
-    try_open (*)      - Like open(), but return None if the file doesn't exist.
-    try_unlink (*)    - Attempt to remove the file or symlink; no error if nonexistent.
-    unlink            - Remove this file or symbolic link.
-    unpickle_one (*)  - Unpickle an object from this path.
-    unpickle_many (*) - Generate a series of objects unpickled from this path.
-    with_name         - Return a new path with a different "basename".
-    with_suffix       - Return a new path with a different suffix on the basename.
-    write_pickle (*)  - Pickle an object into this path.
-    write_pickles (*) - Pickle multiple objects into this path.
-
-    Properties:
-
-    anchor            - The concatenation of drive and root.
-    drive             - The Windows drive, if any; '' on POSIX.
-    name              - The final path component.
-    parts             - A tuple of the path components; '/a/b' -> ('/', 'a', 'b').
-    parent            - The logical parent: '/a/b' -> '/a'; 'foo/..' -> 'foo'.
-    parents           - An immutable sequence giving logical ancestors of the path.
-    root              - The root: '/' or ''
-    stem              - The final component without its suffix; 'foo.tar.gz' -> 'foo.tar'.
-    suffix            - The final '.' extension of the final component. 'foo.tar.gz' -> '.gz'.
-    suffixes          - A list of all extensions; 'foo.tar.gz' -> ['.tar', '.gz'].
+    """This is an extended version of the :class:`pathlib.Path` class.
+    (:mod:`pathlib` is built into Python 3.x and is available as a backport to
+    Python 2.x.) It represents a path on the filesystem.
 
     """
-
     # Manipulations
 
     def expand (self, user=False, vars=False, glob=False, resolve=False):
+        """Return a new :class:`Path` with various expansions performed. All
+	expansions are disabled by default but can be enabled by passing in
+	true values in the keyword arguments.
+
+	user : bool (default False)
+	  Expand ``~`` and ``~user`` home-directory constructs. If a username is
+	  unmatched or ``$HOME`` is unset, no change is made. Calls
+	  :func:`os.path.expanduser`.
+	vars : bool (default False)
+	  Expand ``$var`` and ``${var}`` environment variable constructs. Unknown
+	  variables are not substituted. Calls :func:`os.path.expandvars`.
+	glob : bool (default False)
+	  Evaluate the path as a :mod:`glob` expression and use the matched path.
+	  If the glob does not match anything, do not change anything. If the
+	  glob matches more than one path, raise an :exc:`IOError`.
+	resolve : bool (default False)
+	  Call :meth:`resolve` on the return value before returning it.
+
+        """
         from os import path
         from glob import glob
 
@@ -254,12 +203,13 @@ class Path (_ParentPath):
 
 
     def make_relative (self, other):
-        """A variant on relative_to() that allows computation of, e.g., "a" relative
-        to "b", yielding "../a". This can technically give improper results if
-        "b" is a directory symlink. If `self` is absolute, it is just
-        returned unmodified.
+        """Return a new path that is the equivalent of this one relative to the path
+        *other*. Unlike :meth:`relative_to`, this will not throw an error if *self* is
+        not a sub-path of *other*; instead, it will use ``..`` to build a relative
+        path. This can result in invalid relative paths if *other* contains a
+        directory symbolic link.
 
-        This might not work on Windows?
+        If *self* is an absolute path, it is returned unmodified.
 
         """
         if self.is_absolute ():
@@ -273,18 +223,19 @@ class Path (_ParentPath):
     # Filesystem I/O operations
 
     def scandir (self):
-        """This uses the `scandir` module or `os.scandir` to generate a listing of
-        this path's contents, assuming it's a directory.
+        """Iteratively scan this path, assuming it’s a directory. This requires and
+        uses the :mod:`scandir` module.
 
         `scandir` is different than `iterdir` because it generates `DirEntry`
         items rather than Path instances. DirEntry objects have their
         properties filled from the directory info itself, so querying them
         avoids syscalls that would be necessary with iterdir().
 
-        DirEntry objects have these methods on POSIX systems: inode(),
-        is_dir(), is_file(), is_symlink(), stat(). They have these attributes:
-        `name` (the basename of the item), `path` (the concatenation of its
-        name and this path).
+        The generated values are :class:`scandir.DirEntry` objects which have
+        some information pre-filled. These objects have methods ``inode()``,
+        ``is_dir()``, ``is_file()``, ``is_symlink()``, and ``stat()``. They
+        have attributes ``name`` (the basename of the entry) and ``path`` (its
+        full path).
 
         """
         if hasattr (os, 'scandir'):
@@ -298,8 +249,10 @@ class Path (_ParentPath):
 
     def ensure_parent (self, mode=0o777, parents=False):
         """Ensure that this path's *parent* directory exists. Returns a boolean
-        indicating whether the directory already existed. Will attempt to
-        create superior parent directories if *parents* is True.
+        indicating whether the parent directory already existed. Will attempt
+        to create superior parent directories if *parents* is true. Unlike
+        :meth:`Path.mkdir`, will not raise an exception if parents already
+        exist.
 
         """
         p = self.parent
@@ -319,6 +272,10 @@ class Path (_ParentPath):
 
 
     def rmtree (self):
+        """Recursively delete this directory and its contents. If any errors are
+        encountered, they will be printed to standard error.
+
+        """
         import shutil
         from pwkit.cli import warn
 
@@ -331,9 +288,8 @@ class Path (_ParentPath):
 
 
     def try_unlink (self):
-        """Attempt to unlink this path, but do not raise an exception if it
-        didn't exist. Returns a boolean indicating whether it was really
-        unlinked.
+        """Try to unlink this path. If it doesn't exist, no error is returned. Returns
+        a boolean indicating whether the path was really unlinked.
 
         """
         try:
@@ -346,15 +302,22 @@ class Path (_ParentPath):
 
 
     def rellink_to (self, target, force=False):
-        """Like symlink_to(), but modify `target` to be relative to wherever
-        `self` points.
+        """Make this path a symlink pointing to the given *target*, generating the
+	proper relative path using :meth:`make_relative`. This gives different
+	behavior than :meth:`symlink_to`. For instance, ``Path
+	('a/b').symlink_to ('c')`` results in ``a/b`` pointing to the path
+	``c``, whereas :meth:`rellink_to` results in it pointing to ``../c``.
+	This can result in broken relative paths if (continuing the example)
+	``a`` is a symbolic link to a directory.
 
-        Path('a/b').symlink_to ('c') makes 'a/b' point to 'c', while
-        Path('a/b').rellink_to ('c') makes 'a/b' point to '../c'.
+	If either *target* or *self* is absolute, the symlink will point at
+	the absolute path to *target*. The intention is that if you’re trying
+	to link ``/foo/bar`` to ``bee/boo``, it probably makes more sense for
+	the link to point to ``/path/to/.../bee/boo`` rather than
+	``../../../../bee/boo``.
 
-        If `force`, the symlink will be forcibly created: if the `self`
-        already exists as a path, it will be unlinked, and ENOENT will
-        be ignored.
+	If *force* is true, :meth:`try_unlink` will be called on *self* before
+	the link is made, forcing its re-creation.
 
         """
         target = self.__class__ (target)
@@ -371,6 +334,12 @@ class Path (_ParentPath):
     # Data I/O
 
     def try_open (self, null_if_noexist=False, **kwargs):
+        """Call :meth:`Path.open` on this path (passing *kwargs*) and return the
+        result. If the file doesn't exist, the behavior depends on
+        *null_if_noexist*. If it is false (the default), ``None`` is returned.
+        Otherwise, :data:`os.devnull` is opened and returned.
+
+        """
         try:
             return self.open (**kwargs)
         except IOError as e:
@@ -383,6 +352,15 @@ class Path (_ParentPath):
 
 
     def read_inifile (self, noexistok=False, typed=False):
+        """Open assuming an “ini-file” format and return a generator yielding data
+        records using either :func:`pwkit.inifile.read_stream` (if *typed* is
+        false) or :func:`pwkit.tinifile.read_stream` (if it’s true). The
+        latter version is designed to work with numerical data using the
+        :mod:`pwkit.msmt` subsystem. If *noexistok* is true, a nonexistent
+        file will result in no items being generated rather than an
+        :exc:`IOError` being raised.
+
+        """
         if typed:
             from .tinifile import read_stream
         else:
@@ -398,6 +376,13 @@ class Path (_ParentPath):
 
 
     def read_lines (self, mode='rt', noexistok=False, **kwargs):
+        """Generate a sequence of lines from the file pointed to by this path, by
+        opening as a regular file and iterating over it. The lines therefore
+        contain their newline characters. If *noexistok*, a nonexistent file
+        will result in an empty sequence rather than an exception. *kwargs*
+        are passed to :meth:`Path.open`.
+
+        """
         try:
             with self.open (mode=mode, **kwargs) as f:
                 for line in f:
@@ -408,6 +393,10 @@ class Path (_ParentPath):
 
 
     def read_pickle (self):
+        """Open the file, unpickle one object from it using :mod:`cPickle`, and return
+        it.
+
+        """
         gen = self.read_pickles ()
         value = gen.next ()
         gen.close ()
@@ -415,6 +404,10 @@ class Path (_ParentPath):
 
 
     def read_pickles (self):
+        """Generate a sequence of objects by opening the path and unpickling items
+        until EOF is reached.
+
+        """
         import cPickle as pickle
         with self.open (mode='rb') as f:
             while True:
@@ -426,10 +419,15 @@ class Path (_ParentPath):
 
 
     def write_pickle (self, obj):
+        """Dump *obj* to this path using :mod:`cPickle`."""
         self.write_pickles ((obj, ))
 
 
     def write_pickles (self, objs):
+        """*objs* must be iterable. Write each of its values to this path in sequence
+        using :mod:`cPickle`.
+
+        """
         import cPickle as pickle
         with self.open (mode='wb') as f:
             for obj in objs:
@@ -437,11 +435,28 @@ class Path (_ParentPath):
 
 
     def as_hdf_store (self, mode='r', **kwargs):
+        """Return the path as an opened :class:`pandas.HDFStore` object. Note that the
+        :class:`HDFStore` constructor unconditionally prints messages to
+        standard output when opening and closing files, so use of this
+        function will pollute your program’s standard output. The *kwargs* are
+        forwarded to the :class:`HDFStore` constructor.
+
+        """
         from pandas import HDFStore
         return HDFStore (text_type (self), mode=mode, **kwargs)
 
 
     def read_pandas (self, format='table', **kwargs):
+        """Read using :mod:`pandas`. The function ``pandas.read_FORMAT`` is called
+        where ``FORMAT`` is set from the argument *format*. *kwargs* are
+        passed to this function. Supported formats likely include
+        ``clipboard``, ``csv``, ``excel``, ``fwf``, ``gbq``, ``html``,
+        ``json``, ``msgpack``, ``pickle``, ``sql``, ``sql_query``,
+        ``sql_table``, ``stata``, ``table``. Note that ``hdf`` is not
+        supported because it requires a non-keyword argument; see
+        :meth:`Path.read_hdf`.
+
+        """
         import pandas
 
         reader = getattr (pandas, 'read_' + format, None)
@@ -454,25 +469,31 @@ class Path (_ParentPath):
 
 
     def read_hdf (self, key, **kwargs):
+        """Open as an HDF5 file using :mod:`pandas` and return the item stored under
+        the key *key*. *kwargs* are passed to :func:`pandas.read_hdf`.
+
+        """
         # This one needs special handling because of the "key" and path input.
         import pandas
         return pandas.read_hdf (text_type (self), key, **kwargs)
 
 
     def read_fits (self, **kwargs):
-        """Open this path as a FITS file with Astropy. Keywords:
+        """Open as a FITS file, returning a :class:`astropy.io.fits.HDUList` object.
+        Keyword arguments are passed to :func:`astropy.io.fits.open`; valid
+        ones likely include:
 
-        mode='readonly' ('update', 'append', 'denywrite', 'ostream')
-        memmap=None (boolean)
-        save_backup=False
-        cache=True
-        uint=False or uint16=False
-        ignore_missing_end=False
-        checksum=False (boolean or 'remove')
-        disable_image_compression=False
-        do_not_scale_image_data=False
-        ignore_blank=False
-        scale_back=False
+        - ``mode = 'readonly'`` (or "update", "append", "denywrite", "ostream")
+        - ``memmap = None``
+        - ``save_backup = False``
+        - ``cache = True``
+        - ``uint = False``
+        - ``ignore_missing_end = False``
+        - ``checksum = False``
+        - ``disable_image_compression = False``
+        - ``do_not_scale_image_data = False``
+        - ``ignore_blank = False``
+        - ``scale_back = False``
 
         """
         from astropy.io import fits
@@ -480,6 +501,19 @@ class Path (_ParentPath):
 
 
     def read_fits_bintable (self, hdu=1, drop_nonscalar_ok=True, **kwargs):
+        """Open as a FITS file, read in a binary table, and return it as a
+        :class:`pandas.DataFrame`, converted with
+        :func:`pkwit.numutil.fits_recarray_to_data_frame`. The *hdu* argument
+        specifies which HDU to read, with its default 1 indicating the first
+        FITS extension. The *drop_nonscalar_ok* argument specifies if
+        non-scalar table values (which are inexpressible in
+        :class:`pandas.DataFrame`s) should be silently ignored (``True``) or
+        cause a :exc:`ValueError` to be raised (``False``). Other **kwargs**
+        are passed to :func:`astropy.io.fits.open`, (see
+        :meth:`Path.read_fits`) although the open mode is hardcoded to be
+        ``"readonly"``.
+
+        """
         from astropy.io import fits
         from .numutil import fits_recarray_to_data_frame as frtdf
 
@@ -488,11 +522,54 @@ class Path (_ParentPath):
 
 
     def read_tabfile (self, **kwargs):
+        """Read this path as a table of typed measurements via
+        :func:`pwkit.tabfile.read`. Returns a generator for a sequence of
+        :class:`pwkit.Holder` objects, one for each row in the table, with
+        attributes for each of the columns.
+
+        tabwidth : int (default=8)
+            The tab width to assume. Defaults to 8 and should not be changed unless
+            absolutely necessary.
+        mode : str (default='rt')
+            The file open mode, passed to :func:`io.open`.
+        noexistok : bool (default=False)
+            If true, a nonexistent file will result in no items being generated, as
+            opposed to an :exc:`IOError`.
+        kwargs : keywords
+            Additional arguments are passed to :func:`io.open`.
+
+        """
         from .tabfile import read
         return read (text_type (self), **kwargs)
 
 
     def read_numpy_text (self, **kwargs):
+        """Read this path into a :class:`numpy.ndarray` as a text file using
+        :func:`numpy.loadtxt`. In normal conditions the returned array is
+        two-dimensional, with the first axis spanning the rows in the file and
+        the second axis columns (but see the *unpack* keyword). *kwargs* are
+        passed to :func:`numpy.loadtxt`; they likely are:
+
+	dtype : data type
+	  The data type of the resulting array.
+	comments : str
+	  If specific, a character indicating the start of a comment.
+	delimiter : str
+	  The string that separates values. If unspecified, any span of whitespace works.
+	converters : dict
+	  A dictionary mapping zero-based column *number* to a function that will
+	  turn the cell text into a number.
+	skiprows : int (default=0)
+	  Skip this many lines at the top of the file
+	usecols : sequence
+	  Which columns keep, by number, starting at zero.
+	unpack : bool (default=False)
+	  If true, the return value is transposed to be of shape ``(cols, rows)``.
+	ndmin : int (default=0)
+	  The returned array will have at least this many dimensions; otherwise
+	  mono-dimensional axes will be squeezed.
+
+        """
         import numpy as np
         return np.loadtxt (text_type (self), **kwargs)
 
