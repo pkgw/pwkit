@@ -30,10 +30,27 @@ The :class:`Path` object
       Returns a new path equivalent to ``os.path.join (part, *more)``, except
       the arguments may be either strings or other :class:`Path` instances.
 
-   .. staticmethod:: Path.cwd()
+   .. classmethod:: Path.cwd()
 
       Returns a new path containing the absolute path of the current working
       directory.
+
+   .. classmethod:: Path.create_tempfile(want='handle', resolution='try_unlink', suffix='', **kwargs)
+
+      Returns a context manager managing the creation and destruction of a
+      named temporary file. The operation of this function is exactly like
+      that of the bound method :meth:`Path.make_tempfile`, except that instead
+      of creating a temporary file with a name similar to an existing path,
+      this function creates one with a name selected using the standard
+      OS-dependent methods for choosing names of temporary files.
+
+      The ``overwrite`` resolution is not allowed here since there is no
+      original path to overwrite.
+
+      Note that by default the returned context manager returns a file-like
+      object and not an actual :class:`Path` instance; use ``want="path"`` to
+      get a :class:`Path`.
+
 
 .. _path-manipulations:
 
@@ -77,6 +94,7 @@ And they have the following related methods:
    ~Path.absolute
    ~Path.as_uri
    ~Path.expand
+   ~Path.format
    ~Path.get_parent
    ~Path.is_absolute
    ~Path.joinpath
@@ -184,7 +202,7 @@ And they have the following related methods:
    Return the path stringified as a ``file:///`` URI.
 
 .. automethod:: Path.expand
-
+.. automethod:: Path.format
 .. automethod:: Path.get_parent
 
 .. method:: Path.is_absolute()

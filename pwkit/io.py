@@ -202,6 +202,14 @@ class Path (_ParentPath):
         return other
 
 
+    def format (self, *args, **kwargs):
+        """Return a new path formed by calling :meth:`str.format` on the
+        textualization of this path.
+
+        """
+        return self.__class__ (str (self).format (*args, **kwargs))
+
+
     def get_parent (self, mode='naive'):
         """Get the path of this path’s parent directory.
 
@@ -244,7 +252,6 @@ class Path (_ParentPath):
 
 
     def make_relative (self, other):
-
         """Return a new path that is the equivalent of this one relative to the path
         *other*. Unlike :meth:`relative_to`, this will not throw an error if *self* is
         not a sub-path of *other*; instead, it will use ``..`` to build a relative
@@ -389,15 +396,27 @@ class Path (_ParentPath):
         def __enter__ (self):
             from tempfile import NamedTemporaryFile
 
+            # Pretty hacky: we know that we've been called from
+            # create_tempfile() when `reference` is a class.
+
+            if isinstance (self.reference, type):
+                dir = None
+                prefix = 'tmp'
+                refcls = self.reference
+            else:
+                dir = str(self.reference.parent)
+                prefix = (self.reference.name + '.')
+                refcls = self.reference.__class__
+
             self.handle = NamedTemporaryFile (
-                dir = str(self.reference.parent),
-                prefix = (self.reference.name + '.'),
+                dir = dir,
+                prefix = prefix,
                 suffix = self.suffix,
                 delete = False,
                 **self.kwargs
             )
 
-            self.temppath = self.reference.__class__ (self.handle.name)
+            self.temppath = refcls (self.handle.name)
             self.handle.path = self.temppath
 
             if self.want == 'handle':
@@ -491,6 +510,15 @@ class Path (_ParentPath):
         if resolution not in ('unlink', 'try_unlink', 'keep', 'overwrite'):
             raise ValueError ('unrecognized make_tempfile() "resolution" mode %r' % (resolution,))
         return Path._PathTempfileContextManager (self, want, resolution, suffix, kwargs)
+
+
+    @classmethod
+    def create_tempfile (cls, want='handle', resolution='try_unlink', suffix='', **kwargs):
+        if want not in ('handle', 'path'):
+            raise ValueError ('unrecognized create_tempfile() "want" mode %r' % (want,))
+        if resolution not in ('unlink', 'try_unlink', 'keep'):
+            raise ValueError ('unrecognized create_tempfile() "resolution" mode %r' % (resolution,))
+        return cls._PathTempfileContextManager (cls, want, resolution, suffix, kwargs)
 
 
     def rellink_to (self, target, force=False):
