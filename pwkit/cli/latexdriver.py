@@ -156,12 +156,9 @@ def merge_bibtex_with_aux (auxpath, mainpath, extradir, parse=get_bibtex_dict, a
 
     merged = merge_bibtex_collections (citednames, maindict, gen_extra_dicts (),
                                        allow_missing=allow_missing)
-    newpath = mainpath.with_suffix ('.bib.new')
 
-    with newpath.open ('wt') as newbib:
+    with mainpath.make_tempfile (want='handle', resolution='overwrite') as newbib:
         write_bibtex_dict (newbib, six.viewvalues (merged))
-
-    newpath.rename (mainpath)
 
 
 # This batch of code implements the filename-recorder-to-Makefile magic.
@@ -377,7 +374,7 @@ def commandline (argv=None):
     workdir = input.with_name ('.latexwork')
     workalias = input.with_name ('_latexwork')
 
-    (workdir / 'foo').ensure_parent (parents=True)
+    workdir.ensure_dir (parents=True)
     workalias.rellink_to (workdir, force=True)
 
     job = workalias / base
@@ -396,7 +393,7 @@ def commandline (argv=None):
                 extradir = input.with_name ('.bibtex')
 
                 if bib_style is not None:
-                    (extradir / 'foo').ensure_parent (parents=True)
+                    extradir.ensure_dir (parents=True)
                     bib_export (bib_style, aux, extradir / 'ZZ_bibtools.bib',
                                 no_tool_ok=True, quiet=quiet, ignore_missing=True)
 
