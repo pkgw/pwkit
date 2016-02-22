@@ -276,8 +276,12 @@ def logrun (command, boring_args, interesting_arg, logpath, quiet=False, reckles
         raise
 
 
-def bib_export (style, auxpath, bibpath, no_tool_ok=False, quiet=False):
-    args = ['bib', 'btexport', style, str(auxpath)]
+def bib_export (style, auxpath, bibpath, no_tool_ok=False, quiet=False, ignore_missing=False):
+    args = ['bib', 'btexport']
+    if ignore_missing:
+        args += ['-i']
+    args += [style, str(auxpath)]
+
     if not quiet:
         print ('+', ' '.join (args), '>' + str(bibpath))
 
@@ -394,7 +398,7 @@ def commandline (argv=None):
                 if bib_style is not None:
                     (extradir / 'foo').ensure_parent (parents=True)
                     bib_export (bib_style, aux, extradir / 'ZZ_bibtools.bib',
-                                no_tool_ok=True, quiet=quiet)
+                                no_tool_ok=True, quiet=quiet, ignore_missing=True)
 
                 if not quiet:
                     print ('+', '(generate and normalize)', bib)
