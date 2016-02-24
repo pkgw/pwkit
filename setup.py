@@ -28,6 +28,7 @@ setup (
         'pwkit.cli',
         'pwkit.environments',
         'pwkit.environments.casa',
+        'pwkit.environments.ciao',
         'pwkit.environments.jupyter',
         'pwkit.environments.sas',
     ],
