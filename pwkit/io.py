@@ -551,19 +551,32 @@ class Path (_ParentPath):
         return self.symlink_to (target.make_relative (self.parent))
 
 
-    def rmtree (self):
-        """Recursively delete this directory and its contents. If any errors are
-        encountered, they will be printed to standard error.
+    def rmtree (self, errors='warn'):
+        """Recursively delete this directory and its contents. The *errors* keyword
+        specifies how errors are handled:
+
+        "warn" (the default)
+          Print a warning to standard error.
+        "ignore"
+          Ignore errors.
 
         """
         import shutil
-        from pwkit.cli import warn
 
-        def on_error (func, path, exc_info):
-            warn ('couldn\'t rmtree %s: in %s of %s: %s', self, func.__name__,
-                  path, exc_info[1])
+        if errors == 'ignore':
+            ignore_errors = True
+            onerror = None
+        elif errors == 'warn':
+            ignore_errors = False
+            from .cli import warn
 
-        shutil.rmtree (text_type (self), ignore_errors=False, onerror=on_error)
+            def onerror (func, path, exc_info):
+                warn ('couldn\'t rmtree %s: in %s of %s: %s', self, func.__name__,
+                      path, exc_info[1])
+        else:
+            raise ValueError ('unexpected "errors" keyword %r' % (errors,))
+
+        shutil.rmtree (text_type (self), ignore_errors=ignore_errors, onerror=onerror)
         return self
 
 
