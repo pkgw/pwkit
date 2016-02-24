@@ -80,6 +80,16 @@ class Environment (object):
         os.environ[b'PATH'] = env['PATH']
         os.execvpe (argv[0], argv, env)
 
+    def slurp (self, **kwargs):
+        from ..slurp import Slurper
+        return Slurper (subproc_factory=self.launch, **kwargs)
+
+    def get_wrapout_wrapper (self, **kwargs):
+        from ..cli.wrapout import Wrapper
+        w = Wrapper (**kwargs)
+        w.slurp_factory = self.slurp
+        return w
+
 
 def prepend_path (orig, text, pathsep=os.pathsep):
     """Returns a $PATH-like environment variable with `text` prepended. `orig` is

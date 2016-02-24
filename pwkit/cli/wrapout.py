@@ -11,7 +11,6 @@ __all__ = str ('commandline').split ()
 import os, signal, sys, time
 
 from . import die, propagate_sigint
-from ..slurp import Slurper
 
 usage = """usage: wrapout [-ces] [-a name] <command> [command args...]
 
@@ -71,6 +70,7 @@ class Wrapper (object):
     echo_stderr = False
     propagate_signals = False
     destination = None
+    slurp_factory = None
 
     _red = ''
     _cyan = ''
@@ -113,6 +113,10 @@ class Wrapper (object):
 
 
     def launch (self, cmd, argv, env=None, cwd=None):
+        slurp_factory = self.slurp_factory
+        if slurp_factory is None:
+            from ..slurp import Slurper as slurp_factory
+
         if self.use_colors:
             self._red = ansi_red
             self._cyan = ansi_cyan
@@ -128,8 +132,8 @@ class Wrapper (object):
         midline_kind = None
         stderr_midline = False
 
-        with Slurper (argv=argv, executable=cmd, env=env, cwd=cwd,
-                      propagate_signals=self.propagate_signals) as slurp:
+        with slurp_factory (argv=argv, executable=cmd, env=env, cwd=cwd,
+                            propagate_signals=self.propagate_signals) as slurp:
             # Here's where we get tricky since we want to output partially
             # complete lines, but we may have to switch between different
             # types of output or informational messages.

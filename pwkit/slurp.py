@@ -108,7 +108,11 @@ class Slurper (object):
     def __init__ (self, argv=None, env=None, cwd=None, propagate_signals=True,
                   timeout=10, linebreak=False, encoding=None,
                   stdin=Redirection.DevNull, stdout=Redirection.Pipe,
-                  stderr=Redirection.Pipe, executable=None):
+                  stderr=Redirection.Pipe, executable=None, subproc_factory=None):
+        if subproc_factory is None:
+            subproc_factory = subprocess.Popen
+
+        self.subproc_factory = subproc_factory
         self.proc = None
         self.argv = argv
         self.env = env
@@ -141,14 +145,16 @@ class Slurper (object):
         if stderr == Redirection.DevNull:
             stderr = open (os.devnull, 'w')
 
-        self.proc = subprocess.Popen (self.argv,
-                                      env=self.env,
-                                      executable=self.executable,
-                                      cwd=self.cwd,
-                                      stdin=stdin,
-                                      stdout=stdout,
-                                      stderr=stderr,
-                                      shell=False)
+        self.proc = self.subproc_factory (
+            self.argv,
+            env=self.env,
+            executable=self.executable,
+            cwd=self.cwd,
+            stdin=stdin,
+            stdout=stdout,
+            stderr=stderr,
+            shell=False,
+        )
 
         if self.propagate_signals:
             def handle (signum, frame):
