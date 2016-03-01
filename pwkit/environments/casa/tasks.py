@@ -36,6 +36,7 @@ concat concat_cli
 delcal delcal_cli
 delmod_cli
 dftphotom_cli
+dftspect_cli
 extractbpflags extractbpflags_cli
 flagmanager_cli
 flaglist flaglist_cli FlaglistConfig
@@ -667,6 +668,15 @@ def delmod_cli (argv, alter_logger=True):
 def dftphotom_cli (argv):
     from .dftphotom import dftphotom_cli
     dftphotom_cli (argv)
+
+
+# dftspect
+#
+# Shim for a separate module
+
+def dftspect_cli (argv):
+    from .dftspect import dftspect_cli
+    dftspect_cli (argv)
 
 
 # extractbpflags
