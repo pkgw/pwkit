@@ -35,6 +35,7 @@ clearcal clearcal_cli
 concat concat_cli
 delcal delcal_cli
 delmod_cli
+dftdynspec_cli
 dftphotom_cli
 dftspect_cli
 extractbpflags extractbpflags_cli
@@ -659,6 +660,15 @@ def delmod_cli (argv, alter_logger=True):
         cb.open (b(mspath), addcorr=False, addmodel=False)
         cb.delmod (otf=True, scr=False)
         cb.close ()
+
+
+# dftdynspec
+#
+# Shim for a separate module
+
+def dftdynspec_cli (argv):
+    from .dftdynspec import dftdynspec_cli
+    dftdynspec_cli (argv)
 
 
 # dftphotom
