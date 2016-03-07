@@ -34,8 +34,12 @@ def load_ndshow ():
 
 class BlinkCommand (multitool.Command):
     name = 'blink'
-    argspec = '<images...>'
+    argspec = '[-f] <images...>'
     summary = 'Blink zero or more images.'
+    more_help = """
+-f  - Show the 2D FFT of the images
+
+WCS support isn't fantastic and sometimes causes crashes."""
 
     def _load (self, path, fft, maxnorm):
         try:
@@ -269,15 +273,18 @@ class SetrectCommand (multitool.Command):
 
 class ShowCommand (multitool.Command):
     name = 'show'
-    argspec = '[--no-coords] <image> [images...]'
+    argspec = '[--no-coords] [-f] <image> [images...]'
     summary = 'Show images interactively.'
     more_help = """--no-coords - Do not show coordinates even if available
+-f          - Show the 2D FFT of the image
 
 WCS support isn't fantastic and sometimes causes crashes."""
 
     def invoke (self, args, **kwargs):
         anyfailures = False
         ndshow = load_ndshow ()
+
+        fft = pop_option ('f', args)
         no_coords = pop_option ('no-coords', args)
 
         for path in args:
@@ -298,6 +305,12 @@ WCS support isn't fantastic and sometimes causes crashes."""
             else:
                 data = img.read (flip=True)
                 toworld = img.toworld
+
+            if fft:
+                from numpy.fft import ifftshift, fft2, fftshift
+                data = np.abs (ifftshift (fft2 (fftshift (data.filled (0)))))
+                data = np.ma.MaskedArray (data)
+                toworld = None
 
             if no_coords:
                 toworld = None
