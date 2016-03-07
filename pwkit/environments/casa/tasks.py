@@ -47,6 +47,7 @@ ft ft_cli FtConfig
 gaincal gaincal_cli GaincalConfig
 gencal gencal_cli GencalConfig
 getopacities getopacities_cli
+gpdiagnostics_cli
 gpplot gpplot_cli GpplotConfig
 image2fits image2fits_cli
 importevla importevla_cli
@@ -1481,6 +1482,15 @@ def getopacities_cli (argv):
         opac = averaged
 
     print ('opacity = [%s]' % (', '.join ('%.5f' % q for q in opac)))
+
+
+# gpdiagnostics
+#
+# Shim for a separate module
+
+def gpdiagnostics_cli (argv):
+    from .gpdiagnostics import gpdiagnostics_cli
+    gpdiagnostics_cli (argv)
 
 
 # gpplot

@@ -68,6 +68,18 @@ pol_to_miriad = {
     # rest are inexpressible
 }
 
+pol_is_intensity = {
+    0: False,
+    1: True, 2: False, 3: False, 4: False, # IQUV
+    5: True, 6: False, 7: False, 8: True, # RR RL LR LL
+    9: True, 10: False, 11: False, 12: True, # XX XY YX YY
+    13: False, 14: False, 15: False, 16: False, # RX RY LX LY
+    17: False, 18: False, 19: False, 20: False, # XR XL YR YL
+    21: True, 22: False, 23: False, 24: True, # PP PQ QP QQ
+    25: False, 26: False, 27: False, 28: False, 29: False,
+    30: False, 31: False, 32: False,
+}
+
 # "polarization" is technically valid as an MS selection, but it pretty much
 # doesn't do what you'd want since records generally contain multiple pols.
 # ms.selectpolarization() should be used instead. Maybe ditto for spw?
@@ -80,7 +92,7 @@ def sanitize_unicode (item):
     """The Python bindings to CASA tasks expect to receive all string values
     as binary data (Python 2.X "str" or 3.X "bytes") and not Unicode (Python
     2.X "unicode" or 3.X "str"). To prep for Python 3 (not that CASA will ever
-    be compatible with it ...) I true to use the unicode_literals everywhere,
+    be compatible with it ...) I try to use the unicode_literals everywhere,
     and other Python modules are getting better about using Unicode
     consistently, so this causes problems. This helper converts Unicode into
     UTF-8 encoded bytes, handling the common data structures that are passed
@@ -96,6 +108,11 @@ def sanitize_unicode (item):
         return dict ((sanitize_unicode (k), sanitize_unicode (v)) for k, v in six.iteritems (item))
     if isinstance (item, (list, tuple)):
         return item.__class__ (sanitize_unicode (x) for x in item)
+
+    from ...io import Path
+    if isinstance (item, Path):
+        return binary_type (item)
+
     return item
 
 
