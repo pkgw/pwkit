@@ -149,7 +149,7 @@ class Events (GTIData):
     detx, dety
       Detector position.
     energy
-      Best-fit energy in keV.
+      Best-fit energy in eV.
     expno
       Exposure number?
     fltgrade
