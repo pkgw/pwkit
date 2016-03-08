@@ -116,6 +116,28 @@ class CiaoEnvironment (Environment):
 
 from .. import DefaultExecCommand, DefaultShellCommand
 
+class BgbandCommand (multitool.Command):
+    name = 'bgband'
+    argspec = '<evt> <srcreg> <bkgreg> <elo1> <ehi1> [... <eloN> <ehiN>]'
+    summary = 'Compute basic background statistics for a source in energy bands.'
+
+    def invoke (self, args, envclass=None, **kwargs):
+        if len (args) < 5:
+            raise multitool.UsageError ('bgband takes at least two arguments')
+        if len (args) % 2 == 0:
+            raise multitool.UsageError ('bgband expects an odd number of arguments')
+
+        evt = args[0]
+        srcreg = args[1]
+        bkgreg = args[2]
+        ebins = [(float (args[i]), float (args[i+1])) for i in range (3, len (args), 2)]
+
+        env = envclass ()
+        from .bgband import compute_bgband
+        df = compute_bgband (evt, srcreg, bkgreg, ebins, env)
+        print (df.to_string (index=False, justify='left'))
+
+
 class CiaoTool (multitool.Multitool):
     cli_name = 'pkenvtool ciao'
     summary = 'Run tools in the CIAO environment.'
