@@ -69,6 +69,7 @@ class CiaoEnvironment (Environment):
         env[b'ASCDS_BIN'] = str (p / 'bin')
         env[b'ASCDS_LIB'] = str (p / 'lib')
         env[b'ASCDS_IMAGER_PATH'] = str (p / 'ots' / 'bin')
+        env[b'ASCDS_WORK_PATH'] = str ('/tmp') # needed by at least specextract
         env[b'CIAO_XPA'] = b'CIAO'
         env[b'CIAO_PYTHON'] = b'CIAO'
         env[b'CIAO_APP_PYTHON'] = b'CIAO'
