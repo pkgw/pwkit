@@ -53,6 +53,7 @@ image2fits image2fits_cli
 importevla importevla_cli
 listobs listobs_cli
 mfsclean mfsclean_cli MfscleanConfig
+mjd2date_cli
 mstransform mstransform_cli MstransformConfig
 plotants plotants_cli
 plotcal plotcal_cli PlotcalConfig
@@ -2095,6 +2096,33 @@ def mfsclean (cfg):
 
 
 mfsclean_cli = makekwcli (mfsclean_doc, MfscleanConfig, mfsclean)
+
+
+# mjd2date
+
+mjd2date_doc = \
+"""
+casatask mjd2date <date>
+
+Convert an MJD to a date in the format used by CASA.
+
+"""
+def mjd2date (mjd, precision=3):
+    from astropy.time import Time
+    dt = Time (mjd, format='mjd', scale='utc').to_datetime ()
+    fracsec = ('%.*f' % (precision, 1e-6 * dt.microsecond)).split ('.')[1]
+    return '%04d/%02d/%02d/%02d:%02d:%02d.%s' % (
+        dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second, fracsec
+    )
+
+
+def mjd2date_cli (argv):
+    check_usage (mjd2date_doc, argv, usageifnoargs=True)
+
+    if len (argv) != 2:
+        wrong_usage (mjd2date_doc, 'expect exactly one argument')
+
+    print (mjd2date (float (argv[1])))
 
 
 # mstransform
