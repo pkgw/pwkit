@@ -314,7 +314,7 @@ def dftdynspec (cfg):
 
 
 def dftdynspec_cli (argv):
-    checkusage (dftdynspec, argv, usageifnoargs=True)
+    check_usage (dftdynspec_doc, argv, usageifnoargs=True)
     cfg = Config ().parse (argv[1:])
     util.logger (cfg.loglevel)
     dftdynspec (cfg)
