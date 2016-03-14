@@ -1690,7 +1690,7 @@ gpplot_cli = makekwcli (gpplot_doc, GpplotConfig, gpplot)
 # image2fits
 #
 # This is basically the "exportfits" task with fewer options and a slightly
-# clearer name (which is also consistent with the pwimage2fits script).
+# clearer name.
 
 image2fits_doc = \
 """
@@ -1699,12 +1699,14 @@ casatask image2fits <input MS image> <output FITS image>
 Convert an image in MS format to FITS format.
 """
 
-def image2fits (mspath, fitspath):
+def image2fits (mspath, fitspath, velocity=False, optical=False, bitpix=-32,
+                minpix=0, maxpix=-1, overwrite=False, dropstokes=False, stokeslast=True,
+                history=True, **kwargs):
     ia = util.tools.image ()
     ia.open (b(mspath))
-    ia.tofits (outfile=b(fitspath), velocity=False, optical=False, bitpix=-32,
-               minpix=0, maxpix=-1, overwrite=False, dropstokes=False,
-               stokeslast=True, history=True)
+    ia.tofits (outfile=b(fitspath), velocity=velocity, optical=optical, bitpix=bitpix,
+               minpix=minpix, maxpix=maxpix, overwrite=overwrite, dropstokes=dropstokes,
+               stokeslast=stokeslast, history=history, **kwargs)
     ia.close ()
 
 
