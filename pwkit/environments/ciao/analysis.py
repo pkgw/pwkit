@@ -30,6 +30,10 @@ def get_region_area (env, evtpath, region):
 
 
 def count_events (env, evtpath, filter):
+    """TODO: this can probably be replaced with simply reading the file
+    ourselves!
+
+    """
     with env.slurp (argv=['dmstat', '%s%s[cols energy]' % (evtpath, filter)], linebreak=True) as s:
         for etype, payload in s:
             if etype != 'stdout':

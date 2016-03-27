@@ -134,7 +134,7 @@ class BgbandCommand (multitool.Command):
         ebins = [(float (args[i]), float (args[i+1])) for i in range (3, len (args), 2)]
 
         env = envclass ()
-        from .bgband import compute_bgband
+        from .analysis import compute_bgband
         df = compute_bgband (evt, srcreg, bkgreg, ebins, env)
         print (df.to_string (index=False, justify='left'))
 

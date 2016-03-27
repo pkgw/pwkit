@@ -27,6 +27,20 @@ from ...io import Path
 from ...numutil import fits_recarray_to_data_frame
 
 
+def tight_bounds (minval, maxval):
+    if minval > maxval:
+        maxval, minval = minval, maxval
+
+    span = maxval - minval
+    if span <= 0:
+        span = abs (maxval)
+        if span == 0:
+            span = 1
+
+    span *= 0.05
+    return minval - span, maxval + span
+
+
 class BaseCIAOData (object):
     telescope = None
     "Telescope name: likely 'CHANDRA'"
@@ -202,6 +216,47 @@ class Events (GTIData):
             pass
         else:
             super (Events, self)._process_hdu (hdu)
+
+
+    def plot_lightcurve (self, ccd_id=None):
+        import omega as om
+        from ...bblocks import tt_bblock
+
+        if ccd_id is None:
+            if len (self.gti) != 1:
+                raise Exception ('must specify ccd_id')
+            ccd_id = self.gti.keys ()[0]
+
+        kev = self.events['energy'] * 1e-3
+
+        bbinfo = tt_bblock (
+            self.gti[ccd_id]['start_dmjd'],
+            self.gti[ccd_id]['stop_dmjd'],
+            self.events['dmjd']
+        )
+
+        cps = bbinfo.rates / 86400
+
+        tmin, tmax = tight_bounds (bbinfo.ledges[0], bbinfo.redges[-1])
+        emin, emax = tight_bounds (kev.min (), kev.max ())
+        rmin, rmax = tight_bounds (cps.min (), cps.max ())
+
+        vb = om.layout.VBox (2)
+
+        vb[0] = om.RectPlot ()
+        csp = om.rect.ContinuousSteppedPainter (keyText='%d events' % (self.events.shape[0]))
+        csp.setFloats (np.concatenate ((bbinfo.ledges, bbinfo.redges[-1:])),
+                       np.concatenate ((cps, [0])))
+        vb[0].add (csp)
+        vb[0].setBounds (tmin, tmax, rmin, rmax)
+        vb[0].setYLabel ('Count rate (ct/s)')
+        vb[0].bpainter.paintLabels = False
+
+        vb[1] = om.quickXY (self.events['dmjd'], kev, None, lines=0)
+        vb[1].setBounds (tmin, tmax, emin, emax)
+        vb[1].setLabels ('MJD - %d' % self.mjd0, 'Energy (keV)')
+
+        return vb
 
 
 class OIFData (BaseCIAOData):
