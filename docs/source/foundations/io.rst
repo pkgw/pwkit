@@ -410,6 +410,7 @@ Data input and output
    ~Path.read_hdf
    ~Path.read_inifile
    ~Path.read_lines
+   ~Path.read_numpy
    ~Path.read_numpy_text
    ~Path.read_pandas
    ~Path.read_pickle
@@ -435,6 +436,7 @@ Data input and output
 .. automethod:: Path.read_hdf
 .. automethod:: Path.read_inifile
 .. automethod:: Path.read_lines
+.. automethod:: Path.read_numpy
 .. automethod:: Path.read_numpy_text
 .. automethod:: Path.read_pandas
 .. automethod:: Path.read_pickle

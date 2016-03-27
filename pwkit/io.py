@@ -720,6 +720,25 @@ class Path (_ParentPath):
                 raise
 
 
+    def read_numpy (self, **kwargs):
+        """Read this path into a :class:`numpy.ndarray` using :func:`numpy.load`.
+        *kwargs* are passed to :func:`numpy.load`; they likely are:
+
+	mmap_mode : None, 'r+', 'r', 'w+', 'c'
+          Load the array using memory-mapping
+	allow_pickle : bool = True
+          Whether Pickle-format data are allowed; potential security hazard.
+	fix_imports : bool = True
+	  Try to fix Python 2->3 import renames when loading Pickle-format data.
+	encoding : 'ASCII', 'latin1', 'bytes'
+	  The encoding to use when reading Python 2 strings in Pickle-format data.
+
+        """
+        import numpy as np
+        with self.open ('rb') as f:
+            return np.load (f, **kwargs)
+
+
     def read_numpy_text (self, **kwargs):
         """Read this path into a :class:`numpy.ndarray` as a text file using
         :func:`numpy.loadtxt`. In normal conditions the returned array is
