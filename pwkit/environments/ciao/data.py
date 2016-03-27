@@ -159,9 +159,11 @@ class Events (GTIData):
     ccd_id
       CCD on which the event happened.
     chipx, chipy
-      Pixel position.
+      Row/column on each individual chip.
     detx, dety
-      Detector position.
+      Detector or "mirror off-axis" coordinates: photon positions projected onto the tangent
+      plane of the unit sphere, with the tangent point being the Chandra telescope's optical
+      axis. Center of ACIS is (4096, 4096).
     energy
       Best-fit energy in eV.
     expno
@@ -177,13 +179,15 @@ class Events (GTIData):
     pha_ro
       PHA RO?
     pi
-      PI: "pulse-independent" energy.
+      PI: "pulse-independent" energy. `pi = energy // 14.6 + 1`.
     tdetx, tdety
-      ?
+      "Tiled detector": chip coordinates on a single logical plane. Mapping to physical
+      coordinates is arbitrary though: use for visualization only.
     time
       Event time in MET.
     x, y
-      ?
+      Tangent plane pixels like `detx` and `dety`, but locked to ICRS equatorial coordinates
+      with the provided WCS mapping named `EQPOS`. Center of ACIS is (4096.5, 4096.5).
     mjd
       Event time as an MJD (added in software).
     dks
@@ -251,10 +255,12 @@ class Events (GTIData):
         vb[0].setBounds (tmin, tmax, rmin, rmax)
         vb[0].setYLabel ('Count rate (ct/s)')
         vb[0].bpainter.paintLabels = False
+        self._plot_add_gtis (vb[0], ccd_id)
 
         vb[1] = om.quickXY (self.events['dmjd'], kev, None, lines=0)
         vb[1].setBounds (tmin, tmax, emin, emax)
         vb[1].setLabels ('MJD - %d' % self.mjd0, 'Energy (keV)')
+        self._plot_add_gtis (vb[1], ccd_id)
 
         return vb
 
