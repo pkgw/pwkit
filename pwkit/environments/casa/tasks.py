@@ -57,6 +57,7 @@ mjd2date_cli
 mstransform mstransform_cli MstransformConfig
 plotants plotants_cli
 plotcal plotcal_cli PlotcalConfig
+polmodel_cli
 setjy setjy_cli SetjyConfig
 split split_cli SplitConfig
 spwglue_cli
@@ -2375,6 +2376,15 @@ def plotcal_cli (argv):
     check_usage (plotcal_doc, argv, usageifnoargs=True)
     cfg = PlotcalConfig ().parse (argv[1:])
     plotcal (cfg)
+
+
+# polmodel
+#
+# Shim for a separate module
+
+def polmodel_cli (argv):
+    from .polmodel import polmodel_cli
+    polmodel_cli (argv)
 
 
 # setjy
