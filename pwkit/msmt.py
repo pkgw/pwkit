@@ -936,6 +936,10 @@ class Lval (object):
         return b'$%s$ & %s' % (s, base)
 
 
+    def __pk_latex_u3col__ (self, **kwargs):
+        return br'\multicolumn{3}{c}{%s}' % self.__pk_latex__ (**kwargs)
+
+
     # Math. We start with addition. It gets complicated!
 
     def __neg__ (self):
