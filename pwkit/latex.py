@@ -288,6 +288,10 @@ class TableBuilder (object):
       If True, number each column. This can be disabled on a
       col-by-col basis by calling `addcol` with `numbering` set to
       False.
+    final_double_backslash
+      If True, end the final table row with a `\\`. AAStex6 requires this,
+      giving an error about a misplaced '\omit' if you don't provide one.
+      On the other hand, classic TeX tables look worse if you do provide this.
 
     Legal preamble commands are::
 
@@ -311,6 +315,7 @@ class TableBuilder (object):
     title = b'Untitled table'
     widthspec = b'0em'
     numbercols = True
+    final_double_backslash = False
 
     def __init__ (self, label):
         self._colinfo = []
@@ -558,6 +563,8 @@ class TableBuilder (object):
 
             cr = b' \\\\\n'
 
+        if self.final_double_backslash:
+            write (b' \\\\')
         write (b'\n\\enddata\n')
 
         if self.note is not None and len (self.note):
