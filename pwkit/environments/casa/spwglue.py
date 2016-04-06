@@ -144,6 +144,9 @@ meanbp=
   bandpass solution.) This makes it easier to run automated RFI flaggers on
   the data without losing excessive numbers of edge channels.
 
+corr_to_main=false
+  If true, move the CORRECTED_DATA column to the main DATA column while gluing.
+
 loglevel=
   Logging detail level. Default is info. Options are
     severe warn info info1 info2 info3 info4 info5 debug1 debug2 debugging
@@ -167,6 +170,7 @@ class Config (ParseKeywords):
     field = [int]
     hackfield = int
     meanbp = str
+    corr_to_main = False
 
     loglevel = 'info' # XXXXXX
 
@@ -480,7 +484,16 @@ def _spwglue (cfg, prog, thisout, thisfield, nfields, fieldidx):
                 if invsqmeanbp is not None and col in _vis_data_cols:
                     v *= invsqmeanbp
 
-                dt.putcell (b(col), outrow, v)
+                if not cfg.corr_to_main:
+                    dt.putcell (b(col), outrow, v)
+                elif col == 'DATA':
+                    pass # ignore; will be overwritten by CORRECTED_DATA
+                else:
+                    if col == 'CORRECTED_DATA':
+                        outcol = 'DATA'
+                    else:
+                        outcol = col
+                    dt.putcell (b(outcol), outrow, v)
 
                 if isinstance (v, np.ndarray):
                     v.fill (0)
