@@ -1526,6 +1526,10 @@ dims=WIDTH,HEIGHT
 margins=TOP,RIGHT,LEFT,BOTTOM
   If saving to a file, the plot margins in the same units as the dims.
   The default is 4 on every side.
+
+maxtimegap=10
+  Solutions separated by more than this number of minutes will be drawn
+  with separate lines for clarity.
 """ + loglevel_doc
 
 
@@ -1534,6 +1538,7 @@ class GpplotConfig (ParseKeywords):
     dest = str
     dims = [1000, 600]
     margins = [4, 4, 4, 4]
+    maxtimegap = 10. # minutes
     loglevel = 'warn'
 
 
@@ -1631,7 +1636,7 @@ def gpplot (cfg):
         min_ph = -180
 
     polnames = 'RL' # XXX: identification doesn't seem to be stored in cal table
-    maxtimegap = 10. / 1440 # 10 minutes, in units of days
+    maxtimegap = cfg.maxtimegap / 1440 # => units of days
 
     for iant in seenants:
         for ipol in range (npol):
