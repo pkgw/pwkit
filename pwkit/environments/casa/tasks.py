@@ -47,6 +47,7 @@ ft ft_cli FtConfig
 gaincal gaincal_cli GaincalConfig
 gencal gencal_cli GencalConfig
 getopacities getopacities_cli
+gpdetrend gpdetrend_cli GpdetrendConfig
 gpdiagnostics_cli
 gpplot gpplot_cli GpplotConfig
 image2fits image2fits_cli
@@ -1484,6 +1485,99 @@ def getopacities_cli (argv):
         opac = averaged
 
     print ('opacity = [%s]' % (', '.join ('%.5f' % q for q in opac)))
+
+
+# gpdetrend
+
+gpdetrend_doc = \
+"""
+casatask gpdetrend caltable=
+
+Remove long-term phase trends from a complex-gain calibration table. For each
+antenna/spw/pol, the complex gains are divided into separate chunks (e.g., the
+intention is for one chunk for each visit to the complex-gain calibrator). The
+mean phase within each chunk is divided out. The effect is to remove long-term
+phase trends from the calibration table, but preserve short-term ones.
+
+caltable=MS
+  The input calibration Measurement Set
+
+maxtimegap=int
+  Measured in minutes. Gaps between solutions of this duration or longer will
+  lead to a new segment being considered. Default is four times the smallest
+  time gap seen in the data set.
+""" + loglevel_doc
+
+
+class GpdetrendConfig (ParseKeywords):
+    caltable = Custom (str, required=True)
+    maxtimegap = int
+    loglevel = 'warn'
+
+
+def gpdetrend (cfg):
+    from ... import numutil
+
+    tb = util.tools.table ()
+
+    tb.open (binary_type (cfg.caltable), nomodify=False)
+    #fields = tb.getcol (b'FIELD_ID')
+    spws = tb.getcol (b'SPECTRAL_WINDOW_ID')
+    ants = tb.getcol (b'ANTENNA1')
+    vals = tb.getcol (b'CPARAM')
+    flags = tb.getcol (b'FLAG')
+    times = tb.getcol (b'TIME')
+
+    npol, unused, nsoln = vals.shape
+    assert unused == 1, 'unexpected gain table structure!'
+    vals = vals[:,0,:]
+    flags = flags[:,0,:]
+
+    # see what we've got
+
+    def seen_values (data):
+        return [idx for idx, count in enumerate (np.bincount (data)) if count]
+
+    any_ok = ~(np.all (flags, axis=0)) # mask for solns where at least one pol is unflagged
+    #seenfields = seen_values (fields[any_ok])
+    seenspws = seen_values (spws[any_ok])
+    seenants = seen_values (ants[any_ok])
+
+    # time gap?
+
+    if cfg.maxtimegap is not None:
+        maxtimegap = cfg.maxtimegap * 60 # min => seconds
+    else:
+        stimes = np.sort (times)
+        dt = np.diff (stimes)
+        dt = dt[dt > 0]
+        maxtimegap = 4 * dt.min ()
+
+    # Remove average phase of each chunk
+
+    for iant in seenants:
+        for ipol in range (npol):
+            filter = (ants == iant) & ~flags[ipol]
+
+            for ispw in seenspws:
+                # XXX: do something by field?
+                sfilter = filter & (spws == ispw)
+                t = times[sfilter]
+                if not t.size:
+                    continue
+
+                for s in numutil.slice_around_gaps (t, maxtimegap):
+                    w = np.where (sfilter)[0][s]
+                    meanph = np.angle (vals[ipol,w].mean ())
+                    vals[ipol,w] *= np.exp (-1j * meanph)
+
+    # Rewrite and we're done.
+
+    tb.putcol (b'CPARAM', vals.reshape ((npol, 1, nsoln)))
+    tb.close ()
+
+
+gpdetrend_cli = makekwcli (gpdetrend_doc, GpdetrendConfig, gpdetrend)
 
 
 # gpdiagnostics
