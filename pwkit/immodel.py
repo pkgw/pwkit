@@ -512,7 +512,7 @@ def fit_one_source (im, xmid, ymid, forcepoint=False,
     report ('resid_rms_mjy', '%.4f', f.residrms * 1e3)
     report ('ndof', '%d', f.soln.ndof)
     report ('ndata', '%d', f.data.size)
-    report ('nfree', '%d', f.data.size - f.soln.ndof)
+    report ('nparam', '%d', f.data.size - f.soln.ndof)
     report ('ra_sexg', '%s', fmthours (c.f_ra))
     report ('dec_sexg', '%s', fmtdeglat (c.f_dec))
     report ('x_pix', '%.1f', fx)
