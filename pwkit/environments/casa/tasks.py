@@ -1684,8 +1684,11 @@ def gpplot (cfg):
 
     field_offsets = dict ((fieldid, idx) for idx, fieldid in enumerate (seenfields))
     spw_offsets = dict ((spwid, idx) for idx, spwid in enumerate (seenspws))
+    ant_offsets = dict ((antid, idx) for idx, antid in enumerate (seenants))
 
     # normalize phases to avoid distracting wraps
+
+    mean_amps = np.ones ((len (seenants), npol, len (seenspws)))
 
     for iant in seenants:
         for ipol in range (npol):
@@ -1698,6 +1701,8 @@ def gpplot (cfg):
 
                 meanph = np.angle (vals[ipol,sfilter].mean ())
                 vals[ipol,sfilter] *= np.exp (-1j * meanph)
+                meanam = np.abs (vals[ipol,sfilter]).mean ()
+                mean_amps[ant_offsets[iant],ipol,spw_offsets[ispw]] = meanam
 
     # find plot limits
 
@@ -1761,10 +1766,16 @@ def gpplot (cfg):
                     p_am.addXY (tsub, asub, kt, lines=lines, dsn=spw_offsets[ispw])
                     p_ph.addXY (tsub, psub, None, lines=lines, dsn=spw_offsets[ispw])
                     anyseen = True
+
+                    if kt is not None: # hack for per-spw "anyseen"-type checking
+                        p_am.addHLine (mean_amps[ant_offsets[iant],ipol,spw_offsets[ispw]], None,
+                                       zheight=-1, lineStyle={'color': 'faint'})
                     kt = None
 
             if not anyseen:
                 continue
+
+            p_ph.addHLine (0, None, zheight=-1, lineStyle={'color': 'faint'})
 
             p_am.setBounds (xmin=min_time,
                             xmax=max_time,
