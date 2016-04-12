@@ -261,6 +261,7 @@ example, is a directory; but they do not modify the filesystem.
    ~Path.is_symlink
    ~Path.iterdir
    ~Path.match
+   ~Path.readlink
    ~Path.rglob
    ~Path.scandir
    ~Path.stat
@@ -313,6 +314,8 @@ example, is a directory; but they do not modify the filesystem.
 .. method:: Path.match(pattern)
 
    Test whether this path matches the given shell glob pattern.
+
+.. automethod:: Path.readlink
 
 .. method:: Path.rglob(pattern)
 

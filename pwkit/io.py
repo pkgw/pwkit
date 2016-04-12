@@ -1,5 +1,5 @@
 # -*- mode: python; coding: utf-8 -*-
-# Copyright 2012-2015 Peter Williams <peter@newton.cx> and collaborators.
+# Copyright 2012-2016 Peter Williams <peter@newton.cx> and collaborators.
 # Licensed under the MIT License.
 
 """The ``pwkit`` package provides many tools to ease reading and writing data
@@ -270,6 +270,16 @@ class Path (_ParentPath):
 
 
     # Filesystem interrogation
+
+    def readlink (self):
+        """Assuming that this path is a symbolic link, read its contents and
+        return them as another :class:`Path` object. An "invalid argument"
+        OSError will be raised if this path does not point to a symbolic link.
+
+        """
+        from . import binary_type
+        return self.__class__ (os.readlink (binary_type (self)))
+
 
     def scandir (self):
         """Iteratively scan this path, assuming it’s a directory. This requires and
