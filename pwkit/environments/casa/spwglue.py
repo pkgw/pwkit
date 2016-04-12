@@ -227,11 +227,11 @@ _vis_smatch_cols = frozenset ('EXPOSURE FEED1 FEED2 INTERVAL '
                               'STATE_ID TIME_CENTROID'.split ())
 _vis_vmatch_cols = frozenset ('UVW WEIGHT SIGMA'.split ())
 _vis_or_cols = frozenset ('FLAG_ROW'.split ())
-_vis_pconcat_cols = frozenset ('FLAG DATA MODEL_DATA CORRECTED_DATA'.split ())
+_vis_pconcat_cols = frozenset ('FLAG DATA MODEL_DATA CORRECTED_DATA WEIGHT_SPECTRUM'.split ())
 _vis_data_cols = frozenset ('DATA MODEL_DATA CORRECTED_DATA'.split ())
-_vis_empty_cols = frozenset ('FLAG_CATEGORY WEIGHT_SPECTRUM'.split ())
+_vis_empty_cols = frozenset ('FLAG_CATEGORY'.split ())
 _vis_pconcat_dtypes = {'FLAG': np.bool, 'DATA': np.complex128, 'MODEL_DATA': np.complex128,
-                       'CORRECTED_DATA': np.complex128}
+                       'CORRECTED_DATA': np.complex128, 'WEIGHT_SPECTRUM': np.float64}
 
 _np_converters = {
     np.bool_: bool,
