@@ -442,6 +442,10 @@ def _spwglue (cfg, prog, thisout, thisfield, nfields, fieldidx):
 
     dt = util.tools.table ()
     dt.open (b(thisout), nomodify=False)
+
+    if cfg.corr_to_main:
+        dt.removecols ([b'CORRECTED_DATA'])
+
     outrow = 0
 
     for outspw in range (nout):
