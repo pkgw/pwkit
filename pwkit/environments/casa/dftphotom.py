@@ -220,6 +220,11 @@ def dftphotom (cfg):
         lmn = np.asarray ([l, m, n])
         colnames.append ('uvw')
 
+        # Also need this although 99% of the time `ddid` and `spwid` are the same
+        tb.open (b(os.path.join (cfg.vis, 'DATA_DESCRIPTION')))
+        ddspws = np.asarray (tb.getcol (b'SPECTRAL_WINDOW_ID'))
+        tb.close ()
+
     tbins = {}
     colnames = b(colnames)
 
@@ -235,13 +240,16 @@ def dftphotom (cfg):
 
             if rephase:
                 freqs = cols['axis_info']['freq_axis']['chan_freq']
-                # In our usage, freqs should be of shape (nchan, 1). If you
-                # don't selectinit() with a specific DD, you seem to get
-                # (nchan, nspw). Neither seems to really agree with the docs.
-                # Trying to be careful in case CASA changes.
-                assert freqs.shape[1] == 1, 'internal inconsistency, chan_freq??'
+                # In CASA <= 4.5, `freqs` has shape (nchan, 1) if you've done
+                # a selectinit() on ddid. In 4.6, it has shape (nchan, nspw).
+                # So:
+                if freqs.shape[1] == 1:
+                    freqs = freqs[:,0]
+                else:
+                    freqs = freqs[:,ddspws[ddid]]
+
                 # convert to m^-1 so we can multiply against UVW directly:
-                freqs = freqs[:,0] * util.INVERSE_C_MS
+                freqs *= util.INVERSE_C_MS
 
             for i in range (cols['time'].size): # all records
                 time = cols['time'][i]
