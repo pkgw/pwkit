@@ -1184,7 +1184,7 @@ class SimpleImage (AstroImage):
     def read (self, squeeze=False, flip=False):
         self._checkOpen ()
         data = self._handle.read (flip=flip)
-        idx = list (self._pctmpl)
+        idx = [0] * self._pctmpl.size
         idx[self._platax] = slice (None)
         idx[self._plonax] = slice (None)
         data = data[tuple (idx)]
@@ -1211,7 +1211,7 @@ class SimpleImage (AstroImage):
         self._checkWriteable ()
 
         fulldata = np.ma.empty (self._handle.shape, dtype=data.dtype)
-        idx = list (self._pctmpl)
+        idx = [0] * self._pctmpl.size
         idx[self._platax] = slice (None)
         idx[self._plonax] = slice (None)
 
