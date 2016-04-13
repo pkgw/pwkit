@@ -43,7 +43,7 @@ WCS support isn't fantastic and sometimes causes crashes."""
 
     def _load (self, path, fft, maxnorm):
         try:
-            img = astimage.open (path, 'r')
+            img = astimage.open (path, 'r', eat_warnings=True)
         except Exception as e:
             die ('can\'t open path “%s”: %s', path, e)
 
@@ -127,7 +127,7 @@ class FitsrcCommand (multitool.Command):
         if len (args) != 3:
             raise multitool.UsageError ('expect exactly three arguments')
 
-        im = astimage.open (args[0], 'r').simple ()
+        im = astimage.open (args[0], 'r', eat_warnings=True).simple ()
         x = int (args[1])
         y = int (args[2])
 
@@ -146,7 +146,7 @@ class HackdataCommand (multitool.Command):
         inpath, outpath = args
 
         try:
-            with astimage.open (inpath, 'r') as imin:
+            with astimage.open (inpath, 'r', eat_warnings=True) as imin:
                 indata = imin.read ()
         except Exception as e:
             die ('cannot open input "%s": %s', inpath, e)
@@ -171,7 +171,7 @@ class InfoCommand (multitool.Command):
         from ..astutil import fmtradec, R2A, R2D
 
         try:
-            im = astimage.open (path, 'r')
+            im = astimage.open (path, 'r', eat_warnings=True)
         except Exception as e:
             die ('can\'t open "%s": %s', path, e)
 
@@ -265,7 +265,7 @@ class SetrectCommand (multitool.Command):
             raise multitool.UsageError ('could not parse one of the numeric arguments')
 
         try:
-            img = astimage.open (path, 'rw')
+            img = astimage.open (path, 'rw', eat_warnings=True)
         except Exception as e:
             die ('can\'t open path “%s”: %s', path, e)
 
@@ -292,7 +292,7 @@ WCS support isn't fantastic and sometimes causes crashes."""
 
         for path in args:
             try:
-                img = astimage.open (path, 'r')
+                img = astimage.open (path, 'r', eat_warnings=True)
             except Exception as e:
                 print ('imtool show: can\'t open path “%s”: %s' % (path, e), file=sys.stderr)
                 anyfailures = True
@@ -331,7 +331,7 @@ class StatsCommand (multitool.Command):
 
     def _print (self, path):
         try:
-            img = astimage.open (path, 'r')
+            img = astimage.open (path, 'r', eat_warnings=True)
         except Exception as e:
             die ('error: can\'t open "%s": %s', path, e)
 

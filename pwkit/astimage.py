@@ -1347,9 +1347,15 @@ class NaiveSubImage (AstroImage):
         raise UnsupportedError ('cannot save subimage as FITS')
 
 
-def open (path, mode):
+def open (path, mode, eat_warnings=False):
     import io
     from os.path import exists, join, isdir
+
+    if eat_warnings:
+        import warnings
+        with warnings.catch_warnings ():
+            warnings.filterwarnings ('ignore', module='astropy.*')
+            return open (path, mode, eat_warnings=False)
 
     if mode not in ('r', 'rw'):
         raise ValueError ('mode must be "r" or "rw"; got "%s"' % mode)
