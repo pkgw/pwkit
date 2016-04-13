@@ -113,13 +113,16 @@ WCS support isn't fantastic and sometimes causes crashes."""
 
 class FitsrcCommand (multitool.Command):
     name = 'fitsrc'
-    argspec = '[-p] <image> <x(pixels)> <y(pixels)>'
+    argspec = '[-p] [-d] <image> <x(pixels)> <y(pixels)>'
     summary = 'Fit a compact-source model to a location in an image.'
-    more_help = """-p  - Force use of a point-source model."""
+    more_help = """-p  - Force use of a point-source model.
+-d  - Display the fit results graphically.
+"""
 
     def invoke (self, args, **kwargs):
         from ..immodel import fit_one_source
         forcepoint = pop_option ('p', args)
+        display = pop_option ('d', args)
 
         if len (args) != 3:
             raise multitool.UsageError ('expect exactly three arguments')
@@ -128,7 +131,7 @@ class FitsrcCommand (multitool.Command):
         x = int (args[1])
         y = int (args[2])
 
-        fit_one_source (im, x, y, forcepoint=forcepoint)
+        fit_one_source (im, x, y, forcepoint=forcepoint, display=display)
 
 
 class HackdataCommand (multitool.Command):
