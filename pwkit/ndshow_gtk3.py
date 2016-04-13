@@ -75,31 +75,31 @@ DEFAULT_WIN_HEIGHT = 600
 class Viewport (Gtk.DrawingArea):
     __gtype_name__ = 'Viewport'
 
-    bgpattern = GObject.property (type=GObject.TYPE_PYOBJECT)
-    getshape = GObject.property (type=GObject.TYPE_PYOBJECT)
-    settuning = GObject.property (type=GObject.TYPE_PYOBJECT)
-    getsurface = GObject.property (type=GObject.TYPE_PYOBJECT)
-    onmotion = GObject.property (type=GObject.TYPE_PYOBJECT)
-    drawoverlay = GObject.property (type=GObject.TYPE_PYOBJECT)
+    bgpattern = GObject.Property (type=GObject.TYPE_PYOBJECT)
+    getshape = GObject.Property (type=GObject.TYPE_PYOBJECT)
+    settuning = GObject.Property (type=GObject.TYPE_PYOBJECT)
+    getsurface = GObject.Property (type=GObject.TYPE_PYOBJECT)
+    onmotion = GObject.Property (type=GObject.TYPE_PYOBJECT)
+    drawoverlay = GObject.Property (type=GObject.TYPE_PYOBJECT)
 
-    centerx = GObject.property (type=GObject.TYPE_FLOAT, default=0.)
-    centery = GObject.property (type=GObject.TYPE_FLOAT, default=0.)
+    centerx = GObject.Property (type=GObject.TYPE_FLOAT, default=0.)
+    centery = GObject.Property (type=GObject.TYPE_FLOAT, default=0.)
     # The data pixel coordinate of the central pixel of the displayed window.
 
-    scale = GObject.property (type=GObject.TYPE_FLOAT, default=-1.)
+    scale = GObject.Property (type=GObject.TYPE_FLOAT, default=-1.)
     # From data space to viewer space: e.g., scale = 2 means that each data
     # pixel occupies 2 pixels on-screen.
 
-    needtune = GObject.property (type=GObject.TYPE_BOOLEAN, default=True)
-    tunerx = GObject.property (type=GObject.TYPE_FLOAT, default=0.)
-    tunery = GObject.property (type=GObject.TYPE_FLOAT, default=1.)
-    tunerscale = GObject.property (type=GObject.TYPE_FLOAT, default=200.)
+    needtune = GObject.Property (type=GObject.TYPE_BOOLEAN, default=True)
+    tunerx = GObject.Property (type=GObject.TYPE_FLOAT, default=0.)
+    tunery = GObject.Property (type=GObject.TYPE_FLOAT, default=1.)
+    tunerscale = GObject.Property (type=GObject.TYPE_FLOAT, default=200.)
 
-    drag_type = GObject.property (type=GObject.TYPE_INT, default=DRAG_TYPE_NONE)
-    drag_win_x0 = GObject.property (type=GObject.TYPE_FLOAT, default=0.)
-    drag_win_y0 = GObject.property (type=GObject.TYPE_FLOAT, default=0.)
-    drag_dc_x0 = GObject.property (type=GObject.TYPE_FLOAT, default=0.)
-    drag_dc_y0 = GObject.property (type=GObject.TYPE_FLOAT, default=0.)
+    drag_type = GObject.Property (type=GObject.TYPE_INT, default=DRAG_TYPE_NONE)
+    drag_win_x0 = GObject.Property (type=GObject.TYPE_FLOAT, default=0.)
+    drag_win_y0 = GObject.Property (type=GObject.TYPE_FLOAT, default=0.)
+    drag_dc_x0 = GObject.Property (type=GObject.TYPE_FLOAT, default=0.)
+    drag_dc_y0 = GObject.Property (type=GObject.TYPE_FLOAT, default=0.)
 
     def __init__ (self):
         super (Viewport, self).__init__ ()
