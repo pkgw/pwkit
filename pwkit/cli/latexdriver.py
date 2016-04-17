@@ -204,13 +204,14 @@ def convert_fls_to_makefile (flspath, finalpath, prefix, work, mfpath):
 
 # The actual command-line program
 
-usage = """latexdriver [-lxbBRq] [-eSTYLE] [-ESTYLE] [-MPREFIX,DEST] input.tex output.pdf
+usage = """latexdriver [-lAxbBRq] [-eSTYLE] [-ESTYLE] [-MPREFIX,DEST] input.tex output.pdf
 
 Drive (xe)latex sensibly. Create output.pdf from input.tex, rerunning as
 necessary, silencing chatter, and hiding intermediate files in the directory
 .latexwork/.
 
 -l      - Add "-papersize letter" argument.
+-A      - Add "-papersize A4" argument.
 -x      - Use xetex.
 -b      - Use bibtex.
 -B      - Use bibtex with auto-merging and homogenization; requires `bibtexparser`.
@@ -325,6 +326,7 @@ def commandline (argv=None):
     do_smart_bibtex = pop_option ('B', argv)
     do_xetex = pop_option ('x', argv)
     do_letterpaper = pop_option ('l', argv)
+    do_a4paper = pop_option ('A', argv)
     do_reckless = pop_option ('R', argv)
     quiet = pop_option ('q', argv)
     do_smart_bibtools = False
@@ -345,6 +347,9 @@ def commandline (argv=None):
     if len (argv) != 3:
         wrong_usage (usage, 'expect exactly 2 non-option arguments')
 
+    if do_letterpaper and do_a4paper:
+        wrong_usage (usage, 'only one of "-l" and "-A" may be specified')
+
     input = Path (argv[1])
     output = Path (argv[2])
 
@@ -356,6 +361,8 @@ def commandline (argv=None):
         engine = 'xelatex'
     if do_letterpaper:
         engine_args += ['-papersize', 'letter']
+    if do_letterpaper:
+        engine_args += ['-papersize', 'A4']
     if makefile_dest is not None:
         engine_args += ['-recorder']
 
