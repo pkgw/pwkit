@@ -412,6 +412,7 @@ Data input and output
    ~Path.read_fits_bintable
    ~Path.read_hdf
    ~Path.read_inifile
+   ~Path.read_json
    ~Path.read_lines
    ~Path.read_numpy
    ~Path.read_numpy_text
@@ -438,6 +439,7 @@ Data input and output
 .. automethod:: Path.read_fits_bintable
 .. automethod:: Path.read_hdf
 .. automethod:: Path.read_inifile
+.. automethod:: Path.read_json
 .. automethod:: Path.read_lines
 .. automethod:: Path.read_numpy
 .. automethod:: Path.read_numpy_text

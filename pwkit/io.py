@@ -713,6 +713,18 @@ class Path (_ParentPath):
                 raise
 
 
+    def read_json (self, mode='rt', **kwargs):
+        """Use the :mod:`json` module to read in this file as a JSON-formatted data
+        structure. Keyword arguments are passed to :func:`json.load`. Returns the
+        read-in data structure.
+
+        """
+        import json
+
+        with self.open (mode=mode) as f:
+            return json.load (f, **kwargs)
+
+
     def read_lines (self, mode='rt', noexistok=False, **kwargs):
         """Generate a sequence of lines from the file pointed to by this path, by
         opening as a regular file and iterating over it. The lines therefore
