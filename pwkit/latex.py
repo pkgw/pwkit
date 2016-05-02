@@ -289,7 +289,7 @@ class TableBuilder (object):
       col-by-col basis by calling `addcol` with `numbering` set to
       False.
     final_double_backslash
-      If True, end the final table row with a `\\`. AAStex6 requires this,
+      If True, end the final table row with a ''\\''. AAStex6 requires this,
       giving an error about a misplaced '\omit' if you don't provide one.
       On the other hand, classic TeX tables look worse if you do provide this.
 
