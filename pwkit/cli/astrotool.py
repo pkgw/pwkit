@@ -63,8 +63,7 @@ class Abs2app (multitool.Command):
 
         absmag = fparse (args[0])
         dist = fparse (args[1])
-        appmag = absmag + 5 * (log10 (dist) - 1)
-        print (fmt (appmag))
+        print (fmt (abs2app (absmag, dist)))
 
 
 class App2abs (multitool.Command):
@@ -78,8 +77,7 @@ class App2abs (multitool.Command):
 
         appmag = fparse (args[0])
         dist = fparse (args[1])
-        absmag = appmag - 5 * (log10 (dist) - 1)
-        print (fmt (absmag))
+        print (fmt (app2abs (appmag, dist)))
 
 
 class C2m (multitool.Command):

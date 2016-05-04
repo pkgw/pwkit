@@ -49,7 +49,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 __all__ = str ('''np pi twopi halfpi R2A A2R R2D D2R R2H H2R F2S S2F J2000 angcen orientcen
                   fmthours fmtdeglon fmtdeglat fmtradec parsehours parsedeglat
                   parsedeglon sphdist sphbear sphofs parang gaussian_convolve
-                  gaussian_deconvolve AstrometryInfo''').split ()
+                  gaussian_deconvolve AstrometryInfo app2abs abs2app''').split ()
 
 import six
 from six.moves import range
@@ -917,3 +917,21 @@ class AstrometryInfo (object):
 
 
     __str__ = unicode_to_str
+
+
+# Other astronomical calculations
+
+def app2abs (app_mag, dist_pc):
+    """Convert an apparent magnitude to an absolute magnitude, given a source's
+    (luminosity) distance in parsecs.
+
+    """
+    return app_mag - 5 * (np.log10 (dist_pc) - 1)
+
+
+def abs2app (abs_mag, dist_pc):
+    """Convert an absolute magnitude to an apparent magnitude, given a source's
+    (luminosity) distance in parsecs.
+
+    """
+    return abs_mag + 5 * (np.log10 (dist_pc) - 1)
