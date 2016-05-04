@@ -18,6 +18,7 @@ __all__ = str ('''djoin ensure_dir ensure_symlink make_path_func rellink
                   pathlines pathwords try_open words Path''').split ()
 
 import io, os, pathlib
+import six
 
 from . import PKError, text_type
 
@@ -761,12 +762,20 @@ class Path (_ParentPath):
             return np.load (f, **kwargs)
 
 
-    def read_numpy_text (self, **kwargs):
+    def read_numpy_text (self, dfcols=None, **kwargs):
         """Read this path into a :class:`numpy.ndarray` as a text file using
         :func:`numpy.loadtxt`. In normal conditions the returned array is
         two-dimensional, with the first axis spanning the rows in the file and
-        the second axis columns (but see the *unpack* keyword). *kwargs* are
-        passed to :func:`numpy.loadtxt`; they likely are:
+        the second axis columns (but see the *unpack* and *dfcols* keywords).
+
+        If *dfcols* is not None, the return value is a
+        :class:`pandas.DataFrame` constructed from the array. *dfcols* should
+        be an iterable of column names, one for each of the columns returned
+        by the :func:`numpy.loadtxt` call. For convenience, if *dfcols* is a
+        single string, it will by turned into an iterable by a call to
+        :func:`str.split`.
+
+        The remaining *kwargs* are passed to :func:`numpy.loadtxt`; they likely are:
 
 	dtype : data type
 	  The data type of the resulting array.
@@ -789,7 +798,19 @@ class Path (_ParentPath):
 
         """
         import numpy as np
-        return np.loadtxt (text_type (self), **kwargs)
+
+        if dfcols is not None:
+            kwargs['unpack'] = True
+
+        retval = np.loadtxt (text_type (self), **kwargs)
+
+        if dfcols is not None:
+            import pandas as pd
+            if isinstance (dfcols, six.string_types):
+                dfcols = dfcols.split ()
+            retval = pd.DataFrame (dict (zip (dfcols, retval)))
+
+        return retval
 
 
     def read_pandas (self, format='table', **kwargs):
