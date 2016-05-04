@@ -637,6 +637,29 @@ class Path (_ParentPath):
         return HDFStore (text_type (self), mode=mode, **kwargs)
 
 
+    def read_astropy_ascii (self, **kwargs):
+        """Open as an ASCII table, returning a :class:`astropy.table.Table` object.
+        Keyword arguments are passed to :func:`astropy.io.ascii.open`; valid
+        ones likely include:
+
+        - ``names = <list>`` (column names)
+        - ``format`` ('basic', 'cds', 'csv', 'ipac', ...)
+        - ``guess = True`` (guess table format)
+        - ``delimiter`` (column delimiter)
+        - ``comment = <regex>``
+        - ``header_start = <int>`` (line number of header, ignoring blank and comment lines)
+        - ``data_start = <int>``
+        - ``data_end = <int>``
+        - ``converters = <dict>``
+        - ``include_names = <list>`` (names of columns to include)
+        - ``exclude_names = <list>`` (names of columns to exclude; applied after include)
+        - ``fill_values = <dict>`` (filler values)
+
+        """
+        from astropy.io import ascii
+        return ascii.read (text_type (self), **kwargs)
+
+
     def read_fits (self, **kwargs):
         """Open as a FITS file, returning a :class:`astropy.io.fits.HDUList` object.
         Keyword arguments are passed to :func:`astropy.io.fits.open`; valid

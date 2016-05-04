@@ -408,6 +408,7 @@ Data input and output
    ~Path.open
    ~Path.try_open
    ~Path.as_hdf_store
+   ~Path.read_astropy_ascii
    ~Path.read_fits
    ~Path.read_fits_bintable
    ~Path.read_hdf
@@ -435,6 +436,7 @@ Data input and output
 
 .. automethod:: Path.try_open
 .. automethod:: Path.as_hdf_store
+.. automethod:: Path.read_astropy_ascii
 .. automethod:: Path.read_fits
 .. automethod:: Path.read_fits_bintable
 .. automethod:: Path.read_hdf
