@@ -183,7 +183,7 @@ class Config (ParseKeywords):
 # empty  - column should be empty (ndim = -1)
 _spw_match_cols = frozenset ('MEAS_FREQ_REF FLAG_ROW FREQ_GROUP FREQ_GROUP_NAME '
                              'IF_CONV_CHAIN NET_SIDEBAND BBC_NO'.split ())
-_spw_first_cols = frozenset ('REF_FREQUENCY NAME'.split ())
+_spw_first_cols = frozenset ('DOPPLER_ID REF_FREQUENCY NAME'.split ())
 _spw_scsum_cols = frozenset ('NUM_CHAN TOTAL_BANDWIDTH'.split ())
 _spw_concat_cols = frozenset ('CHAN_FREQ CHAN_WIDTH EFFECTIVE_BW RESOLUTION'.split ())
 _spw_empty_cols = frozenset ('ASSOC_SPW_ID ASSOC_NATURE'.split ())
