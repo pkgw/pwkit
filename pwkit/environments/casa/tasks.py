@@ -1624,6 +1624,10 @@ margins=TOP,RIGHT,LEFT,BOTTOM
 maxtimegap=10
   Solutions separated by more than this number of minutes will be drawn
   with separate lines for clarity.
+
+mjdrange=START,STOP
+  If specified, gain solutions outside of the MJDs STOP and START will be
+  ignored.
 """ + loglevel_doc
 
 
@@ -1633,12 +1637,16 @@ class GpplotConfig (ParseKeywords):
     dims = [1000, 600]
     margins = [4, 4, 4, 4]
     maxtimegap = 10. # minutes
+    mjdrange = [float]
     loglevel = 'warn'
 
 
 def gpplot (cfg):
     import omega as om, omega.render
     from ... import numutil
+
+    if len (cfg.mjdrange) not in (0, 2):
+        raise Exception ('"mjdrange" parameter must provide exactly 0 or 2 numbers')
 
     if isinstance (cfg.dest, omega.render.Pager):
         # This is for non-CLI invocation.
@@ -1671,6 +1679,13 @@ def gpplot (cfg):
     assert unused == 1, 'unexpected gain table structure!'
     vals = vals[:,0,:]
     flags = flags[:,0,:]
+
+    # Apply date filter by futzing with flags
+
+    times /= 86400. # convert to MJD
+
+    if len (cfg.mjdrange):
+        flags |= (times < cfg.mjdrange[0]) | (times > cfg.mjdrange[1])
 
     # see what we've got
 
@@ -1706,7 +1721,6 @@ def gpplot (cfg):
 
     # find plot limits
 
-    times /= 86400. # convert to MJD
     min_time = times[any_ok].min ()
     max_time = times[any_ok].max ()
     mjdref = int (np.floor (min_time))
