@@ -110,16 +110,19 @@ Working with Angles
 
    “Center” an angle *a* to be between -π and +π.
 
-   Both *a* and the return value are, of course, in radians.
+   This is done by adding or subtracting multiples of 2π as necessary. Both
+   *a* and the return value are in radians. The argument may be a vector.
 
 .. function:: orientcen(a)
 
    “Center” an orientation *a* to be between -π/2 and +π/2.
 
-   Both *a* and the return value are, of course, in radians. An “orientation”
-   is different than an angle because values that differ by just π, not 2π,
-   are considered equivalent. Orientations can come up in the discussion of
-   linear polarization, for example.
+   This is done by adding or subtract multiples of π as necessary. Both *a*
+   and the return value are in radians. The argument may be a vector.
+
+   An “orientation” is different than an angle because values that differ by
+   just π, not 2π, are considered equivalent. Orientations can come up in the
+   discussion of linear polarization, for example.
 
 .. autofunction:: sphdist
 .. autofunction:: sphbear
@@ -141,13 +144,66 @@ Simple Operations on 2D Gaussians
 Basic Astrometry
 ------------------------------------------------------------------------------
 
-.. autosummary::
-   get_2mass_epoch
-   get_simbad_astrometry_info
+The :class:`AstrometryInfo` class can be used to perform basic astrometric
+calculations that are nonetheless fairly accurate.
 
 .. autoclass:: AstrometryInfo
 
+   The attributes encoding the astrometric data are as follows. Values of
+   ``None`` will be treated as unknown. Most of this information can be
+   automatically filled in from the :meth:`fill_from_simbad` function, if you
+   trust Simbad.
+
+   .. autosummary::
+      ra
+      dec
+      pos_u_maj
+      pos_u_min
+      pos_u_pa
+      pos_epoch
+      promo_ra
+      promo_dec
+      promo_u_maj
+      promo_u_min
+      promo_u_pa
+      parallax
+      u_parallax
+      vradial
+      u_vradial
+
+   Methods are:
+
+   .. autosummary::
+      verify
+      predict
+      print_prediction
+      fill_from_simbad
+
+   The stringification of an :class:`AstrometryInfo` class formats its fields
+   in a human-readable, multiline format that uses Unicode characters.
+
+.. autoattribute:: AstrometryInfo.ra
+.. autoattribute:: AstrometryInfo.dec
+.. autoattribute:: AstrometryInfo.pos_u_maj
+.. autoattribute:: AstrometryInfo.pos_u_min
+.. autoattribute:: AstrometryInfo.pos_u_pa
+.. autoattribute:: AstrometryInfo.pos_epoch
+.. autoattribute:: AstrometryInfo.promo_ra
+.. autoattribute:: AstrometryInfo.promo_dec
+.. autoattribute:: AstrometryInfo.promo_u_maj
+.. autoattribute:: AstrometryInfo.promo_u_min
+.. autoattribute:: AstrometryInfo.promo_u_pa
+.. autoattribute:: AstrometryInfo.parallax
+.. autoattribute:: AstrometryInfo.u_parallax
+.. autoattribute:: AstrometryInfo.vradial
+.. autoattribute:: AstrometryInfo.u_vradial
 .. automethod:: AstrometryInfo.verify
 .. automethod:: AstrometryInfo.predict
 .. automethod:: AstrometryInfo.print_prediction
 .. automethod:: AstrometryInfo.fill_from_simbad
+
+A few helper functions may also be of interest:
+
+.. autosummary::
+   get_2mass_epoch
+   get_simbad_astrometry_info

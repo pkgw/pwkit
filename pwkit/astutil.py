@@ -317,6 +317,18 @@ def _parsesexagesimal (sxgstr, desc, negok):
 
 
 def parsehours (hrstr):
+    """Parse a string formatted as sexagesimal hours into an angle.
+
+    This function converts a textual representation of an angle, measured in
+    hours, into a floating point value measured in radians. The format of
+    *hrstr* is very limited: it may not have leading or trailing whitespace,
+    and the components of the sexagesimal representation must be separated by
+    colons. The input must therefore resemble something like
+    ``"12:34:56.78"``. A :exc:`ValueError` will be raised if the input does
+    not resemble this template. Hours greater than 24 are not allowed, but
+    negative values are.
+
+    """
     hr = _parsesexagesimal (hrstr, 'hours', False)
     if hr >= 24:
         raise ValueError ('illegal hour specification: ' + hrstr)
@@ -324,6 +336,18 @@ def parsehours (hrstr):
 
 
 def parsedeglat (latstr):
+    """Parse a latitude formatted as sexagesimal degrees into an angle.
+
+    This function converts a textual representation of a latitude, measured in
+    degrees, into a floating point value measured in radians. The format of
+    *latstr* is very limited: it may not have leading or trailing whitespace,
+    and the components of the sexagesimal representation must be separated by
+    colons. The input must therefore resemble something like
+    ``"-00:12:34.5"``. A :exc:`ValueError` will be raised if the input does
+    not resemble this template. Latitudes greater than 90 or less than -90
+    degrees are not allowed.
+
+    """
     deg = _parsesexagesimal (latstr, 'latitude', True)
     if abs (deg) > 90:
         raise ValueError ('illegal latitude specification: ' + latstr)
@@ -331,6 +355,18 @@ def parsedeglat (latstr):
 
 
 def parsedeglon (lonstr):
+    """Parse a longitude formatted as sexagesimal degrees into an angle.
+
+    This function converts a textual representation of a longitude, measured
+    in degrees, into a floating point value measured in radians. The format of
+    *lonstr* is very limited: it may not have leading or trailing whitespace,
+    and the components of the sexagesimal representation must be separated by
+    colons. The input must therefore resemble something like
+    ``"270:12:34.5"``. A :exc:`ValueError` will be raised if the input does
+    not resemble this template. Values of any sign and magnitude are allowed,
+    and they are not normalized (e.g. to lie within the range [0, 2π]).
+
+    """
     return _parsesexagesimal (lonstr, 'longitude', True) * D2R
 
 
@@ -338,9 +374,23 @@ def parsedeglon (lonstr):
 
 @broadcastize (4)
 def sphdist (lat1, lon1, lat2, lon2):
-    """Args are: lat1, lon1, lat2, lon2 -- consistent with the usual coordinates
-    in images, but note that this maps to (Dec, RA) or (Y, X), so be careful
-    with this.
+    """Calculate the distance between two locations on a sphere.
+
+    lat1
+      The latitude of the first location.
+    lon1
+      The longitude of the first location.
+    lat2
+      The latitude of the second location.
+    lon2
+      The longitude of the second location.
+
+    Returns the separation in radians. All arguments are in radians as well.
+    The arguments may be vectors.
+
+    Note that the ordering of the arguments maps to the nonstandard ordering
+    ``(Dec, RA)`` in equatorial coordinates. In a spherical projection it maps
+    to ``(Y, X)`` which may also be unexpected.
 
     The distance is computed with the "specialized Vincenty formula". Faster
     but more error-prone formulae are possible; see Wikipedia on Great-circle
@@ -360,25 +410,40 @@ def sphdist (lat1, lon1, lat2, lon2):
 
 @broadcastize (4)
 def sphbear (lat1, lon1, lat2, lon2, tol=1e-15):
-    """Args are (lat1, lon1, lat2, lon2, tol=1e-15) --
-    consistent with the usual coordinates in images, but note that
-    this maps to (Dec, RA) or (Y, X). All in radians. Returns the
-    bearing (AKA position angle, PA) of point 2 with regards to point
-    1.
+    """Calculate the bearing between two locations on a sphere.
 
-    The sign convention is astronomical: bearing ranges from -pi to pi,
-    with negative values if point 2 is in the western hemisphere w.r.t.
-    point 1, positive if it is in the eastern.
+    lat1
+      The latitude of the first location.
+    lon1
+      The longitude of the first location.
+    lat2
+      The latitude of the second location.
+    lon2
+      The longitude of the second location.
+    tol
+      Tolerance for checking proximity to poles and rounding to zero.
 
-    If point1 is very near the pole, the bearing is undefined and the result
+    The bearing (AKA the position angle, PA) is the orientation of point 2
+    with regards to point 1 relative to the longitudinal axis. Returns the
+    bearing in radians. All arguments are in radians as well. The arguments
+    may be vectors.
+
+    Note that the ordering of the arguments maps to the nonstandard ordering
+    ``(Dec, RA)`` in equatorial coordinates. In a spherical projection it maps
+    to ``(Y, X)`` which may also be unexpected.
+
+    The sign convention is astronomical: bearings range from -π to π, with
+    negative values if point 2 is in the western hemisphere with regards to
+    point 1, positive if it is in the eastern. (That is, “east from north”.)
+    If point 1 is very near the pole, the bearing is undefined and the result
     is NaN.
 
-    tol is used for checking pole nearness and for rounding the bearing to
-    precisely zero if it's extremely small.
+    The *tol* argument is used for checking proximity to the poles and for
+    rounding the bearing to precisely zero if it's extremely small.
 
-    Derived from bear() in angles.py from Prasanth Nair,
-    https://github.com/phn/angles . His version is BSD licensed. This one is
-    sufficiently different that I think it counts as a separate
+    Derived from ``bear()`` in `angles.py from Prasanth Nair
+    <https://github.com/phn/angles>`_. His version is BSD licensed. This one
+    is sufficiently different that I think it counts as a separate
     implementation.
 
     """
@@ -407,24 +472,59 @@ def sphbear (lat1, lon1, lat2, lon2, tol=1e-15):
 
 
 def sphofs (lat1, lon1, r, pa, tol=1e-2, rmax=None):
-    """Args are: lat1, lon1, r, pa -- consistent with
-    the usual coordinates in images, but note that this maps
-    to (Dec, RA) or (Y, X). PA is East from North. Returns
-    lat2, lon2.
+    """Offset from one location on the sphere to another.
 
-    Error checking can be done in two ways. If tol is not
-    None, sphdist() is used to calculate the actual distance
-    between the two locations, and if the magnitude of the
-    fractional difference between that and *r* is larger than
-    tol, an exception is raised. This will add an overhead
-    to the computation that may be significant if you're
-    going to be calling this function a whole lot.
+    This function is given a start location, expressed as a latitude and
+    longitude, a distance to offset, and a direction to offset (expressed as a
+    bearing, AKA position angle). It uses these to compute a final location.
+    This function mirrors :func:`sphdist` and :func:`sphbear` such that::
 
-    If rmax is not None, magnitudes of *r* greater than that
-    value are rejected. For reference, an *r* of 0.2 (~11 deg)
-    gives a maximum fractional distance error of ~3%.
+      # If:
+      r = sphdist (lat1, lon1, lat2a, lon2a)
+      pa = sphbear (lat1, lon1, lat2a, lon2a)
+      lat2b, lon2b = sphofs (lat1, lon1, r, pa)
+      # Then lat2b = lat2a and lon2b = lon2a
+
+    Arguments are:
+
+    lat1
+      The latitude of the start location.
+    lon1
+      The longitude of the start location.
+    r
+      The distance to offset by.
+    pa
+      The position angle (“PA” or bearing) to offset towards.
+    tol
+      The tolerance for the accuracy of the calculation.
+    rmax
+      The maximum allowed offset distance.
+
+    Returns a pair ``(lat2, lon2)``. All arguments and the return values are
+    measured in radians. The arguments may be vectors. The PA sign convention
+    is astronomical, measuring orientation east from north.
+
+    Note that the ordering of the arguments and return values maps to the
+    nonstandard ordering ``(Dec, RA)`` in equatorial coordinates. In a
+    spherical projection it maps to ``(Y, X)`` which may also be unexpected.
+
+    The offset is computed naively as::
+
+      lat2 = lat1 + r * cos (pa)
+      lon2 = lon1 + r * sin (pa) / cos (lat2)
+
+    This will fail for large offsets. Error checking can be done in two ways.
+    If *tol* is not None, :func:`sphdist` is used to calculate the actual
+    distance between the two locations, and if the magnitude of the fractional
+    difference between that and *r* is larger than *tol*, :exc:`ValueError` is
+    raised. This will add an overhead to the computation that may be
+    significant if you're going to be calling this function a lot.
+
+    Additionally, if *rmax* is not None, magnitudes of *r* greater than *rmax*
+    are rejected. For reference, an *r* of 0.2 (~11 deg) gives a maximum
+    fractional distance error of ~3%.
+
     """
-
     if rmax is not None and np.abs (r) > rmax:
         raise ValueError ('sphofs radius value %f is too big for '
                           'our approximation' % r)
@@ -450,9 +550,20 @@ def sphofs (lat1, lon1, r, pa, tol=1e-2, rmax=None):
 def parang (hourangle, declination, latitude):
     """Calculate the parallactic angle of a sky position.
 
-    Inputs and outputs are all in radians. Implementation adapted
-    from GBTIDL parangle.pro."""
+    This computes the parallactic angle of a sky position expressed in terms
+    of an hour angle and declination. Arguments:
 
+    hourangle
+      The hour angle of the location on the sky.
+    declination
+      The declination of the location on the sky.
+    latitude
+      The latitude of the observatory.
+
+    Inputs and outputs are all in radians. Implementation adapted from GBTIDL
+    ``parangle.pro``.
+
+    """
     return -np.arctan2 (-np.sin (hourangle),
                         np.cos (declination) * np.tan (latitude)
                         - np.sin (declination) * np.cos (hourangle))
@@ -640,59 +751,69 @@ query id %s''' % (s, ident)
 
 
 class AstrometryInfo (object):
-    """Holds astrometric data and their uncertainties, and can compute
-    predicted positions with uncertainties.
+    """Holds astrometric data and their uncertainties, and can predict
+    positions with uncertainties.
 
-    Fields:
-
-    ra          - J2000 right ascension of the object, in radians
-    dec         - J2000 declination of the object, in radians
-    pos_u_maj   - Major axis of positional error ellipse, in radians
-    pos_u_min   - Minor axis of positional error ellipse, in radians
-    pos_u_pa    - Position angle of positional error ellipse, East from
-                  North, in radians
-    pos_epoch   - Epoch of position; that is, date when the position was
-                  measured, as an MJD[TT].
-    promo_ra    - Proper motion in right ascension, in mas/yr.
-                  XXX: terminology for cos(delta) factor
-    promo_dec   - Proper motion in declination, in mas/yr.
-    promo_u_maj - Major axis of proper motion error ellipse, in mas/yr
-    promo_u_min - Minor axis of proper motion error ellipse, in mas/yr
-    promo_u_pa  - Position angle of proper motion error ellipse, East from
-                  North, in radians
-    parallax    - Parallax of the target, in mas.
-    u_parallax  - Uncertainty in the parallax, in mas.
-    vradial     - Radial velocity of the object, in km/s.
-                  XXX: totally pointless?
-    u_vradial   - Uncertainty in the radial velocity, in km/s.
-                  XXX: totally pointless?
-
-    Methods:
-
-    fill_from_simbad (ident, debug=False) - does what it says
-    verify(complain=True) - make sure fields are consistent and valid
-    predict(mjd, complain=True) - predict position with uncertainty at given MJD
-        returns (ra, dec, maj, min, pa), all in radians
-    print_prediction(ptup) - prints prediction to stdout prettily
     """
-
     ra = None
+    "The J2000 right ascension of the object, measured in radians."
+
     dec = None
+    "The J2000 declination of the object, measured in radians."
+
     pos_u_maj = None
+    "Major axis of the error ellipse for the object position, in radians."
+
     pos_u_min = None
+    "Minor axis of the error ellipse for the object position, in radians."
+
     pos_u_pa = None
+    """Position angle (really orientation) of the error ellipse for the object
+    position, east from north, in radians.
+
+    """
     pos_epoch = None
+    """The epoch of position, that is, the date when the position was measured, in
+    MJD[TT].
+
+    """
     promo_ra = None
+    """The proper motion in right ascension, in milliarcsec per year. XXX:
+    cos(dec) confusion!
+
+    """
     promo_dec = None
+    """The object's proper motion in declination, in milliarcsec per year."""
+
     promo_u_maj = None
+    """Major axis of the error ellipse for the object's proper motion, in
+    milliarcsec per year.
+
+    """
     promo_u_min = None
+    """Minor axis of the error ellipse for the object's proper motion, in
+    milliarcsec per year.
+
+    """
     promo_u_pa = None
+    """Position angle (really orientation) of the error ellipse for the object
+    proper motion, east from north, in radians.
+
+    """
     parallax = None
+    "The object's parallax, in milliarcsec."
+
     u_parallax = None
+    "Uncertainty in the object's parallax, in milliarcsec."
+
     vradial = None
+    "The object's radial velocity, in km/s. NOTE: not relevant in our usage."
+
     u_vradial = None
+    """The uncertainty in the object's radial velocity, in km/s. NOTE: not
+    relevant in our usage.
 
-
+    """
     def __init__ (self, simbadident=None, **kwargs):
         if simbadident is not None:
             self.fill_from_simbad (simbadident)
@@ -713,6 +834,16 @@ class AstrometryInfo (object):
 
 
     def verify (self, complain=True):
+        """Validate that the attributes are self-consistent.
+
+        This function does some basic checks of the object attributes to
+        ensure that astrometric calculations can legally be performed. If the
+        *complain* keyword is true, messages may be printed to
+        :data:`sys.stderr` if non-fatal issues are encountered.
+
+        Returns *self*.
+
+        """
         import sys
 
         if self.ra is None:
@@ -774,11 +905,18 @@ class AstrometryInfo (object):
 
 
     def predict (self, mjd, complain=True, n=20000):
-        """Returns (ra, dec, major, minor, pa), all in radians. These are the
-        predicted position of the object and its uncertainty at `mjd`. If
-        `complain` is True, print out warnings for incomplete information. `n`
-        is the number of Monte Carlo samples to draw for computing the
-        positional uncertainty.
+        """Predict the object position at a given MJD.
+
+        The return value is a tuple ``(ra, dec, major, minor, pa)``, all in
+        radians. These are the predicted position of the object and its
+        uncertainty at *mjd*. If *complain* is True, print out warnings for
+        incomplete information. *n* is the number of Monte Carlo samples to
+        draw for computing the positional uncertainty.
+
+        The uncertainty ellipse parameters are sigmas, not FWHM. These may be
+        converted with the :data:`S2F` constant.
+
+        This function relies on the external :mod:`precastro` module.
 
         """
         import precastro, sys
@@ -871,7 +1009,13 @@ class AstrometryInfo (object):
 
 
     def print_prediction (self, ptup, precision=2):
-        """The argument is the tuple returned by predict(). Prints it to stdout."""
+        """Print a summary of a predicted position.
+
+        The argument *ptup* is a tuple returned by :meth:`predict`. It is
+        printed to :data:`sys.stdout` in a reasonable format that uses Unicode
+        characters.
+
+        """
         from . import ellipses
         bestra, bestdec, maj, min, pa = ptup
 
@@ -886,7 +1030,13 @@ class AstrometryInfo (object):
 
 
     def fill_from_simbad (self, ident, debug=False):
-        """Fills in astrometric information based on Simbad/Sesame. Returns `self`.
+        """Fill in astrometric information using the Simbad web service.
+
+        This uses the CDS Simbad web service to look up astrometric
+        information for the source name *ident* and fills in attributes
+        appropriately. Values from Simbad are not always reliable.
+
+        Returns *self*.
 
         """
         import sys
