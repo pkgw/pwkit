@@ -21,6 +21,19 @@ from . import text_type, unicode_to_str
 from .numutil import broadcastize
 
 
+# Workaround for Sphinx bug 1641. Without this, the "autoattribute" directive
+# does not work if the print_function future is used. Copied from
+# https://github.com/sphinx-doc/sphinx/issues/1641#issuecomment-204323049.
+# See commit message associated with this code for more detail.
+
+try:
+    import builtins
+    print_ = getattr (builtins, 'print')
+except ImportError:
+    import __builtin__
+    print_ = getattr (__builtin__, 'print')
+
+
 # Constants.
 
 pi = np.pi
@@ -578,15 +591,15 @@ def get_2mass_epoch (tmra, tmdec, debug=False):
     for line in urlopen (_vizurl, postdata):
         line = line.strip ()
         if debug:
-            print ('D: 2M >>', line)
+            print_ ('D: 2M >>', line)
 
         if line.startswith ('1;'):
             jd = float (line[2:])
 
     if jd is None:
         import sys
-        print ('warning: 2MASS epoch lookup failed; astrometry could be very wrong!',
-               file=sys.stderr)
+        print_ ('warning: 2MASS epoch lookup failed; astrometry could be very wrong!',
+                file=sys.stderr)
         return J2000
 
     return jd - 2400000.5
@@ -611,7 +624,7 @@ query id %s''' % (s, ident)
     for line in urlopen (url):
         line = line.strip ()
         if debug:
-            print ('D: SA >>', line)
+            print_ ('D: SA >>', line)
 
         if errtext is not None:
             errtext += line
@@ -718,44 +731,44 @@ class AstrometryInfo (object):
 
         if self.pos_u_maj is None:
             if complain:
-                print ('AstrometryInfo: no positional uncertainty info', file=sys.stderr)
+                print_ ('AstrometryInfo: no positional uncertainty info', file=sys.stderr)
         elif self.pos_u_maj < self.pos_u_min:
             # Based on experience with PM, this may be possible
             if complain:
-                print ('AstrometryInfo: swapped positional uncertainty '
-                       'major/minor axes', file=sys.stderr)
+                print_ ('AstrometryInfo: swapped positional uncertainty '
+                        'major/minor axes', file=sys.stderr)
             self.pos_u_maj, self.pos_u_min = self.pos_u_min, self.pos_u_maj
             self.pos_u_pa += 0.5 * np.pi
 
         if self.promo_ra is None:
             if complain:
-                print ('AstrometryInfo: assuming zero proper motion', file=sys.stderr)
+                print_ ('AstrometryInfo: assuming zero proper motion', file=sys.stderr)
         elif self.promo_u_maj is None:
             if complain:
-                print ('AstrometryInfo: no uncertainty on proper motion', file=sys.stderr)
+                print_ ('AstrometryInfo: no uncertainty on proper motion', file=sys.stderr)
         elif self.promo_u_maj < self.promo_u_min:
             # I've seen this: V* V374 Peg
             if complain:
-                print ('AstrometryInfo: swapped proper motion uncertainty '
-                       'major/minor axes', file=sys.stderr)
+                print_ ('AstrometryInfo: swapped proper motion uncertainty '
+                        'major/minor axes', file=sys.stderr)
             self.promo_u_maj, self.promo_u_min = self.promo_u_min, self.promo_u_maj
             self.promo_u_pa += 0.5 * np.pi
 
         if self.parallax is None:
             if complain:
-                print ('AstrometryInfo: assuming zero parallax', file=sys.stderr)
+                print_ ('AstrometryInfo: assuming zero parallax', file=sys.stderr)
         else:
             if self.parallax < 0.:
                 raise ValueError ('negative parallax in AstrometryInfo')
             if self.u_parallax is None:
                 if complain:
-                    print ('AstrometryInfo: no uncertainty on parallax', file=sys.stderr)
+                    print_ ('AstrometryInfo: no uncertainty on parallax', file=sys.stderr)
 
         if self.vradial is None:
             pass # not worth complaining
         elif self.u_vradial is None:
             if complain:
-                print ('AstrometryInfo: no uncertainty on v_radial', file=sys.stderr)
+                print_ ('AstrometryInfo: no uncertainty on v_radial', file=sys.stderr)
 
         return self # chain-friendly
 
@@ -782,8 +795,8 @@ class AstrometryInfo (object):
             o.promoepoch = self.pos_epoch + 2400000.5
         else:
             if complain:
-                print ('AstrometryInfo.predict(): assuming epoch of '
-                       'position is J2000.0', file=sys.stderr)
+                print_ ('AstrometryInfo.predict(): assuming epoch of '
+                        'position is J2000.0', file=sys.stderr)
             o.promoepoch = 2451545.0 # J2000.0
 
         if self.promo_ra is not None:
@@ -802,8 +815,8 @@ class AstrometryInfo (object):
 
         if self.pos_u_maj is None and self.promo_u_maj is None and self.u_parallax is None:
             if complain:
-                print ('AstrometryInfo.predict(): no uncertainties '
-                       'available; cannot Monte Carlo!', file=sys.stderr)
+                print_ ('AstrometryInfo.predict(): no uncertainties '
+                        'available; cannot Monte Carlo!', file=sys.stderr)
             return (bestra, bestdec, 0., 0., 0.)
 
         if self.pos_u_maj is not None:
@@ -867,9 +880,9 @@ class AstrometryInfo (object):
         min *= R2A
         pa *= R2D
 
-        print ('position =', fmtradec (bestra, bestdec, precision=precision))
-        print ('err(1σ)  = %.*f" × %.*f" @ %.0f°' % (precision, maj * f, precision,
-                                                     min * f, pa))
+        print_ ('position =', fmtradec (bestra, bestdec, precision=precision))
+        print_ ('err(1σ)  = %.*f" × %.*f" @ %.0f°' % (precision, maj * f, precision,
+                                                      min * f, pa))
 
 
     def fill_from_simbad (self, ident, debug=False):
