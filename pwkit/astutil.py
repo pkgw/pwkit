@@ -2,46 +2,8 @@
 # Copyright 2012-2014 Peter Williams <peter@newton.cx> and collaborators.
 # Licensed under the MIT License.
 
-"""pwkit.astutil - miscellaneous astronomical constants and utilities
-
-Constants:
-
-np                  - The numpy module.
-pi                  - Pi.
-twopi               - 2 * Pi.
-halfpi              - 0.5 * Pi.
-R2A                 - arcsecs = radians * R2A
-A2R                 - radians = arcsecs * A2R
-R2D                 - degrees = radians * R2D
-D2R                 - radians = degrees * D2R
-R2H                 - hours = radians * R2H
-H2R                 - radians = hours * H2R
-F2S                 - sigma = fwhm * F2S (for Gaussians)
-S2F                 - fwhm = sigma * S2F
-J2000               - J2000 as an MJD: 51544.5
-
-Functions:
-
-angcen              - Center an angle in radians in [-π, π].
-fmtdeglat           - Format radian latitude (dec) as sexagesimal degrees.
-fmtdeglon           - Format radian longitude as sexagesimal degrees.
-fmthours            - Format radian longitude (RA) as sexagesimal hours.
-fmtradec            - Format radian ra/dec as text.
-gaussian_convolve   - Convolve a Gaussian profile with another.
-gaussian_deconvolve - Deconvolve a Gaussian from profile from another.
-orientcen           - Center an orientation in radians in [-π/2, π/2]
-parang              - Parallactic angle from HA, dec, lat.
-parsedeglat         - Parse sexagesimal degrees (dec) into a latitude.
-parsedeglon         - Parse sexagesimal degrees into a longitude.
-parsehours          - Parse sexagesimal hours (RA) into a longitude.
-sphbear             - Calculate the bearing (~PA) from one lat/lon to another.
-sphdist             - Calculate the distance between two lat/lons
-sphofs              - Calculate lat/lon from an initial lat/lon and an offset.
-
-Classes:
-
-AstrometryInfo      - Hold astrometric parameters and predict a source location
-                      with Monte Carlo uncertainties. (Requires precastro.)
+"""This module provides functions and constants for doing a variety of basic
+calculations and conversions that come up in astronomy.
 
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
@@ -137,27 +99,84 @@ def _fmtsexagesimal (base, norm, basemax, seps, precision=3):
 
 
 def fmthours (radians, norm='wrap', precision=3, seps='::'):
-    """(radians, norm='wrap', precision=3) -> string
+    """Format an angle as sexagesimal hours in a string.
 
-    norm[alization] can be one of 'none', 'raise', or 'wrap'
+    Arguments are:
+
+    radians
+      The angle, in radians.
+    norm (default "wrap")
+      The normalization mode, used for angles outside of the standard range
+      of 0 to 2π. If "none", the value is formatted ignoring any potential
+      problems. If "wrap", it is wrapped to lie within the standard range.
+      If "raise", a :exc:`ValueError` is raised.
+    precision (default 3)
+      The number of decimal places in the "seconds" place to use in the
+      formatted string.
+    seps (default "::")
+      A two- or three-item iterable, used to separate the hours, minutes, and
+      seconds components. If a third element is present, it appears after the
+      seconds component. Specifying "hms" yields something like "12h34m56s";
+      specifying ``['', '']`` yields something like "123456".
+
+    Returns a string.
 
     """
     return _fmtsexagesimal (radians * R2H, norm, 24, seps, precision=precision)
 
 
 def fmtdeglon (radians, norm='wrap', precision=2, seps='::'):
-    """(radians, norm='wrap', precision=2) -> string
+    """Format a longitudinal angle as sexagesimal degrees in a string.
 
-    norm[alization] can be one of 'none', 'raise', or 'wrap'
+    Arguments are:
+
+    radians
+      The angle, in radians.
+    norm (default "wrap")
+      The normalization mode, used for angles outside of the standard range
+      of 0 to 2π. If "none", the value is formatted ignoring any potential
+      problems. If "wrap", it is wrapped to lie within the standard range.
+      If "raise", a :exc:`ValueError` is raised.
+    precision (default 2)
+      The number of decimal places in the "arcseconds" place to use in the
+      formatted string.
+    seps (default "::")
+      A two- or three-item iterable, used to separate the degrees, arcminutes,
+      and arcseconds components. If a third element is present, it appears
+      after the arcseconds component. Specifying "dms" yields something like
+      "12d34m56s"; specifying ``['', '']`` yields something like "123456".
+
+    Returns a string.
 
     """
     return _fmtsexagesimal (radians * R2D, norm, 360, seps, precision=precision)
 
 
 def fmtdeglat (radians, norm='raise', precision=2, seps='::'):
-    """(radians, norm='raise', precision=2) -> string
+    """Format a latitudinal angle as sexagesimal degrees in a string.
 
-    norm[alization] can be one of 'none', 'raise', or 'wrap'
+    Arguments are:
+
+    radians
+      The angle, in radians.
+    norm (default "raise")
+      The normalization mode, used for angles outside of the standard range
+      of -π/2 to π/2. If "none", the value is formatted ignoring any potential
+      problems. If "wrap", it is wrapped to lie within the standard range.
+      If "raise", a :exc:`ValueError` is raised.
+    precision (default 2)
+      The number of decimal places in the "arcseconds" place to use in the
+      formatted string.
+    seps (default "::")
+      A two- or three-item iterable, used to separate the degrees, arcminutes,
+      and arcseconds components. If a third element is present, it appears
+      after the arcseconds component. Specifying "dms" yields something like
+      "+12d34m56s"; specifying ``['', '']`` yields something like "123456".
+
+    Returns a string. The return value always includes a plus or minus sign.
+    Note that the default of *norm* is different than in :func:`fmthours` and
+    :func:`fmtdeglon` since it's not so clear what a "latitude" of 110 degrees
+    (e.g.) means.
 
     """
     if norm == 'none':
@@ -216,6 +235,38 @@ def fmtdeglat (radians, norm='raise', precision=2, seps='::'):
 
 
 def fmtradec (rarad, decrad, precision=2, raseps='::', decseps='::', intersep=' '):
+    """Format equatorial coordinates in a single sexagesimal string.
+
+    Returns a string of the RA/lon coordinate, formatted as sexagesimal hours,
+    then *intersep*, then the Dec/lat coordinate, formatted as degrees. This
+    yields something like "12:34:56.78 -01:23:45.6". Arguments are:
+
+    rarad
+      The right ascension coordinate, in radians. More generically, this is
+      the longitudinal coordinate; note that the ordering in this function
+      differs than the other spherical functions, which generally prefer
+      coordinates in "lat, lon" order.
+    decrad
+      The declination coordinate, in radians. More generically, this is the
+      latitudinal coordinate.
+    precision (default 2)
+      The number of decimal places in the "arcseconds" place of the
+      latitudinal (declination) coordinate. The longitudinal (right ascension)
+      coordinate gets one additional place, since hours are bigger than
+      degrees.
+    raseps (default "::")
+      A two- or three-item iterable, used to separate the hours, minutes, and
+      seconds components of the RA/lon coordinate. If a third element is
+      present, it appears after the seconds component. Specifying "hms" yields
+      something like "12h34m56s"; specifying ``['', '']`` yields something
+      like "123456".
+    decseps (default "::")
+      A two- or three-item iterable, used to separate the degrees, arcminutes,
+      and arcseconds components of the Dec/lat coordinate.
+    intersep (default " ")
+      The string separating the RA/lon and Dec/lat coordinates
+
+    """
     return (fmthours (rarad, precision=precision + 1, seps=raseps) +
             text_type (intersep) +
             fmtdeglat (decrad, precision=precision, seps=decseps))
