@@ -10,16 +10,16 @@ Basic astronomical calculations (:mod:`pwkit.astutil`)
 
 .. currentmodule:: pwkit.astutil
 
-This module collects many utilities for performing basic astronomical
-calculations, including:
+This topics covered in this module are:
 
  - :ref:`useful-constants`
  - :ref:`sexagesimal`
  - :ref:`angles`
  - :ref:`gaussians`
  - :ref:`astrometry`
+ - :ref:`misc-astronomy`
 
-Angles are always measured in radians, whereas some other astronomical
+Angles are **always** measured in radians, whereas some other astronomical
 codebases prefer degrees.
 
 
@@ -207,3 +207,21 @@ A few helper functions may also be of interest:
 .. autosummary::
    get_2mass_epoch
    get_simbad_astrometry_info
+
+.. autofunction:: get_2mass_epoch
+.. autofunction:: get_simbad_astrometry_info
+
+
+.. _misc-astronomy:
+
+Miscellaneous Astronomical Computations
+------------------------------------------------------------------------------
+
+These functions don’t fit under the other rubrics very well.
+
+.. autosummary::
+   abs2app
+   app2abs
+
+.. autofunction:: abs2app
+.. autofunction:: app2abs

@@ -1,5 +1,5 @@
 # -*- mode: python; coding: utf-8 -*-
-# Copyright 2012-2014 Peter Williams <peter@newton.cx> and collaborators.
+# Copyright 2012-2016 Peter Williams <peter@newton.cx> and collaborators.
 # Licensed under the MIT License.
 
 """This module provides functions and constants for doing a variety of basic
@@ -572,21 +572,33 @@ def parang (hourangle, declination, latitude):
 # 2D Gaussian (de)convolution
 
 def gaussian_convolve (maj1, min1, pa1, maj2, min2, pa2):
-    """Arguments:
+    """Convolve two Gaussians analytically.
 
-    maj1 - major axis of input Gaussian 1
-    min1 - etc
-    pa1  - Gaussian 1 PA in radians.
-    maj2 - major axis of input Gaussian 2
-    min2 -
-    pa2  - Gaussian 1 PA in radians.
+    Given the shapes of two 2-dimensional Gaussians, this function returns
+    the shape of their convolution.
 
-    Returns: (maj3, min3, pa3).
+    Arguments:
 
-    Axes can be in any units so long as they're consistent.
+    maj1
+      Major axis of input Gaussian 1.
+    min1
+      Minor axis of input Gaussian 1.
+    pa1
+      Orientation angle of input Gaussian 1, in radians.
+    maj2
+      Major axis of input Gaussian 2.
+    min2
+      Minor axis of input Gaussian 2.
+    pa2
+      Orientation angle of input Gaussian 2, in radians.
+
+    The return value is ``(maj3, min3, pa3)``, with the same format as the
+    input arguments. The axes can be measured in any units, so long as they're
+    consistent.
+
+    Implementation copied from MIRIAD’s ``gaufac``.
 
     """
-    # copied from miriad/src/subs/gaupar.for:gaufac()
     c1 = np.cos (pa1)
     s1 = np.sin (pa1)
     c2 = np.cos (pa2)
@@ -614,34 +626,53 @@ def gaussian_convolve (maj1, min1, pa1, maj2, min2, pa2):
 
 
 def gaussian_deconvolve (smaj, smin, spa, bmaj, bmin, bpa):
-    """Deconvolve a source with regard to a PSF.
+    """Deconvolve two Gaussians analytically.
 
-    smaj - source major axis.
-    smin - source minor axis.
-    spa  - source PA in radians.
-    bmaj - beam/PSF major axis.
-    bmin - beam/PSF minor axis.
-    bpa  - beam/PSF PA in radians.
+    Given the shapes of 2-dimensional “source” and “beam” Gaussians, this
+    returns a deconvolved “result” Gaussian such that the convolution of
+    “beam” and “result” is “source”.
 
-    Returns: (dmaj, dmin, dpa, status). Units are consistent with the inputs.
-    `status` is one of 'ok', 'pointlike', 'fail'.
+    Arguments:
 
-    Ideally if:
+    smaj
+      Major axis of source Gaussian.
+    smin
+      Minor axis of source Gaussian.
+    spa
+      Orientation angle of source Gaussian, in radians.
+    bmaj
+      Major axis of beam Gaussian.
+    bmin
+      Minor axis of beam Gaussian.
+    bpa
+      Orientation angle of beam Gaussian, in radians.
 
-      tmaj, tmin, tpa, status = gaussian_deconvolve (cmaj, cmin, cpa, bmaj, bmin, bpa)
+    The return value is ``(rmaj, rmin, rpa, status)``. The first three values
+    have the same format as the input arguments. The *status* result is one of
+    "ok", "pointlike", or "fail". A "pointlike" status indicates that the
+    source and beam shapes are difficult to distinguish; a "fail" status
+    indicates that the two shapes seem to be mutually incompatible (e.g.,
+    source and beam are very narrow and orthogonal).
 
-    then:
+    The axes can be measured in any units, so long as they're consistent.
 
-      cmaj, cmin, cpa = gaussian_convolve (tmaj, tmin, tpa, bmaj, bmin, bpa)
+    Ideally if::
 
-    Derived from miriad gaupar.for:GauDfac()
+      rmaj, rmin, rpa, status = gaussian_deconvolve (smaj, smin, spa, bmaj, bmin, bpa)
 
-    We currently don't do a great job of dealing with pointlike sources. I've
-    added extra code ensure smaj >= bmaj, smin >= bmin, and increased
-    coefficient in front of "limit" from 0.1 to 0.5. Feel a little wary about
-    that first change.
+    then::
+
+      smaj, smin, spa = gaussian_convolve (rmaj, rmin, rpa, bmaj, bmin, bpa)
+
+    Implementation derived from MIRIAD’s ``gaudfac``. This function currently
+    doesn't do a great job of dealing with pointlike sources, i.e. ones where
+    “source” and “beam” are nearly indistinguishable.
 
     """
+    # I've added extra code to ensure ``smaj >= bmaj``, ``smin >= bmin``, and
+    # increased the coefficient in front of "limit" from 0.1 to 0.5. Feel a
+    # little wary about that first change.
+
     from numpy import cos, sin, sqrt, min, abs, arctan2
 
     if smaj < bmaj:
@@ -659,7 +690,6 @@ def gaussian_deconvolve (smaj, smin, spa, bmaj, bmin, bpa):
     s = alpha + beta
     t = sqrt ((alpha - beta)**2 + gamma**2)
     limit = 0.5 * min ([smaj, smin, bmaj, bmin])**2
-    #limit = 0.1 * min ([smaj, smin, bmaj, bmin])**2
     status = 'ok'
 
     if alpha < 0 or beta < 0 or s < t:
@@ -688,8 +718,23 @@ def gaussian_deconvolve (smaj, smin, spa, bmaj, bmin, bpa):
 _vizurl = 'http://vizier.u-strasbg.fr/viz-bin/asu-tsv'
 
 def get_2mass_epoch (tmra, tmdec, debug=False):
-    """Given a 2MASS ra/dec in radians, fetch the epoch when it was observed
-    as an MJD."""
+    """Given a 2MASS position, look up the epoch when it was observed.
+
+    This function uses the CDS Vizier web service to look up information in
+    the 2MASS point source database. Arguments are:
+
+    tmra
+      The source's J2000 right ascension, in radians.
+    tmdec
+      The source's J2000 declination, in radians.
+    debug
+      If True, the web server's response will be printed to :data:`sys.stdout`.
+
+    The return value is an MJD. If the lookup fails, a message will be printed
+    to :data:`sys.stderr` (unconditionally!) and the :data:`J2000` epoch will
+    be returned.
+
+    """
     from urllib2 import urlopen
     postdata = '''-mime=csv
 -source=2MASS
@@ -721,6 +766,31 @@ _simbaditems = ('COO(d;A) COO(d;D) COO(E) COO(B) PM(A) PM(D) PM(E) PLX(V) PLX(E)
                 'RV(V) RV(E)').split ()
 
 def get_simbad_astrometry_info (ident, items=_simbaditems, debug=False):
+    """Fetch astrometric information from the Simbad web service.
+
+    Given the name of a source as known to the CDS Simbad service, this
+    function looks up its positional information and returns it in a
+    dictionary. In most cases you should use an :class:`AstrometryInfo` object
+    and its :meth:`~AstrometryInfo.fill_from_simbad` method instead of this
+    function.
+
+    Arguments:
+
+    ident
+      The Simbad name of the source to look up.
+    items
+      An iterable of data items to look up. The default fetches position,
+      proper motion, parallax, and radial velocity information. Each item name
+      resembles the string ``COO(d;A)`` or ``PLX(E)``. The allowed formats are
+      defined `on this CDS page
+      <http://simbad.u-strasbg.fr/Pages/guide/sim-fscript.htx>`_.
+    debug
+      If true, the response from the webserver will be printed.
+
+    The return value is a dictionary with a key corresponding to the textual
+    result returned for each requested item.
+
+    """
     from urllib import quote
     from urllib2 import urlopen
 
@@ -1139,6 +1209,15 @@ def app2abs (app_mag, dist_pc):
     """Convert an apparent magnitude to an absolute magnitude, given a source's
     (luminosity) distance in parsecs.
 
+    Arguments:
+
+    app_mag
+      Apparent magnitude.
+    dist_pc
+      Distance, in parsecs.
+
+    Returns the absolute magnitude. The arguments may be vectors.
+
     """
     return app_mag - 5 * (np.log10 (dist_pc) - 1)
 
@@ -1146,6 +1225,15 @@ def app2abs (app_mag, dist_pc):
 def abs2app (abs_mag, dist_pc):
     """Convert an absolute magnitude to an apparent magnitude, given a source's
     (luminosity) distance in parsecs.
+
+    Arguments:
+
+    abs_mag
+      Absolute magnitude.
+    dist_pc
+      Distance, in parsecs.
+
+    Returns the apparent magnitude. The arguments may be vectors.
 
     """
     return abs_mag + 5 * (np.log10 (dist_pc) - 1)
