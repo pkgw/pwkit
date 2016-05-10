@@ -5,12 +5,12 @@
 Numerical utilities (:mod:`pwkit.numutil`)
 ==============================================================================
 
-.. module:: pwkit.numutil
+.. automodule:: pwkit.numutil
    :synopsis: low-level numerical utilities
 
-The :mod:`numpy` and :mod:`scipy` packages provide a whole host of routines,
-but there are still some that are missing. The :mod:`pwkit.numutil` module
-provides several useful additions:
+.. currentmodule:: pwkit.numutil
+
+The functionality in this module can be grouped into these categories:
 
  - :ref:`auto-broadcasting`
  - :ref:`statistics`
@@ -91,28 +91,16 @@ Making functions that auto-broadcast their arguments
 Convenience functions for statistics
 ------------------------------------------------------------------------------
 
-.. function:: rms(x)
+.. autosummary::
+   rms
+   weighted_mean
+   weighted_mean_df
+   weighted_variance
 
-   Placeholder.
-
-
-.. function:: weighted_mean(values, uncerts, **kwargs)
-
-   Placeholder.
-
-
-.. function:: weighted_mean_df(df, **kwargs)
-
-   The same as :func:`weighted_mean`, except the argument is expected to be a
-   two-column :class:`pandas.DataFrame` whose first column gives the data
-   values and second column gives their uncertainties. Returns
-   ``(weighted_mean, uncertainty_in_mean)``.
-
-
-.. function:: weighted_variance(x, weights)
-
-   Placeholder.
-
+.. autofunction:: rms
+.. autofunction:: weighted_mean
+.. autofunction:: weighted_mean_df
+.. autofunction:: weighted_variance
 
 
 .. _dataframes:
@@ -120,65 +108,25 @@ Convenience functions for statistics
 Convenience functions for :class:`pandas.DataFrame` objects
 ------------------------------------------------------------------------------
 
-.. function:: reduce_data_frame (df, chunk_slicers, avg_cols=(), uavg_cols=(), minmax_cols=(), nchunk_colname=u'nchunk', uncert_prefix=u'u', min_points_per_chunk=3)
+.. autosummary::
+   reduce_data_frame
+   reduce_data_frame_evenly_with_gaps
+   slice_around_gaps
+   slice_evenly_with_gaps
+   dfsmooth
+   fits_recarray_to_data_frame
+   data_frame_to_astropy_table
+   usmooth
+   page_data_frame
 
-   Placeholder.
-
-
-.. function:: reduce_data_frame_evenly_with_gaps (df, valcol, target_len, maxgap, **kwargs)
-
-   Placeholder.
-
-
-.. function:: slice_around_gaps (values, maxgap)
-
-   Placeholder.
-
-
-.. function:: slice_evenly_with_gaps (values, target_len, maxgap)
-
-   Placeholder.
-
-
-.. function:: dfsmooth (window, df, ucol, k=None)
-
-   Placeholder.
-
-
-.. function:: fits_recarray_to_data_frame (recarray, drop_nonscalar_ok=True)
-
-    Convert a FITS data table, stored as a Numpy record array, into a Pandas
-    DataFrame object. By default, non-scalar columns are discarded, but if
-    *drop_nonscalar_ok* is False then a :exc:`ValueError` is raised. Column
-    names are lower-cased. Example::
-
-      from pwkit import io, numutil
-      hdu_list = io.Path ('my-table.fits').read_fits ()
-      # assuming the first FITS extension is a binary table:
-      df = numutil.fits_recarray_to_data_frame (hdu_list[1].data)
-
-    FITS data are big-endian, whereas nowadays almost everything is
-    little-endian. This seems to be an issue for Pandas DataFrames, where
-    ``df[['col1', 'col2']]`` triggers an assertion for me if the underlying
-    data are not native-byte-ordered. This function normalizes the read-in
-    data to native endianness to avoid this.
-
-    See also :meth:`pwkit.io.Path.read_fits_bintable`.
-
-
-.. function:: data_frame_to_astropy_table (dataframe)
-
-   This is a backport of the Astropy method
-   :meth:`astropy.table.table.Table.from_pandas`. It converts a Pandas
-   :class:`pandas.DataFrame` object to an Astropy
-   :class:`astropy.table.Table`.
-
-
-.. function:: usmooth (window, uncerts, *data, **kwargs)
-
-   Placeholder.
-
-
+.. autofunction:: reduce_data_frame
+.. autofunction:: reduce_data_frame_evenly_with_gaps
+.. autofunction:: slice_around_gaps
+.. autofunction:: slice_evenly_with_gaps
+.. autofunction:: dfsmooth
+.. autofunction:: fits_recarray_to_data_frame
+.. autofunction:: data_frame_to_astropy_table
+.. autofunction:: usmooth
 .. autofunction:: page_data_frame
 
 
@@ -187,66 +135,38 @@ Convenience functions for :class:`pandas.DataFrame` objects
 Parallelized versions of simple math algorithms
 ------------------------------------------------------------------------------
 
-.. function:: parallel_newton (func, x0, fprime=None, par_args=(), simple_args=(), tol=1.48e-8, maxiter=50, parallel=True, **kwargs)
+.. autosummary::
+   parallel_newton
+   parallel_quad
 
-   Placeholder. A parallelized version of :func:`scipy.optimize.newton`.
-
-
-.. function:: parallel_quad (func, a, b, par_args=(), simple_args=(), parallel=True, **kwargs)
-
-   Placeholder. A parallelized version of :func:`scipy.integrate.quad`.
+.. autofunction:: parallel_newton
+.. autofunction:: parallel_quad
 
 
 .. _tophats-and-steps:
 
-Tophat and Step Functions
+Tophat and step functions
 ------------------------------------------------------------------------------
 
-.. function:: unit_tophat_ee (x)
+.. autosummary::
+   unit_tophat_ee
+   unit_tophat_ei
+   unit_tophat_ie
+   unit_tophat_ii
+   make_tophat_ee
+   make_tophat_ei
+   make_tophat_ie
+   make_tophat_ii
+   make_step_lcont
+   make_step_rcont
 
-   Placeholder.
-
-
-.. function:: unit_tophat_ei (x)
-
-   Placeholder.
-
-
-.. function:: unit_tophat_ie (x)
-
-   Placeholder.
-
-
-.. function:: unit_tophat_ii (x)
-
-   Placeholder.
-
-
-.. function:: make_tophat_ee (lower, upper)
-
-   Placeholder.
-
-
-.. function:: make_tophat_ei (lower, upper)
-
-   Placeholder.
-
-
-.. function:: make_tophat_ie (lower, upper)
-
-   Placeholder.
-
-
-.. function:: make_tophat_ii (lower, upper)
-
-   Placeholder.
-
-
-.. function:: make_step_lcont (transition)
-
-   Placeholder.
-
-
-.. function:: make_step_rcont (transition)
-
-   Placeholder.
+.. autofunction:: unit_tophat_ee
+.. autofunction:: unit_tophat_ei
+.. autofunction:: unit_tophat_ie
+.. autofunction:: unit_tophat_ii
+.. autofunction:: make_tophat_ee
+.. autofunction:: make_tophat_ei
+.. autofunction:: make_tophat_ie
+.. autofunction:: make_tophat_ii
+.. autofunction:: make_step_lcont
+.. autofunction:: make_step_rcont

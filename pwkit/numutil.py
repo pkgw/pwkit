@@ -2,40 +2,9 @@
 # Copyright 2014-2015 Peter Williams <peter@newton.cx> and collaborators.
 # Licensed under the MIT License.
 
-"""numutil - NumPy and generic numerical utilities.
-
-Functions:
-
-dfsmooth          - Convolve data series in a pandas DataFrame with a window.
-fits_recarray_to_data_frame
-                  - Convert a FITS data table to a Pandas DataFrame
-make_step_lcont   - Return a step function that is left-continuous.
-make_step_rcont   - Return a step function that is right-continuous.
-make_tophat_ee    - Return a tophat function operating on an exclusive/exclusive range.
-make_tophat_ei    - Return a tophat function operating on an exclusive/inclusive range.
-make_tophat_ie    - Return a tophat function operating on an inclusive/exclusive range.
-make_tophat_ii    - Return a tophat function operating on an inclusive/inclusive range.
-reduce_data_frame - Reduce rows of a DataFrame in chunks
-reduce_data_frame_evenly_with_gaps
-                  - Reduce DataFrame rows in approximately even-sized chunks.
-rms               - Calculate the square root of the mean of the squares of x.
-parallel_newton   - Parallelized invocation of `scipy.optimize.newton`.
-parallel_quad     - Parallelized invocation of `scipy.integrate.quad`.
-slice_around_gaps - Slice an ordered array into chunks separated by gaps.
-slice_evenly_with_gaps
-                  - Generate approximately same-sized slices of an ordered array.
-unit_tophat_ee    - Tophat function on (0,1).
-unit_tophat_ei    - Tophat function on (0,1].
-unit_tophat_ie    - Tophat function on [0,1).
-unit_tophat_ii    - Tophat function on [0,1].
-usmooth           - Convolve data series with a window, with uncertainties.
-weighted_mean     - Compute a weighted mean from values and their uncertainties.
-weighted_mean_df  - Convenience wrapper to call weighted_mean on a DataFrame.
-weighted_variance - Estimate the variance of a weighted sampled.
-
-Decorators:
-
-broadcastize - Make a Python function automatically broadcast arguments.
+"""The :mod:`numpy` and :mod:`scipy` packages provide a whole host of
+routines, but there are still some that are missing. The :mod:`pwkit.numutil`
+module provides several useful additions.
 
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
@@ -104,31 +73,11 @@ class _Broadcaster (method_decorator):
 
 
 class _BroadcasterDecorator (object):
-    """Decorator to make functions automatically work on vectorized arguments.
-
-    @broadcastize (3) # myfunc's first 3 arguments should be arrays.
-    def myfunc (arr1, arr2, arr3, non_vec_arg1, non_vec_arg2):
-        ...
-
-    This decorator makes it so that the child function's arguments are assured
-    to be Numpy arrays of at least 1 dimension, and all having the same shape.
-    The child can then perform vectorized computations without having to
-    special-case scalar-vs.-vector possibilities or worry about manual
-    broadcasting. If the inputs to the function are indeed all scalars, the output
-    is converted back to scalar upon return.
-
-    Therefore, for the caller, the function appears to have magic broadcasting
-    rules equivalent to a Numpy ufunc. Meanwhile the implementer can get
-    broadcasting behavior without having to special case the actual inputs.
+    """Decorator to make functions automatically work on vectorized arguments. See
+    the pwkit documentation for usage information.
 
     """
     def __init__ (self, n_arr, ret_spec=0, force_float=True):
-        """Decorator for making a auto-broadcasting function. Arguments:
-
-        n_arr - The number of array arguments accepted by the decorated function.
-                These arguments come at the beginning of the argument list.
-
-        """
         self._n_arr = int (n_arr)
         if self._n_arr < 1:
             raise ValueError ('broadcastiz\'ed function must take at least 1 '
@@ -157,13 +106,22 @@ broadcastize = _BroadcasterDecorator
 
 def fits_recarray_to_data_frame (recarray, drop_nonscalar_ok=True):
     """Convert a FITS data table, stored as a Numpy record array, into a Pandas
-    DataFrame object. Non-scalar columns are discarded.
+    DataFrame object. By default, non-scalar columns are discarded, but if
+    *drop_nonscalar_ok* is False then a :exc:`ValueError` is raised. Column
+    names are lower-cased. Example::
+
+      from pwkit import io, numutil
+      hdu_list = io.Path ('my-table.fits').read_fits ()
+      # assuming the first FITS extension is a binary table:
+      df = numutil.fits_recarray_to_data_frame (hdu_list[1].data)
 
     FITS data are big-endian, whereas nowadays almost everything is
     little-endian. This seems to be an issue for Pandas DataFrames, where
-    df[['col1', 'col2']] triggers an assertion for me if the underlying data
-    are not native-byte-ordered. While we're at it, we lower-case the column
-    names.
+    ``df[['col1', 'col2']]`` triggers an assertion for me if the underlying
+    data are not native-byte-ordered. This function normalizes the read-in
+    data to native endianness to avoid this.
+
+    See also :meth:`pwkit.io.Path.read_fits_bintable`.
 
     """
     from pandas import DataFrame
@@ -187,8 +145,10 @@ def fits_recarray_to_data_frame (recarray, drop_nonscalar_ok=True):
 
 
 def data_frame_to_astropy_table (dataframe):
-    """This is basically a copy of astropy.tables.table.Table.from_pandas();
-    Anaconda currently only has astropy 1.0 which doesn't contain this.
+    """This is a backport of the Astropy method
+   :meth:`astropy.table.table.Table.from_pandas`. It converts a Pandas
+   :class:`pandas.DataFrame` object to an Astropy
+   :class:`astropy.table.Table`.
 
     """
     from astropy.utils import OrderedDict
@@ -330,13 +290,32 @@ def reduce_data_frame (df, chunk_slicers,
     """"Reduce" a DataFrame by collapsing rows in grouped chunks. Returns another
     DataFrame with similar columns but fewer rows.
 
-    `chunk_slicers` is an iterable that returns values that are used to slice
-    `df` with its `iloc()` method. An example value might be the generator
-    returned from `slice_evenly_with_gaps`.
+    Arguments:
 
-       avg_cols - Reduced by taking the mean
-      uavg_cols - Reduced by taking a weighted mean
-    minmax_cols - Reduced by reporting the min and max values in each chunk.
+    df
+      The input :class:`pandas.DataFrame`.
+    chunk_slicers
+      An iterable that returns values that are used to slice *df* with its
+      :meth:`pandas.DataFrame.iloc` indexer. An example value might be the
+      generator returned from :func:`slice_evenly_with_gaps`.
+    avg_cols
+      An iterable of names of columns that are to be reduced by taking the mean.
+    uavg_cols
+      An iterable of names of columns that are to be reduced by taking a
+      weighted mean.
+    minmax_cols
+      An iterable of names of columns that are to be reduced by reporting minimum
+      and maximum values.
+    nchunk_colname
+      The name of a column to create reporting the number of rows contributing
+      to each chunk.
+    uncert_prefix
+      The column name prefix for locating uncertainty estimates. By default, the
+      uncertainty on the column ``"temp"`` is given in the column ``"utemp"``.
+    min_points_per_chunk
+      Require at least this many rows in each chunk. Smaller chunks are discarded.
+
+    Returns a new :class:`pandas.DataFrame`.
 
     """
     subds = [df.iloc[idx] for idx in chunk_slicers]
@@ -370,6 +349,13 @@ def reduce_data_frame (df, chunk_slicers,
 
 
 def reduce_data_frame_evenly_with_gaps (df, valcol, target_len, maxgap, **kwargs):
+    """"Reduce" a DataFrame by collapsing rows in grouped chunks, grouping based on
+    gaps in one of the columns.
+
+    This function combines :func:`reduce_data_frame` with
+    :func:`slice_evenly_with_gaps`.
+
+    """
     return reduce_data_frame (df,
                               slice_evenly_with_gaps (df[valcol], target_len, maxgap),
                               **kwargs)
@@ -379,18 +365,24 @@ def reduce_data_frame_evenly_with_gaps (df, valcol, target_len, maxgap, **kwargs
 
 def usmooth (window, uncerts, *data, **kwargs):
     """Smooth data series according to a window, weighting based on uncertainties.
+
     Arguments:
 
-    window  - the window
-    uncerts - an array of uncertainties used to weight the smoothing
-    *data   - the data series, same size as `uncerts`
-    k=None  - Only keep every `k`th point of the results; if k is None,
-              it is set to window.size.
+    window
+      The smoothing window.
+    uncerts
+      An array of uncertainties used to weight the smoothing.
+    data
+      One or more data series, of the same size as *uncerts*.
+    k = None
+      If specified, only every *k*-th point of the results will be kept. If k
+      is None (the default), it is set to ``window.size``, i.e. correlated
+      points will be discarded.
 
-    Returns: (s_uncerts, s_data[0], s_data[1], ...) - the smoothed uncertainties
-    and data series.
+    Returns: ``(s_uncerts, s_data[0], s_data[1], ...)``, the smoothed
+    uncertainties and data series.
 
-    Example:
+    Example::
 
         u, x, y = numutil.usmooth (np.hamming (7), u, x, y)
 
@@ -429,21 +421,28 @@ def usmooth (window, uncerts, *data, **kwargs):
 
 
 def dfsmooth (window, df, ucol, k=None):
-    """Smooth a Pandas DataFrame according to a window, weighting based on
-    uncertainties. Arguments:
+    """Smooth a :class:`pandas.DataFrame` according to a window, weighting based on
+    uncertainties.
 
-    window  - the window.
-    df      - the data frame.
-    ucol    - the name of the column in `df` that contains the uncertainties
-              to weight by.
-    k=None  - Only keep every `k`th point of the results; if k is None,
-              it is set to window.size.
+    Arguments are:
+
+    window
+      The smoothing window.
+    df
+      The :class:`pandas.DataFrame`.
+    ucol
+      The name of the column in *df* that contains the uncertainties to weight
+      by.
+    k = None
+      If specified, only every *k*-th point of the results will be kept. If k
+      is None (the default), it is set to ``window.size``, i.e. correlated
+      points will be discarded.
 
     Returns: a smoothed data frame.
 
     The returned data frame has a default integer index.
 
-    Example:
+    Example::
 
         sdata = numutil.dfsmooth (np.hamming (7), data, 'u_temp')
 
@@ -476,42 +475,50 @@ def dfsmooth (window, df, ucol, k=None):
 
 def parallel_newton (func, x0, fprime=None, par_args=(), simple_args=(), tol=1.48e-8,
                      maxiter=50, parallel=True, **kwargs):
-    """A parallelized version of `scipy.optimize.newton`.
+    """A parallelized version of :func:`scipy.optimize.newton`.
 
     Arguments:
 
-    func        - The function to search for zeros, called as f(x, [*par_args...], [*simple_args...])
-    x0          - The initial point for the zero search.
-    fprime      - (Optional) The first derivative of `func`, called the same way.
-    par_args    - Tuple of additional parallelized arguments.
-    simple_args - Tuple of additional arguments passed identically to every invocation.
-    tol         - The allowable error of the zero value.
-    maxiter     - Maximum number of iterations.
-    parallel    - Controls parallelization; default uses all available cores.
-                  See `pwkit.parallel.make_parallel_helper`.
-    **kwargs    - Passed to `scipy.optimize.newton`.
+    func
+      The function to search for zeros, called as ``f(x, [*par_args...], [*simple_args...])``.
+    x0
+      The initial point for the zero search.
+    fprime
+      (Optional) The first derivative of *func*, called the same way.
+    par_args
+      Tuple of additional parallelized arguments.
+    simple_args
+      Tuple of additional arguments passed identically to every invocation.
+    tol
+      The allowable error of the zero value.
+    maxiter
+      Maximum number of iterations.
+    parallel
+      Controls parallelization; default uses all available cores. See
+      :func:`pwkit.parallel.make_parallel_helper`.
+    kwargs
+      Passed to :func:`scipy.optimize.newton`.
 
-    Returns: locations of zeros.
+    Returns: an array of locations of zeros.
 
-    Finds zeros in parallel. The values `x0`, `tol`, `maxiter`, and the items
-    of `par_args` should all be numeric, and may be N-dimensional Numpy
+    Finds zeros in parallel. The values *x0*, *tol*, *maxiter*, and the items
+    of *par_args* should all be numeric, and may be N-dimensional Numpy
     arrays. They are all broadcast to a common shape, and one zero-finding run
     is performed for each element in the resulting array. The return value is
     an array of zero locations having the same shape as the common broadcast
     of the parameters named above.
 
-    The `simple_args` are passed to each function identically for each
+    The *simple_args* are passed to each function identically for each
     integration. They do not need to be Pickle-able.
 
-    Example:
+    Example::
 
-    >>> parallel_newton (lambda x, a: x - 2 * a, 2,
-                         par_args=(np.arange (6),))
-    <<< array([  0.,   2.,   4.,   6.,   8.,  10.])
-
-    >>> parallel_newton (lambda x: np.sin (x), np.arange (6))
-    <<< array([  0.00000000e+00,   3.65526589e-26,   3.14159265e+00,
-                 3.14159265e+00,   3.14159265e+00,   6.28318531e+00])
+       >>> parallel_newton (lambda x, a: x - 2 * a, 2,
+                            par_args=(np.arange (6),))
+       <<< array([  0.,   2.,   4.,   6.,   8.,  10.])
+       >>> parallel_newton (lambda x: np.sin (x), np.arange (6))
+       <<< array([  0.00000000e+00,   3.65526589e-26,   3.14159265e+00,
+                    3.14159265e+00,   3.14159265e+00,   6.28318531e+00])
 
     """
     from scipy.optimize import newton
@@ -547,55 +554,62 @@ def parallel_newton (func, x0, fprime=None, par_args=(), simple_args=(), tol=1.4
 
 
 def parallel_quad (func, a, b, par_args=(), simple_args=(), parallel=True, **kwargs):
-    """A parallelized version of `scipy.integrate.quad`.
+    """A parallelized version of :func:`scipy.integrate.quad`.
 
-    Arguments:
+    Arguments are:
 
-    func        - The function to integrate, called as f(x, [*par_args...], [*simple_args...])
-    a           - The lower limit(s) of integration.
-    b           - The upper limits(s) of integration.
-    par_args    - Tuple of additional parallelized arguments.
-    simple_args - Tuple of additional arguments passed identically to every invocation.
-    parallel    - Controls parallelization; default uses all available cores.
-                  See `pwkit.parallel.make_parallel_helper`.
-    **kwargs    - Passed to `scipy.integrate.quad`. Don't set 'full_output' to True.
+    func
+      The function to integrate, called as ``f(x, [*par_args...], [*simple_args...])``.
+    a
+      The lower limit(s) of integration.
+    b
+      The upper limits(s) of integration.
+    par_args
+      Tuple of additional parallelized arguments.
+    simple_args
+      Tuple of additional arguments passed identically to every invocation.
+    parallel
+      Controls parallelization; default uses all available cores. See
+      :func:`pwkit.parallel.make_parallel_helper`.
+    kwargs
+      Passed to :func:`scipy.integrate.quad`. Don't set *full_output* to True.
 
-    Returns: integrals and errors, see below.
+    Returns: integrals and errors; see below.
 
-    Computes many integrals in parallel. The values `a`, `b`, and the items of
-    `par_args` should all be numeric, and may be N-dimensional Numpy arrays.
+    Computes many integrals in parallel. The values *a*, *b*, and the items of
+    *par_args* should all be numeric, and may be N-dimensional Numpy arrays.
     They are all broadcast to a common shape, and one integral is performed
     for each element in the resulting array. If this common shape is (X,Y,Z),
     the return value has shape (2,X,Y,Z), where the subarray [0,...] contains
     the computed integrals and the subarray [1,...] contains the absolute
-    error estimates. If `a`, `b`, and the items in `par_args` are all scalars,
+    error estimates. If *a*, *b*, and the items in *par_args* are all scalars,
     the return value has shape (2,).
 
-    The `simple_args` are passed to each integrand function identically for each
+    The *simple_args* are passed to each integrand function identically for each
     integration. They do not need to be Pickle-able.
 
-    Example:
+    Example::
 
-    >>> parallel_quad (lambda x, u, v, q: u * x + v,
-                       0, # a
-                       [3, 4], # b
-                       (np.arange (6).reshape ((3,2)), np.arange (3).reshape ((3,1))), # par_args
-                       ('hello',),)
+      >>> parallel_quad (lambda x, u, v, q: u * x + v,
+                         0, # a
+                         [3, 4], # b
+                         (np.arange (6).reshape ((3,2)), np.arange (3).reshape ((3,1))), # par_args
+                         ('hello',),)
 
-    Computes six integrals and returns an array of shape (2,3,2). The
-    functions that are evaluated are
+    Computes six integrals and returns an array of shape ``(2,3,2)``. The
+    functions that are evaluated are::
 
       [[ 0*x + 0, 1*x + 0 ],
        [ 2*x + 1, 3*x + 1 ],
        [ 4*x + 2, 5*x + 2 ]]
 
-    and the bounds of the integrals are
+    and the bounds of the integrals are::
 
       [[ (0, 3), (0, 4) ],
        [ (0, 3), (0, 4) ],
        [ (0, 3), (0, 4) ]]
 
-    In all cases the unused fourth parameter 'q' is 'hello'.
+    In all cases the unused fourth parameter *q* is ``'hello'``.
 
     """
     from scipy.integrate import quad
@@ -648,9 +662,10 @@ def weighted_mean (values, uncerts, **kwargs):
 
 
 def weighted_mean_df (df, **kwargs):
-    """Compute a weighted mean from a two-column Pandas DataFrame, where the first
-    column gives values and the second gives their uncertainties. Returns
-    (weighted_mean, uncertainty_in_mean).
+    """The same as :func:`weighted_mean`, except the argument is expected to be a
+   two-column :class:`pandas.DataFrame` whose first column gives the data
+   values and second column gives their uncertainties. Returns
+   ``(weighted_mean, uncertainty_in_mean)``.
 
     """
     return weighted_mean (df[df.columns[0]], df[df.columns[1]], **kwargs)
