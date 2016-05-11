@@ -24,7 +24,7 @@ from ... import PKError, cli, reraise_context
 from . import CasaEnvironment
 
 
-casapy_argv = ['casapy', '--log2term', '--nogui', '-c']
+casapy_argv = ['casa', '--log2term', '--nogui', '-c']
 
 signals_for_child = [
     signal.SIGHUP,
