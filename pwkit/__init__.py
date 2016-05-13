@@ -2,60 +2,7 @@
 # Copyright 2014-2016 Peter Williams <peter@newton.cx> and collaborators.
 # Licensed under the MIT License.
 
-"""
-Peter Williams' toolkit for science and astronomy.
-
-Modules in this package:
-
-  (this one)       - Exceptions, Holder class, Python 3 compat help.
-  astimage         - Generic I/O interface for astronomical images (FITS, CASA, MIRIAD).
-  astutil          - Miscellaneous astronomy-related constants and functions.
-  bblocks          - Bayesian Blocks analysis for binning time-tagged events.
-  cgs              - Physical constants in CGS.
-  cli              - Utilities for command-line programs.
-  colormaps        - Mapping scalars into a color palette for visualization.
-  contours         - Tracing contours in functions and data.
-  data_gui_helpers - Helpers for GUIs for investigating data arrays.
-  ellipses         - Computations with ellipses in several parametrizations.
-  environments     - Interfacing with external software environments (SAS, CIAO, etc).
-  immodel          - Analytical modeling of astronomical images.
-  inifile          - Simple ini-format file parser.
-  io               - Utilities for input and output.
-  kbn_conf         - Calculate Poisson-like confidence intervals assuming a background.
-  kwargv           - Keyword-style argument parsing.
-  latex            - Tools for interacting with the LaTeX typesetting system.
-  lmmin            - Levenberg-Marquardt least-squares function minimizer.
-  lsqmdl           - Model data with least-squares fitting.
-  method_decorator - Utility for writing decorators that go on methods in classes.
-  msmt             - Framework for working with uncertain measurements.
-  ndshow_gtk2      - Visualize data arrays as interactive images, using Gtk+2.
-  ndshow_gtk2      - Visualize data arrays as interactive images, using Gtk+3.
-  numutil          - Basic NumPy and generic numerical utilities.
-  parallel         - Utilities for parallel processing.
-  pdm              - Finding periods in data with Phase Dispersion Minimization.
-  phoenix          - Working with Phoenix-based model atmospheres.
-  radio_cal_models - Models of radio-wavelength calibrator flux densities.
-  slurp            - Streaming output from sub-programs.
-  synphot          - Synthetic photometry and database of instrumental bandpasses.
-  tabfile          - I/O on typed tabular files containing uncertain measurements.
-  tinifile         - I/O on typed ini-format files containing uncertain measurements.
-  ucd_physics      - Estimating physical quantities for M stars and UCDs.
-  unicode_to_latex - Rendering Unicode to LaTeX.
-
-
-Classes in the toplevel module:
-
-  Holder      - A "namespace object" that just lets you assign attributes.
-  PKError     - Base exception class for PWKit
-  binary_type - The binary data type: either `str` (Python 2.x) or `bytes` (Python 3.x)
-  text_type   - The text data type: either `unicode` (Python 2.x) or `str` (Python 3.x)
-
-Functions in the toplevel module:
-
-  reraise_context - Reraise an exception with additional contextual information
-                    in the message.
-  unicode_to_str  - Write `def __unicode__ (self): ... ; __str__ = unicode_to_str`
-                    in classes.
+"""A toolkit for science and astronomy in Python.
 
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
@@ -83,6 +30,22 @@ else:
 
 
 class PKError (Exception):
+    """A generic base class for exceptions.
+
+    All custom exceptions raised by :mod:`pwkit` modules should be subclasses
+    of this class.
+
+    The constructor automatically applies old-fashioned ``printf``-like
+    (``%``-based) string formatting if more than one argument is given::
+
+      PKError ('my format string says %r, %d', myobj, 12345)
+      # has text content equal to:
+      'my format string says %r, %d' % (myobj, 12345)
+
+    If only a single argument is given, the exception text is its
+    stringification without applying ``printf``-style formatting.
+
+    """
     def __init__ (self, fmt, *args):
         if not len (args):
             self.args = (text_type (fmt), )
@@ -101,6 +64,39 @@ class PKError (Exception):
 def reraise_context (fmt, *args):
     """Reraise an exception with its message modified to specify additional
     context.
+
+    This function tries to help provide context when a piece of code
+    encounters an exception while trying to get something done, and it wishes
+    to propagate contextual information farther up the call stack. It only
+    makes sense in Python 2, which does not provide Python 3’s `exception
+    chaining <https://www.python.org/dev/peps/pep-3134/>`_ functionality.
+    Instead of that more sophisticated infrastructure, this function just
+    modifies the textual message associated with the exception being raised.
+
+    If only a single argument is supplied, the exception text prepended with
+    the stringification of that argument. If multiple arguments are supplied,
+    the first argument is treated as an old-fashioned ``printf``-type
+    (``%``-based) format string, and the remaining arguments are the formatted
+    values.
+
+    Example usage::
+
+      from pwkit import reraise_context
+      from pwkit.io import Path
+
+      filename = 'my-filename.txt'
+
+      try:
+        f = Path (filename).open ('rt')
+        for line in f.readlines ():
+          # do stuff ...
+      except Exception as e:
+        reraise_context ('while reading "%r"', filename)
+        # The exception is reraised and so control leaves this function.
+
+    If an exception with text ``"bad value"`` were to be raised inside the
+    ``try`` block in the above example, its text would be modified to read
+    ``"while reading \"my-filename.txt\": bad value"``.
 
     """
     import sys
@@ -124,35 +120,12 @@ def reraise_context (fmt, *args):
 
 
 class Holder (object):
-    """A basic 'namespace class' that provides you a place to easily stick named
-    data with a minimum of fuss.
+    """Create a new :class:`Holder`. Any keyword arguments will be assigned as
+    properties on the object itself, for instance, ``o = Holder (foo=1)``
+    yields an object such that ``o.foo`` is 1.
 
-    Holder (name1=val1, name2=val2, ...)
-
-    Provides nice str/unicode/repr representations, and basic manipulations:
-
-    set(**kwargs)            - Set named keys as a group
-    set_one (name, value)    - Set a specific key
-    get (name, defval=None)  - Retrieve a key with an optional default
-    has (name)               - Test whether a key is in the Holder
-                               (can also test `name in holderobj`)
-    copy ()                  - Make a shallow clone of the Holder
-    to_dict ()               - Return a copy of the contents as a dict
-    to_pretty (format='str') - Return aligned, multi-line stringification
-
-    Iterating over a Holder yields its contents in the form of a sequence of
-    (name, value) tuples.
-
-    This class may also be used as a decorator on a class definition to transform
-    its contents into a Holder instance. Writing:
-
-        @Holder
-        class mydata ():
-            a = 1
-            b = 'hello'
-
-    creates a Holder instance named 'mydata' containing names 'a' and 'b'.
-    This can be a convenient way to populate one-off data structures.
+    The *__decorating* keyword is used to implement the :class:`Holder`
+    decorator functionality, described below.
 
     """
     def __init__ (self, __decorating=None, **kwargs):
@@ -195,28 +168,72 @@ class Holder (object):
         return key in self.__dict__
 
     def set (self, **kwargs):
+        """For each keyword argument, sets an attribute on this :class:`Holder` to its
+        value.
+
+        Equivalent to::
+
+          for key, value in kwargs.iteritems ():
+            setattr (self, key, value)
+
+        Returns *self*.
+
+        """
         self.__dict__.update (kwargs)
         return self
 
     def get (self, name, defval=None):
+        """Get an attribute on this :class:`Holder`.
+
+        Equivalent to ``getattr (self, name, defval)``.
+
+        """
         return self.__dict__.get (name, defval)
 
     def set_one (self, name, value):
+        """Set a single attribute on this object.
+
+        Equivalent to ``setattr (self, name, value)``. Returns *self*.
+
+        """
         self.__dict__[name] = value
         return self
 
     def has (self, name):
+        """Return whether the named attribute has been set on this object.
+
+        This can more naturally be expressed by writing ``name in self``.
+
+        """
         return name in self.__dict__
 
     def copy (self):
+        """Return a shallow copy of this object.
+
+        """
         new = self.__class__ ()
         new.__dict__ = dict (self.__dict__)
         return new
 
     def to_dict (self):
+        """Return a copy of this object converted to a :class:`dict`.
+
+        """
         return self.__dict__.copy ()
 
     def to_pretty (self, format='str'):
+        """Return a string with a prettified version of this object’s contents.
+
+        The format is a multiline string where each line is of the form ``key
+        = value``. If the *format* argument is equal to ``"str"``, each
+        ``value`` is the stringification of the value; if it is ``"repr"``, it
+        is its :func:`repr`.
+
+        Calling :func:`str` on a :class:`Holder` returns a slightly different
+        pretty stringification that uses a textual representation similar to a
+        Python :class:`dict` literal.
+
+        """
         if format == 'str':
             template = '%-*s = %s'
         elif format == 'repr':

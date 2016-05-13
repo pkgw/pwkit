@@ -5,8 +5,10 @@
 Core utilities (:mod:`pwkit`)
 ========================================================================
 
-.. module:: pwkit
+.. automodule:: pwkit
    :synopsis: core abstractions for :mod:`pwkit`
+
+.. currentmodule:: pwkit
 
 The toplevel :mod:`pwkit` module includes a few basic abstractions that show
 up throughout the rest of the codebase. These include:
@@ -22,89 +24,48 @@ The :class:`Holder` namespace object
 ------------------------------------------------------------------------
 
 :class:`Holder` is a “namespace object” that primarily exists so that you can
-fill it with named attributes however you want. This is convenient for, say,
-implementing functions that return complex data in a way that's amenable to
-future extension.
+fill it with named attributes however you want. It’s essentially like a plain
+:class:`dict`, but you can write the convenient form ``myholder.xcoord``
+instead of ``mydict['xcoord']``. It has useful methods like
+:meth:`~Holder.set` and :meth:`~Holder.to_pretty` also.
 
-.. class:: Holder(__decorating=None, **kwargs)
+.. autoclass:: Holder
 
-   Create a new :class:`Holder`. Any keyword arguments will be assigned as
-   properties on the object itself, for instance, ``o = Holder (foo=1)``
-   yields an object such that ``o.foo`` is 1.
+   .. autosummary::
+      get
+      set
+      set_one
+      has
+      copy
+      to_dict
+      to_pretty
 
-   The *__decorating* keyword is used to implement the :class:`Holder`
-   decorator functionality, described below.
+   Iterating over a :class:`Holder` yields its contents in the form of a
+   sequence of ``(name, value)`` tuples. The stringification of a
+   :class:`Holder` returns its representation in a dict-like format.
+   :class:`Holder` objects implement ``__contains__`` so that boolean tests
+   such as ``"myprop" in myholder`` act sensibly.
 
-While the :class:`Holder` is primarily meant for bare-bones namespace
-management, it does provide several convenience functions: :meth:`Holder.get`,
-:meth:`Holder.set`, :meth:`Holder.set_one`, :meth:`Holder.has`,
-:meth:`Holder.copy`, :meth:`Holder.to_dict`, and :meth:`Holder.to_pretty`.
-
-
-.. method:: Holder.__unicode__()
-
-   Placeholder.
-
-
-.. method:: Holder.__str__()
-
-   Placeholder.
-
-
-.. method:: Holder.__repr__()
-
-   Placeholder.
-
-
-.. method:: Holder.__iter__()
-
-   Placeholder.
-
-
-.. method:: Holder.__contains__(key)
-
-   Placeholder.
-
-
-.. method:: Holder.get(name, defval=None)
-
-   Placeholder.
-
-
-.. method:: Holder.set(**kwargs)
-
-   Placeholder.
-
-
-.. method:: Holder.set_one(name, value)
-
-   Placeholder.
-
-
-.. method:: Holder.has(name)
-
-   Placeholder.
-
-
-.. method:: Holder.copy()
-
-   Placeholder.
-
-
-.. method:: Holder.to_dict()
-
-   Placeholder.
-
-
-.. method:: Holder.to_pretty(format='str')
-
-   Placeholder.
-
+   .. automethod:: get
+   .. automethod:: set
+   .. automethod:: set_one
+   .. automethod:: has
+   .. automethod:: copy
+   .. automethod:: to_dict
+   .. automethod:: to_pretty
 
 .. decorator:: Holder
 
-   Placeholder decorator documentation.
+   The :class:`Holder` class may also be used as a decorator on a class
+   definition to transform its contents into a Holder instance. Writing::
 
+     @Holder
+     class mydata ():
+         a = 1
+         b = 'hello'
+
+   creates a Holder instance named ``mydata`` containing names ``a`` and
+   ``b``. This can be a convenient way to populate one-off data structures.
 
 
 .. _exception-utilities:
@@ -112,14 +73,9 @@ management, it does provide several convenience functions: :meth:`Holder.get`,
 Utilities for exceptions
 ------------------------------------------------------------------------
 
-.. exception:: PKError (fmt, *args):
+.. autoclass:: PKError
 
-   Placeholder.
-
-
-.. function:: reraise_context (fmt, *args):
-
-   Placeholder.
+.. autofunction:: reraise_context
 
 
 
@@ -128,15 +84,11 @@ Utilities for exceptions
 Abstractions between Python versions 2 and 3
 ------------------------------------------------------------------------
 
-.. data:: text_type
+The toplevel :mod:`pwkit` module imports the following variables from the
+:mod:`six` package that helps with Python 2/3 compatibility:
 
-   The builtin class corresponding to text in this Python interpreter: either
-   :class:`unicode` in Python 2, or :class:`str` in Python 3.
-
-.. data:: binary_type
-
-   The builtin class corresponding to binary data in this Python interpreter:
-   either :class:`str` in Python 2, or :class:`bytes` in Python 3.
+- :data:`~six.binary_type`
+- :data:`~six.text_type`
 
 .. function:: unicode_to_str(s)
 
