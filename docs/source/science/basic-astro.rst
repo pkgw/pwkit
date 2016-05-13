@@ -178,6 +178,7 @@ calculations that are nonetheless fairly accurate.
       predict
       print_prediction
       fill_from_simbad
+      fill_from_allwise
 
    The stringification of an :class:`AstrometryInfo` class formats its fields
    in a human-readable, multiline format that uses Unicode characters.
@@ -201,6 +202,7 @@ calculations that are nonetheless fairly accurate.
 .. automethod:: AstrometryInfo.predict
 .. automethod:: AstrometryInfo.print_prediction
 .. automethod:: AstrometryInfo.fill_from_simbad
+.. automethod:: AstrometryInfo.fill_from_allwise
 
 A few helper functions may also be of interest:
 

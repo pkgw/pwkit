@@ -17,7 +17,7 @@ import six
 from six.moves import range
 import numpy as np
 
-from . import text_type, unicode_to_str
+from . import text_type, unicode_to_str, PKError
 from .numutil import broadcastize
 
 
@@ -1109,7 +1109,6 @@ class AstrometryInfo (object):
         Returns *self*.
 
         """
-        import sys
         info = get_simbad_astrometry_info (ident, debug=debug)
         posref = 'unknown'
 
@@ -1157,6 +1156,89 @@ class AstrometryInfo (object):
 
         if posref == '2003yCat.2246....0C':
             self.pos_epoch = get_2mass_epoch (self.ra, self.dec, debug)
+
+        return self # eases chaining
+
+
+    def fill_from_allwise (self, ident, catalog_ident='II/328/allwise'):
+        """Fill in astrometric information from the AllWISE catalog using Astroquery.
+
+        This uses the :mod:`astroquery` module to query the AllWISE
+        (2013wise.rept....1C) source catalog through the Vizier
+        (2000A&AS..143...23O) web service. It then fills in the instance with
+        the relevant information. Arguments are:
+
+        ident
+          The AllWISE catalog identifier of the form ``"J112254.70+255021.9"``.
+        catalog_ident
+          The Vizier designation of the catalog to query. The default is
+          "II/328/allwise", the current version of the AllWISE catalog.
+
+        Raises :exc:`~pwkit.PKError` if something unexpected happens that
+        doesn't itself result in an exception within :mod:`astroquery`.
+
+        You should probably prefer :meth:`fill_from_simbad` for objects that
+        are known to the CDS Simbad service, but not all objects in the
+        AllWISE catalog are so known.
+
+        If you use this function, you should `acknowledge AllWISE
+        <http://irsadist.ipac.caltech.edu/wise-allwise/>`_ and `Vizier
+        <http://cds.u-strasbg.fr/vizier-org/licences_vizier.html>`_.
+
+        Returns *self*.
+
+        """
+        from astroquery.vizier import Vizier
+        import numpy.ma.core as ma_core
+
+        # We should match exactly one table and one row within that table, but
+        # for robustness we ignore additional results if they happen to
+        # appear. Strangely, querying for an invalid identifier yields a table
+        # with two rows that are filled with masked out data.
+
+        table_list = Vizier.query_constraints (catalog=catalog_ident, AllWISE=ident)
+        if not len (table_list):
+            raise PKError ('Vizier query returned no tables (catalog=%r AllWISE=%r)',
+                           catalog_ident, ident)
+
+        table = table_list[0]
+        if not len (table):
+            raise PKError ('Vizier query returned empty %s table (catalog=%r AllWISE=%r)',
+                           table.meta['name'], catalog_ident, ident)
+
+        row = table[0]
+        if isinstance (row['_RAJ2000'], ma_core.MaskedConstant):
+            raise PKError ('Vizier query returned flagged row in %s table; your AllWISE '
+                           'identifier likely does not exist (it should be of the form '
+                           '"J112254.70+255021.9"; catalog=%r AllWISE=%r)',
+                           table.meta['name'], catalog_ident, ident)
+
+        # OK, we can actually do this.
+
+        self.ra = row['RA_pm'] * D2R
+        self.dec = row['DE_pm'] * D2R
+
+        if row['e_RA_pm'] > row['e_DE_pm']:
+            self.pos_u_maj = row['e_RA_pm'] * A2R
+            self.pos_u_min = row['e_DE_pm'] * A2R
+            self.pos_u_pa = halfpi
+        else:
+            self.pos_u_maj = row['e_DE_pm'] * A2R
+            self.pos_u_min = row['e_RA_pm'] * A2R
+            self.pos_u_pa = 0
+
+        self.pos_epoch = 55400. # hardcoded in the catalog
+        self.promo_ra = row['pmRA'] * 1. # need to floatify for precastro
+        self.promo_dec = row['pmDE'] * 1.
+
+        if row['e_pmRA'] > row['e_pmDE']:
+            self.promo_u_maj = row['e_pmRA'] * 1.
+            self.promo_u_min = row['e_pmDE'] * 1.
+            self.promo_u_pa = halfpi
+        else:
+            self.promo_u_maj = row['e_pmDE'] * 1.
+            self.promo_u_min = row['e_pmRA'] * 1.
+            self.promo_u_pa = 0.
 
         return self # eases chaining
 
