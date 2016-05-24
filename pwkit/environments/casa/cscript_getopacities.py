@@ -23,10 +23,7 @@ def in_casapy (helper, ms=None, plotdest=None):
     if plotdest is None:
         raise ValueError ('plotdest')
 
-    opac = helper.casans.plotweather (vis=ms)
-
+    opac = helper.casans.plotweather (vis=ms, plotName=plotdest)
     opac = np.asarray (opac)
     with open (helper.temppath ('opac.npy'), 'wb') as f:
         pickle.dump (opac, f)
-
-    os.rename (ms + '.plotweather.png', plotdest)
