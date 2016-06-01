@@ -678,7 +678,7 @@ class UpdateCcf (multitool.Command):
                              '--force',
                              '--include=*.CCF',
                              '--exclude=*/',
-                             'xmm.esac.esa.int::XMM_RED_CCF',
+                             'xmm.esac.esa.int::XMM_VALID_CCF',
                              '.'])
 
 
