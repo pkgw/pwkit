@@ -163,7 +163,7 @@ def merge_bibtex_with_aux (auxpath, mainpath, extradir, parse=get_bibtex_dict, a
 
 # This batch of code implements the filename-recorder-to-Makefile magic.
 
-def convert_fls_to_makefile (flspath, finalpath, prefix, work, mfpath):
+def convert_fls_to_makefile (flspath, finalpath, prefix, replacement, work, mfpath):
     texpwd = None
 
     with flspath.open ('rt') as fls, mfpath.open ('wt') as mf:
@@ -192,6 +192,9 @@ def convert_fls_to_makefile (flspath, finalpath, prefix, work, mfpath):
             if prefix is not None:
                 if r_full.startswith (r_prefix):
                     r_full = r_full[len (r_prefix) + 1:]
+
+                    if replacement is not None:
+                        r_full = replacement + r_full
                 else:
                     warn ('unexpected dependent file path %r' % r_full)
                     continue
@@ -204,7 +207,7 @@ def convert_fls_to_makefile (flspath, finalpath, prefix, work, mfpath):
 
 # The actual command-line program
 
-usage = """latexdriver [-lAxbBRq] [-eSTYLE] [-ESTYLE] [-MPREFIX,DEST] input.tex output.pdf
+usage = """latexdriver [-lAxbBRq] [-eSTYLE] [-ESTYLE] [-M<args>] input.tex output.pdf
 
 Drive (xe)latex sensibly. Create output.pdf from input.tex, rerunning as
 necessary, silencing chatter, and hiding intermediate files in the directory
@@ -217,8 +220,9 @@ necessary, silencing chatter, and hiding intermediate files in the directory
 -B      - Use bibtex with auto-merging and homogenization; requires `bibtexparser`.
 -eSTYLE - Use 'bib' tool with bibtex style STYLE.
 -ESTYLE - Optionally use the 'bib' tool in conjunction with '-B' option.
--MPREFIX,DEST  - Use '-recorder' option to output Makefile-format dependency info
-          to DEST, stripping prefix PREFIX.
+-MPREFIX[,REPLACEMENT],DEST  - Use '-recorder' option to output Makefile-format
+          dependency info to DEST, stripping prefix PREFIX, optionally replacing it
+          with REPLACEMENT.
 -R      - Be reckless and ignore errors from tools.
 -q      - Be quiet and avoid printing anything on success.
 
@@ -316,6 +320,7 @@ def commandline (argv=None):
 
     bib_style = None
     makefile_prefix = None
+    makefile_replacement = None
     makefile_dest = None
     engine_args = default_args
     engine = 'pdflatex'
@@ -340,7 +345,13 @@ def commandline (argv=None):
 
     for i in range (1, len (argv)):
         if argv[i].startswith ('-M'):
-            makefile_prefix, makefile_dest = argv[i][2:].split (',', 1)
+            pieces = argv[i][2:].split (',', 2)
+            if len (pieces) == 2:
+                makefile_prefix, makefile_dest = pieces
+            elif len (pieces) == 3:
+                makefile_prefix, makefile_replacement, makefile_dest = pieces
+            else:
+                wrong_usage (usage, 'could not parse -M argument')
             del argv[i]
             break
 
@@ -447,6 +458,7 @@ def commandline (argv=None):
         if makefile_dest is not None:
             convert_fls_to_makefile (job.with_suffix ('.fls'), output,
                                      Path (makefile_prefix),
+                                     makefile_replacement,
                                      workalias,
                                      Path (makefile_dest))
     finally:
