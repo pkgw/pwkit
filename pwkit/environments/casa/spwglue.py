@@ -220,11 +220,25 @@ def _spwproc_concat (spwtb, colname, inspws, outdata):
     outdata[colname] = clist
 
 
-# Similar info for the main visibility data
+# Similar info for the main visibility data:
+# ident   - define a unique visibility dump
+# smatch  - scalars that should match precisely
+# sapprox - scalars that should match approximately (to 1e-5) [1]
+# vmatch  - vectors that should match precisely
+# or      - values that should be boolean-OR'ed together
+# pconcat - non-data values that should be concatted across windows
+# data    - main data columns
+# empty   - columns that should be blank
+#
+# [1] This feature implemented since EVLA dataset
+# 11A-266.sb4865287.eb4875705.55772.08031621527.ms has 22 rows out of ~9
+# million that have an EXPOSURE value that differs from the others by 1 part
+# in ~10^9.
+
 _vis_ident_cols = 'ARRAY_ID FIELD_ID TIME ANTENNA1 ANTENNA2'.split ()
-_vis_smatch_cols = frozenset ('EXPOSURE FEED1 FEED2 INTERVAL '
-                              'OBSERVATION_ID PROCESSOR_ID SCAN_NUMBER '
-                              'STATE_ID TIME_CENTROID'.split ())
+_vis_smatch_cols = frozenset ('''FEED1 FEED2 OBSERVATION_ID PROCESSOR_ID
+                              SCAN_NUMBER STATE_ID'''.split ())
+_vis_sapprox_cols = frozenset ('EXPOSURE INTERVAL TIME_CENTROID'.split ())
 _vis_vmatch_cols = frozenset ('UVW WEIGHT SIGMA'.split ())
 _vis_or_cols = frozenset ('FLAG_ROW'.split ())
 _vis_pconcat_cols = frozenset ('FLAG DATA MODEL_DATA CORRECTED_DATA WEIGHT_SPECTRUM'.split ())
@@ -532,6 +546,7 @@ def _spwglue (cfg, prog, thisout, thisfield, nfields, fieldidx):
                     for col in colnames:
                         if (col in _vis_ident_cols or
                             col in _vis_smatch_cols or
+                            col in _vis_sapprox_cols or
                             col in _vis_or_cols):
                             curout[col] = vdata[col][i]
                         elif col in _vis_vmatch_cols:
@@ -552,6 +567,9 @@ def _spwglue (cfg, prog, thisout, thisfield, nfields, fieldidx):
                         elif col in _vis_smatch_cols:
                             if vdata[col][i] != curout[col]:
                                 die ('changing value for column %s within a glued record', col)
+                        elif col in _vis_sapprox_cols:
+                            if abs ((vdata[col][i] - curout[col]) / curout[col]) > 1e-5:
+                                die ('excessively changing value for column %s within a glued record', col)
                         elif col in _vis_vmatch_cols:
                             if not np.all (vdata[col][...,i] == curout[col]):
                                 die ('changing value for column %s within a glued record: %r , %r', col,
