@@ -398,7 +398,7 @@ class Uval (object):
 
     # Textualization.
 
-    def text_pieces (self, method, uplaces=2):
+    def text_pieces (self, method, uplaces=2, use_exponent=True):
         """Return (main, dhigh, dlow, sharedexponent), all as strings. The
         delta terms do not have sign indicators. Any item except the first
         may be None.
@@ -456,10 +456,10 @@ class Uval (object):
 
         msp = int (floor (log10 (max (abs (rmd), rdh, rdl))))
 
-        # If we're not very large or very small, don't use scientific
-        # notation.
+        # If we're not very large or very small, or it's been explicitly
+        # disabled, don't use scientific notation.
 
-        if msp > -3 and msp < 3:
+        if (msp > -3 and msp < 3) or not use_exponent:
             srmd = '%.*f' % (-lsp, rmd)
             srdh = '%.*f' % (-lsp, rdh)
             srdl = '%.*f' % (-lsp, rdl)
@@ -478,8 +478,8 @@ class Uval (object):
         return sarmd, sardh, sardl, str (msp)
 
 
-    def format (self, method, parenexp=True, uplaces=2):
-        main, dh, dl, exp = self.text_pieces (method, uplaces=uplaces)
+    def format (self, method, parenexp=True, uplaces=2, use_exponent=True):
+        main, dh, dl, exp = self.text_pieces (method, uplaces=uplaces, use_exponent=use_exponent)
 
         if exp is not None and not parenexp:
             main += 'e' + exp
@@ -521,10 +521,10 @@ class Uval (object):
         return 'u', self.format ('pct', parenexp=False), True
 
 
-    def __pk_latex__ (self, method=None, uplaces=1, **kwargs):
+    def __pk_latex__ (self, method=None, uplaces=1, use_exponent=True, **kwargs):
         if method is None:
             method = uval_default_repval_method
-        main, dh, dl, exp = self.text_pieces (method, uplaces=uplaces)
+        main, dh, dl, exp = self.text_pieces (method, uplaces=uplaces, use_exponent=use_exponent)
 
         if dh is None:
             return r'$%s$' % main
@@ -549,10 +549,10 @@ class Uval (object):
         return b'$\\sim$ & ' + latexify_n2col (v, **kwargs)
 
 
-    def __pk_latex_u3col__ (self, method=None, uplaces=1, **kwargs):
+    def __pk_latex_u3col__ (self, method=None, uplaces=1, use_exponent=True, **kwargs):
         if method is None:
             method = uval_default_repval_method
-        main, dh, dl, exp = self.text_pieces (method, uplaces=uplaces)
+        main, dh, dl, exp = self.text_pieces (method, uplaces=uplaces, use_exponent=use_exponent)
 
         if dh is None:
             return r'\multicolumn{3}{c}{$%s$}' % main
