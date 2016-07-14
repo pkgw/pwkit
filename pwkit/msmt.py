@@ -1985,7 +1985,7 @@ def _init_unary_math ():
 
     for name in six.iterkeys (scalar_unary_math):
         if name == 'isfinite':
-            g[name] = lambda v: _dispatch_unary_math (name, True, v)
+            g[name] = lambda v: _dispatch_unary_math ('isfinite', True, v)
         else:
             g[name] = _make_wrapped_unary_math (name)
 
