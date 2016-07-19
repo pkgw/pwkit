@@ -228,7 +228,7 @@ def dftphotom (cfg):
     tbins = {}
     colnames = b(colnames)
 
-    for ddid in ddids:
+    for ddindex, ddid in enumerate (ddids):
         ms.selectinit (ddid)
         if cfg.polarization is not None:
             ms.selectpolarization (b(cfg.polarization.split (',')))
@@ -241,12 +241,14 @@ def dftphotom (cfg):
             if rephase:
                 freqs = cols['axis_info']['freq_axis']['chan_freq']
                 # In CASA <= 4.5, `freqs` has shape (nchan, 1) if you've done
-                # a selectinit() on ddid. In 4.6, it has shape (nchan, nspw).
-                # So:
+                # a selectinit() on ddid. In 4.6, it has shape (nchan,
+                # n-selected-DDIDs) ... I think. I believe the following is
+                # right. I'm not sure about the `ddindex` use but if you
+                # select only spw 3, the resulting axis has size 1.
                 if freqs.shape[1] == 1:
                     freqs = freqs[:,0]
                 else:
-                    freqs = freqs[:,ddspws[ddid]]
+                    freqs = freqs[:,ddindex]
 
                 # convert to m^-1 so we can multiply against UVW directly:
                 freqs *= util.INVERSE_C_MS
