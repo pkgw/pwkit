@@ -163,7 +163,7 @@ def merge_bibtex_with_aux (auxpath, mainpath, extradir, parse=get_bibtex_dict, a
 
 # This batch of code implements the filename-recorder-to-Makefile magic.
 
-def convert_fls_to_makefile (flspath, finalpath, prefix, replacement, work, mfpath):
+def convert_fls_to_makefile (flspath, finalpath, prefix, replacement, work, mfpath, foreign_deps_ok):
     texpwd = None
 
     with flspath.open ('rt') as fls, mfpath.open ('wt') as mf:
@@ -195,7 +195,7 @@ def convert_fls_to_makefile (flspath, finalpath, prefix, replacement, work, mfpa
 
                     if replacement is not None:
                         r_full = replacement + r_full
-                else:
+                elif not foreign_deps_ok:
                     warn ('unexpected dependent file path %r' % r_full)
                     continue
 
@@ -223,6 +223,8 @@ necessary, silencing chatter, and hiding intermediate files in the directory
 -MPREFIX[,REPLACEMENT],DEST  - Use '-recorder' option to output Makefile-format
           dependency info to DEST, stripping prefix PREFIX, optionally replacing it
           with REPLACEMENT.
+-f      - Allow "foreign" dependencies from the '-recorder' option that do not
+          begin with the PREFIX given to the '-M' option.
 -R      - Be reckless and ignore errors from tools.
 -q      - Be quiet and avoid printing anything on success.
 
@@ -333,6 +335,7 @@ def commandline (argv=None):
     do_letterpaper = pop_option ('l', argv)
     do_a4paper = pop_option ('A', argv)
     do_reckless = pop_option ('R', argv)
+    do_foreign_deps = pop_option ('f', argv)
     quiet = pop_option ('q', argv)
     do_smart_bibtools = False
 
@@ -460,6 +463,7 @@ def commandline (argv=None):
                                      Path (makefile_prefix),
                                      makefile_replacement,
                                      workalias,
-                                     Path (makefile_dest))
+                                     Path (makefile_dest),
+                                     do_foreign_deps)
     finally:
         workalias.unlink ()
