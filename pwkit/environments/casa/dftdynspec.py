@@ -198,7 +198,7 @@ def dftdynspec (cfg):
     tbins = {}
     colnames = b(colnames)
 
-    for ddid in ddids:
+    for ddindex, ddid in enumerate (ddids):
         ms.selectinit (ddid)
         if cfg.polarization is not None:
             ms.selectpolarization (b(cfg.polarization.split (',')))
@@ -212,13 +212,14 @@ def dftdynspec (cfg):
 
             if rephase:
                 freqs = cols['axis_info']['freq_axis']['chan_freq']
-                # In our usage, freqs should be of shape (nchan, 1). If you
-                # don't selectinit() with a specific DD, you seem to get
-                # (nchan, nspw). Neither seems to really agree with the docs.
-                # Trying to be careful in case CASA changes.
-                assert freqs.shape[1] == 1, 'internal inconsistency, chan_freq??'
+                # In CASA <= 4.5, `freqs` has shape (nchan, 1) if you've done
+                # a selectinit() on ddid. In 4.6, it has shape (nchan,
+                # n-selected-DDIDs) ... I think. I believe the following is
+                # right. I'm not sure about the `ddindex` use but if you
+                # select only spw 3, the resulting axis has size 1.
+
                 # convert to m^-1 so we can multiply against UVW directly:
-                freqs = freqs[:,0] * util.INVERSE_C_MS
+                freqs = freqs[:,ddindex] * util.INVERSE_C_MS
 
             for i in xrange (cols['time'].size): # all records
                 time = cols['time'][i]
