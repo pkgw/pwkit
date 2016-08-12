@@ -2014,6 +2014,7 @@ def listsdm (sdm, file=None):
     qa = util.tools.quanta ()
     me = util.tools.measures ()
 
+    list_scans = True
     list_antennas = False
     list_fields = True
     list_spws = False
@@ -2354,22 +2355,28 @@ def listsdm (sdm, file=None):
     printf ('   Facility: %s, %s-configuration', telescopeName, configName)
     printf ('      Observed from %s to %s (UTC)', obsStart, obsEnd)
     printf ('      Total integration time = %.2f seconds (%.2f hours)', intTime, intTime / 3600)
-    printf (' ')
-    printf ('Scan listing:')
-    printf ('  Timerange (UTC)           Scan FldID  FieldName       SpwIDs         Intent(s)')
 
-    i = 0
-    for scan in scandict:
-        SPWs = []
-        for spw in scandict[scan]['spws']:
-            SPWs += spw
-        printSPWs = list(set(SPWs))
-        printf (' %s - %s %s %s %s %s %s', startTimeShort[i], endTimeShort[i],
-                str(scandict.keys()[i]).rjust(4),
-                str(scandict[scan]['field']).rjust(5),
-                scandict[scan]['source'].ljust(15), str(printSPWs),
-                scandict[scan]['intent'])
-        i = i + 1
+    if list_scans:
+        printf (' ')
+        printf ('Scan listing:')
+
+        maxspwlen = 0
+
+        for scaninfo in scandict.itervalues ():
+            SPWs = []
+            for spw in scaninfo['spws']:
+                SPWs += spw
+
+            scaninfo['spwstr'] = str (list (set (SPWs)))
+            maxspwlen = max (maxspwlen, len (scaninfo['spwstr']))
+
+        fmt = '  %-25s  %-4s %-5s %-15s %-*s %s'
+        printf (fmt, 'Timerange (UTC)', 'Scan', 'FldID', 'FieldName', maxspwlen, 'SpwIDs', 'Intent(s)')
+
+        for i, (scanid, scaninfo) in enumerate (scandict.iteritems ()):
+            printf (fmt, startTimeShort[i] + ' - ' + endTimeShort[i], scanid,
+                    scaninfo['field'], scaninfo['source'], maxspwlen,
+                    scaninfo['spwstr'], scaninfo['intent'])
 
     if list_spws:
         printf (' ')
