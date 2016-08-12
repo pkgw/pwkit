@@ -779,77 +779,6 @@ def extractbpflags_cli (argv):
     extractbpflags (argv[1], sys.stdout)
 
 
-# flagmanager. Not really complicated enough to make it worth making a
-# modular implementation to be driven from the CLI.
-
-flagmanager_doc = \
-"""
-casatask flagmanager list <ms>
-casatask flagmanager save <ms> <name>
-casatask flagmanager restore <ms> <name>
-casatask flagmanager delete <ms> <name>
-"""
-
-def flagmanager_cli (argv, alter_logger=True):
-    check_usage (flagmanager_doc, argv, usageifnoargs=True)
-
-    if len (argv) < 3:
-        wrong_usage (flagmanager_doc, 'expect at least a mode and an MS name')
-
-    mode = argv[1]
-    ms = argv[2]
-
-    if alter_logger:
-        if mode == 'list':
-            util.logger ('info')
-        elif mode == 'delete':
-            # it WARNs 'deleting version xxx' ... yargh
-            util.logger ('severe')
-        else:
-            util.logger ()
-
-    try:
-        factory = util.tools.agentflagger
-    except AttributeError:
-        factory = util.tools.testflagger
-
-    af = factory ()
-    af.open (b(ms))
-
-    if mode == 'list':
-        if len (argv) != 3:
-            wrong_usage (flagmanager_doc, 'expect exactly one argument in list mode')
-        af.getflagversionlist ()
-    elif mode == 'save':
-        if len (argv) != 4:
-            wrong_usage (flagmanager_doc, 'expect exactly two arguments in save mode')
-        from time import strftime
-        name = argv[3]
-        af.saveflagversion (versionname=b(name), merge=b'replace',
-                            comment=b('created %s (casatask flagmanager)'
-                                      % strftime ('%Y-%m-%dT%H:%M:%SZ')))
-    elif mode == 'restore':
-        if len (argv) != 4:
-            wrong_usage (flagmanager_doc, 'expect exactly two arguments in restore mode')
-        name = argv[3]
-        af.restoreflagversion (versionname=b(name), merge=b'replace')
-    elif mode == 'delete':
-        if len (argv) != 4:
-            wrong_usage (flagmanager_doc, 'expect exactly two arguments in delete mode')
-        name = argv[3]
-
-        if not os.path.isdir (os.path.join (ms + '.flagversions', 'flags.' + name)):
-            # This condition only results in a WARN from deleteflagversion ()!
-            raise RuntimeError ('version "%s" doesn\'t exist in "%s.flagversions"'
-                                % (name, ms))
-
-        af.deleteflagversion (versionname=b(name))
-    else:
-        wrong_usage (flagmanager_doc, 'unknown flagmanager mode "%s"' % mode)
-
-    af.done ()
-
-
 # flagcmd
 
 flagcmd_doc = \
@@ -978,6 +907,77 @@ def flaglist (cfg):
 
 
 flaglist_cli = makekwcli (flaglist_doc, FlaglistConfig, flaglist)
+
+
+# flagmanager. Not really complicated enough to make it worth making a
+# modular implementation to be driven from the CLI.
+
+flagmanager_doc = \
+"""
+casatask flagmanager list <ms>
+casatask flagmanager save <ms> <name>
+casatask flagmanager restore <ms> <name>
+casatask flagmanager delete <ms> <name>
+"""
+
+def flagmanager_cli (argv, alter_logger=True):
+    check_usage (flagmanager_doc, argv, usageifnoargs=True)
+
+    if len (argv) < 3:
+        wrong_usage (flagmanager_doc, 'expect at least a mode and an MS name')
+
+    mode = argv[1]
+    ms = argv[2]
+
+    if alter_logger:
+        if mode == 'list':
+            util.logger ('info')
+        elif mode == 'delete':
+            # it WARNs 'deleting version xxx' ... yargh
+            util.logger ('severe')
+        else:
+            util.logger ()
+
+    try:
+        factory = util.tools.agentflagger
+    except AttributeError:
+        factory = util.tools.testflagger
+
+    af = factory ()
+    af.open (b(ms))
+
+    if mode == 'list':
+        if len (argv) != 3:
+            wrong_usage (flagmanager_doc, 'expect exactly one argument in list mode')
+        af.getflagversionlist ()
+    elif mode == 'save':
+        if len (argv) != 4:
+            wrong_usage (flagmanager_doc, 'expect exactly two arguments in save mode')
+        from time import strftime
+        name = argv[3]
+        af.saveflagversion (versionname=b(name), merge=b'replace',
+                            comment=b('created %s (casatask flagmanager)'
+                                      % strftime ('%Y-%m-%dT%H:%M:%SZ')))
+    elif mode == 'restore':
+        if len (argv) != 4:
+            wrong_usage (flagmanager_doc, 'expect exactly two arguments in restore mode')
+        name = argv[3]
+        af.restoreflagversion (versionname=b(name), merge=b'replace')
+    elif mode == 'delete':
+        if len (argv) != 4:
+            wrong_usage (flagmanager_doc, 'expect exactly two arguments in delete mode')
+        name = argv[3]
+
+        if not os.path.isdir (os.path.join (ms + '.flagversions', 'flags.' + name)):
+            # This condition only results in a WARN from deleteflagversion ()!
+            raise RuntimeError ('version "%s" doesn\'t exist in "%s.flagversions"'
+                                % (name, ms))
+
+        af.deleteflagversion (versionname=b(name))
+    else:
+        wrong_usage (flagmanager_doc, 'unknown flagmanager mode "%s"' % mode)
+
+    af.done ()
 
 
 # flagzeros. Not quite a CASA task; something like
