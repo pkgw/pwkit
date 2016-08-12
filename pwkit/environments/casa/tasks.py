@@ -1668,6 +1668,9 @@ maxtimegap=10
 mjdrange=START,STOP
   If specified, gain solutions outside of the MJDs STOP and START will be
   ignored.
+
+phaseonly=false
+  If True, plot only phases, and not amplitudes.
 """ + loglevel_doc
 
 
@@ -1678,6 +1681,7 @@ class GpplotConfig (ParseKeywords):
     margins = [4, 4, 4, 4]
     maxtimegap = 10. # minutes
     mjdrange = [float]
+    phaseonly = False
     loglevel = 'warn'
 
 
@@ -1817,7 +1821,8 @@ def gpplot (cfg):
                     else:
                         lines = (tsub.size > 1)
 
-                    p_am.addXY (tsub, asub, kt, lines=lines, dsn=spw_offsets[ispw])
+                    if not cfg.phaseonly:
+                        p_am.addXY (tsub, asub, kt, lines=lines, dsn=spw_offsets[ispw])
                     p_ph.addXY (tsub, psub, None, lines=lines, dsn=spw_offsets[ispw])
                     anyseen = True
 
@@ -1844,11 +1849,14 @@ def gpplot (cfg):
             p_am.setYLabel ('Amplitude')
             p_ph.setLabels ('Time (MJD - %d)' % mjdref, 'De-meaned Phase (deg)')
 
-            vb = om.layout.VBox (2)
-            vb[0] = p_am
-            vb[1] = p_ph
-            vb.setWeight (0, 2.5)
-            pager.send (vb)
+            if cfg.phaseonly:
+                pager.send (p_ph)
+            else:
+                vb = om.layout.VBox (2)
+                vb[0] = p_am
+                vb[1] = p_ph
+                vb.setWeight (0, 2.5)
+                pager.send (vb)
 
 gpplot_cli = makekwcli (gpplot_doc, GpplotConfig, gpplot)
 
