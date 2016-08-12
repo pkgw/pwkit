@@ -51,6 +51,7 @@ gpdetrend gpdetrend_cli GpdetrendConfig
 gpdiagnostics_cli
 gpplot gpplot_cli GpplotConfig
 image2fits image2fits_cli
+importalma importalma_cli
 importevla importevla_cli
 listobs listobs_cli
 listsdm listsdm_cli
@@ -1845,6 +1846,37 @@ def image2fits_cli (argv):
         wrong_usage (image2fits_doc, 'expected exactly 2 arguments')
 
     image2fits (argv[1], argv[2])
+
+
+# importalma
+#
+# This is a casapy script. We don't reeeallly need to be, but there's enough
+# logic in CASA's task_importasdm.py that I'm not thrilled to copy/paste it
+# all.
+
+importalma_doc = \
+"""
+casatask importalma <ASDM> <MS>
+
+Convert an ALMA low-level ASDM dataset to Measurement Set format. This
+implementation automatically infers the value of the "tbuff" parameter.
+"""
+
+def importalma (asdm, ms):
+    from .scripting import CasapyScript
+
+    script = os.path.join (os.path.dirname (__file__), 'cscript_importalma.py')
+    with CasapyScript (script, asdm=asdm, ms=ms) as cs:
+        pass
+
+
+def importalma_cli (argv):
+    check_usage (importalma_doc, argv, usageifnoargs=True)
+
+    if len (argv) != 3:
+        wrong_usage (importalma_doc, 'expected exactly 2 arguments')
+
+    importalma (argv[1], argv[2])
 
 
 # importevla
