@@ -2014,6 +2014,9 @@ def listsdm (sdm, file=None):
     qa = util.tools.quanta ()
     me = util.tools.measures ()
 
+    list_antennas = False
+    list_spws = False
+
     # read Scan.xml
     xmlscans = minidom.parse(sdm+'/Scan.xml')
     scandict = {}
@@ -2342,7 +2345,7 @@ def listsdm (sdm, file=None):
         scandict[scanNum]['chanwidth'] = cWidthOrdList
         scandict[scanNum]['baseband'] = bbandOrdList
 
-    # report informatio to the logger
+    # report information to the logger
     printf ('================================================================================')
     printf ('   SDM File: %s', sdm)
     printf ('================================================================================')
@@ -2355,12 +2358,10 @@ def listsdm (sdm, file=None):
     printf ('  Timerange (UTC)           Scan FldID  FieldName       SpwIDs         Intent(s)')
 
     i = 0
-    #SPWs = []
     for scan in scandict:
         SPWs = []
         for spw in scandict[scan]['spws']:
             SPWs += spw
-        #printSPWs = sorted(SPWs)
         printSPWs = list(set(SPWs))
         printf (' %s - %s %s %s %s %s %s', startTimeShort[i], endTimeShort[i],
                 str(scandict.keys()[i]).rjust(4),
@@ -2369,17 +2370,18 @@ def listsdm (sdm, file=None):
                 scandict[scan]['intent'])
         i = i + 1
 
-    printf (' ')
-    printf ('Spectral window information:')
-    printf ('  SpwID  #Chans  Ch0(MHz)  ChWidth(kHz) TotBW(MHz)  Baseband')
+    if list_spws:
+        printf (' ')
+        printf ('Spectral window information:')
+        printf ('  SpwID  #Chans  Ch0(MHz)  ChWidth(kHz) TotBW(MHz)  Baseband')
 
-    for i in range(0, len(spwIdList)):
-        printf (' %s %s %s %s %s %s', string.split(spwIdList[i],
-                                                   '_')[1].ljust(4), str(nChanList[i]).ljust(4),
-                str(refFreqList[i]/1e6).ljust(8),
-                str(np.array(chanWidthList[i])/1e3).ljust(8),
-                str(np.array(chanWidthList[i])*nChanList[i]/1e6).ljust(8),
-                basebandList[i].ljust(8))
+        for i in range(0, len(spwIdList)):
+            printf (' %s %s %s %s %s %s', string.split(spwIdList[i],
+                                                       '_')[1].ljust(4), str(nChanList[i]).ljust(4),
+                    str(refFreqList[i]/1e6).ljust(8),
+                    str(np.array(chanWidthList[i])/1e3).ljust(8),
+                    str(np.array(chanWidthList[i])*nChanList[i]/1e6).ljust(8),
+                    basebandList[i].ljust(8))
 
     printf (' ')
     printf ('Field information:')
@@ -2391,15 +2393,16 @@ def listsdm (sdm, file=None):
                 fieldRAList[i].ljust(13), fieldDecList[i].ljust(15),
                 str(fieldSrcIDList[i]).ljust(5))
 
-    printf (' ')
-    printf ('Antennas (%i):' % len(antList))
-    printf ('  ID    Name   Station   Diam.(m)  Lat.          Long.')
+    if list_antennas:
+        printf (' ')
+        printf ('Antennas (%i):' % len(antList))
+        printf ('  ID    Name   Station   Diam.(m)  Lat.          Long.')
 
-    for i in range(0, len(antList)):
-        printf (' %s %s %s %s %s %s ', str(antList[i]).ljust(5),
-                antNameList[i].ljust(6), assocStatList[i].ljust(5),
-                str(dishDiamList[i]).ljust(5), statLatList[i].ljust(12),
-                statLonList[i].ljust(12))
+        for i in range(0, len(antList)):
+            printf (' %s %s %s %s %s %s ', str(antList[i]).ljust(5),
+                    antNameList[i].ljust(6), assocStatList[i].ljust(5),
+                    str(dishDiamList[i]).ljust(5), statLatList[i].ljust(12),
+                    statLonList[i].ljust(12))
 
     # return the scan dictionary
     return scandict
