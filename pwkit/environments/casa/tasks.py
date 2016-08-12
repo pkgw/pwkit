@@ -2270,7 +2270,7 @@ def listsdm (sdm, file=None):
     # associate antennas with stations:
     assocStatList = []
     for station in stationList:
-        i = np.where(np.array(statIdList) == station)[0]
+        i = np.where(np.array(statIdList) == station)[0][0]
         assocStatList.append(statNameList[i])
 
     # read ExecBlock.xml
@@ -2304,9 +2304,9 @@ def listsdm (sdm, file=None):
         bbandTempList = []
 
         for dDesc in dataDescList[i]:
-            el = np.where(np.array(dataDescElList) == dDesc)[0]
+            el = np.where(np.array(dataDescElList) == dDesc)[0][0]
             spwIdN = spwIdDataDescList[el]
-            spwEl = np.where(np.array(spwIdList) == spwIdN)[0]
+            spwEl = np.where(np.array(spwIdList) == spwIdN)[0][0]
             spwTempList.append(int(string.split(spwIdList[spwEl], '_')[1]))
             nChanTempList.append(nChanList[spwEl])
             rFreqTempList.append(refFreqList[spwEl])
@@ -2330,7 +2330,7 @@ def listsdm (sdm, file=None):
         scanEl = np.where(np.array(mainScanList) == scanNum)[0]
         for thisEl in scanEl:
             configEl = mainConfigList[thisEl]
-            listEl = np.where(np.array(configDescList) == configEl)[0]
+            listEl = np.where(np.array(configDescList) == configEl)[0][0]
             spwOrdList.append(spwOrd[listEl])
             nChanOrdList.append(nChanOrd[listEl])
             rFreqOrdList.append(rFreqOrd[listEl])
