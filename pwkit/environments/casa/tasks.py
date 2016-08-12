@@ -39,8 +39,9 @@ dftdynspec_cli
 dftphotom_cli
 dftspect_cli
 extractbpflags extractbpflags_cli
-flagmanager_cli
+flagcmd flagcmd_cli FlagcmdConfig
 flaglist flaglist_cli FlaglistConfig
+flagmanager_cli
 flagzeros flagzeros_cli FlagzerosConfig
 fluxscale fluxscale_cli FluxscaleConfig
 ft ft_cli FtConfig
@@ -847,6 +848,43 @@ def flagmanager_cli (argv, alter_logger=True):
         wrong_usage (flagmanager_doc, 'unknown flagmanager mode "%s"' % mode)
 
     af.done ()
+
+
+# flagcmd
+
+flagcmd_doc = \
+"""
+casatask flagcmd vis= [keywords..]
+
+Flag data using auto-generated lists of flagging commands.
+
+"""
+
+class FlagcmdConfig (ParseKeywords):
+    vis = Custom (str, required=True)
+    inpmode = 'table'
+    useapplied = False
+    action = 'apply'
+    flagbackup = True
+    loglevel = 'warn'
+
+
+def flagcmd (cfg):
+    from .scripting import CasapyScript
+    script = os.path.join (os.path.dirname (__file__), 'cscript_flagcmd.py')
+
+    args = dict (
+        vis = cfg.vis,
+        inpmode = cfg.inpmode,
+        useapplied = cfg.useapplied,
+        action = cfg.action,
+        flagbackup = cfg.flagbackup,
+    )
+
+    with CasapyScript (script, **b(args)):
+        pass    
+
+flagcmd_cli = makekwcli (flagcmd_doc, FlagcmdConfig, flagcmd)
 
 
 # flaglist. Not quite a CASA task; something like
