@@ -23,10 +23,6 @@ Note that when considering astronomical position angles, conventionally
 defined as East from North, the Dec/lat axis should be considered the X axis
 and the RA/long axis should be considered the Y axis.
 
-NOTE: Pineau et al 2011A&A...527A.126P has some relevant equations, including
-ones for computing the overlap of two error ellipses, which is something I've
-had trouble figuring out in the past.
-
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
@@ -247,6 +243,27 @@ def bivrandom (x0, y0, sx, sy, cxy, size=None):
     return mvn (p0, cov, size)
 
 
+def bivconvolve (sx_a, sy_a, cxy_a, sx_b, sy_b, cxy_b):
+    """Given two independent bivariate distributions, compute a bivariate
+    distribution corresponding to their convolution.
+
+    I'm sure this is worked out in a ton of places, but I got the equations
+    from Pineau+ (2011A&A...527A.126P).
+
+    Returns: (sx_c, sy_c, cxy_c), the parameters of the convolved
+    distribution.
+
+    """
+    _bivcheck (sx_a, sy_a, cxy_a)
+    _bivcheck (sx_b, sy_b, cxy_b)
+
+    sx_c = np.sqrt (sx_a**2 + sx_b**2)
+    sy_c = np.sqrt (sy_a**2 + sy_b**2)
+    cxy_c = cxy_a + cxy_b
+
+    return _bivcheck (sx_c, sy_c, cxy_c)
+
+
 def bivplot (sx, sy, cxy, **kwargs):
     _bivcheck (sx, sy, cxy)
     return ellplot (*bivell (sx, sy, cxy), **kwargs)
@@ -411,14 +428,11 @@ def double_ell_distance (mjr0, mnr0, pa0, mjr1, mnr1, pa1, dx, dy):
     sx0, sy0, cxy0 = ellbiv (mjr0, mnr0, pa0 + theta)
     sx1, sy1, cxy1 = ellbiv (mjr1, mnr1, pa1 + theta)
 
-    # 3. The separation between the centers is still just:
-    d = np.sqrt (dx**2 + dy**2)
+    # 3. Their convolution is:
+    sx, sy, cxy = bivconvolve (sx0, sy0, cxy0, sx1, sy1, cxy1)
 
-    # 4. When convolving Gaussians, covariance matrices just sum, but we work
-    # with sigmas, not variances. Therefore the convolution of the two is:
-    sx = np.sqrt (sx0**2 + sx1**2)
-    sy = np.sqrt (sy0**2 + sy1**2)
-    cxy = cxy0 + cxy1
+    # 4. The separation between the centers is still just:
+    d = np.sqrt (dx**2 + dy**2)
 
     # 5. The effective sigma in the purely X direction, taking into account
     # the covariance term, is:
