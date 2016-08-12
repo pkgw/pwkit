@@ -2015,6 +2015,7 @@ def listsdm (sdm, file=None):
     me = util.tools.measures ()
 
     list_antennas = False
+    list_fields = True
     list_spws = False
 
     # read Scan.xml
@@ -2383,15 +2384,15 @@ def listsdm (sdm, file=None):
                     str(np.array(chanWidthList[i])*nChanList[i]/1e6).ljust(8),
                     basebandList[i].ljust(8))
 
-    printf (' ')
-    printf ('Field information:')
-    printf ('  FldID  Code   Name             RA            Dec             SrcID')
+    if list_fields:
+        printf (' ')
+        printf ('Field information:')
+        printf ('  FldID  Code   Name            RA            Dec             SrcID')
 
-    for i in range(0, len(fieldList)):
-        printf (' %s %s %s %s %s %s', str(fieldList[i]).ljust(5),
-                fieldCodeList[i].ljust(6), fieldNameList[i].ljust(15),
-                fieldRAList[i].ljust(13), fieldDecList[i].ljust(15),
-                str(fieldSrcIDList[i]).ljust(5))
+        for i in range(0, len(fieldList)):
+            printf ('  %-6d %-6s %-15s %-13s %-15s %-5d', fieldList[i], fieldCodeList[i],
+                    fieldNameList[i], fieldRAList[i], fieldDecList[i],
+                    fieldSrcIDList[i])
 
     if list_antennas:
         printf (' ')
