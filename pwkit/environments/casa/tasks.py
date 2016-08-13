@@ -1821,9 +1821,11 @@ def gpplot (cfg):
                     else:
                         lines = (tsub.size > 1)
 
-                    if not cfg.phaseonly:
+                    if cfg.phaseonly:
+                        p_ph.addXY (tsub, psub, kt, lines=lines, dsn=spw_offsets[ispw])
+                    else:
                         p_am.addXY (tsub, asub, kt, lines=lines, dsn=spw_offsets[ispw])
-                    p_ph.addXY (tsub, psub, None, lines=lines, dsn=spw_offsets[ispw])
+                        p_ph.addXY (tsub, psub, None, lines=lines, dsn=spw_offsets[ispw])
                     anyseen = True
 
                     if kt is not None: # hack for per-spw "anyseen"-type checking
