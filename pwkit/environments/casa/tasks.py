@@ -1772,6 +1772,11 @@ def gpplot (cfg):
     min_time = (min_time - mjdref)
     max_time = (max_time - mjdref)
     span = max_time - min_time
+    if span <= 0:
+        if max_time == 0:
+            span = 1.
+        else:
+            span = 0.05 * max_time
     max_time += 0.05 * span
     min_time -= 0.05 * span
 
@@ -1779,12 +1784,22 @@ def gpplot (cfg):
     max_am = np.abs (okvals).max ()
     min_am = np.abs (okvals).min ()
     span = max_am - min_am
+    if span <= 0:
+        if max_am == 0:
+            span = 1.
+        else:
+            span = 0.05 * max_am
     max_am += 0.05 * span
     min_am -= 0.05 * span
 
     max_ph = np.angle (okvals, deg=True).max ()
     min_ph = np.angle (okvals, deg=True).min ()
     span = max_ph - min_ph
+    if span <= 0:
+        if max_ph == 0:
+            span = 1.
+        else:
+            span = 0.05 * max_ph
     max_ph += 0.05 * span
     min_ph -= 0.05 * span
     if max_ph > 160:
