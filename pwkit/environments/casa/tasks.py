@@ -65,6 +65,7 @@ polmodel_cli
 setjy setjy_cli SetjyConfig
 split split_cli SplitConfig
 spwglue_cli
+tsysplot tsysplot_cli TsysplotConfig
 uvsub uvsub_cli UvsubConfig
 commandline
 ''').split ()
@@ -811,7 +812,7 @@ def flagcmd (cfg):
     )
 
     with CasapyScript (script, **b(args)):
-        pass    
+        pass
 
 flagcmd_cli = makekwcli (flagcmd_doc, FlagcmdConfig, flagcmd)
 
@@ -3304,6 +3305,184 @@ split_cli = makekwcli (split_doc, SplitConfig, split)
 def spwglue_cli (argv):
     from .spwglue import spwglue_cli
     spwglue_cli (argv)
+
+
+# tsysplot
+#
+# See bpplot() -- CASA plotcal can do this in a certain sense, but it's slow
+# and ugly.
+
+tsysplot_doc = \
+"""
+casatask tsysplot caltable= dest=
+
+Plot a system temperature (Tsys) calibration table.
+
+caltable=MS
+  The input calibration Measurement Set
+
+dest=PATH
+  If specified, plots are saved to this file -- the format is inferred
+  from the extension, which must allow multiple pages to be saved. If
+  unspecified, the plots are displayed using a Gtk3 backend.
+
+dims=WIDTH,HEIGHT
+  If saving to a file, the dimensions of a each page. These are in points
+  for vector formats (PDF, PS) and pixels for bitmaps (PNG). Defaults to
+  1000, 600.
+
+margins=TOP,RIGHT,LEFT,BOTTOM
+  If saving to a file, the plot margins in the same units as the dims.
+  The default is 4 on every side.
+""" + loglevel_doc
+
+
+class TsysplotConfig (ParseKeywords):
+    caltable = Custom (str, required=True)
+    dest = str
+    dims = [1000, 600]
+    margins = [4, 4, 4, 4]
+    loglevel = 'warn'
+
+
+def tsysplot (cfg):
+    import omega as om, omega.render
+    from ... import numutil
+
+    if isinstance (cfg.dest, omega.render.Pager):
+        # This is for non-CLI invocation.
+        pager = cfg.dest
+    elif cfg.dest is None:
+        import omega.gtk3
+        pager = om.makeDisplayPager ()
+    else:
+        pager = om.makePager (cfg.dest,
+                              dims=cfg.dims,
+                              margins=cfg.margins,
+                              style=om.styles.ColorOnWhiteVector ())
+
+    tb = util.tools.table ()
+
+    tb.open (binary_type (cfg.caltable), nomodify=True)
+    fields = tb.getcol (b'FIELD_ID')
+    spws = tb.getcol (b'SPECTRAL_WINDOW_ID')
+    ants = tb.getcol (b'ANTENNA1')
+    vals = tb.getcol (b'FPARAM')
+    flags = tb.getcol (b'FLAG')
+    times = tb.getcol (b'TIME')
+    tb.close ()
+
+    tb.open (binary_type (os.path.join (cfg.caltable, 'ANTENNA')), nomodify=True)
+    antnames = tb.getcol (b'NAME')
+    tb.close ()
+
+    tb.open (binary_type (os.path.join (cfg.caltable, 'FIELD')), nomodify=True)
+    fieldnames = tb.getcol (b'NAME')
+    tb.close ()
+
+    npol, nchan, nsoln = vals.shape
+
+    # see what we've got
+
+    def seen_values (data):
+        return [idx for idx, count in enumerate (np.bincount (data)) if count]
+
+    any_ok = ~(np.all (flags, axis=(0, 1)))
+    seenfields = seen_values (fields[any_ok])
+    field_offsets = dict ((fieldid, idx) for idx, fieldid in enumerate (seenfields))
+    seenants = seen_values (ants[any_ok])
+    ant_offsets = dict ((antid, idx) for idx, antid in enumerate (seenants))
+
+    apbyfield = {}
+    seenspws = set ()
+
+    for ifield in seenfields:
+        antpols = apbyfield[ifield] = {}
+
+        for ipol in range (npol):
+            for isoln in np.where (fields == ifield)[0]:
+                if not flags[ipol,:,isoln].all ():
+                    k = (ants[isoln], ipol)
+                    byspw = antpols.get (k)
+                    if byspw is None:
+                        antpols[k] = byspw = []
+
+                    byspw.append ((spws[isoln], isoln))
+                    seenspws.add (spws[isoln])
+
+    seenspws = sorted (seenspws)
+    spw_to_offset = dict ((spwid, spwofs * nchan)
+                          for spwofs, spwid in enumerate (seenspws))
+
+    # find plot limits
+
+    min_time = times[any_ok].min ()
+    max_time = times[any_ok].max ()
+    mjdref = int (np.floor (min_time))
+    times -= mjdref # convert to delta-MJD
+    min_time = (min_time - mjdref)
+    max_time = (max_time - mjdref)
+    span = max_time - min_time
+    if span <= 0:
+        if max_time == 0:
+            span = 1.
+        else:
+            span = 0.05 * max_time
+    max_time += 0.05 * span
+    min_time -= 0.05 * span
+
+    okvals = vals[np.where (~flags)]
+    max_val = okvals.max ()
+    min_val = okvals.min ()
+    span = max_val - min_val
+    if span <= 0:
+        if max_val == 0:
+            span = 1.
+        else:
+            span = 0.05 * max_val
+    max_val += 0.05 * span
+    min_val -= 0.05 * span
+
+    polnames = 'XY' # XXX: identification doesn't seem to be stored in cal table
+
+    # plot away
+
+    for iant, ipol in sorted (six.iterkeys (antpols)):
+        p = om.RectPlot ()
+        p.addKeyItem ('%s %s' % (antnames[iant], polnames[ipol]))
+
+        for ifield in seenfields:
+            antpols = apbyfield[ifield]
+            kt = fieldnames[ifield]
+
+            for ispw, isoln in antpols[iant,ipol]:
+                f = flags[ipol,:,isoln]
+                v = vals[ipol,:,isoln]
+                w = np.where (~f)[0]
+
+                for s in numutil.slice_around_gaps (w, 1):
+                    wsub = w[s]
+                    if wsub.size == 0:
+                        continue # Should never happen, but eh.
+                    else:
+                        # It'd also be pretty weird to have a spectral window
+                        # containing just one (valid) channel, but it could
+                        # happen.
+                        lines = (wsub.size > 1)
+
+                    p.addXY (wsub + spw_to_offset[ispw], v[wsub], kt,
+                             lines=lines, dsn=ifield)
+                    kt = None
+
+        p.setBounds (xmin=0,
+                     xmax=len (seenspws) * nchan,
+                     ymin=min_val,
+                     ymax=max_val)
+        p.setLabels ('Normalized channel', 'System temperature (K)')
+        pager.send (p)
+
+
+tsysplot_cli = makekwcli (tsysplot_doc, TsysplotConfig, tsysplot)
 
 
 # uvsub
