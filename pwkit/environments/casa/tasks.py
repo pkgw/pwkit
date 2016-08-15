@@ -1281,6 +1281,9 @@ minsnr=
 preavg=
   Interval for pre-averaging data within each solution interval,
   in seconds. Default is -1, meaning not to pre-average.
+
+smodel=I,Q,U,V
+  Full-stokes point source model to use, if none is embedded in the vis file.
 """ + stdsel_doc + loglevel_doc
 
 
@@ -1305,12 +1308,13 @@ class GaincalConfig (ParseKeywords):
     opacity = [float]
     gaincurve = False
     parang = False
+    smodel = [int]
 
     @Custom ([str], sep=';')
     def spwmap (v):
         return [map (int, e.split (',')) for e in v]
 
-    # gaincal keywords: splinetime npointaver phasewrap smodel
+    # gaincal keywords: splinetime npointaver phasewrap
     # bandpass keywords: fillgaps degamp degphase visnorm maskcenter
     #   maskedge
 
@@ -1336,6 +1340,9 @@ def gaincal (cfg):
     cb.selectvis (**b(selkws))
 
     applyonthefly (cb, cfg)
+
+    if cfg.smodel is not None and len (cfg.smodel):
+        cb.setptmodel (cfg.smodel)
 
     # Solve
 
