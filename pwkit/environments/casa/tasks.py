@@ -67,6 +67,7 @@ split split_cli SplitConfig
 spwglue_cli
 tsysplot tsysplot_cli TsysplotConfig
 uvsub uvsub_cli UvsubConfig
+xyphplot xyphplot_cli XyphplotConfig
 commandline
 ''').split ()
 
@@ -3536,6 +3537,129 @@ def uvsub (cfg):
 
 
 uvsub_cli = makekwcli (uvsub_doc, UvsubConfig, uvsub)
+
+
+# xyphplot
+#
+# This is nearly the same as bpplot.
+
+xyphplot_doc = \
+"""
+casatask xyphplot caltable= dest=
+
+Plot a frequency-dependent X/Y phase calibration table.
+
+caltable=MS
+  The input calibration Measurement Set
+
+dest=PATH
+  If specified, plots are saved to this file -- the format is inferred
+  from the extension, which must allow multiple pages to be saved. If
+  unspecified, the plots are displayed using a Gtk3 backend.
+
+dims=WIDTH,HEIGHT
+  If saving to a file, the dimensions of a each page. These are in points
+  for vector formats (PDF, PS) and pixels for bitmaps (PNG). Defaults to
+  1000, 600.
+
+margins=TOP,RIGHT,LEFT,BOTTOM
+  If saving to a file, the plot margins in the same units as the dims.
+  The default is 4 on every side.
+""" + loglevel_doc
+
+
+class XyphplotConfig (ParseKeywords):
+    caltable = Custom (str, required=True)
+    dest = str
+    dims = [1000, 600]
+    margins = [4, 4, 4, 4]
+    loglevel = 'warn'
+
+
+def xyphplot (cfg):
+    import omega as om, omega.render
+    from ... import numutil
+
+    if isinstance (cfg.dest, omega.render.Pager):
+        # This is for non-CLI invocation.
+        pager = cfg.dest
+    elif cfg.dest is None:
+        import omega.gtk3
+        pager = om.makeDisplayPager ()
+    else:
+        pager = om.makePager (cfg.dest,
+                              dims=cfg.dims,
+                              margins=cfg.margins,
+                              style=om.styles.ColorOnWhiteVector ())
+
+    tb = util.tools.table ()
+
+    # Every antenna has the same solution, and only the first of two
+    # polarizations is not just unity. And the solution is phase only. So this
+    # is prett simple to plot!
+
+    tb.open (binary_type (cfg.caltable), nomodify=True)
+    spws = tb.getcol (b'SPECTRAL_WINDOW_ID')
+    vals = tb.getcol (b'CPARAM')
+    flags = tb.getcol (b'FLAG')
+    tb.close ()
+
+    npol, nchan, nsoln = vals.shape
+
+    seenspws = np.unique (spws) # assume all available
+    spw_to_offset = dict ((spwid, spwofs * nchan)
+                          for spwofs, spwid in enumerate (seenspws))
+
+    # find plot limits
+
+    okvals = vals[np.where (~flags)]
+
+    max_ph = np.angle (okvals, deg=True).max ()
+    min_ph = np.angle (okvals, deg=True).min ()
+    span = max_ph - min_ph
+    max_ph += 0.05 * span
+    min_ph -= 0.05 * span
+    if max_ph > 160:
+        max_ph = 180
+    if min_ph < -160:
+        min_ph = -180
+
+    polnames = 'XY' # XXX: identification doesn't seem to be stored in cal table
+
+    # plot away
+
+    p = om.RectPlot ()
+
+    for ispw in seenspws:
+        ipol = 0
+        isoln = np.where ((spws == ispw) & ~np.all (flags, axis=(0,1)))[0][0]
+
+        f = flags[ipol,:,isoln]
+        ph = np.angle (vals[ipol,:,isoln], deg=True)
+        w = np.where (~f)[0]
+
+        for s in numutil.slice_around_gaps (w, 1):
+            wsub = w[s]
+            if wsub.size == 0:
+                continue # Should never happen, but eh.
+            else:
+                # It'd also be pretty weird to have a spectral window
+                # containing just one (valid) channel, but it could
+                # happen.
+                lines = (wsub.size > 1)
+
+            p.addXY (wsub + spw_to_offset[ispw], ph[wsub], None,
+                     lines=lines, dsn=ispw)
+
+        p.setBounds (xmin=0,
+                     xmax=len (seenspws) * nchan,
+                     ymin=min_ph,
+                     ymax=max_ph)
+        p.setLabels ('Normalized channel', 'Phase (deg)')
+
+    pager.send (p)
+
+xyphplot_cli = makekwcli (xyphplot_doc, XyphplotConfig, xyphplot)
 
 
 # Driver for command-line access. I wrote this before multitool, and it
