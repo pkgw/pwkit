@@ -318,6 +318,9 @@ each page showing a particular antenna and polarization. Polarizations are
 always reported as "R" and "L" since the relevant information is not stored
 within the bandpass data set.
 
+This task also works well to plot frequency-dependent polarimetric leakage
+calibration tables.
+
 caltable=MS
   The input calibration Measurement Set
 
