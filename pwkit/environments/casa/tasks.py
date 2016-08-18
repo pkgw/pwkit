@@ -39,6 +39,7 @@ delmod_cli
 dftdynspec_cli
 dftphotom_cli
 dftspect_cli
+elplot elplot_cli ElplotConfig
 extractbpflags extractbpflags_cli
 flagcmd flagcmd_cli FlagcmdConfig
 flaglist flaglist_cli FlaglistConfig
@@ -709,6 +710,111 @@ def dftphotom_cli (argv):
 def dftspect_cli (argv):
     from .dftspect import dftspect_cli
     dftspect_cli (argv)
+
+
+# elplot
+#
+# See bpplot() -- CASA plotcal can do this in a certain sense, but it's slow
+# and ugly.
+
+elplot_doc = \
+"""
+casatask elplot vis= dest=
+
+Plot elevations of fields observed in a MeasurementSet.
+
+vis=MS
+  The input Measurement Set.
+
+dest=PATH
+  If specified, plots are saved to this file -- the format is inferred
+  from the extension, which must allow multiple pages to be saved. If
+  unspecified, the plots are displayed using a Gtk3 backend.
+
+dims=WIDTH,HEIGHT
+  If saving to a file, the dimensions of a each page. These are in points
+  for vector formats (PDF, PS) and pixels for bitmaps (PNG). Defaults to
+  1000, 600.
+
+margins=TOP,RIGHT,LEFT,BOTTOM
+  If saving to a file, the plot margins in the same units as the dims.
+  The default is 4 on every side.
+""" + loglevel_doc
+
+
+class ElplotConfig (ParseKeywords):
+    vis = Custom (str, required=True)
+    dest = str
+    dims = [1000, 600]
+    margins = [4, 4, 4, 4]
+    loglevel = 'warn'
+
+
+def elplot (cfg):
+    import omega as om, omega.render
+
+    if isinstance (cfg.dest, omega.render.Pager):
+        # This is for non-CLI invocation.
+        pager = cfg.dest
+    elif cfg.dest is None:
+        import omega.gtk3
+        pager = om.makeDisplayPager ()
+    else:
+        pager = om.makePager (cfg.dest,
+                              dims=cfg.dims,
+                              margins=cfg.margins,
+                              style=om.styles.ColorOnWhiteVector ())
+
+    ms = util.tools.ms ()
+    me = util.tools.measures ()
+
+    ms.open (binary_type (cfg.vis), nomodify=True)
+    scans = ms.range ([b'scan_number'])['scan_number']
+
+    md = ms.metadata ()
+    field_names = md.namesforfields ()
+    obs = md.observatoryposition ()
+    me.doframe (obs)
+    timetmpl = md.timerangeforobs (0)['begin']
+
+    mjd0 = int (np.floor (md.timesforscan (scans[0]).min () / 86400))
+
+    field_dsns = {}
+
+    p = om.RectPlot ()
+
+    for scan in scans:
+        mjds = md.timesforscan (scan=scan) / 86400
+
+        fields = md.fieldsforscan (scan=scan)
+        if fields.size != 1:
+            import sys
+            print ('warning: scan %d does not contain one field: %r' % (scan, fields))
+        field = fields[0]
+
+        fdir = ms.getfielddirmeas (fieldid=field)
+        els = np.empty (mjds.size)
+
+        for i in xrange (mjds.size):
+            timetmpl['m0']['value'] = mjds[i]
+            me.doframe (timetmpl)
+            els[i] = me.measure (fdir, b'AZEL')['m1']['value'] * 180 / np.pi
+
+        dsn = field_dsns.get (field)
+        kt = None
+
+        if dsn is None:
+            dsn = len (field_dsns)
+            field_dsns[field] = dsn
+            kt = field_names[field]
+
+        p.addXY (mjds - mjd0, els, kt, dsn=dsn)
+
+    p.setLabels ('MJD - %d (day)' % mjd0, 'Elevation (deg)')
+    pager.send (p)
+    pager.done ()
+
+elplot_cli = makekwcli (elplot_doc, ElplotConfig, elplot)
 
 
 # extractbpflags
