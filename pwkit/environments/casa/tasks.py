@@ -32,6 +32,7 @@ __all__ = str ('''
 applycal applycal_cli ApplycalConfig
 bpplot bpplot_cli BpplotConfig
 clearcal clearcal_cli
+closures_cli
 concat concat_cli
 delcal delcal_cli
 delmod_cli
@@ -547,6 +548,15 @@ def clearcal_cli (argv):
     util.logger ()
     for vis in argv[1:]:
         clearcal (b(vis), weightonly=weightonly)
+
+
+# closures
+#
+# Shim for a separate module
+
+def closures_cli (argv):
+    from .closures import closures_cli
+    closures_cli (argv)
 
 
 # concat
