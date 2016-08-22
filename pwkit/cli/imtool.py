@@ -227,10 +227,44 @@ class HackdataCommand (multitool.Command):
             die ('cannot write to output "%s": %s', outpath, e)
 
 
-class InfoCommand (multitool.Command):
+class InfoCommand (multitool.ArgparsingCommand):
+    # XXX terrible code duplication while my output format stuff is half-baked.
+
     name = 'info'
-    argspec = '<images...>'
-    summary = 'Print properties of the image.'
+    summary = 'Print properties of one or more images.'
+
+    def get_arg_parser (self, **kwargs):
+        ap = super (InfoCommand, self).get_arg_parser (**kwargs)
+        ap.add_argument ('--format', metavar='FORMAT', default='pretty',
+                         help='Output format for results: "pretty", "yaml".')
+        ap.add_argument ('--dest', metavar='PATH',
+                         help='Path in which to save results.')
+        ap.add_argument ('--section', metavar='LOCATION.TO.SECTION',
+                         help='Save results in the named dot-separated section of the output file.')
+        ap.add_argument ('images', metavar='IMAGE-PATH', nargs='+',
+                         help='The path to an image.')
+        return ap
+
+
+    def invoke (self, args, **kwargs):
+        if args.format == 'pretty':
+            self._invoke_pretty_format (args.images)
+        elif args.format == 'yaml':
+            self._invoke_yaml_format (args)
+        else:
+            die ('unrecognized output format %r', args.format)
+
+
+    def _invoke_pretty_format (self, impaths):
+        if len (impaths) == 1:
+            self._print (impaths[0])
+        else:
+            for i, path in enumerate (impaths):
+                if i > 0:
+                    print ()
+                print ('path     =', path)
+                self._print (path)
+
 
     def _print (self, path):
         from ..astutil import fmtradec, R2A, R2D
@@ -299,15 +333,113 @@ class InfoCommand (multitool.Command):
         if im.units is not None:
             print ('units    =', im.units)
 
-    def invoke (self, args, **kwargs):
-        if len (args) == 1:
-            self._print (args[0])
+
+    def _invoke_yaml_format (self, args):
+        from ..astutil import fmtdeglat, fmthours, R2A, R2D
+
+        if len (args.images) > 1:
+            die ('can only use YAML output format with one image')
+
+        try:
+            im = astimage.open (args.images[0], 'r', eat_warnings=True)
+        except Exception as e:
+            die ('can\'t open "%s": %s', args.images[0], e)
+
+        try:
+            from ruamel import yaml as ruamel_yaml
+        except ImportError:
+            import ruamel_yaml # how Conda packages it, grr ...
+
+        if args.dest is None:
+            toplevel = None
         else:
-            for i, path in enumerate (args):
-                if i > 0:
-                    print ()
-                print ('path     =', path)
-                self._print (path)
+            with Path (args.dest).try_open ('rt') as f:
+                toplevel = ruamel_yaml.load (f, ruamel_yaml.RoundTripLoader)
+
+        if toplevel is None:
+            toplevel = {}
+
+        dest_section = toplevel
+
+        if args.section is not None:
+            for piece in args.section.split ('.'):
+                dest_section = dest_section.setdefault (piece, {})
+
+        dest_section['kind'] = im.__class__.__name__
+
+        latcell = loncell = None
+
+        if im.toworld is not None:
+            latax, lonax = im._latax, im._lonax
+            delta = 1e-6
+            p = 0.5 * (np.asfarray (im.shape) - 1)
+            w1 = im.toworld (p)
+            p[latax] += delta
+            w2 = im.toworld (p)
+            latcell = (w2[latax] - w1[latax]) / delta
+            p[latax] -= delta
+            p[lonax] += delta
+            w2 = im.toworld (p)
+            loncell = (w2[lonax] - w1[lonax]) / delta * np.cos (w2[latax])
+
+        if im.pclat is not None:
+            dest_section['center'] = {
+                'kind': 'pointing',
+                'lat': fmtdeglat (im.pclat),
+                'lon': fmthours (im.pclon),
+            }
+        elif im.toworld is not None:
+            w = im.toworld (0.5 * (np.asfarray (im.shape) - 1))
+            dest_section['center'] = {
+                'kind': 'lattice',
+                'lat': fmtdeglat (w[latax]),
+                'lon': fmthours (w[lonax]),
+            }
+
+        if im.shape is not None:
+            dest_section['shape'] = [x.item () for x in im.shape]
+            npix = 1
+            for x in im.shape:
+                npix *= x
+            dest_section['npix'] = npix.item ()
+
+        if im.axdescs is not None:
+            dest_section['axdescs'] = list (im.axdescs)
+
+        if im.charfreq is not None:
+            dest_section['charfreq'] = im.charfreq
+
+        if im.mjd is not None:
+            dest_section['mjd'] = im.mjd
+
+        if latcell is not None:
+            dest_section['ctrcell'] = {
+                'lat': latcell.item (),
+                'lon': loncell.item (),
+            }
+
+        if im.bmaj is not None:
+            dest_section['beam'] = {
+                'major': im.bmaj,
+                'minor': im.bmin,
+                'posang': im.bpa,
+            }
+
+            if latcell is not None:
+                bmrad2 = 2 * np.pi * im.bmaj * im.bmin / (8 * np.log (2))
+                cellrad2 = latcell * loncell
+                dest_section['ctrbmvol'] = np.abs (bmrad2 / cellrad2).item ()
+
+        if im.units is not None:
+            dest_section['units'] = im.units
+
+        if args.dest is None:
+            import sys
+            ruamel_yaml.dump (toplevel, stream=sys.stdout, Dumper=ruamel_yaml.RoundTripDumper)
+        else:
+            with Path (args.dest).open ('wt') as f:
+                ruamel_yaml.dump (toplevel, stream=f, Dumper=ruamel_yaml.RoundTripDumper)
+
 
 
 class SetrectCommand (multitool.Command):
