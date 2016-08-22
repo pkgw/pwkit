@@ -111,27 +111,30 @@ WCS support isn't fantastic and sometimes causes crashes."""
         ndshow.cycle (images, args, toworlds=toworlds, yflip=True)
 
 
-class FitsrcCommand (multitool.Command):
+class FitsrcCommand (multitool.ArgparsingCommand):
     name = 'fitsrc'
-    argspec = '[-p] [-d] <image> <x(pixels)> <y(pixels)>'
     summary = 'Fit a compact-source model to a location in an image.'
-    more_help = """-p  - Force use of a point-source model.
--d  - Display the fit results graphically.
-"""
+
+    def get_arg_parser (self, **kwargs):
+        ap = super (FitsrcCommand, self).get_arg_parser (**kwargs)
+        ap.add_argument ('--forcepoint', '-p', action='store_true',
+                         help='Force the use of a point-source model.')
+        ap.add_argument ('--display', '-d', action='store_true',
+                         help='Display the fit results graphically.')
+        ap.add_argument ('image', metavar='IMAGE-PATH',
+                         help='The path to an image.')
+        ap.add_argument ('x', metavar='X-PIXEL', type=int,
+                         help='The X pixel coordinate near which to search for a source.')
+        ap.add_argument ('y', metavar='Y-PIXEL', type=int,
+                         help='The Y pixel coordinate near which to search for a source.')
+        return ap
+
 
     def invoke (self, args, **kwargs):
         from ..immodel import fit_one_source
-        forcepoint = pop_option ('p', args)
-        display = pop_option ('d', args)
 
-        if len (args) != 3:
-            raise multitool.UsageError ('expect exactly three arguments')
-
-        im = astimage.open (args[0], 'r', eat_warnings=True).simple ()
-        x = int (args[1])
-        y = int (args[2])
-
-        fit_one_source (im, x, y, forcepoint=forcepoint, display=display)
+        im = astimage.open (args.image, 'r', eat_warnings=True).simple ()
+        fit_one_source (im, args.x, args.y, forcepoint=args.forcepoint, display=args.display)
 
 
 class HackdataCommand (multitool.Command):

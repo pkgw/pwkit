@@ -455,7 +455,7 @@ def _guess_background_point_flux (im, imdata, xmid, ymid, patchhalfsize=16):
 
 
 def fit_one_source (im, xmid, ymid, forcepoint=False,
-                    patchhalfsize=16, noise=1e-3, smallvalfactor=0.5, display=False):
+                    patchhalfsize=16, noise=1e-3, smallvalfactor=0.5, report_func=None, display=False):
     imdata = im.read ()
     bgguess, ptguess = _guess_background_point_flux (im, imdata, xmid, ymid,
                                                      patchhalfsize)
@@ -502,8 +502,11 @@ def fit_one_source (im, xmid, ymid, forcepoint=False,
     if im.pclat is not None:
         d = sphdist (c.f_dec, c.f_ra, im.pclat, im.pclon)
 
-    def report (key, fmt, value):
-        print (key, '=', fmt % value, sep='')
+    if report_func is not None:
+        report = report_func
+    else:
+        def report (key, fmt, value):
+            print (key, '=', fmt % value, sep='')
 
     report ('preferred_shape', '%s', kind)
     report ('preferred_shape_reason', '%s', reason)

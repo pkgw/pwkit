@@ -63,6 +63,10 @@ class UsageError (PKError):
 class Command (object):
     """A command in a multifunctional CLI tool.
 
+    For historical reasons, this class defaults to a homebrew argument parsing
+    system. Use `ArgparsingCommand` for a better system based on the
+    `argparse` module.
+
     Attributes:
 
     argspec
@@ -116,7 +120,6 @@ class Command (object):
         usage = self._usage (argv0)
         argv = [argv0] + args
         uina = 'long' if self.help_if_no_args else False
-
         check_usage (usage, argv, usageifnoargs=uina)
 
         try:
@@ -132,6 +135,55 @@ class Command (object):
         if len (self.more_help):
             text += '\n\n' + self.more_help
         return text
+
+
+class ArgparsingCommand (Command):
+    """A multifunctional CLI command that uses the "argparse" module.
+
+    Attributes:
+
+    name
+      The command's name, as should be specified at the CLI.
+    summary
+      A one-line summary of this command's functionality.
+
+    Functions:
+
+    ``get_arg_parser(self, **kwargs)``
+      Get the `argparse.ArgumentParser` instance used to parse this
+      command's textual arguments.
+    ``invoke(self, args, **kwargs)``
+      Execute this command.
+
+    'name' must be set; other attributes are optional. 'invoke()' must be
+    implemented.
+
+    """
+    name = None
+    summary = ''
+
+    def get_arg_parser (self, **kwargs):
+        """Return an instance of `argparse.ArgumentParser` used to process
+        this tool's command-line arguments.
+
+        """
+        import argparse
+        ap = argparse.ArgumentParser (
+            prog = kwargs['argv0'],
+            description = self.summary,
+        )
+        return ap
+
+
+    def invoke_with_usage (self, args, **kwargs):
+        """Invoke the command with standardized usage-help processing. Same
+        calling convention as `Command.invoke()`, except here *args* is an
+        un-parsed list of strings.
+
+        """
+        ap = self.get_arg_parser (**kwargs)
+        args = ap.parse_args (args)
+        return self.invoke (args, **kwargs)
 
 
 def is_strict_subclass (value, klass):
