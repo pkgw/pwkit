@@ -16,6 +16,7 @@ from .. import PKError
 from . import multitool
 from . import *
 from .. import astimage
+from ..io import Path
 
 
 def load_ndshow ():
@@ -121,6 +122,12 @@ class FitsrcCommand (multitool.ArgparsingCommand):
                          help='Force the use of a point-source model.')
         ap.add_argument ('--display', '-d', action='store_true',
                          help='Display the fit results graphically.')
+        ap.add_argument ('--format', metavar='FORMAT', default='shell',
+                         help='Output format for results: "shell", "yaml".')
+        ap.add_argument ('--dest', metavar='PATH',
+                         help='Path in which to save results.')
+        ap.add_argument ('--section', metavar='LOCATION.TO.SECTION',
+                         help='Save results in the named dot-separated section of the output file.')
         ap.add_argument ('image', metavar='IMAGE-PATH',
                          help='The path to an image.')
         ap.add_argument ('x', metavar='X-PIXEL', type=int,
@@ -133,8 +140,63 @@ class FitsrcCommand (multitool.ArgparsingCommand):
     def invoke (self, args, **kwargs):
         from ..immodel import fit_one_source
 
+        # TODO: would be nice to have a consistent API for outputting
+        # structured data in a variety of formats, preferably supporting
+        # streaming.
+
+        close_me = None
+
+        if args.format == 'shell':
+            if args.dest is not None:
+                dest = close_me = open (args.dest, 'wt')
+            else:
+                import sys
+                dest = sys.stdout
+
+            def report_func (key, fmt, value):
+                print (key, '=', fmt % value, sep='', file=dest)
+        elif args.format == 'yaml':
+            try:
+                from ruamel import yaml as ruamel_yaml
+            except ImportError:
+                import ruamel_yaml # how Conda packages it, grr ...
+
+            if args.dest is None:
+                toplevel = None
+            else:
+                with Path (args.dest).try_open ('rt') as f:
+                    toplevel = ruamel_yaml.load (f, ruamel_yaml.RoundTripLoader)
+
+            if toplevel is None:
+                toplevel = {}
+
+            dest_section = toplevel
+
+            if args.section is not None:
+                for piece in args.section.split ('.'):
+                    dest_section = dest_section.setdefault (piece, {})
+
+            def report_func (key, fmt, value):
+                if isinstance (value, np.number):
+                    value = value.item ()
+                dest_section[key] = value
+        else:
+            die ('unrecognized output format %r', args.format)
+
         im = astimage.open (args.image, 'r', eat_warnings=True).simple ()
-        fit_one_source (im, args.x, args.y, forcepoint=args.forcepoint, display=args.display)
+        fit_one_source (im, args.x, args.y, forcepoint=args.forcepoint,
+                        display=args.display, report_func=report_func)
+
+        if close_me is not None:
+            close_me.close ()
+
+        if args.format == 'yaml':
+            if args.dest is None:
+                import sys
+                ruamel_yaml.dump (toplevel, stream=sys.stdout, Dumper=ruamel_yaml.RoundTripDumper)
+            else:
+                with Path (args.dest).open ('wt') as f:
+                    ruamel_yaml.dump (toplevel, stream=f, Dumper=ruamel_yaml.RoundTripDumper)
 
 
 class HackdataCommand (multitool.Command):
