@@ -3225,7 +3225,7 @@ fluxdensity=
   of the model image is used. The built-in standards do NOT have
   polarimetric information, so for pol cal you do need to manually
   specify the flux density information -- or see the program
-  "mspolmodel".
+  "casatask polmodel".
 
 modimage=
   An image to use as the basis for the source's spatial structure and,
@@ -3242,9 +3242,10 @@ reffreq=
   dependence.
 
 standard='Perley-Butler 2013'
-  Solar-system standards are not supported by this implementation, so
-  acceptable values are: Baars, Perley 90, Perley-Taylor 95,
-  Perley-Taylor 99, Perley-Butler 2010, Perley-Butler 2013.
+  Acceptable values are: Baars, Perley 90, Perley-Taylor 95,
+  Perley-Taylor 99, Perley-Butler 2010, Perley-Butler 2013. You can
+  specify the solar-system standard "Butler-JPL-Horizons 2012", but
+  doing so farms out the work to a stock CASA installation.
 
 *** Supported data selection keywords:
 
@@ -3273,6 +3274,31 @@ class SetjyConfig (ParseKeywords):
 
 
 def setjy (cfg):
+    if cfg.standard == 'Butler-JPL-Horizons 2012':
+        # The CASA C++ code has stuff that fakes you into thinking that the
+        # solar system flux density cal implementation is all in C++, but
+        # actually the current implementation is all in Python in the core
+        # CASA distribution. It'd be a real pain to duplicate so we farm it
+        # out to a CASA distribution.
+        from .scripting import CasapyScript
+        script = os.path.join (os.path.dirname (__file__), 'cscript_setjy.py')
+        args = dict (
+            vis = cfg.vis,
+            standard = cfg.standard,
+            field = cfg.field,
+            observation = cfg.observation,
+            scan = cfg.scan,
+            spw = cfg.spw,
+            timerange = cfg.timerange,
+            scalebychan = True, # see below
+        )
+        print ('Farming out to CASA ...')
+        with CasapyScript (script, **b(args)) as cs:
+            with open (os.path.join (cs.workdir, 'casa_stderr'), 'r') as f:
+                stderr = f.read ()
+            print (stderr)
+        return
+
     kws = {}
 
     for kw in 'field fluxdensity observation scan spw standard'.split ():
