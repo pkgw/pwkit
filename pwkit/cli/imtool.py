@@ -176,6 +176,8 @@ class FitsrcCommand (multitool.ArgparsingCommand):
                 for piece in args.section.split ('.'):
                     dest_section = dest_section.setdefault (piece, {})
 
+            dest_section.clear ()
+
             def report_func (key, fmt, value):
                 if isinstance (value, np.number):
                     value = value.item ()
@@ -365,6 +367,7 @@ class InfoCommand (multitool.ArgparsingCommand):
             for piece in args.section.split ('.'):
                 dest_section = dest_section.setdefault (piece, {})
 
+        dest_section.clear ()
         dest_section['kind'] = im.__class__.__name__
 
         latcell = loncell = None
