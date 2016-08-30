@@ -485,6 +485,26 @@ class Summfits (multitool.Command):
             elif kind == 'image':
                 output (2, 'data shape=%r dtype=%s', hdu.data.shape, hdu.data.dtype)
 
+
+class T2m (multitool.Command):
+    name = 't2m'
+    argspec = '<text>'
+    summary = 'Convert a textual time in UTC to MJD[TAI].'
+    more_help = '''This uses the Astropy time parsing code. See
+http://docs.astropy.org/en/stable/time/#time-format for a list of allowed
+formats. If multiple arguments are supplied, they will be joined with spaces
+before parsing.'''
+
+    def invoke (self, args, **kwargs):
+        if not len (args):
+            raise multitool.UsageError ('t2m expected at least one argument')
+
+        from astropy.time import Time
+        s = ' '.join (args)
+        t = Time (s, scale='utc')
+        print ('%.4f' % t.tai.mjd)
+
+
 # The driver.
 
 from .multitool import HelpCommand
