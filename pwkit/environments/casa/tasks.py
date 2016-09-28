@@ -1513,6 +1513,14 @@ casatask gencal vis=<MS> caltable=<TBL> caltype=<TYPE> [keywords...]
 Generate certain calibration tables that don't need to be solved for from
 the actual data.
 
+If you want to generate antenna position corrections for Jansky VLA data, you
+can just specify `caltype=antpos` and leave off the "parameter" keyword. This
+will cause the task will talk to an NRAO server and automatically download the
+correct position corrections. Other telescopes do not support this
+functionality, but if you can obtain the position corrections, you can use the
+"antenna" and "parameter" keywords to build the desired calibration table
+manually.
+
 vis=
   Input dataset
 
@@ -1526,7 +1534,7 @@ caltype=
   sbd       - single-band delay: phase slope for each SPW; needs parameter(s)
   mbd       - multi-band delay: phase slope for all SPWs; needs parameter(s)
   antpos    - antenna position corrections in ITRF; what you want; accepts parameter(s)
-  antposvla - antenna position corrections in VLA frame; not what you want; accepts parameter(s)
+  antposvla - antenna position corrections in VLA frame; **not what you want**; accepts parameter(s)
   tsys      - tsys from ALMA syscal table
   swpow     - EVLA switched-power and requantizer gains ("experimental")
   opac      - tropospheric opacity; needs parameter
