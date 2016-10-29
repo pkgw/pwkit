@@ -375,7 +375,7 @@ def commandline (argv=None):
         engine = 'xelatex'
     if do_letterpaper:
         engine_args += ['-papersize', 'letter']
-    if do_letterpaper:
+    if do_a4paper:
         engine_args += ['-papersize', 'A4']
     if makefile_dest is not None:
         engine_args += ['-recorder']
