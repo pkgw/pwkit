@@ -13,8 +13,9 @@ Installation
 The most recent stable version of ``pwkit`` is available on the `Python
 package index`_, so you should be able to install this package simply by
 running ``pip install pwkit``. The package is also available in the `conda`_
-package manager by installing it from `anaconda.org`_; the command ``conda
-install -c pkgw pwkit`` should suffice.
+package manager by installing it from `anaconda.org`_. If you are using
+packages from the `conda-forge`_ project, install with ``conda install -c
+pkgw-forge pwkit``. Otherwise, use ``conda install -c pkgw pwkit``.
 
 If you want to download the source code and install ``pwkit`` manually, the
 package uses the standard Python `setuptools`_, so running ``python setup.py
@@ -23,6 +24,7 @@ install`` will do the trick.
 .. _Python package index: https://pypi.python.org/pypi/pwkit/
 .. _conda: http://conda.pydata.org/docs/
 .. _anaconda.org: https://anaconda.org/pkgw/pwkit
+.. _conda-forge: http://conda-forge.github.io/
 .. _setuptools: https://pypi.python.org/pypi/setuptools
 
 Some ``pwkit`` functionality requires additional Python modules such as
