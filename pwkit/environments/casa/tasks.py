@@ -1,20 +1,18 @@
 # -*- mode: python; coding: utf-8 -*-
-# Copyright 2015 Peter Williams <peter@newton.cx> and collaborators.
+# Copyright 2015-2017 Peter Williams <peter@newton.cx> and collaborators.
 # Licensed under the MIT License.
 
-"""pwkit.environments.casa.tasks - library of clones of CASA tasks
+"""The way that the official ``casapy`` code is written, it's basically
+impossible to import its tasks into a straight-Python environment. (Trust me,
+I've tried.) So, this module more-or-less duplicates lots of CASA code. But
+this module also tries to provide to provide saner semantics and interfaces.
 
-The way that the casapy code is written it's basically impossible to import
-its tasks into a straight-Python environment (trust me, I've tried), so we're
-more-or-less duplicating lots of CASA code. I try to provide saner semantics,
-APIs, etc.
-
-The goal is to make task-like functionality as a real Python library with no
-side effects, so that we can actually script data processing. While we're at
-it, we make them available on the command line.
+The goal is to make task-like functionality available in a real Python
+library, with no side effects, so that data processing can be scripted
+tractably. These tasks are also accessible through the ``casatask`` command
+line program provided with :mod:`pwkit`.
 
 """
-
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import os.path, six, sys
