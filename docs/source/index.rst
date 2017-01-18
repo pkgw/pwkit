@@ -1,4 +1,4 @@
-.. Copyright 2015 Peter K. G. Williams <peter@newton.cx> and collaborators.
+.. Copyright 2015-2017 Peter K. G. Williams <peter@newton.cx> and collaborators.
    This file licensed under the Creative Commons Attribution-ShareAlike 3.0
    Unported License (CC-BY-SA).
 
@@ -16,7 +16,7 @@ This documentation has a lot of stubs.
    section-cli.rst
    section-viz.rst
    io/index.rst
-   section-environments.rst
+   environments/index.rst
    cli-tools/index.rst
    infrastructure/index.rst
 
