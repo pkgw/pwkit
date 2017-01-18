@@ -10,7 +10,7 @@ This documentation has a lot of stubs.
 .. toctree::
    :maxdepth: 2
 
-   casa.rst
+   casa/index.rst
    ../pwkit/environments/ciao/index.rst
    ../pwkit/environments/heasoft.rst
    ../pwkit/environments/sas/index.rst

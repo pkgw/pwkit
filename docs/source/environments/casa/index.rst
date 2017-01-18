@@ -60,9 +60,9 @@ This package provides several kinds of functionality.
 .. toctree::
    :maxdepth: 2
 
-   ../pwkit/environments/casa/toplevel.rst
-   ../pwkit/environments/casa/dftphotom.rst
-   ../pwkit/environments/casa/scripting.rst
-   ../pwkit/environments/casa/spwglue.rst
-   ../pwkit/environments/casa/tasks.rst
-   ../pwkit/environments/casa/util.rst
+   ../../pwkit/environments/casa/toplevel.rst
+   ../../pwkit/environments/casa/dftphotom.rst
+   ../../pwkit/environments/casa/scripting.rst
+   ../../pwkit/environments/casa/spwglue.rst
+   ../../pwkit/environments/casa/tasks.rst
+   ../../pwkit/environments/casa/util.rst
