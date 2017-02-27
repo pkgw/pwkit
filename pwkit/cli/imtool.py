@@ -40,7 +40,10 @@ class BlinkCommand (multitool.Command):
     more_help = """
 -f  - Show the 2D FFT of the images
 
-WCS support isn't fantastic and sometimes causes crashes."""
+WCS support isn't fantastic and sometimes causes crashes.
+
+If an input image has multiple planes, they will be showed separately.
+"""
 
     def _load (self, path, fft, maxnorm):
         try:
@@ -48,27 +51,30 @@ WCS support isn't fantastic and sometimes causes crashes."""
         except Exception as e:
             die ('can\'t open path “%s”: %s', path, e)
 
-        try:
-            img = img.simple ()
-        except Exception as e:
-            print ('blink: can\'t convert “%s” to simple 2D sky image; taking '
-                   'first plane' % path, file=sys.stderr)
-            data = img.read (flip=True)[tuple (np.zeros (img.shape.size - 2, dtype=np.int))]
-            toworld = None
-        else:
-            data = img.read (flip=True)
-            toworld = img.toworld
+        def getplanes():
+            try:
+                simg = img.simple ()
+            except Exception as e:
+                # Multi-dimensional image -- iterate over outer planes
+                fulldata = img.read(flip=True)
 
-        if fft:
-            from numpy.fft import ifftshift, fft2, fftshift
-            data = np.abs (ifftshift (fft2 (fftshift (data.filled (0)))))
-            data = np.ma.MaskedArray (data)
-            toworld = None
+                for index in np.ndindex(*img.shape[:-2]):
+                    yield fulldata[index], None, ' ' + repr(index)
+            else:
+                yield simg.read (flip=True), img.toworld, ''
 
-        if maxnorm:
-            data /= np.ma.max (data)
+        for data, toworld, desc in getplanes():
+            if fft:
+                from numpy.fft import ifftshift, fft2, fftshift
+                data = np.abs (ifftshift (fft2 (fftshift (data.filled (0)))))
+                data = np.ma.MaskedArray (data)
+                toworld = None
 
-        return data, toworld
+            if maxnorm:
+                data /= np.ma.max (data)
+
+            yield data, toworld, desc
+
 
     def invoke (self, args, **kwargs):
         fft = pop_option ('f', args)
@@ -77,11 +83,13 @@ WCS support isn't fantastic and sometimes causes crashes."""
 
         images = []
         toworlds = []
+        names = []
 
         for path in args:
-            image, toworld = self._load (path, fft, maxnorm)
-            images.append (image)
-            toworlds.append (toworld)
+            for image, toworld, desc in self._load (path, fft, maxnorm):
+                images.append (image)
+                toworlds.append (toworld)
+                names.append(path + desc)
 
         if not len (images):
             return
@@ -109,7 +117,7 @@ WCS support isn't fantastic and sometimes causes crashes."""
         for im in images:
             im.mask = jointmask
 
-        ndshow.cycle (images, args, toworlds=toworlds, yflip=True)
+        ndshow.cycle (images, names, toworlds=toworlds, yflip=True)
 
 
 class FitsrcCommand (multitool.ArgparsingCommand):
