@@ -164,6 +164,8 @@ class FitsrcCommand (multitool.ArgparsingCommand):
             def report_func (key, fmt, value):
                 print (key, '=', fmt % value, sep='', file=dest)
         elif args.format == 'yaml':
+            from collections import OrderedDict
+
             try:
                 from ruamel import yaml as ruamel_yaml
             except ImportError:
@@ -176,13 +178,13 @@ class FitsrcCommand (multitool.ArgparsingCommand):
                     toplevel = ruamel_yaml.load (f, ruamel_yaml.RoundTripLoader)
 
             if toplevel is None:
-                toplevel = {}
+                toplevel = OrderedDict()
 
             dest_section = toplevel
 
             if args.section is not None:
                 for piece in args.section.split ('.'):
-                    dest_section = dest_section.setdefault (piece, {})
+                    dest_section = dest_section.setdefault (piece, OrderedDict())
 
             dest_section.clear ()
 
@@ -345,6 +347,7 @@ class InfoCommand (multitool.ArgparsingCommand):
 
 
     def _invoke_yaml_format (self, args):
+        from collections import OrderedDict
         from ..astutil import fmtdeglat, fmthours, R2A, R2D
 
         if len (args.images) > 1:
@@ -367,13 +370,16 @@ class InfoCommand (multitool.ArgparsingCommand):
                 toplevel = ruamel_yaml.load (f, ruamel_yaml.RoundTripLoader)
 
         if toplevel is None:
-            toplevel = {}
+            toplevel = OrderedDict()
 
         dest_section = toplevel
 
         if args.section is not None:
             for piece in args.section.split ('.'):
-                dest_section = dest_section.setdefault (piece, {})
+                dest_section = dest_section.setdefault (piece, OrderedDict())
+
+        def okeys(**kwargs):
+            return OrderedDict(sorted(kwargs.items(), key=lambda t: t[0]))
 
         dest_section.clear ()
         dest_section['kind'] = im.__class__.__name__
@@ -394,18 +400,18 @@ class InfoCommand (multitool.ArgparsingCommand):
             loncell = (w2[lonax] - w1[lonax]) / delta * np.cos (w2[latax])
 
         if im.pclat is not None:
-            dest_section['center'] = {
-                'kind': 'pointing',
-                'lat': fmtdeglat (im.pclat),
-                'lon': fmthours (im.pclon),
-            }
+            dest_section['center'] = okeys(
+                kind = 'pointing',
+                lat = fmtdeglat (im.pclat),
+                lon = fmthours (im.pclon),
+            )
         elif im.toworld is not None:
             w = im.toworld (0.5 * (np.asfarray (im.shape) - 1))
-            dest_section['center'] = {
-                'kind': 'lattice',
-                'lat': fmtdeglat (w[latax]),
-                'lon': fmthours (w[lonax]),
-            }
+            dest_section['center'] = okeys(
+                kind = 'lattice',
+                lat = fmtdeglat (w[latax]),
+                lon = fmthours (w[lonax]),
+            )
 
         if im.shape is not None:
             dest_section['shape'] = [x.item () for x in im.shape]
@@ -424,17 +430,17 @@ class InfoCommand (multitool.ArgparsingCommand):
             dest_section['mjd'] = im.mjd
 
         if latcell is not None:
-            dest_section['ctrcell'] = {
-                'lat': latcell.item (),
-                'lon': loncell.item (),
-            }
+            dest_section['ctrcell'] = okeys(
+                lat = latcell.item (),
+                lon = loncell.item (),
+            )
 
         if im.bmaj is not None:
-            dest_section['beam'] = {
-                'major': im.bmaj,
-                'minor': im.bmin,
-                'posang': im.bpa,
-            }
+            dest_section['beam'] = okeys(
+                major = im.bmaj,
+                minor = im.bmin,
+                posang = im.bpa,
+            )
 
             if latcell is not None:
                 bmrad2 = 2 * np.pi * im.bmaj * im.bmin / (8 * np.log (2))
