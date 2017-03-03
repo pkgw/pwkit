@@ -4,4 +4,4 @@ numpy
 pandas
 pathlib
 six
-sphinx
+sphinx>=1.4.3
