@@ -144,7 +144,7 @@ def merge_bibtex_with_aux (auxpath, mainpath, extradir, parse=get_bibtex_dict, a
     with auxpath.open ('rt') as aux:
         citednames = sorted (cited_names_from_aux_file (aux))
 
-    with mainpath.open ('rt') as main:
+    with mainpath.try_open (mode='rt', null_if_noexist=True) as main:
         maindict = parse (main)
 
     def gen_extra_dicts ():
@@ -312,6 +312,22 @@ def bib_export (style, auxpath, bibpath, no_tool_ok=False, quiet=False, ignore_m
                  ' '.join (args), bibpath, -e.returncode)
 
 
+def just_smart_bibtools(bib_style, aux):
+    """Tectonic has taken over most of the features that this tool used to provide,
+    but here's a hack to keep my smart .bib file generation working.
+
+    """
+    assert aux.endswith('.aux')
+    bib = aux[:-4] + '.bib'
+
+    extradir = Path ('.bibtex')
+    extradir.ensure_dir (parents=True)
+
+    bib_export (bib_style, aux, extradir / 'ZZ_bibtools.bib',
+                no_tool_ok=True, quiet=True, ignore_missing=True)
+    merge_bibtex_with_aux (aux, bib, extradir)
+
+
 def commandline (argv=None):
     if argv is None:
         argv = sys.argv
@@ -326,6 +342,15 @@ def commandline (argv=None):
     makefile_dest = None
     engine_args = default_args
     engine = 'pdflatex'
+
+    # Hooray hack
+
+    if argv[1] == '--just-smart-bibtools':
+        assert len(argv) == 4
+        bib_style = argv[2]
+        auxpath = argv[3]
+        just_smart_bibtools(bib_style, auxpath)
+        return
 
     # I should probably start using a real arg parser.
 
