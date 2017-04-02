@@ -11,7 +11,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 __all__ = str ('''np pi twopi halfpi R2A A2R R2D D2R R2H H2R F2S S2F J2000 angcen orientcen
                   fmthours fmtdeglon fmtdeglat fmtradec parsehours parsedeglat
                   parsedeglon sphdist sphbear sphofs parang gaussian_convolve
-                  gaussian_deconvolve AstrometryInfo app2abs abs2app''').split ()
+                  gaussian_deconvolve load_skyfield_data AstrometryInfo app2abs abs2app''').split ()
 
 import six
 from six.moves import range
@@ -714,6 +714,34 @@ def gaussian_deconvolve (smaj, smin, spa, bmaj, bmin, bpa):
 # uncertainties* at a given date through Monte Carlo simulations with
 # skyfield.
 
+
+def load_skyfield_data():
+    """Load data files used in Skyfield. This will download files from the
+    internet if they haven't been downloaded before.
+
+    Skyfield downloads files to the current directory by default, which is not
+    ideal. Here we abuse astropy and use its cache directory to cache the data
+    files per-user. If we start downloading files in other places in pwkit we
+    should maybe make this system more generic. And the dep on astropy is not
+    at all necessary.
+
+    Skyfield will print out a progress bar as it downloads things.
+
+    Returns ``(planets, ts)``, the standard Skyfield ephemeris and timescale
+    data files.
+
+    """
+    import os.path
+    from astropy.config import paths
+    from skyfield.api import Loader
+
+    cache_dir = os.path.join(paths.get_cache_dir(), 'pwkit')
+    loader = Loader(cache_dir)
+    planets = loader('de421.bsp')
+    ts = loader.timescale()
+    return planets, ts
+
+
 _vizurl = 'http://vizier.u-strasbg.fr/viz-bin/asu-tsv'
 
 def get_2mass_epoch (tmra, tmdec, debug=False):
@@ -1000,14 +1028,13 @@ class AstrometryInfo (object):
 
         """
         import sys
-        from skyfield.api import load, Star
+        from skyfield.api import Star
         from . import ellipses
 
         self.verify (complain=complain)
 
-        planets = load('de421.bsp') # downloads a big file if not cached
+        planets, ts = load_skyfield_data() # might download stuff from the internet
         earth = planets['earth']
-        ts = load.timescale() # downloads small files
         t = ts.tdb(jd = mjd + 2400000.5)
 
         # "Best" position.

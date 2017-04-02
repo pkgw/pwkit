@@ -207,9 +207,11 @@ calculations that are nonetheless fairly accurate.
 A few helper functions may also be of interest:
 
 .. autosummary::
+   load_skyfield_data
    get_2mass_epoch
    get_simbad_astrometry_info
 
+.. autofunction:: load_skyfield_data
 .. autofunction:: get_2mass_epoch
 .. autofunction:: get_simbad_astrometry_info
 
