@@ -189,17 +189,28 @@ class Ephem (multitool.Command):
             raise multitool.UsageError ('ephem expected exactly 2 arguments')
 
         try:
-            import precastro
+            import skyfield
         except ImportError:
-            die ('need the "precastro" module')
+            die ('need the "skyfield" module')
+
+        # TODO: might want to make it possible to use a different ephemeris
+        # file, if the hardcoded standard doesn't contain the ones we want.
+
+        from ..astutil import load_skyfield_data
+        planets, ts = load_skyfield_data()
 
         try:
-            obj = precastro.EphemObject (args[0])
+            earth = planets['earth']
+            obj = planets[args[0]]
         except Exception as e:
             die (e)
 
         mjd = fparse (args[1])
-        print (fmtradec (*obj.astropos (mjd + 2400000.5)))
+        t = ts.tdb(jd = mjd + 2400000.5)
+
+        ra, dec, _ = earth.at(t).observe(obj).radec()
+
+        print(fmtradec (ra.radians, dec.radians))
 
 
 class Flux2lum (multitool.Command):
@@ -257,7 +268,7 @@ class Sastrom (multitool.Command):
         verbose = pop_option ('v', args)
 
         if len (args) != 2:
-            raise multitool.UsageError ('simbadastrom expected 2 arguments')
+            raise multitool.UsageError ('sastrom expected 2 arguments')
 
         ident = args[0]
         mjd = float (args[1])
@@ -273,26 +284,21 @@ class Sastrom (multitool.Command):
 class Sesame (multitool.Command):
     name = 'sesame'
     argspec = '{source name}'
-    summary = 'Print source information from Sesame.'
+    summary = 'Print source information from Sesame/Simbad.'
 
     def invoke (self, args, **kwargs):
         if not len (args):
             raise multitool.UsageError ('sesame expected an argument')
 
-        try:
-            import precastro
-        except ImportError:
-            die ('need the "precastro" module')
-
         src = ' '.join (args)
-        obj = precastro.SiderealObject ()
+        from ..astutil import AstrometryInfo
 
         try:
-            obj.fromsesame (src)
+            obj = AstrometryInfo(simbadident = src)
         except Exception as e:
             die ('couldn\'t look up "%s": %s (%s)', src, e, e.__class__.__name__)
 
-        print (obj.describe ())
+        print(obj)
 
 
 class Senscale (multitool.Command):
@@ -358,18 +364,15 @@ class Ssep (multitool.Command):
         if len (args) != 2:
             raise multitool.UsageError ('ssep expected 2 arguments')
 
-        try:
-            import precastro
-        except ImportError:
-            die ('need the "precastro" module')
+        from ..astutil import AstrometryInfo
 
         try:
-            obj1 = precastro.SiderealObject ().fromsesame (args[0])
+            obj1 = AstrometryInfo(simbadident=args[0])
         except Exception as e:
             die ('couldn\'t look up "%s": %s (%s)', args[0], e, e.__class__.__name__)
 
         try:
-            obj2 = precastro.SiderealObject ().fromsesame (args[1])
+            obj2 = AstrometryInfo(simbadident=args[1])
         except Exception as e:
             die ('couldn\'t look up "%s": %s (%s)', args[1], e, e.__class__.__name__)
 
