@@ -544,8 +544,7 @@ def sphofs (lat1, lon1, r, pa, tol=1e-2, rmax=None):
 
 
 # Spherical trig tools that are more astronomy-specific. Note that precise
-# positional calculations should generally use precastro and (indirectly)
-# NOVAS.
+# positional calculations should generally use skyfield.
 
 def parang (hourangle, declination, latitude):
     """Calculate the parallactic angle of a sky position.
@@ -712,8 +711,8 @@ def gaussian_deconvolve (smaj, smin, spa, bmaj, bmin, bpa):
 
 
 # Given astrometric properties of a source, predict its position *with
-# uncertainties* at a given date through Monte Carlo simulations involving
-# precastro.
+# uncertainties* at a given date through Monte Carlo simulations with
+# skyfield.
 
 _vizurl = 'http://vizier.u-strasbg.fr/viz-bin/asu-tsv'
 
@@ -735,8 +734,12 @@ def get_2mass_epoch (tmra, tmdec, debug=False):
     be returned.
 
     """
-    from urllib2 import urlopen
-    postdata = '''-mime=csv
+    import codecs
+    try:
+        from urllib.request import urlopen
+    except ImportError:
+        from urllib2 import urlopen
+    postdata = b'''-mime=csv
 -source=2MASS
 -out=_q,JD
 -c=%.6f %.6f
@@ -744,7 +747,7 @@ def get_2mass_epoch (tmra, tmdec, debug=False):
 
     jd = None
 
-    for line in urlopen (_vizurl, postdata):
+    for line in codecs.getreader('utf-8')(urlopen (_vizurl, postdata)):
         line = line.strip ()
         if debug:
             print_ ('D: 2M >>', line)
@@ -791,8 +794,15 @@ def get_simbad_astrometry_info (ident, items=_simbaditems, debug=False):
     result returned for each requested item.
 
     """
-    from urllib import quote
-    from urllib2 import urlopen
+    import codecs
+    try:
+        from urllib.parse import quote
+    except ImportError:
+        from urllib import quote
+    try:
+        from urllib.request import urlopen
+    except ImportError:
+        from urllib2 import urlopen
 
     s = '\\n'.join ('%s %%%s' % (i, i) for i in items)
     s = '''output console=off script=off
@@ -802,7 +812,7 @@ query id %s''' % (s, ident)
     results = {}
     errtext = None
 
-    for line in urlopen (url):
+    for line in codecs.getreader('utf-8')(urlopen (url)):
         line = line.strip ()
         if debug:
             print_ ('D: SA >>', line)
@@ -986,36 +996,46 @@ class AstrometryInfo (object):
         The uncertainty ellipse parameters are sigmas, not FWHM. These may be
         converted with the :data:`S2F` constant.
 
-        This function relies on the external :mod:`precastro` module.
+        This function relies on the external :mod:`skyfield` package.
 
         """
-        import precastro, sys
+        import sys
+        from skyfield.api import load, Star
         from . import ellipses
-        o = precastro.SiderealObject ()
+
         self.verify (complain=complain)
+
+        planets = load('de421.bsp') # downloads a big file if not cached
+        earth = planets['earth']
+        ts = load.timescale() # downloads small files
+        t = ts.tdb(jd = mjd + 2400000.5)
 
         # "Best" position.
 
-        o.ra = self.ra
-        o.dec = self.dec
+        args = {
+            'ra_hours': self.ra * R2H,
+            'dec_degrees': self.dec * R2D,
+        }
 
-        if self.pos_epoch is not None:
-            o.promoepoch = self.pos_epoch + 2400000.5
-        else:
-            if complain:
-                print_ ('AstrometryInfo.predict(): assuming epoch of '
-                        'position is J2000.0', file=sys.stderr)
-            o.promoepoch = 2451545.0 # J2000.0
+        if self.pos_epoch is not None and self.pos_epoch != 51544.5:
+            print_ ('AstrometryInfo.predict(): ignoring epoch of position!', file=sys.stderr)
+            ### o.promoepoch = self.pos_epoch + 2400000.5
+        ###else:
+        ###    if complain:
+        ###        print_ ('AstrometryInfo.predict(): assuming epoch of position is J2000.0', file=sys.stderr)
+        ###    o.promoepoch = 2451545.0 # J2000.0
 
         if self.promo_ra is not None:
-            o.promora = self.promo_ra
-            o.promodec = self.promo_dec
+            args['ra_mas_per_year'] = self.promo_ra
+            args['dec_mas_per_year'] = self.promo_dec
         if self.parallax is not None:
-            o.parallax = self.parallax
+            args['parallax_mas'] = self.parallax
         if self.vradial is not None:
-            o.vradial = self.vradial
+            args['radial_km_per_s'] = self.vradial
 
-        bestra, bestdec = o.astropos (mjd + 2400000.5)
+        bestra, bestdec, _ = earth.at(t).observe(Star(**args)).radec()
+        bestra = bestra.radians
+        bestdec = bestdec.radians
 
         # Monte Carlo to get an uncertainty. As always, astronomy position
         # angle convention requires that we treat declination as X and RA as
@@ -1061,15 +1081,14 @@ class AstrometryInfo (object):
         results = np.empty ((n, 2))
 
         for i in range (n):
-            o.ra = ras[i]
-            o.dec = decs[i]
-            o.promora = pmras[i]
-            o.promodec = pmdecs[i]
-            o.parallax = parallaxes[i]
-            o.vradial = vradials[i]
-
-            ara, adec = o.astropos (mjd + 2400000.5)
-            results[i] = adec, ara
+            args['ra_hours'] = ras[i] * R2H
+            args['dec_degrees'] = decs[i] * R2D
+            args['ra_mas_per_year'] = pmras[i]
+            args['dec_mas_per_year'] = pmdecs[i]
+            args['parallax_mas'] = parallaxes[i]
+            args['radial_km_per_s'] = vradials[i]
+            ara, adec, _ = earth.at(t).observe(Star(**args)).radec()
+            results[i] = adec.radians, ara.radians
 
         maj, min, pa = ellipses.bivell (*ellipses.databiv (results))
 
@@ -1228,8 +1247,8 @@ class AstrometryInfo (object):
             self.pos_u_pa = 0
 
         self.pos_epoch = 55400. # hardcoded in the catalog
-        self.promo_ra = row['pmRA'] * 1. # need to floatify for precastro
-        self.promo_dec = row['pmDE'] * 1.
+        self.promo_ra = row['pmRA']
+        self.promo_dec = row['pmDE']
 
         if row['e_pmRA'] > row['e_pmDE']:
             self.promo_u_maj = row['e_pmRA'] * 1.
