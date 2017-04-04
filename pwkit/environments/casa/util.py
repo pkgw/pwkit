@@ -177,7 +177,12 @@ def logger (filter='WARN'):
             os.chdir (tempdir)
             sink = tools.logsink ()
             sink.setlogfile (sanitize_unicode (os.devnull))
-            os.unlink ('casapy.log')
+            try:
+                os.unlink ('casapy.log')
+            except OSError as e:
+                if e.errno != 2:
+                    raise
+                # otherwise, it's a ENOENT, in which case, no worries.
         finally:
             os.chdir (cwd)
     finally:
