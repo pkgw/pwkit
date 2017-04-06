@@ -2,6 +2,8 @@
    This file licensed under the Creative Commons Attribution-ShareAlike 3.0
    Unported License (CC-BY-SA).
 
+.. _casa-tasks:
+
 Programmatic access to CASA tasks (:mod:`pwkit.environments.casa.tasks`)
 ========================================================================
 
@@ -79,6 +81,11 @@ The following tasks are provided by the associated command line program,
 
 Tasks
 -----
+
+The documentation scheme for the CASA task wrappers is a work in progress. For
+now, the best way to get the best documentation is from the command-line
+interface. Run ``casatask taskname --help``, replacing ``taskname`` with the
+name of the task of interest.
 
 .. _task-applycal:
 

@@ -1,40 +1,11 @@
 # -*- mode: python; coding: utf-8 -*-
-# Copyright 2015 Peter Williams <peter@newton.cx> and collaborators.
+# Copyright 2015-2017 Peter Williams <peter@newton.cx> and collaborators.
 # Licensed under the MIT License.
 
-"""pwkit.environments.casa.util - core utilities for the CASA Python libraries
-
-Variables are:
-
-INVERSE_C_SM
-  Inverse of C in s/m (useful for wavelength to time conversion)
-INVERSE_C_NSM
-  Inverse of C in ns/m (ditto).
-pol_names
-  Dict mapping CASA polarization codes to their string names.
-pol_to_miriad
-  Dict mapping CASA polarization codes to their MIRIAD equivalents.
-msselect_keys
-  A set of the keys supported by the CASA ms-select subsystem.
-tools
-  An object for constructing CASA tools: ``ia = tools.image ()``.
-
-Functions are:
-
-datadir
-  Return the CASA data directory.
-logger
-  Create a CASA logger that prints to stderr without leaving a
-  casapy.log file around.
-forkandlog
-  Run a function in a subprocess, returning the text it outputs
-  via the CASA logging subsystem.
-sanitize_unicode
-  Encode Unicode strings as bytes for interfacing with casac
-  functions.
+"""This module provides low-level tools and utilities for interacting with the
+``casac`` module provided by CASA.
 
 """
-
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 __all__ = str ('''INVERSE_C_MS INVERSE_C_MNS pol_names pol_to_miriad msselect_keys
@@ -89,17 +60,33 @@ msselect_keys = frozenset ('array baseline field observation '
 
 
 def sanitize_unicode (item):
-    """The Python bindings to CASA tasks expect to receive all string values
-    as binary data (Python 2.X "str" or 3.X "bytes") and not Unicode (Python
-    2.X "unicode" or 3.X "str"). To prep for Python 3 (not that CASA will ever
-    be compatible with it ...) I try to use the unicode_literals everywhere,
-    and other Python modules are getting better about using Unicode
-    consistently, so this causes problems. This helper converts Unicode into
-    UTF-8 encoded bytes, handling the common data structures that are passed
-    to CASA functions.
+    """Safely pass string values to the CASA tools.
 
-    I usually import this as just 'b' and write tool.method (b(arg)), in
-    analogy with the b'' byte string syntax.
+    item
+      A value to be passed to a CASA tool.
+
+    In Python 2, the bindings to CASA tasks expect to receive all string values
+    as binary data (:class:`str`) and not Unicode. But :mod:`pwkit` often uses
+    the ``from __future__ import unicode_literals`` statement to prepare for
+    Python 3 compatibility, and other Python modules are getting better about
+    using Unicode consistently, so more and more module code ends up using
+    Unicode strings in cases where they might get exposed to CASA. Doing so
+    will lead to errors.
+
+    This helper function converts Unicode into UTF-8 encoded bytes for
+    arguments that you might pass to a CASA tool. It will leave non-strings
+    unchanged and recursively transform collections, so you can safely use it
+    just about anywhere.
+
+    I usually import this as just ``b`` and write ``tool.method (b(arg))``, in
+    analogy with the ``b''`` byte string syntax. This leads to code such as::
+
+      from pwkit.environments.casa.util import tools, sanitize_unicode as b
+
+      tb = tools.table()
+      path = u'data.ms'
+      tb.open(path) # => raises exception
+      tb.open(b(path)) # => works
 
     """
     if isinstance (item, text_type):
@@ -119,6 +106,24 @@ def sanitize_unicode (item):
 # Finding the data directory
 
 def datadir (*subdirs):
+    """Get a path within the CASA data directory.
+
+    subdirs
+      Extra elements to append to the returned path.
+
+    This function locates the directory where CASA resource data files (tables
+    of time offsets, calibrator models, etc.) are stored. If called with no
+    arguments, it simply returns that path. If arguments are provided, they are
+    appended to the returned path using :func:`os.path.join`, making it easy to
+    construct the names of specific data files. For instance::
+
+      from pwkit.environments.casa import util
+
+      cal_image_path = util.datadir('nrao', 'VLA', 'CalModels', '3C286_C.im')
+      tb = util.tools.image()
+      tb.open(cal_image_path)
+
+    """
     import os.path
     data = None
 
@@ -165,6 +170,20 @@ def _rmtree_error (func, path, excinfo):
 
 
 def logger (filter='WARN'):
+    """Set up CASA to write log messages to standard output.
+
+    filter
+      The log level filter: less urgent messages will not be shown. Valid values
+      are strings: "DEBUG1", "INFO5", ... "INFO1", "INFO", "WARN", "SEVERE".
+
+    This function creates and returns a CASA ”log sink” object that is
+    configured to write to standard output. The default CASA implementation
+    would *always* create a file named ``casapy.log`` in the current
+    directory; this function safely prevents such a file from being left
+    around. This is particularly important if you don’t have write permissions
+    to the current directory.
+
+    """
     import os, shutil, tempfile
 
     cwd = os.getcwd ()
@@ -196,6 +215,42 @@ def logger (filter='WARN'):
 
 
 def forkandlog (function, filter='INFO5', debug=False):
+    """Fork a child process and read its CASA log output.
+
+    function
+      A function to run in the child process
+    filter
+      The CASA log level filter to apply in the child process: less urgent
+      messages will not be shown. Valid values are strings: "DEBUG1", "INFO5",
+      ... "INFO1", "INFO", "WARN", "SEVERE".
+    debug
+      If true, the standard output and error of the child process are *not*
+      redirected to /dev/null.
+
+    Some CASA tools produce important results that are *only* provided via log
+    messages. This is a problem for automation, since there’s no way for
+    Python code to intercept those log messages and extract the results of
+    interest. This function provides a framework for working around this
+    limitation: by forking a child process and sending its log output to a
+    pipe, the parent process can capture the log messages.
+
+    This function is a generator. It yields lines from the child process’ CASA
+    log output.
+
+    Because the child process is a fork of the parent, it inherits a complete
+    clone of the parent’s state at the time of forking. That means that the
+    *function* argument you pass it can do just about anything you’d do in a
+    regular program.
+
+    The child process’ standard output and error streams are redirected to
+    ``/dev/null`` unless the *debug* argument is true. Note that the CASA log
+    output is redirected to a pipe that is neither of these streams. So, if
+    the function raises an unhandled Python exception, the Python traceback
+    will not pollute the CASA log output. But, by the same token, the calling
+    program will not be able to detect that the exception occurred except by
+    its impact on the expected log output.
+
+    """
     import sys, os
 
     readfd, writefd = os.pipe ()
