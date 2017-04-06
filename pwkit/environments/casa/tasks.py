@@ -772,7 +772,7 @@ def elplot (cfg):
     md = ms.metadata ()
     field_names = md.namesforfields ()
     obs = md.observatoryposition ()
-    me.doframe (obs)
+    me.doframe (b(obs))
     timetmpl = md.timerangeforobs (0)['begin']
 
     mjd0 = int (np.floor (md.timesforscan (scans[0]).min () / 86400))
@@ -795,8 +795,8 @@ def elplot (cfg):
 
         for i in xrange (mjds.size):
             timetmpl['m0']['value'] = mjds[i]
-            me.doframe (timetmpl)
-            els[i] = me.measure (fdir, b'AZEL')['m1']['value'] * 180 / np.pi
+            me.doframe (b(timetmpl))
+            els[i] = me.measure (b(fdir), b'AZEL')['m1']['value'] * 180 / np.pi
 
         dsn = field_dsns.get (field)
         kt = None
