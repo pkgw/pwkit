@@ -77,7 +77,7 @@ class Environment (object):
         # the program. But we're about to replace ourselves with the new
         # program, so no worries about mutating os.environ. If the exec fails
         # the mutation will remain, though.
-        os.environ[b'PATH'] = env['PATH']
+        os.environ['PATH'] = env['PATH']
         os.execvpe (argv[0], argv, env)
 
     def slurp (self, **kwargs):
@@ -166,7 +166,7 @@ class DefaultShellCommand (multitool.Command):
             raise multitool.UsageError ('shell expects no arguments')
 
         from tempfile import NamedTemporaryFile
-        with NamedTemporaryFile (delete=False) as f:
+        with NamedTemporaryFile (mode='wt', delete=False) as f:
             print ('''[ -e ~/.bashrc ] && source ~/.bashrc
 PS1="%s $PS1"
 rm %s''' % (envname, f.name), file=f)

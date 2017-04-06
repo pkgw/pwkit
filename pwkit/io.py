@@ -22,6 +22,11 @@ import six
 
 from . import PKError, text_type
 
+if six.PY2:
+    path_type = six.binary_type
+else:
+    path_type = six.text_type
+
 
 # Reading text.
 
@@ -278,8 +283,7 @@ class Path (_ParentPath):
         OSError will be raised if this path does not point to a symbolic link.
 
         """
-        from . import binary_type
-        return self.__class__ (os.readlink (binary_type (self)))
+        return self.__class__ (os.readlink (path_type (self)))
 
 
     def scandir (self):
@@ -303,8 +307,7 @@ class Path (_ParentPath):
         else:
             from scandir import scandir
 
-        from . import binary_type
-        return scandir (binary_type (self))
+        return scandir (path_type (self))
 
 
     # Filesystem modification

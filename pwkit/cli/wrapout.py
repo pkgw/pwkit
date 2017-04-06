@@ -55,56 +55,73 @@ wrapout will kill itself with the same signal.
 
 rfc3339_fmt = '%Y-%m-%dT%H:%M:%S%z'
 
-ansi_red = '\033[31m'
-ansi_cyan = '\033[36m'
-ansi_bold = '\033[1m'
-ansi_reset = '\033[m'
+ansi_red = b'\033[31m'
+ansi_cyan = b'\033[36m'
+ansi_bold = b'\033[1m'
+ansi_reset = b'\033[m'
 
 OUTKIND_STDOUT, OUTKIND_STDERR, OUTKIND_EXTRA = 0, 1, 2
 
 
+if hasattr(sys.stdout, 'buffer'):
+    binary_stdout = sys.stdout.buffer
+elif hasattr(sys.stdout, 'stream'): # when unicode_stdio() is invoked.
+    binary_stdout = sys.stdout.stream
+else:
+    binary_stdout = sys.stdout
+
+if hasattr(sys.stderr, 'buffer'):
+    binary_stderr = sys.stderr.buffer
+elif hasattr(sys.stderr, 'stream'): # when unicode_stdio() is invoked.
+    binary_stderr = sys.stderr.stream
+else:
+    binary_stderr = sys.stderr
+
+
 class Wrapper (object):
     # I like !! for errors and ** for info, but those are nigh-un-grep-able.
-    markers = [' -- ', ' EE ', ' II ']
+    markers = [b' -- ', b' EE ', b' II ']
     use_colors = False
     echo_stderr = False
     propagate_signals = False
     destination = None
     slurp_factory = None
 
-    _red = ''
-    _cyan = ''
-    _bold = ''
-    _reset = ''
-    _kind_prefixes = ['', '', '']
+    _red = b''
+    _cyan = b''
+    _bold = b''
+    _reset = b''
+    _kind_prefixes = [b'', b'', b'']
 
     def __init__ (self, destination=None):
         if destination is None:
-            self.destination = sys.stdout
+            self.destination = binary_stdout
         else:
             self.destination = destination
 
 
     def output (self, kind, line):
-        print (self._cyan,
-               't=%07d' % (time.time () - self._t0),
-               self._reset,
-               self._kind_prefixes[kind],
-               self.markers[kind],
-               line,
-               self._reset,
-               sep='', end='', file=self.destination)
+        self.destination.write(b''.join([
+            self._cyan,
+            b't=%07d' % (time.time () - self._t0),
+            self._reset,
+            self._kind_prefixes[kind],
+            self.markers[kind],
+            line,
+            self._reset,
+        ]))
         self.destination.flush ()
 
 
     def output_stderr (self, text):
-        print (self._red,
-               't=%07d' % (time.time () - self._t0),
-               self._reset,
-               ' ',
-               text,
-               sep='', end='', file=sys.stderr)
-        sys.stderr.flush ()
+        binary_stderr.write(b''.join([
+            self._red,
+            b't=%07d' % (time.time () - self._t0),
+            self._reset,
+            ' ',
+            text,
+        ]))
+        binary_stderr.flush ()
 
 
     def outpar (self, name, value):
@@ -187,23 +204,23 @@ class Wrapper (object):
                         # this should be terser and distinguishable from the
                         # stdout output.
                         if stderr_midline:
-                            sys.stderr.write (lines[0])
+                            binary_stderr.write (lines[0])
                         else:
                             self.output_stderr (lines[0])
 
                         for line in lines[1:-1]:
-                            sys.stderr.write (b'\n')
+                            binary_stderr.write (b'\n')
                             self.output_stderr (line)
 
                         if len (lines) == 1:
-                            sys.stderr.flush ()
+                            binary_stderr.flush ()
                             stderr_midline = True
                         elif not len (lines[-1]):
-                            sys.stderr.write (b'\n')
-                            sys.stderr.flush ()
+                            binary_stderr.write (b'\n')
+                            binary_stderr.flush ()
                             stderr_midline = False
                         else:
-                            sys.stderr.write (b'\n')
+                            binary_stderr.write (b'\n')
                             self.output_stderr (lines[-1])
                             stderr_midline = True
 
@@ -217,13 +234,13 @@ class Wrapper (object):
         if slurp.proc.returncode < 0:
             signum = -slurp.proc.returncode
             self.output (OUTKIND_STDERR,
-                         'process killed by signal %d\n' % signum)
+                         b'process killed by signal %d\n' % signum)
 
             if self.propagate_signals:
                 signal.signal (signum, signal.SIG_DFL)
                 os.kill (os.getpid (), signum) # sayonara
         elif slurp.proc.returncode != 0:
-            self.output (OUTKIND_STDERR, 'process exited with error code\n')
+            self.output (OUTKIND_STDERR, b'process exited with error code\n')
 
         return slurp.proc.returncode
 
@@ -276,7 +293,7 @@ def commandline (argv=None):
         subargv[0] = argv0
 
     if use_colors is None:
-        use_colors = sys.stdout.isatty ()
+        use_colors = binary_stdout.isatty ()
 
     wrapper = Wrapper ()
     wrapper.use_colors = use_colors

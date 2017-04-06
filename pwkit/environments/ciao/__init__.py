@@ -64,48 +64,48 @@ class CiaoEnvironment (Environment):
     def modify_environment (self, env):
         p = self._installpath
 
-        env[b'ASCDS_INSTALL'] = str (p)
-        env[b'ASCDS_CONTRIB'] = str (p / 'contrib')
-        env[b'ASCDS_BIN'] = str (p / 'bin')
-        env[b'ASCDS_LIB'] = str (p / 'lib')
-        env[b'ASCDS_IMAGER_PATH'] = str (p / 'ots' / 'bin')
-        env[b'ASCDS_WORK_PATH'] = str ('/tmp') # needed by at least specextract
-        env[b'CIAO_XPA'] = b'CIAO'
-        env[b'CIAO_PYTHON'] = b'CIAO'
-        env[b'CIAO_APP_PYTHON'] = b'CIAO'
-        env[b'CIAO_IPYTHON'] = b'CIAO'
-        env[b'CIAO_APP_IPYTHON'] = b'CIAO'
-        env[b'CIAO_PYTHON_EXE'] = str (p / 'ots' / 'bin' / 'python')
-        env[b'CIAO_SCRIPT_LANG'] = b'python'
-        env[b'XPA_METHOD'] = b'local'
-        env[b'CALDB'] = str (p / 'CALDB')
-        env[b'CALDBCONFIG'] = str (p / 'CALDB' / 'software' / 'tools' / 'caldb.config')
-        env[b'CALDBALIAS'] = str (p / 'CALDB' / 'software' / 'tools' / 'alias_config.fits')
-        env[b'ASCDS_CALIB'] = str (p / 'data')
-        env[b'ASCDS_CIAO'] = b'ciao'
+        env['ASCDS_INSTALL'] = str (p)
+        env['ASCDS_CONTRIB'] = str (p / 'contrib')
+        env['ASCDS_BIN'] = str (p / 'bin')
+        env['ASCDS_LIB'] = str (p / 'lib')
+        env['ASCDS_IMAGER_PATH'] = str (p / 'ots' / 'bin')
+        env['ASCDS_WORK_PATH'] = str ('/tmp') # needed by at least specextract
+        env['CIAO_XPA'] = b'CIAO'
+        env['CIAO_PYTHON'] = b'CIAO'
+        env['CIAO_APP_PYTHON'] = b'CIAO'
+        env['CIAO_IPYTHON'] = b'CIAO'
+        env['CIAO_APP_IPYTHON'] = b'CIAO'
+        env['CIAO_PYTHON_EXE'] = str (p / 'ots' / 'bin' / 'python')
+        env['CIAO_SCRIPT_LANG'] = b'python'
+        env['XPA_METHOD'] = b'local'
+        env['CALDB'] = str (p / 'CALDB')
+        env['CALDBCONFIG'] = str (p / 'CALDB' / 'software' / 'tools' / 'caldb.config')
+        env['CALDBALIAS'] = str (p / 'CALDB' / 'software' / 'tools' / 'alias_config.fits')
+        env['ASCDS_CALIB'] = str (p / 'data')
+        env['ASCDS_CIAO'] = b'ciao'
 
         # Obsvis:
-        env[b'OBSVIS_PKG_PATH'] = str (p / 'lib' / 'tcltk' / 'packages' / 'obsvis')
+        env['OBSVIS_PKG_PATH'] = str (p / 'lib' / 'tcltk' / 'packages' / 'obsvis')
 
         # Sherpa:
-        env[b'CIAO_HEADAS'] = str (p / 'ots' / 'spectral')
-        env[b'XSPEC_HELP_FILE'] = str (p / 'doc' / 'xspec.hlp')
+        env['CIAO_HEADAS'] = str (p / 'ots' / 'spectral')
+        env['XSPEC_HELP_FILE'] = str (p / 'doc' / 'xspec.hlp')
 
         # Proposal tools:
-        env[b'DATA_ROOT'] = str (p / 'config')
-        env[b'JCMLIBDATA'] = str (p / 'config' / 'jcm_data')
-        env[b'ASCDS_PROP_NHBASE'] = env[b'JCMLIBDATA']
-        env[b'JCMPATH'] = env[b'JCMLIBDATA']
-        env[b'ASCDS_PROP_DATE_DATA'] = env[b'JCMLIBDATA']
-        env[b'ASCDS_PROP_PREC_DATA'] = env[b'JCMLIBDATA']
+        env['DATA_ROOT'] = str (p / 'config')
+        env['JCMLIBDATA'] = str (p / 'config' / 'jcm_data')
+        env['ASCDS_PROP_NHBASE'] = env['JCMLIBDATA']
+        env['JCMPATH'] = env['JCMLIBDATA']
+        env['ASCDS_PROP_DATE_DATA'] = env['JCMLIBDATA']
+        env['ASCDS_PROP_PREC_DATA'] = env['JCMLIBDATA']
 
-        env[b'PFILES'] = '%s;%s:%s' % (self._parampath,
-                                       p / 'contrib' / 'param',
-                                       p / 'param')
+        env['PFILES'] = '%s;%s:%s' % (self._parampath,
+                                      p / 'contrib' / 'param',
+                                      p / 'param')
 
-        prepend_environ_path (env, b'PATH', str (p / 'contrib' / 'bin'))
-        prepend_environ_path (env, b'PATH', str (p / 'ots' / 'bin'))
-        prepend_environ_path (env, b'PATH', str (p / 'bin'))
+        prepend_environ_path (env, 'PATH', str (p / 'contrib' / 'bin'))
+        prepend_environ_path (env, 'PATH', str (p / 'ots' / 'bin'))
+        prepend_environ_path (env, 'PATH', str (p / 'bin'))
 
         return env
 
