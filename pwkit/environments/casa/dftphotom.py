@@ -262,7 +262,7 @@ def dftphotom (cfg):
                 # close to the fundamental data, but TT is possible and should
                 # be perfectly precise for standard applications.
                 mq = me.epoch (b'utc', b({'value': time / 86400., 'unit': 'd'}))
-                mjdtt = me.measure (mq, b'tt')['m0']['value']
+                mjdtt = me.measure (b(mq), b'tt')['m0']['value']
 
                 tdata = tbins.get (mjdtt, None)
                 if tdata is None:
