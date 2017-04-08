@@ -193,7 +193,7 @@ def _spwproc_match (spwtb, colname, inspws, outdata):
     theval = None
 
     for inspw in inspws:
-        v = spwtb.getcell (b(colname), inspw)
+        v = b(spwtb.getcell (b(colname), inspw))
         if theval is None:
             theval = v
         elif theval != v:
@@ -203,7 +203,7 @@ def _spwproc_match (spwtb, colname, inspws, outdata):
 
 
 def _spwproc_first (spwtb, colname, inspws, outdata):
-    outdata[colname] = spwtb.getcell (b(colname), inspws[0])
+    outdata[colname] = b(spwtb.getcell (b(colname), inspws[0]))
 
 
 def _spwproc_scsum (spwtb, colname, inspws, outdata):
@@ -216,7 +216,7 @@ def _spwproc_scsum (spwtb, colname, inspws, outdata):
 def _spwproc_concat (spwtb, colname, inspws, outdata):
     clist = []
     for inspw in inspws:
-        clist += list (spwtb.getcell (b(colname), inspw))
+        clist += b(list (spwtb.getcell (b(colname), inspw)))
     outdata[colname] = clist
 
 
@@ -248,11 +248,14 @@ _vis_pconcat_dtypes = {'FLAG': np.bool, 'DATA': np.complex128, 'MODEL_DATA': np.
                        'CORRECTED_DATA': np.complex128, 'WEIGHT_SPECTRUM': np.float64}
 
 _np_converters = {
-    np.bool_: bool,
-    np.int32: int,
-    np.float64: float,
+    #np.bool_: bool,
+    #np.int32: int,
+    #np.float64: float,
     np.ndarray: lambda x: x,
-    int: int,
+    np.bool_: np.int32,
+    np.int32: lambda x: x,
+    np.float64: lambda x: x,
+    int: np.int32,
 }
 
 def spwglue (cfg):
@@ -356,7 +359,7 @@ def _spwglue (cfg, prog, thisout, thisfield, nfields, fieldidx):
     ddspws = np.asarray (tb.getcol (b'SPECTRAL_WINDOW_ID'))
     tb.close ()
     indd2outdd = {}
-    ddout = [{'SPECTRAL_WINDOW_ID': i} for i in range (nout)]
+    ddout = [{'SPECTRAL_WINDOW_ID': np.int32(i)} for i in range (nout)]
 
     for i in range (ddspws.size):
         inspw = ddspws[i]
@@ -369,13 +372,13 @@ def _spwglue (cfg, prog, thisout, thisfield, nfields, fieldidx):
 
         fr = ddout[outspw].get ('FLAG_ROW')
         if fr is None:
-            ddout[outspw]['FLAG_ROW'] = int (ddflagrows[i]) # hack: have to convert bool->int for some reason
+            ddout[outspw]['FLAG_ROW'] = np.int32(ddflagrows[i]) # hack: have to convert bool->int for some reason
         elif ddflagrows[i] != fr:
             die ('dd %d glued into output spw %d has different FLAG_ROW ident', i, outspw)
 
         pid = ddout[outspw].get ('POLARIZATION_ID')
         if pid is None:
-            ddout[outspw]['POLARIZATION_ID'] = int (ddpids[i]) # np.int32 -> int
+            ddout[outspw]['POLARIZATION_ID'] = ddpids[i]
         elif ddpids[i] != pid:
             die ('dd %d glued into output spw %d has different POLARIZATION ident', i, outspw)
 
@@ -391,12 +394,12 @@ def _spwglue (cfg, prog, thisout, thisfield, nfields, fieldidx):
     srcout = []
 
     for i in range (tb.nrows ()):
-        data = dict ((c, tb.getcell (b(c), i)) for c in srccols)
+        data = dict ((c, b(tb.getcell (b(c), i))) for c in srccols)
         m = inspw2outspw.get (data['SPECTRAL_WINDOW_ID'])
         if m is None:
             continue # this spw is being dropped
 
-        data['SPECTRAL_WINDOW_ID'] = m[0]
+        data['SPECTRAL_WINDOW_ID'] = np.int32(m[0])
         key = (data['SOURCE_ID'], data['TIME'], data['INTERVAL'], m[0])
 
         if key in srckeys:
