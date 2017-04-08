@@ -196,10 +196,14 @@ class Events (GTIData):
       Event time as MJD-MJD0 (added in software).
 
     """
+    exposure = None
+    """The total effective exposure time, in seconds."""
+
     def _process_main (self, hdulist, header):
         super (Events, self)._process_main (hdulist, header)
 
         hdu = hdulist['EVENTS']
+        self.exposure = hdu.header.get('exposure')
         self.events = fits_recarray_to_data_frame (hdu.data)
 
         if self.t0 is None:
@@ -229,7 +233,7 @@ class Events (GTIData):
         if ccd_id is None:
             if len (self.gti) != 1:
                 raise Exception ('must specify ccd_id')
-            ccd_id = self.gti.keys ()[0]
+            ccd_id = list(self.gti.keys())[0]
 
         kev = self.events['energy'] * 1e-3
 
