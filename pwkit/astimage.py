@@ -1372,7 +1372,7 @@ def open (path, mode, eat_warnings=False):
     with io.open (path, 'rb') as f:
         sniff = f.read (9)
 
-    if sniff.startswith ('SIMPLE  ='):
+    if sniff.startswith (b'SIMPLE  ='):
         return FITSImage (path, mode)
 
     raise UnsupportedError ('cannot infer format of image "%s"' % path)

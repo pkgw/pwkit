@@ -21,7 +21,7 @@ def get_region_area (env, evtpath, region):
             if etype != 'stdout':
                 continue
 
-            if 'Region area' not in payload:
+            if b'Region area' not in payload:
                 continue
 
             return float (payload.split ()[-1])
@@ -39,7 +39,7 @@ def count_events (env, evtpath, filter):
             if etype != 'stdout':
                 continue
 
-            if 'good:' not in payload:
+            if b'good:' not in payload:
                 continue
 
             return int (payload.split ()[-1])
