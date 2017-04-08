@@ -2285,13 +2285,13 @@ def listsdm (sdm, file=None):
         rowstart = rownode.getElementsByTagName('startTime')
         start = int(rowstart[0].childNodes[0].nodeValue)
         startmjd = float(start)*1.0E-9/86400.0
-        t = qa.quantity(startmjd,b'd')
+        t = b(qa.quantity(startmjd,b'd'))
         starttime = qa.time(t,form=b'ymd',prec=8)[0]
         startTimeShort.append(qa.time(t,prec=8)[0])
         rowend = rownode.getElementsByTagName('endTime')
         end = int(rowend[0].childNodes[0].nodeValue)
         endmjd = float(end)*1.0E-9/86400.0
-        t = qa.quantity(endmjd,b'd')
+        t = b(qa.quantity(endmjd,b'd'))
         endtime = qa.time(t,form=b'ymd',prec=8)[0]
         endTimeShort.append(qa.time(t,prec=8)[0])
 
@@ -2447,8 +2447,8 @@ def listsdm (sdm, file=None):
         DecDeg = float(coordInfo[4])*(180.0/np.pi)
         RAInp = {'unit': 'deg', 'value': RADeg}
         DecInp = {'unit': 'deg', 'value': DecDeg}
-        RAHMS = qa.formxxx(b(RAInp), format=b'hms')
-        DecDMS = qa.formxxx(b(DecInp), format=b'dms')
+        RAHMS = b(qa.formxxx(b(RAInp), format=b'hms'))
+        DecDMS = b(qa.formxxx(b(DecInp), format=b'dms'))
         fieldRAList.append(RAHMS)
         fieldDecList.append(DecDMS)
         fieldSrcIDList.append(int(rowSrcId[0].childNodes[0].nodeValue))
@@ -2488,10 +2488,10 @@ def listsdm (sdm, file=None):
         statIdList.append(str(rowStatId[0].childNodes[0].nodeValue))
         statNameList.append(str(rowStatName[0].childNodes[0].nodeValue))
         posInfo = string.split(str(rowStatPos[0].childNodes[0].nodeValue))
-        x = qa.quantity([float(posInfo[2])], b'm')
-        y = qa.quantity([float(posInfo[3])], b'm')
-        z = qa.quantity([float(posInfo[4])], b'm')
-        pos = me.position(b'ITRF', x, y, z)
+        x = b(qa.quantity([float(posInfo[2])], b'm'))
+        y = b(qa.quantity([float(posInfo[3])], b'm'))
+        z = b(qa.quantity([float(posInfo[4])], b'm'))
+        pos = b(me.position(b'ITRF', x, y, z))
         qLon = pos['m0']
         qLat = pos['m1']
         statLatList.append(qa.formxxx(qLat, b'dms', prec=0))
@@ -2510,9 +2510,9 @@ def listsdm (sdm, file=None):
     eTime = float(rowlist[0].getElementsByTagName('endTime')[0].childNodes[0].nodeValue)*1.0E-9
     # integration time in seconds, start and end times:
     intTime = eTime - sTime
-    t = qa.quantity(sTime/86400.0, b'd')
+    t = b(qa.quantity(sTime/86400.0, b'd'))
     obsStart = qa.time(t, form=b'ymd', prec=8)[0]
-    t = qa.quantity(eTime/86400.0, b'd')
+    t = b(qa.quantity(eTime/86400.0, b'd'))
     obsEnd = qa.time(t, form=b'ymd', prec=8)[0]
     # observer name and obs. info:
     observerName = str(rowlist[0].getElementsByTagName('observerName')[0].childNodes[0].nodeValue)
