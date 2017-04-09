@@ -1098,10 +1098,12 @@ class AstrometryInfo (object):
         else:
             parallaxes = np.zeros (n) + self.parallax
 
-        if self.vradial is not None:
+        if self.vradial is None:
+            vradials = np.zeros (n)
+        elif self.u_vradial is not None:
             vradials = np.random.normal (self.vradial, self.u_vradial, n)
         else:
-            vradials = np.zeros (n)
+            vradials = np.zeros (n) + self.vradial
 
         # Now we compute the positions and summarize as an ellipse:
 
