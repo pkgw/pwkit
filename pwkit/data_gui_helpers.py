@@ -268,7 +268,10 @@ def data_to_imagesurface (data, **kwargs):
     way to quickly visualize 2D data.
 
     """
-    import cairo
+    try:
+        import cairocffi as cairo
+    except ImportError:
+        import cairo
 
     data = np.atleast_2d (data)
     if data.ndim != 2:

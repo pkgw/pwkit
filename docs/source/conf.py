@@ -82,7 +82,7 @@ class Mock (MagicMock):
         return Mock ()
 
 sys.modules.update ((m, Mock ()) for m in [
-    'cairo',
+    'cairocffi',
     'gi',
     'gi.repository',
     'glib',
