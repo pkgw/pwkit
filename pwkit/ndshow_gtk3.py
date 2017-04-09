@@ -52,15 +52,9 @@ __all__ = str ('Cycler Viewer Viewport cycle view').split ()
 import sys, time
 from six.moves import range
 import numpy as np
-
-# Cairo: pycairo is ancient and busted. cairocffi is 100% compatible and is
-# not ancient or busted. There is a gi.repository.cairo, but it barely exposes
-# any API, and it seems like you're not really supposed to use it.
-try:
-    import cairocffi as cairo
-except ImportError:
-    import cairo
-
+import cairo
+# There is a gi.repository.cairo but it barely exposes any API, and it seems
+# like you're not really supposed to use it.
 import gi
 gi.require_version ('Gdk', '3.0')
 gi.require_version ('Gtk', '3.0')

@@ -552,12 +552,7 @@ _fill_transforms ()
 # Infrastructure for quickly rendering color maps.
 
 def showdemo (factoryname, **kwargs):
-    import gtk
-    try:
-        import cairocffi as cairo
-    except ImportError:
-        import cairo
-
+    import gtk, cairo
     W, H = 512, 100
 
     colormap = factory_map[factoryname] (**kwargs)

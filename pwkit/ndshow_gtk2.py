@@ -47,11 +47,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 __all__ = str ('Cycler Viewer Viewport cycle view').split ()
 
-import glib, gtk, numpy as np, sys, time
-try:
-    import cairocffi as cairo
-except ImportError:
-    import cairo
+import cairo, glib, gtk, numpy as np, sys, time
 
 from . import PKError
 from .data_gui_helpers import Clipper, ColorMapper
