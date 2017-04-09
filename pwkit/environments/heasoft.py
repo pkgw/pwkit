@@ -78,40 +78,40 @@ class HeasoftEnvironment (Environment):
         def path (*args):
             return os.path.join (self._installdir, *args)
 
-        env[b'CALDB'] = b'http://heasarc.gsfc.nasa.gov/FTP/caldb'
-        env[b'CALDBCONFIG'] = path ('caldb.config')
-        env[b'CALDBALIAS'] = path ('alias_config.fits')
+        env['CALDB'] = b'http://heasarc.gsfc.nasa.gov/FTP/caldb'
+        env['CALDBCONFIG'] = path ('caldb.config')
+        env['CALDBALIAS'] = path ('alias_config.fits')
 
-        env[b'HEADAS'] = path (plat)
-        env[b'LHEASOFT'] = env[b'HEADAS']
-        env[b'FTOOLS'] = env[b'HEADAS']
+        env['HEADAS'] = path (plat)
+        env['LHEASOFT'] = env['HEADAS']
+        env['FTOOLS'] = env['HEADAS']
 
-        prepend_environ_path (env, b'PATH', path (plat, 'bin'))
-        prepend_environ_path (env, b'LD_LIBRARY_PATH', path (plat, 'lib'))
-        prepend_environ_path (env, b'PERLLIB', path (plat, 'lib', 'perl'))
-        prepend_environ_path (env, b'PERL5LIB', path (plat, 'lib', 'perl'))
-        prepend_environ_path (env, b'PYTHONPATH', path (plat, 'lib'))
-        prepend_environ_path (env, b'PYTHONPATH', path (plat, 'lib', 'python'))
+        prepend_environ_path (env, 'PATH', path (plat, 'bin'))
+        prepend_environ_path (env, 'LD_LIBRARY_PATH', path (plat, 'lib'))
+        prepend_environ_path (env, 'PERLLIB', path (plat, 'lib', 'perl'))
+        prepend_environ_path (env, 'PERL5LIB', path (plat, 'lib', 'perl'))
+        prepend_environ_path (env, 'PYTHONPATH', path (plat, 'lib'))
+        prepend_environ_path (env, 'PYTHONPATH', path (plat, 'lib', 'python'))
 
         userpfiles = user_data_path ('hea-pfiles')
         io.ensure_dir (userpfiles, parents=True)
-        env[b'PFILES'] = ';'.join ([userpfiles,
-                                    path (plat, 'syspfiles')])
+        env['PFILES'] = ';'.join ([userpfiles,
+                                   path (plat, 'syspfiles')])
 
-        env[b'LHEA_DATA'] = path (plat, 'refdata')
-        env[b'LHEA_HELP'] = path (plat, 'help')
-        env[b'PGPLOT_DIR'] = path (plat, 'lib')
-        env[b'PGPLOT_FONT'] = path (plat, 'lib', 'grfont.dat')
-        env[b'PGPLOT_RGB'] = path (plat, 'lib', 'rgb.txt')
-        env[b'POW_LIBRARY'] = path (plat, 'lib', 'pow')
-        env[b'TCLRL_LIBDIR'] = path (plat, 'lib')
-        env[b'XANADU'] = path ()
-        env[b'XANBIN'] = path (plat)
-        env[b'XRDEFAULTS'] = path (plat, 'xrdefaults')
+        env['LHEA_DATA'] = path (plat, 'refdata')
+        env['LHEA_HELP'] = path (plat, 'help')
+        env['PGPLOT_DIR'] = path (plat, 'lib')
+        env['PGPLOT_FONT'] = path (plat, 'lib', 'grfont.dat')
+        env['PGPLOT_RGB'] = path (plat, 'lib', 'rgb.txt')
+        env['POW_LIBRARY'] = path (plat, 'lib', 'pow')
+        env['TCLRL_LIBDIR'] = path (plat, 'lib')
+        env['XANADU'] = path ()
+        env['XANBIN'] = path (plat)
+        env['XRDEFAULTS'] = path (plat, 'xrdefaults')
 
-        env[b'EXT'] = b'lnx' # XXX portability probably ...
-        env[b'LHEAPERL'] = b'/usr/bin/perl' # what could go wrong?
-        env[b'PFCLOBBER'] = b'1'
-        env[b'FTOOLSINPUT'] = b'stdin'
-        env[b'FTOOLSOUTPUT'] = b'stdout'
+        env['EXT'] = b'lnx' # XXX portability probably ...
+        env['LHEAPERL'] = b'/usr/bin/perl' # what could go wrong?
+        env['PFCLOBBER'] = b'1'
+        env['FTOOLSINPUT'] = b'stdin'
+        env['FTOOLSOUTPUT'] = b'stdout'
         return env
