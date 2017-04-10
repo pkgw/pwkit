@@ -1012,6 +1012,57 @@ class AstrometryInfo (object):
         return self # chain-friendly
 
 
+    def predict_without_uncertainties(self, mjd, complain=True):
+        """Predict the object position at a given MJD.
+
+        The return value is a tuple ``(ra, dec)``, in radians, giving the
+        predicted position of the object at *mjd*. Unlike :meth:`predict`, the
+        astrometric uncertainties are ignored. This function is therefore
+        deterministic but potentially misleading.
+
+        If *complain* is True, print out warnings for incomplete information.
+
+        This function relies on the external :mod:`skyfield` package.
+
+        """
+        import sys
+        from skyfield.api import Star
+
+        self.verify (complain=complain)
+
+        planets, ts = load_skyfield_data() # might download stuff from the internet
+        earth = planets['earth']
+        t = ts.tdb(jd = mjd + 2400000.5)
+
+        # "Best" position. The implementation here is a bit weird to keep
+        # parallelism with predict().
+
+        args = {
+            'ra_hours': self.ra * R2H,
+            'dec_degrees': self.dec * R2D,
+        }
+
+        if self.pos_epoch is not None and self.pos_epoch != 51544.5:
+            print_ ('AstrometryInfo.predict_without_uncertainties(): '
+                    'ignoring epoch of position!', file=sys.stderr)
+            ### o.promoepoch = self.pos_epoch + 2400000.5
+        ###else:
+        ###    if complain:
+        ###        print_ ('AstrometryInfo.predict(): assuming epoch of position is J2000.0', file=sys.stderr)
+        ###    o.promoepoch = 2451545.0 # J2000.0
+
+        if self.promo_ra is not None:
+            args['ra_mas_per_year'] = self.promo_ra
+            args['dec_mas_per_year'] = self.promo_dec
+        if self.parallax is not None:
+            args['parallax_mas'] = self.parallax
+        if self.vradial is not None:
+            args['radial_km_per_s'] = self.vradial
+
+        bestra, bestdec, _ = earth.at(t).observe(Star(**args)).radec()
+        return bestra.radians, bestdec.radians
+
+
     def predict (self, mjd, complain=True, n=20000):
         """Predict the object position at a given MJD.
 

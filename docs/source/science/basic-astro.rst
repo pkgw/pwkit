@@ -177,6 +177,7 @@ calculations that are nonetheless fairly accurate.
       verify
       predict
       print_prediction
+      predict_without_uncertainties
       fill_from_simbad
       fill_from_allwise
 
@@ -201,6 +202,7 @@ calculations that are nonetheless fairly accurate.
 .. automethod:: AstrometryInfo.verify
 .. automethod:: AstrometryInfo.predict
 .. automethod:: AstrometryInfo.print_prediction
+.. automethod:: AstrometryInfo.predict_without_uncertainties
 .. automethod:: AstrometryInfo.fill_from_simbad
 .. automethod:: AstrometryInfo.fill_from_allwise
 
