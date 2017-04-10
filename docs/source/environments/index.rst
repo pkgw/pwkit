@@ -12,6 +12,5 @@ This documentation has a lot of stubs.
 
    casa/index.rst
    heasoft/index.rst
+   sas/index.rst
    ../pwkit/environments/ciao/index.rst
-   ../pwkit/environments/sas/index.rst
-   ../pwkit/environments/sas/data.rst
