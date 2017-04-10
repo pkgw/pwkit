@@ -1,40 +1,12 @@
 # -*- mode: python; coding: utf-8 -*-
-# Copyright 2015 Peter Williams <peter@newton.cx> and collaborators.
+# Copyright 2015-2017 Peter Williams <peter@newton.cx> and collaborators.
 # Licensed under the MIT License.
 
-"""heasoft - running software in the HEAsoft/CALDB environment
+"""This module provides an encapsulated scheme for running HEASoft tools
+within the :mod:`pwkit.environments` framework.
 
-To use, export an environment variable $PWKIT_HEASOFT pointing to the HEAsoft
-platform-specific directory, usually known as $HEADAS. E.g.,
-$PWKIT_HEASOFT/bin, $PWKIT_HEASOFT/BUILD_DIR, and
-$PWKIT_HEASOFT/headas-init.sh should exist. CALDB also needs to be set up as
-described below.
-
-"pfiles" are set up to land in ~/.local/share/hea-pfiles/.
-
-
-HEAsoft installation notes
-==========================
-
-(All examples assume version 6.16 for convenience, substitute as needed of
-course.)
-
-Installation from source strongly recommended. Download from something like
-http://heasarc.gsfc.nasa.gov/FTP/software/lheasoft/release/heasoft-6.16src.tar.gz
-- the website lets you customize the tarball, but it's probably easiest just
-to do the full install every time. Tarball unpacks into `heasoft-6.16/...` so
-you can safely curl|tar in ~/sw/.
-
-$ cd heasoft-6.16/BUILD_DIR
-$ ./configure --prefix=/a/heasoft/6.16
-$ make # note: not parallel-friendly
-$ make install
-
-The CALDB setup is so lightweight that it's not worth separating it out:
-
-$ cd /a/heasoft/6.16
-$ wget http://heasarc.gsfc.nasa.gov/FTP/caldb/software/tools/caldb.config
-$ wget http://heasarc.gsfc.nasa.gov/FTP/caldb/software/tools/alias_config.fits
+This module sets things up such that parameter files for HEASoft tasks
+(“pfiles”) land in the directory ``~/.local/share/hea-pfiles/``.
 
 """
 from __future__ import absolute_import, division, print_function, unicode_literals

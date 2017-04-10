@@ -11,7 +11,7 @@ This documentation has a lot of stubs.
    :maxdepth: 2
 
    casa/index.rst
+   heasoft/index.rst
    ../pwkit/environments/ciao/index.rst
-   ../pwkit/environments/heasoft.rst
    ../pwkit/environments/sas/index.rst
    ../pwkit/environments/sas/data.rst
