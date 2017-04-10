@@ -92,6 +92,11 @@ class BaseCIAOData (object):
             self.mjdref = header['MJDREF']
             # TODO: use TIMEZERO correctly?
             self.timesys = header['TIMESYS']
+        elif 'MJDREFI' in header:
+            self.mjdref = float(header['MJDREFI'])
+            if 'MJDREFF' in header:
+                self.mjdref += header['MJDREFF']
+            self.timesys = header['TIMESYS']
 
     def _process_hdu (self, hdu):
         warn ('ignoring HDU named %s', hdu.name)
@@ -118,8 +123,8 @@ class GTIData (BaseCIAOData):
 
 
     def _process_hdu (self, hdu):
-        if hdu.name == 'GTI':
-            ccd = hdu.header['CCD_ID']
+        if hdu.name in ('GTI', 'STDGTI'):
+            ccd = hdu.header.get('CCD_ID', 0)
             gti = self.gti[ccd] = fits_recarray_to_data_frame (hdu.data)
             gti.rename (columns={'start': 'start_met', 'stop': 'stop_met'},
                         inplace=True)
