@@ -11,7 +11,8 @@ The emphasis of this module is on getting 90%-good-enough semantics and a
 really, genuinely, uniform interface. This can be tough to achieve.
 
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
+from __future__ import absolute_import, division, print_function
+# NOTE: intentionally omitting unicode_literals: problematic for CASA
 
 # Developer notes:
 """Note that CASA allegedly supports HDF5, FITS, and MIRIAD format images too.
@@ -25,8 +26,14 @@ TODO: axis types (ugh standardizing these would be a bear)
 TODO: image units (ie, "set units to Jy/px"; standardization also a pain)
 
 """
-__all__ = str ('''UnsupportedError AstroImage MIRIADImage PyrapImage FITSImage SimpleImage
-                  open''').split ()
+__all__ = '''
+UnsupportedError
+AstroImage
+MIRIADImage
+PyrapImage
+FITSImage
+SimpleImage
+open'''.split ()
 
 import six
 from six.moves import range
@@ -838,17 +845,17 @@ class CasaCImage (AstroImage):
         p2w = self._pax2wax = np.asarray (cs.axesmap (toworld=True))[::-1].copy ()
         assert p2w.size == self.shape.size
 
-        self._specax = w2p[_casac_findwcoord (cs, b'spectral')[0]]
-        #self._polax = w2p[_casac_findwcoord (cs, b'stokes')[0]]
-        self._lonax = w2p[_casac_findwcoord (cs, b'direction')[0]]
-        self._latax = w2p[_casac_findwcoord (cs, b'direction')[1]]
+        self._specax = w2p[_casac_findwcoord (cs, 'spectral')[0]]
+        #self._polax = w2p[_casac_findwcoord (cs, 'stokes')[0]]
+        self._lonax = w2p[_casac_findwcoord (cs, 'direction')[0]]
+        self._latax = w2p[_casac_findwcoord (cs, 'direction')[1]]
 
         self.axdescs = [None] * naxis
         names = cs.names ()
         for i in range (naxis):
             self.axdescs[i] = names[p2w[i]]
 
-        self.charfreq = _casac_convert (cs.referencevalue (format=b'm', type=b'spectral')
+        self.charfreq = _casac_convert (cs.referencevalue (format='m', type='spectral')
                                         ['measure']['spectral']['frequency']['m0'], 'GHz')
         self.units = maybelower (self._handle.brightnessunit ())
 
@@ -915,7 +922,7 @@ class CasaCImage (AstroImage):
 
         self._checkOpen ()
         pixel = np.asarray (pixel)[::-1] # reverse to CASA's ordering
-        qtys = self._handle.toworld (pixel, format=b'q')['quantity']
+        qtys = self._handle.toworld (pixel, format='q')['quantity']
 
         # Our "world" coordinates are still in what CASA would call
         # its "pixel" ordering. This will probably all go down in
