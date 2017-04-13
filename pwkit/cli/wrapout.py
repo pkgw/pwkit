@@ -63,19 +63,9 @@ ansi_reset = b'\033[m'
 OUTKIND_STDOUT, OUTKIND_STDERR, OUTKIND_EXTRA = 0, 1, 2
 
 
-if hasattr(sys.stdout, 'buffer'):
-    binary_stdout = sys.stdout.buffer
-elif hasattr(sys.stdout, 'stream'): # when unicode_stdio() is invoked.
-    binary_stdout = sys.stdout.stream
-else:
-    binary_stdout = sys.stdout
-
-if hasattr(sys.stderr, 'buffer'):
-    binary_stderr = sys.stderr.buffer
-elif hasattr(sys.stderr, 'stream'): # when unicode_stdio() is invoked.
-    binary_stderr = sys.stderr.stream
-else:
-    binary_stderr = sys.stderr
+from ..io import get_stdout_bytes, get_stderr_bytes
+binary_stdout = get_stdout_bytes()
+binary_stderr = get_stderr_bytes()
 
 
 class Wrapper (object):

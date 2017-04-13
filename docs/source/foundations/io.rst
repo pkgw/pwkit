@@ -10,6 +10,14 @@ Convenient file input and output (:mod:`pwkit.io`)
 
 .. currentmodule:: pwkit.io
 
+The functionality in this module can be grouped into these categories:
+
+ - :ref:`the-path-object`
+ - :ref:`unicode-safety`
+ - :ref:`other-functions` (generally being superseded by :class:`Path`)
+
+
+.. _the-path-object:
 
 The :class:`Path` object
 ------------------------------------------------------------------------
@@ -454,6 +462,19 @@ Data input and output
 .. automethod:: Path.write_pickles
 .. automethod:: Path.write_yaml
 
+
+
+.. _unicode-safety:
+
+Functions helping with Unicode safety
+------------------------------------------------------------------------
+
+.. autosummary::
+   get_stdout_bytes
+   get_stderr_bytes
+
+.. autofunction:: get_stdout_bytes
+.. autofunction:: get_stderr_bytes
 
 
 .. _other-functions:

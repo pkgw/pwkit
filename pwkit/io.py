@@ -7,10 +7,6 @@ files. The most generic such tools are located in this module. The most
 important tool is the :class:`Path` class for object-oriented navigation of
 the filesystem.
 
-There are also some :ref:`free functions <other-functions>` in the
-:mod:`pwkit.io` module, but they are generally being superseded by operations
-on :class:`Path` objects.
-
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
@@ -26,6 +22,58 @@ if six.PY2:
     path_type = six.binary_type
 else:
     path_type = six.text_type
+
+
+# Python 2/3 bytes/unicode compat helpers
+
+def _get_bytes_stream(base):
+    if hasattr(base, 'buffer'): # Python 3
+        return base.buffer
+    if hasattr(base, 'stream'): # after pwkit.cli.unicode_stdio() is invoked.
+        return base.stream
+    return base # Hopefully ...
+
+def get_stdout_bytes():
+    """Get a reference to the standard output stream that accepts bytes, not
+    unicode characters.
+
+    Returns: a file-like object hooked up to the process’ standard output.
+
+    Usually, you want to write text to a process's standard output stream
+    (“stdout”), so you want :data:`sys.stdout` to be a stream that accepts
+    Unicode. The function :func:`pwkit.cli.unicode_stdio` sets this up in
+    Python 2, which has an imperfect hack to allow Unicode output to work most
+    of the time. However, there are other times when you really *do* want to
+    write arbitrary binary data to stdout. Depending on whether you’re using
+    Python 2 or Python 3, or whether :func:`pwkit.cli.unicode_stdio` has been
+    called, the right way to get access to the underlying byte-based stream is
+    different. This function encapsulates these checks and works across all of
+    these cases.
+
+    """
+    import sys
+    return _get_bytes_stream(sys.stdout)
+
+def get_stderr_bytes():
+    """Get a reference to the standard error stream that accepts bytes, not
+    unicode characters.
+
+    Returns: a file-like object hooked up to the process’ standard error.
+
+    Usually, you want to write text to a process's standard error stream
+    (“stderr”), so you want :data:`sys.stderr` to be a stream that accepts
+    Unicode. The function :func:`pwkit.cli.unicode_stdio` sets this up in
+    Python 2, which has an imperfect hack to allow Unicode output to work most
+    of the time. However, there are other times when you really *do* want to
+    write arbitrary binary data to stderr. Depending on whether you’re using
+    Python 2 or Python 3, or whether :func:`pwkit.cli.unicode_stdio` has been
+    called, the right way to get access to the underlying byte-based stream is
+    different. This function encapsulates these checks and works across all of
+    these cases.
+
+    """
+    import sys
+    return _get_bytes_stream(sys.stderr)
 
 
 # Reading text.
