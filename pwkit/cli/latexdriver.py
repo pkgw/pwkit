@@ -119,8 +119,8 @@ def write_bibtex_dict (stream, entries):
         if first:
             first = False
         else:
-            stream.write ('\n')
-        stream.write (writer._entry_to_bibtex (rec))
+            stream.write (b'\n')
+        stream.write (writer._entry_to_bibtex (rec).encode('utf8'))
 
 
 def merge_bibtex_with_aux (auxpath, mainpath, extradir, parse=get_bibtex_dict, allow_missing=False):
