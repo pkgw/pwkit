@@ -429,6 +429,8 @@ Data input and output
    ~Path.read_pickle
    ~Path.read_pickles
    ~Path.read_tabfile
+   ~Path.read_text
+   ~Path.read_toml
    ~Path.read_yaml
    ~Path.write_pickle
    ~Path.write_pickles
@@ -457,6 +459,8 @@ Data input and output
 .. automethod:: Path.read_pickle
 .. automethod:: Path.read_pickles
 .. automethod:: Path.read_tabfile
+.. automethod:: Path.read_text
+.. automethod:: Path.read_toml
 .. automethod:: Path.read_yaml
 .. automethod:: Path.write_pickle
 .. automethod:: Path.write_pickles

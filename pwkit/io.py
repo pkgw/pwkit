@@ -957,11 +957,46 @@ class Path (_ParentPath):
         return read (text_type (self), **kwargs)
 
 
+    def read_text(self, encoding=None, errors=None, newline=None):
+        """Read this path as one large chunk of text.
+
+        This function reads in the entire file as one big piece of text and
+        returns it. The *encoding*, *errors*, and *newline* keywords are
+        passed to :meth:`open`.
+
+        This is not a good way to read files unless you know for sure that they
+        are small.
+
+        """
+        with self.open (mode='rt', encoding=encoding, errors=errors, newline=newline) as f:
+            return f.read()
+
+
+    def read_toml(self, encoding=None, errors=None, newline=None, **kwargs):
+        """Read this path as a TOML document.
+
+        The `TOML <https://github.com/toml-lang/toml>`_ parsing is done with
+        the :mod:`pytoml` module. The *encoding*, *errors*, and *newline*
+        keywords are passed to :meth:`open`. The remaining *kwargs* are passed
+        to :meth:`toml.load`.
+
+        Returns the decoded data structure.
+
+        """
+        import pytoml
+
+        with self.open (mode='rt', encoding=encoding, errors=errors, newline=newline) as f:
+            return pytoml.load (f, **kwargs)
+
+
     def read_yaml (self, encoding=None, errors=None, newline=None, **kwargs):
         """Read this path as a YAML document.
 
-        The *encoding*, *errors*, and *newline* keywords are passed to
-        :meth:`open`. The remaining *kwargs* are passed to :meth:`yaml.load`.
+        The YAML parsing is done with the :mod:`yaml` module. The *encoding*,
+        *errors*, and *newline* keywords are passed to :meth:`open`. The
+        remaining *kwargs* are passed to :meth:`yaml.load`.
+
+        Returns the decoded data structure.
 
         """
         import yaml
