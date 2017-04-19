@@ -810,10 +810,10 @@ class PyrapImage (AstroImage):
 # 'casac' images.
 
 def _casac_convert (d, unitstr):
-    from .environments.casa.util import tools
+    from .environments.casa.util import tools, sanitize_unicode as b
     qa = tools.quanta ()
-    x = qa.quantity (d['value'], d['unit'])
-    return qa.convert (x, unitstr)['value']
+    x = qa.quantity (b(d['value']), b(d['unit']))
+    return qa.convert (b(x), b(unitstr))['value']
 
 
 def _casac_findwcoord (cs, kind):
