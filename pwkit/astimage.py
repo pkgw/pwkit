@@ -879,10 +879,10 @@ class CasaCImage (AstroImage):
     def read (self, squeeze=False, flip=False):
         self._checkOpen ()
 
-        # Older casac doesn't accept ndarrays, and we need to be careful to
-        # change from Numpy types to Python ints.
-        blc = [0] * self.shape.size
-        trc = [int (x) for x in (self.shape[::-1] - 1)]
+        # Older casac doesn't accept ndarrays ... but casa 4.7 only works with
+        # ndarrays! Sigh.
+        blc = np.zeros(self.shape.size, dtype=np.int)
+        trc = np.array(self.shape[::-1] - 1)
 
         data = self._handle.getchunk (blc, trc, dropdeg=squeeze, getmask=False)
         data = data.T # does the right thing and gives us C-contiguous data
