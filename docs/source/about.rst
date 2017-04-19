@@ -73,7 +73,7 @@ include after your Acknowledgments section would be:
 
 .. code-block:: none
 
-   \software{..., pwkit \citep{2016ApJ...819L..25A}, ...}
+   \software{..., pwkit \citep{2017ascl.soft04001W}, ...}
 
 
 Authors
