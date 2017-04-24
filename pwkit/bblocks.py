@@ -163,17 +163,20 @@ def bin_bblock (widths, counts, p0=0.05):
     return info
 
 
-def tt_bblock (tstarts, tstops, times, p0=0.05):
+def tt_bblock (tstarts, tstops, times, p0=0.05, intersect_with_bins=False):
     """Bayesian Blocks for time-tagged events. Arguments:
 
     tstarts  - Array of input bin start times.
     tstops   - Array of input bin stop times.
     times    - Array of event arrival times.
     p0=0.05  - Probability of preferring solutions with additional bins.
+    intersect_with_bins=False
+             - If true, intersect bblock bins with input bins; can result
+               in more bins than bblocks wants; they will have the same
+               rate values.
 
     Returns a Holder with:
 
-    blockstarts - Start times of output blocks.
     counts      - Number of events in each output block.
     finalp0     - Final value of p0, after iteration to minimize `nblocks`.
     ledges      - Times of left edges of output blocks.
@@ -187,7 +190,22 @@ def tt_bblock (tstarts, tstops, times, p0=0.05):
 
     Bin start/stop times are best derived from a 1D Voronoi tesselation of the
     event arrival times, with some kind of global observation start/stop time
-    setting the extreme edges.
+    setting the extreme edges. Or they can be set from "good time intervals"
+    if observations were toggled on or off as in an X-ray telescope.
+
+    If *intersect_with_bins* is True, the true Bayesian Blocks bins (BBBs) are
+    intersected with the "good time intervals" (GTIs) defined by the *tstarts*
+    and *tstops* variables. One GTI may contain multiple BBBs if the event
+    rate appears to change within the GTI, and one BBB may span multiple GTIs
+    if the event date does *not* appear to change between the GTIs. The
+    intersection will ensure that no BBB intervals cross the edge of a GTI. If
+    this would happen, the BBB is split into multiple, partially redundant
+    records. Each of these records will have the **same** value for the
+    *counts*, *rates*, and *widths* values. However, the *ledges*, *redges*,
+    and *midpoints* values will be recalculated. Note that in this mode, it is
+    not necessarily true that ``widths = ledges - redges`` as is usually the
+    case. When this flag is true, keep in mind that multiple bins are
+    therefore *not* necessarily independent statistical samples.
 
     """
     tstarts = np.asarray (tstarts)
@@ -271,6 +289,84 @@ def tt_bblock (tstarts, tstops, times, p0=0.05):
     # bin, which is the bin before the leftmost bin of the (i+1)'th block:
     info.redges = np.concatenate ((redges[info.blockstarts[1:] - 1], [redges[-1]]))
     info.midpoints = 0.5 * (info.ledges + info.redges)
+    del info.blockstarts
+
+    if intersect_with_bins:
+        # OK, we now need to intersect the bblock bins with the input bins.
+        # This can fracture one bblock bin into multiple ones but shouldn't
+        # make any of them disappear, since they're definitionally constrained
+        # to contain events.
+        #
+        # First: sorted list of all timestamps at which *something* changes:
+        # either a bblock edge, or a input bin edge. We drop the last entry,
+        # giving is a list of left edges of bins in which everything is the
+        # same.
+
+        all_times = set(tstarts)
+        all_times.update(tstops)
+        all_times.update(info.ledges)
+        all_times.update(info.redges)
+        all_times = np.array(sorted(all_times))[:-1]
+
+        # Now, construct a lookup table of which bblock number each of these
+        # bins corresponds to. More than one bin may have the same bblock
+        # number, if a GTI change slices a single bblock into more than one
+        # piece. We do this in a somewhat non-obvious way since we know that
+        # the bblocks completely cover the overall GTI span in order.
+
+        bblock_ids = np.zeros(all_times.size)
+
+        for i in range(1, info.nblocks):
+            bblock_ids[all_times >= info.ledges[i]] = i
+
+        # Now, a lookup table of which bins are within a good GTI span. Again,
+        # we know that all bins are either entirely in a good GTI or entirely
+        # outside, so the logic is simplified but not necessarily obvious.
+
+        good_timeslot = np.zeros(all_times.size, dtype=np.bool)
+
+        for t0, t1 in zip(tstarts, tstops):
+            ok = (all_times >= t0) & (all_times < t1)
+            good_timeslot[ok] = True
+
+        # Finally, look for contiguous spans that are in a good timeslot *and*
+        # have the same underlying bblock number. These are our intersected
+        # blocks.
+
+        old_bblock_ids = []
+        ledges = []
+        redges = []
+        cur_bblock_id = -1
+
+        for i in range(all_times.size):
+            if bblock_ids[i] != cur_bblock_id or not good_timeslot[i]:
+                if cur_bblock_id >= 0:
+                    # Ending a previous span.
+                    redges.append(all_times[i])
+                    cur_bblock_id = -1
+
+                if good_timeslot[i]:
+                    # Starting a new span.
+                    ledges.append(all_times[i])
+                    old_bblock_ids.append(bblock_ids[i])
+                    cur_bblock_id = bblock_ids[i]
+
+        if cur_bblock_id >= 0:
+            # End the last span.
+            redges.append(tstops[-1])
+
+        # Finally, rewrite all of the data as planned.
+
+        old_bblock_ids = np.array(old_bblock_ids, dtype=np.int)
+        info.counts = info.counts[old_bblock_ids]
+        info.rates = info.rates[old_bblock_ids]
+        info.widths = info.widths[old_bblock_ids]
+
+        info.ledges = np.array(ledges)
+        info.redges = np.array(redges)
+        info.midpoints = 0.5 * (info.ledges + info.redges)
+        info.nblocks = info.ledges.size
+
     return info
 
 
