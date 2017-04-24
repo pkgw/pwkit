@@ -231,7 +231,45 @@ class Events (GTIData):
             super (Events, self)._process_hdu (hdu)
 
 
-    def plot_lightcurve (self, ccd_id=None):
+    def _plot_binned_event_energies(self, bbinfo, energy_scale=1., time_key='dmjd',
+                                    target_max_per_bin=100, **kwargs):
+        import omega as om
+        from scipy.stats.mstats_extras import mjci
+
+        p = om.RectPlot()
+        time = self.events[time_key]
+        energy = self.events['energy'] * energy_scale
+
+        for ledge, redge in zip(bbinfo.ledges, bbinfo.redges):
+            subset = self.events[(time >= ledge) & (time < redge)]
+            n = subset.shape[0]
+
+            if n == 0:
+                continue
+
+            nbin = max(int(np.floor(n / target_max_per_bin)), 1)
+            subbin_width = (redge - ledge) / nbin
+
+            for i in range(nbin):
+                t0 = ledge + i * subbin_width
+                t1 = t0 + subbin_width
+                tmid = 0.5 * (t0 + t1)
+                matched = (time >= t0) & (time < t1)
+                subsubset = self.events[matched]
+                if subsubset.shape[0] == 0:
+                    continue
+
+                subsubenergy = energy[matched]
+                med_energy = subsubenergy.median()
+                u_med_energy = mjci(subsubenergy.data, prob=0.5).item()
+                p.addXY([t0, t1], [med_energy, med_energy], None, **kwargs)
+                p.addXY([tmid, tmid], [med_energy - u_med_energy, med_energy + u_med_energy],
+                        None, **kwargs)
+
+        return p
+
+
+    def plot_lightcurve (self, ccd_id=None, bin_energies=False):
         import omega as om
         from ...bblocks import tt_bblock
 
@@ -245,9 +283,9 @@ class Events (GTIData):
         bbinfo = tt_bblock (
             self.gti[ccd_id]['start_dmjd'],
             self.gti[ccd_id]['stop_dmjd'],
-            self.events['dmjd']
+            self.events['dmjd'],
+            intersect_with_bins = True,
         )
-
         cps = bbinfo.rates / 86400
 
         tmin, tmax = tight_bounds (bbinfo.ledges[0], bbinfo.redges[-1])
@@ -266,11 +304,18 @@ class Events (GTIData):
         vb[0].bpainter.paintLabels = False
         self._plot_add_gtis (vb[0], ccd_id)
 
-        vb[1] = om.quickXY (self.events['dmjd'], kev, None, lines=0)
+        if bin_energies:
+            vb[1] = self._plot_binned_event_energies(
+                bbinfo,
+                energy_scale = 1e-3,
+                dsn = 0
+            )
+        else:
+            vb[1] = om.quickXY (self.events['dmjd'], kev, None, lines=0)
+
         vb[1].setBounds (tmin, tmax, emin, emax)
         vb[1].setLabels ('MJD - %d' % self.mjd0, 'Energy (keV)')
         self._plot_add_gtis (vb[1], ccd_id)
-
         return vb
 
 
