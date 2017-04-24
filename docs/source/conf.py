@@ -87,4 +87,5 @@ sys.modules.update ((m, Mock ()) for m in [
     'gi.repository',
     'glib',
     'gtk',
+    'sherpa',
 ])
