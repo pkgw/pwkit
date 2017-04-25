@@ -166,27 +166,40 @@ def bin_bblock (widths, counts, p0=0.05):
 def tt_bblock (tstarts, tstops, times, p0=0.05, intersect_with_bins=False):
     """Bayesian Blocks for time-tagged events. Arguments:
 
-    tstarts  - Array of input bin start times.
-    tstops   - Array of input bin stop times.
-    times    - Array of event arrival times.
-    p0=0.05  - Probability of preferring solutions with additional bins.
-    intersect_with_bins=False
-             - If true, intersect bblock bins with input bins; can result
-               in more bins than bblocks wants; they will have the same
-               rate values.
+    *tstarts*
+      Array of input bin start times.
+    *tstops*
+      Array of input bin stop times.
+    *times*
+      Array of event arrival times.
+    *p0* = 0.05
+      Probability of preferring solutions with additional bins.
+    *intersect_with_bins* = False
+      If true, intersect bblock bins with input bins; can result in more bins
+      than bblocks wants; they will have the same rate values.
 
     Returns a Holder with:
 
-    counts      - Number of events in each output block.
-    finalp0     - Final value of p0, after iteration to minimize `nblocks`.
-    ledges      - Times of left edges of output blocks.
-    midpoints   - Times of midpoints of output blocks.
-    nblocks     - Number of output blocks.
-    ncells      - Number of input cells/bins.
-    origp0      - Original value of p0.
-    rates       - Event rate associated with each block.
-    redges      - Times of right edges of output blocks.
-    widths      - Width of each output block.
+    *counts*
+      Number of events in each output block.
+    *finalp0*
+      Final value of p0, after iteration to minimize `nblocks`.
+    *ledges*
+      Times of left edges of output blocks.
+    *midpoints*
+      Times of midpoints of output blocks.
+    *nblocks*
+      Number of output blocks.
+    *ncells*
+      Number of input cells/bins.
+    *origp0*
+      Original value of p0.
+    *rates*
+      Event rate associated with each block.
+    *redges*
+      Times of right edges of output blocks.
+    *widths*
+      Width of each output block.
 
     Bin start/stop times are best derived from a 1D Voronoi tesselation of the
     event arrival times, with some kind of global observation start/stop time
