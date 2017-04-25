@@ -71,7 +71,9 @@ htmlhelp_basename = 'pwkitdoc'
 #html_extra_path = []
 
 
-# Tomfoolery to fake modules that readthedocs.org doesn't know
+# Tomfoolery to fake modules that readthedocs.org doesn't know. We need to do
+# a super-duper hack for `pwkit.sherpa` because of how multiple inheritance
+# interacts with the Mock object system.
 
 import sys
 from mock import Mock as MagicMock
@@ -79,6 +81,10 @@ from mock import Mock as MagicMock
 class Mock (MagicMock):
     @classmethod
     def __getattr__ (cls, name):
+        if name == 'ArithmeticModel':
+            return dict
+        if name == 'CompositeModel':
+            return Mock
         return Mock ()
 
 sys.modules.update ((m, Mock ()) for m in [
@@ -88,4 +94,7 @@ sys.modules.update ((m, Mock ()) for m in [
     'glib',
     'gtk',
     'sherpa',
+    'sherpa.astro',
+    'sherpa.astro.ui',
+    'sherpa.models',
 ])
