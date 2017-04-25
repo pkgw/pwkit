@@ -11,6 +11,8 @@ from __future__ import absolute_import, division, print_function
 __all__ = '''
 FilterAdditionHack
 expand_rmf_matrix
+derive_identity_rmf
+derive_identity_arf
 get_source_qq_data
 get_bkg_qq_data
 make_qq_plot
@@ -93,7 +95,7 @@ def expand_rmf_matrix(rmf):
     two-dimensional Numpy array.
 
     """
-    n_chan = (rmf.n_chan + rmf.f_chan).max()
+    n_chan = rmf.e_min.size
     n_energy = rmf.n_grp.size
 
     expanded = np.zeros((n_energy, n_chan))
@@ -109,6 +111,205 @@ def expand_rmf_matrix(rmf):
             grp_ofs += 1
 
     return expanded
+
+
+def derive_identity_rmf(name, rmf):
+    """Create an "identity" RMF that does not mix energies.
+
+    *name*
+      The name of the RMF object to be created; passed to Sherpa.
+    *rmf*
+      An existing RMF object on which to base this one.
+
+    Returns:
+      A new RMF1D object that has a response matrix that is as close to
+      diagonal as we can get in energy space, and that has a constant
+      sensitivity as a function of detector channel.
+
+    In many X-ray observations, the relevant background signal does not behave
+    like an astrophysical source that is filtered through the telescope's
+    response functions. However, I have been unable to get current Sherpa
+    (version 4.9) to behave how I want when working with backround models that
+    are *not* filtered through these response functions. This function
+    constructs an "identity" RMF response matrix that provides the best
+    possible approximation of a passthrough "instrumental response": it mixes
+    energies as little as possible and has a uniform sensitivity as a function
+    of detector channel.
+
+    """
+    from sherpa.astro.data import DataRMF
+    from sherpa.astro.instrument import RMF1D
+
+    # The "x" axis of the desired matrix -- the columnar direction; axis 1 --
+    # is "channels". There are n_chan of them and each maps to a notional
+    # energy range specified by "e_min" and "e_max".
+    #
+    # The "y" axis of the desired matrix -- the row direction; axis 1 -- is
+    # honest-to-goodness energy. There are tot_n_energy energy bins, each
+    # occupying a range specified by "energ_lo" and "energ_hi".
+    #
+    # We want every channel that maps to a valid output energy to have a
+    # nonzero entry in the matrix. The relative sizes of n_energy and n_cell
+    # can vary, as can the bounds of which regions of each axis can be validly
+    # mapped to each other. So this problem is basically equivalent to that of
+    # drawing an arbitrary pixelated line on bitmap, without anti-aliasing.
+    #
+    # The output matrix is represented in a row-based sparse format.
+    #
+    # - There is a integer vector "n_grp" of size "n_energy". It gives the
+    #   number of "groups" needed to fill in each row of the matrix. Let
+    #   "tot_groups = sum(n_grp)". For a given row, "n_grp[row_index]" may
+    #   be zero, indicating that the row is all zeros.
+    # - There are integer vectors "f_chan" and "n_chan", each of size
+    #   "tot_groups", that define each group. "f_chan" gives the index of
+    #   the first channel column populated by the group; "n_chan" gives the
+    #   number of columns populated by the group. Note that there can
+    #   be multiple groups for a single row, so successive group records
+    #   may fill in different pieces of the same row.
+    # - Let "tot_cells = sum(n_chan)".
+    # - There is a vector "matrix" of size "tot_cells" that stores the actual
+    #   matrix data. This is just a concatenation of all the data corresponding
+    #   to each group.
+    # - Unpopulated matrix entries are zero.
+    #
+    # See expand_rmf_matrix() for a sloppy implementation of how to unpack
+    # this sparse format.
+
+    n_chan = rmf.e_min.size
+    n_energy = rmf.energ_lo.size
+
+    c_lo_offset = rmf.e_min[0]
+    c_lo_slope = (rmf.e_min[-1] - c_lo_offset) / (n_chan - 1)
+
+    c_hi_offset = rmf.e_max[0]
+    c_hi_slope = (rmf.e_max[-1] - c_hi_offset) / (n_chan - 1)
+
+    e_lo_offset = rmf.energ_lo[0]
+    e_lo_slope = (rmf.energ_lo[-1] - e_lo_offset) / (n_energy - 1)
+
+    e_hi_offset = rmf.energ_hi[0]
+    e_hi_slope = (rmf.energ_hi[-1] - e_hi_offset) / (n_energy - 1)
+
+    all_e_indices = np.arange(n_energy)
+    all_e_los = e_lo_slope * all_e_indices + e_lo_offset
+    start_chans = np.floor((all_e_los - c_lo_offset) / c_lo_slope).astype(np.int)
+
+    all_e_his = e_hi_slope * all_e_indices + e_hi_offset
+    stop_chans = np.ceil((all_e_his - c_hi_offset) / c_hi_slope).astype(np.int)
+
+    first_e_index_on_channel_grid = 0
+    while stop_chans[first_e_index_on_channel_grid] < 0:
+        first_e_index_on_channel_grid += 1
+
+    last_e_index_on_channel_grid = n_energy - 1
+    while start_chans[last_e_index_on_channel_grid] >= n_chan:
+        last_e_index_on_channel_grid -= 1
+
+    n_nonzero_rows = last_e_index_on_channel_grid + 1 - first_e_index_on_channel_grid
+    e_slice = slice(first_e_index_on_channel_grid, last_e_index_on_channel_grid + 1)
+    n_grp = np.zeros(n_energy, dtype=np.int)
+    n_grp[e_slice] = 1
+
+    start_chans = np.maximum(start_chans[e_slice], 0)
+    stop_chans = np.minimum(stop_chans[e_slice], n_chan - 1)
+
+    # We now have a first cut at a row-oriented expression of our "identity"
+    # RMF. However, it's conservative. Trim down to eliminate overlaps between
+    # sequences.
+
+    for i in range(n_nonzero_rows - 1):
+        my_end = stop_chans[i]
+        next_start = start_chans[i+1]
+        if next_start <= my_end:
+            stop_chans[i] = max(start_chans[i], next_start - 1)
+
+    # Results are funky unless the sums along the vertical axis are constant.
+    # Ideally the sum along the *horizontal* axis would add up to 1 (since,
+    # ideally, each row is a probability distribution), but it is not
+    # generally possible to fulfill both of these constraints simultaneously.
+    # The latter constraint does not seem to matter in practice so we ignore it.
+    # Due to the funky encoding of the matrix, we need to build a helper table
+    # to meet the vertical-sum constraint.
+
+    counts = np.zeros(n_chan, dtype=np.int)
+
+    for i in range(n_nonzero_rows):
+        counts[start_chans[i]:stop_chans[i]+1] += 1
+
+    counts[:start_chans.min()] = 1
+    counts[stop_chans.max()+1:] = 1
+    assert (counts > 0).all()
+
+    # We can now build the matrix.
+
+    f_chan = start_chans
+    rmfnchan = stop_chans + 1 - f_chan
+    assert (rmfnchan > 0).all()
+
+    matrix = np.zeros(rmfnchan.sum())
+    amounts = 1. / counts
+    ofs = 0
+
+    for i in range(n_nonzero_rows):
+        f = f_chan[i]
+        n = rmfnchan[i]
+        matrix[ofs:ofs+n] = amounts[f:f+n]
+        ofs += n
+
+    # All that's left to do is create the Python objects.
+
+    drmf = DataRMF(
+        name,
+        rmf.detchans,
+        rmf.energ_lo,
+        rmf.energ_hi,
+        n_grp,
+        f_chan,
+        rmfnchan,
+        matrix,
+        offset = 0,
+        e_min = rmf.e_min,
+        e_max = rmf.e_max,
+        header = None
+    )
+
+    return RMF1D(drmf, pha=rmf._pha)
+
+
+def derive_identity_arf(name, arf):
+    """Create an "identity" ARF that has uniform sensitivity.
+
+    *name*
+      The name of the ARF object to be created; passed to Sherpa.
+    *arf*
+      An existing ARF object on which to base this one.
+
+    Returns:
+      A new ARF1D object that has a uniform spectral response vector.
+
+    In many X-ray observations, the relevant background signal does not behave
+    like an astrophysical source that is filtered through the telescope's
+    response functions. However, I have been unable to get current Sherpa
+    (version 4.9) to behave how I want when working with backround models that
+    are *not* filtered through these response functions. This function
+    constructs an "identity" ARF response function that has uniform sensitivity
+    as a function of detector channel.
+
+    """
+    from sherpa.astro.data import DataARF
+    from sherpa.astro.instrument import ARF1D
+
+    darf = DataARF(
+        name,
+        arf.energ_lo,
+        arf.energ_hi,
+        np.ones(arf.specresp.shape),
+        arf.bin_lo,
+        arf.bin_hi,
+        arf.exposure,
+        header = None,
+    )
+    return ARF1D(darf, pha=arf._pha)
 
 
 def get_source_qq_data():
