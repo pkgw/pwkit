@@ -10,6 +10,7 @@ from __future__ import absolute_import, division, print_function
 
 __all__ = '''
 PowerLawApecDemModel
+make_fixed_temp_multi_apec
 expand_rmf_matrix
 derive_identity_rmf
 derive_identity_arf
@@ -32,7 +33,7 @@ DEFAULT_KT_ARRAY = np.logspace(-1.5, 1, 20)
 
 class PowerLawApecDemModel(XSAdditiveModel):
     """A model that has contributions from APEC plasmas at a variety of fixed
-    temperatures, with the normalization at each temperature scaling with kT
+    temperatures., with the normalization at each temperature scaling with kT
     as a power law. The model parameters are:
 
     *gfac*
@@ -83,6 +84,47 @@ class PowerLawApecDemModel(XSAdditiveModel):
         return (self._cached_vals * scales).sum(axis=1)
 
 ui.add_model(PowerLawApecDemModel)
+
+
+def make_fixed_temp_multi_apec(kTs, name_template='apec%d', norm=None):
+    """Create a model summing multiple APEC components at fixed temperatures.
+
+    *kTs*
+      An iterable of temperatures for the components, in keV.
+    *name_template* = 'apec%d'
+      A template to use for the names of each component; it is string-formatted
+      with the 0-based component number as an argument.
+    *norm* = None
+      An initial normalization to be used for every component, or None to use
+      the Sherpa default.
+    Returns:
+      A tuple ``(total_model, sub_models)``, where *total_model* is a Sherpa
+      model representing the sum of the APEC components and *sub_models* is
+      a list of the individual models.
+
+    This function creates a vector of APEC model components and sums them.
+    Their *kT* parameters are set and then frozen (using
+    :func:`sherpa.astro.ui.freeze`), so that upon exit from this function, the
+    amplitude of each component is the only free parameter.
+
+    """
+    total_model = None
+    sub_models = []
+
+    for i, kT in enumerate(kTs):
+        component = ui.xsapec(name_template % i)
+        component.kT = kT
+        ui.freeze(component.kT)
+        if norm is not None:
+            component.norm = norm
+        sub_models.append(component)
+
+        if total_model is None:
+            total_model = component
+        else:
+            total_model = total_model + component
+
+    return total_model, sub_models
 
 
 def expand_rmf_matrix(rmf):

@@ -28,6 +28,7 @@ not provided in the standard Sherpa distribution.
 
 .. autoclass:: PowerLawApecDemModel
 
+.. autofunction:: make_fixed_temp_multi_apec
 
 
 .. _sherpa-plots:
