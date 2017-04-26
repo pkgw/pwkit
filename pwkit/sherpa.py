@@ -344,10 +344,9 @@ def get_bkg_qq_data():
 
     """
     bdata = ui.get_bkg()
-    bfp = ui.get_bkg_fit_plot()
     kev = bdata.get_x()
-    obs_data = bdata.get_y()
-    model_data = bfp.modelplot.y
+    obs_data = bdata.counts
+    model_data = ui.get_bkg_model()(kev)
     return np.vstack((kev, obs_data, model_data))
 
 
