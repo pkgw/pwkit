@@ -96,5 +96,8 @@ sys.modules.update ((m, Mock ()) for m in [
     'sherpa',
     'sherpa.astro',
     'sherpa.astro.ui',
+    'sherpa.astro.xspec',
+    'sherpa.astro.xspec._xspec',
     'sherpa.models',
+    'sherpa.models.parameter',
 ])

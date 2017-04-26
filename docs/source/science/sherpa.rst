@@ -13,8 +13,21 @@ Helpers for X-ray spectral modeling with the Sherpa packge (:mod:`pwkit.sherpa`)
 
 This module includes a grab-bag of helpers in following broad topics:
 
+ - :ref:`sherpa-models`
  - :ref:`sherpa-plots`
  - :ref:`sherpa-data-structure-utilities`
+
+
+.. _sherpa-models:
+
+Additional Spectral Models
+--------------------------
+
+The :mod:`pwkit.sherpa` module provides several tools for constructing models
+not provided in the standard Sherpa distribution.
+
+.. autoclass:: PowerLawApecDemModel
+
 
 
 .. _sherpa-plots:

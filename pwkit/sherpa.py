@@ -9,6 +9,7 @@
 from __future__ import absolute_import, division, print_function
 
 __all__ = '''
+PowerLawApecDemModel
 expand_rmf_matrix
 derive_identity_rmf
 derive_identity_arf
@@ -18,8 +19,70 @@ make_qq_plot
 make_spectrum_plot
 '''.split()
 
-from sherpa.astro import ui
 import numpy as np
+from sherpa.astro import ui
+from sherpa.astro.xspec import XSAdditiveModel, _xspec
+from sherpa.models import Parameter
+from sherpa.models.parameter import hugeval
+
+
+# Some helpful models
+
+DEFAULT_KT_ARRAY = np.logspace(-1.5, 1, 20)
+
+class PowerLawApecDemModel(XSAdditiveModel):
+    """A model that has contributions from APEC plasmas at a variety of fixed
+    temperatures, with the normalization at each temperature scaling with kT
+    as a power law. The model parameters are:
+
+    *gfac*
+      The power-law normalization parameter. The contribution at temperature *kT*
+      is ``norm * kT**gfac``.
+    *Abundanc*
+      The standard APEC abundance parameter.
+    *redshift*
+      The standard APEC redshift parameter.
+    *norm*
+      The standard overall normalization parameter.
+
+    This model is only efficient to compute if *Abundanc* and *redshift* are
+    frozen.
+
+    """
+    def __init__(self, name, kt_array=None):
+        if kt_array is None:
+            kt_array = DEFAULT_KT_ARRAY
+        else:
+            kt_array = np.atleast_1d(np.asfarray(kt_array))
+
+        self.gfac = Parameter(name, 'gfac', 0.5, 1e-4, 1e4, 1e-6, 1e6)
+        self.Abundanc = Parameter(name, 'Abundanc', 1., 0., 5., 0.0, hugeval, frozen=True)
+        self.redshift = Parameter(name, 'redshift', 0., -0.999, 10., -0.999, hugeval, frozen=True)
+        self.norm = Parameter(name, 'norm', 1.0, 0.0, 1e24, 0.0, hugeval)
+
+        self._kt_array = kt_array
+        self._cur_cache_key = None
+        self._cached_vals = None
+        XSAdditiveModel.__init__(self, name, (self.gfac, self.Abundanc, self.redshift, self.norm))
+
+    def _calc(self, params, *args, **kwargs):
+        gfac, abund, redshift, norm = params
+        cache_key = (abund, redshift)
+
+        if self._cur_cache_key != cache_key:
+            self._cached_vals = [None] * self._kt_array.size
+
+            for i in range(self._kt_array.size):
+                apec_params = [self._kt_array[i], abund, redshift, 1.]
+                self._cached_vals[i] = _xspec.xsaped(apec_params, *args, **kwargs)
+
+            self._cur_cache_key = cache_key
+            self._cached_vals = np.array(self._cached_vals).T
+
+        scales = norm * self._kt_array**gfac
+        return (self._cached_vals * scales).sum(axis=1)
+
+ui.add_model(PowerLawApecDemModel)
 
 
 def expand_rmf_matrix(rmf):
