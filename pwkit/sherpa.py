@@ -32,9 +32,20 @@ from sherpa.models.parameter import hugeval
 DEFAULT_KT_ARRAY = np.logspace(-1.5, 1, 20)
 
 class PowerLawApecDemModel(XSAdditiveModel):
-    """A model that has contributions from APEC plasmas at a variety of fixed
-    temperatures., with the normalization at each temperature scaling with kT
-    as a power law. The model parameters are:
+    """A model with contributions from APEC plasmas at a range of
+    temperatures, scaling with temperature.
+
+    Constructor arguments are:
+
+    *name*
+      The Sherpa name of the resulting model instance.
+    *kt_array* = None
+      An array of temperatures to use for the plasma models. If left at the
+      default of None, a hard-coded default is used that spans temperatures of
+      ~0.03 to 10 keV with logarithmic spacing.
+
+    The contribution at each temperature scales with kT as a power law. The
+    model parameters are:
 
     *gfac*
       The power-law normalization parameter. The contribution at temperature *kT*
@@ -132,8 +143,8 @@ def expand_rmf_matrix(rmf):
 
     *rmf*
       An RMF object as might be returned by ``sherpa.astro.ui.get_rmf()``.
-
-    Returns: a non-sparse RMF matrix
+    Returns:
+      A non-sparse RMF matrix.
 
     The Response Matrix Function (RMF) of an X-ray telescope like Chandra can
     be stored in a sparse format as defined in `OGIP Calibration Memo
@@ -169,7 +180,6 @@ def derive_identity_rmf(name, rmf):
       The name of the RMF object to be created; passed to Sherpa.
     *rmf*
       An existing RMF object on which to base this one.
-
     Returns:
       A new RMF1D object that has a response matrix that is as close to
       diagonal as we can get in energy space, and that has a constant
@@ -332,7 +342,6 @@ def derive_identity_arf(name, arf):
       The name of the ARF object to be created; passed to Sherpa.
     *arf*
       An existing ARF object on which to base this one.
-
     Returns:
       A new ARF1D object that has a uniform spectral response vector.
 
@@ -364,13 +373,14 @@ def derive_identity_arf(name, arf):
 def get_source_qq_data():
     """Get data for a quantile-quantile plot of the source data and model.
 
+    Returns:
+      An ndarray of shape ``(3, npts)``. The first slice is the energy axis in
+      keV; the second is the observed values in each bin (counts, or rate, or
+      rate per keV, etc.); the third is the corresponding model value in each
+      bin.
+
     The inputs are implicit; the data are obtained from the current state of
     the Sherpa ``ui`` module.
-
-    Returns an array of shape ``(3, npts)``. The first slice is the energy
-    axis in keV; the second is the observed values in each bin (counts, or
-    rate, or rate per keV, etc.); the third is the corresponding model value
-    in each bin.
 
     """
     sdata = ui.get_data()
@@ -383,13 +393,14 @@ def get_source_qq_data():
 def get_bkg_qq_data():
     """Get data for a quantile-quantile plot of the background data and model.
 
+    Returns:
+      An ndarray of shape ``(3, npts)``. The first slice is the energy axis in
+      keV; the second is the observed values in each bin (counts, or rate, or
+      rate per keV, etc.); the third is the corresponding model value in each
+      bin.
+
     The inputs are implicit; the data are obtained from the current state of
     the Sherpa ``ui`` module.
-
-    Returns an array of shape ``(3, npts)``. The first slice is the energy
-    axis in keV; the second is the observed values in each bin (counts, or
-    rate, or rate per keV, etc.); the third is the corresponding model value
-    in each bin.
 
     """
     bdata = ui.get_bkg()
@@ -414,8 +425,8 @@ def make_qq_plot(kev, obs, mdl, unit, key_text):
     *key_text*
       Text describing the quantile-quantile comparison quantity; will be
       shown on the plot legend.
-
-    Returns an :mod:`omega.RectPlot` instance.
+    Returns:
+      An :class:`omega.RectPlot` instance.
 
     *TODO*: nothing about this is Sherpa-specific. Same goes for some of the
     plotting routines in :mod:`pkwit.environments.casa.data`; might be
@@ -479,12 +490,10 @@ def make_spectrum_plot(model_plot, data_plot, desc, xmin_clamp=0.01,
     *max_valid_x*
       Like *min_valid_x* but for the largest "x" (energy axis) value in which the
       model and data are valid.
-
-    Returns ``(plot, xlow, xhigh)``, where *plot* an OmegaPlot RectPlot instance,
-    *xlow* is the left edge of the plot bounds, and *xhigh* is the right edge of
-    the plot bounds.
-
-    The plot bounds are
+    Returns:
+      A tuple ``(plot, xlow, xhigh)``, where *plot* an OmegaPlot RectPlot
+      instance, *xlow* is the left edge of the plot bounds, and *xhigh* is the
+      right edge of the plot bounds.
 
     """
     import omega as om

@@ -81,7 +81,7 @@ from mock import Mock as MagicMock
 class Mock (MagicMock):
     @classmethod
     def __getattr__ (cls, name):
-        if name == 'ArithmeticModel':
+        if name in ('ArithmeticModel', 'XSAdditiveModel'):
             return dict
         if name == 'CompositeModel':
             return Mock
