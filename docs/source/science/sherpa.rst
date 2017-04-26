@@ -15,7 +15,6 @@ This module includes a grab-bag of helpers in following broad topics:
 
  - :ref:`sherpa-plots`
  - :ref:`sherpa-data-structure-utilities`
- - :ref:`partial-response-model-workaround`
 
 
 .. _sherpa-plots:
@@ -50,16 +49,3 @@ Data Structure Utilities
 .. autofunction:: expand_rmf_matrix
 .. autofunction:: derive_identity_arf
 .. autofunction:: derive_identity_rmf
-
-
-.. _partial-response-model-workaround:
-
-Workarounds for models that only partially obey the instrumental response
--------------------------------------------------------------------------
-
-.. warning::
-
-   This class is superseded by the functionality provided in
-   :func:`derive_identity_arf` and :func:`derive_identity_rmf`.
-
-.. autoclass:: FilterAdditionHack

@@ -9,7 +9,6 @@
 from __future__ import absolute_import, division, print_function
 
 __all__ = '''
-FilterAdditionHack
 expand_rmf_matrix
 derive_identity_rmf
 derive_identity_arf
@@ -20,62 +19,7 @@ make_spectrum_plot
 '''.split()
 
 from sherpa.astro import ui
-from sherpa.models import CompositeModel, ArithmeticModel
 import numpy as np
-
-
-class FilterAdditionHack(CompositeModel, ArithmeticModel):
-    """Create a new model that adds together two models, one filtered through
-    instrumental response functions, one not.
-
-    *dataobj*
-      An object representing the input data; in standard usage, this is the
-      result of calling :func:`sherpa.astro.ui.get_data`. This is needed
-      to implement the hack.
-    *lhs*
-      A source model that *is* filtered through the telescope's response function.
-    *rhs*
-      A source model that is *not* filtered through the telescope's response function.
-
-    As of version 4.9, Sherpa has some problems when combining the
-    ``set_{bkg_,}_full_model`` functions with energy filtering. There is a
-    relevant-looking bug notice `here
-    <http://cxc.harvard.edu/sherpa/bugs/set_full_model.html>`_, although I
-    think that I might be seeing a *slightly* different problem than the one
-    that that page describes. Regardless, I can't get their suggested fix to
-    work. Looking at how the background model is evaluated, I don't see how
-    their suggested fix can be relevant, either. This class implements my
-    workaround, which hopefully isn't totally crazy.
-
-    """
-    def __init__(self, dataobj, lhs, rhs):
-        self.dataobj = dataobj
-        self.lhs = lhs
-        self.rhs = rhs
-        self.op = np.add
-        CompositeModel.__init__(self, '%s + %s' % (lhs.name, rhs.name), (lhs, rhs))
-
-    def startup(self):
-        self.lhs.startup()
-        self.rhs.startup()
-        CompositeModel.startup(self)
-
-    def teardown(self):
-        self.lhs.teardown()
-        self.rhs.teardown()
-        CompositeModel.teardown(self)
-
-    def calc(self, p, *args, **kwargs):
-        nlhs = len(self.lhs.pars)
-        lhs = self.lhs.calc(p[:nlhs], *args, **kwargs)
-        rhs = self.rhs.calc(p[nlhs:], *args, **kwargs)
-
-        # the hack!
-        old_shape = lhs.shape
-        lhs = self.dataobj.apply_filter(lhs)
-        print('CC', old_shape, lhs.shape, rhs.shape)
-
-        return self.op(lhs, rhs)
 
 
 def expand_rmf_matrix(rmf):
