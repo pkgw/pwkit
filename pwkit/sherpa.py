@@ -17,7 +17,9 @@ derive_identity_arf
 get_source_qq_data
 get_bkg_qq_data
 make_qq_plot
+make_multi_qq_plots
 make_spectrum_plot
+make_multi_spectrum_plots
 '''.split()
 
 import numpy as np
@@ -370,9 +372,11 @@ def derive_identity_arf(name, arf):
     return ARF1D(darf, pha=arf._pha)
 
 
-def get_source_qq_data():
+def get_source_qq_data(id=None):
     """Get data for a quantile-quantile plot of the source data and model.
 
+    *id*
+      The dataset id for which to get the data; defaults if unspecified.
     Returns:
       An ndarray of shape ``(3, npts)``. The first slice is the energy axis in
       keV; the second is the observed values in each bin (counts, or rate, or
@@ -383,16 +387,20 @@ def get_source_qq_data():
     the Sherpa ``ui`` module.
 
     """
-    sdata = ui.get_data()
+    sdata = ui.get_data(id=id)
     kev = sdata.get_x()
     obs_data = sdata.counts
-    model_data = ui.get_model()(kev)
+    model_data = ui.get_model(id=id)(kev)
     return np.vstack((kev, obs_data, model_data))
 
 
-def get_bkg_qq_data():
+def get_bkg_qq_data(id=None, bkg_id=None):
     """Get data for a quantile-quantile plot of the background data and model.
 
+    *id*
+      The dataset id for which to get the data; defaults if unspecified.
+    *bkg_id*
+      The identifier of the background; defaults if unspecified.
     Returns:
       An ndarray of shape ``(3, npts)``. The first slice is the energy axis in
       keV; the second is the observed values in each bin (counts, or rate, or
@@ -403,10 +411,10 @@ def get_bkg_qq_data():
     the Sherpa ``ui`` module.
 
     """
-    bdata = ui.get_bkg()
+    bdata = ui.get_bkg(id=id, bkg_id=bkg_id)
     kev = bdata.get_x()
     obs_data = bdata.counts
-    model_data = ui.get_bkg_model()(kev)
+    model_data = ui.get_bkg_model(id=id, bkg_id=bkg_id)(kev)
     return np.vstack((kev, obs_data, model_data))
 
 
@@ -447,7 +455,9 @@ def make_qq_plot(kev, obs, mdl, unit, key_text):
     p.addXY([0, mx], [0, mx], '1:1')
     p.addXY(c_mdl, c_obs, key_text)
 
-    locs = np.linspace(0., kev.size - 2, 10)
+    # HACK: this range of numbers is chosen to give reasonable sampling for my
+    # sources, which are typically quite soft.
+    locs = np.array([0, 0.05, 0.08, 0.11, 0.17, 0.3, 0.4, 0.7, 1]) * (kev.size - 2)
     c0 = mx * 1.05
     c1 = mx * 1.1
 
@@ -461,6 +471,62 @@ def make_qq_plot(kev, obs, mdl, unit, key_text):
         p.addXY([c0, c1], [obsval, obsval], None, dsn=2)
 
     p.setLabels('Cumulative model ' + unit, 'Cumulative data ' + unit)
+    p.defaultKeyOverlay.vAlign = 0.3
+    return p
+
+
+def make_multi_qq_plots(arrays, key_text):
+    """Make a quantile-quantile plot comparing multiple sets of events and models.
+
+    *arrays*
+      X.
+    *key_text*
+      Text describing the quantile-quantile comparison quantity; will be
+      shown on the plot legend.
+    Returns:
+      An :class:`omega.RectPlot` instance.
+
+    *TODO*: nothing about this is Sherpa-specific. Same goes for some of the
+    plotting routines in :mod:`pkwit.environments.casa.data`; might be
+    reasonable to add a submodule for generic X-ray-y plotting routines.
+
+    *TODO*: Some gross code duplication here.
+
+    """
+    import omega as om
+
+    p = om.RectPlot()
+    p.addXY([0, 1.], [0, 1.], '1:1')
+
+    for index, array in enumerate(arrays):
+        kev, obs, mdl = array
+        c_obs = np.cumsum(obs)
+        c_mdl = np.cumsum(mdl)
+
+        mx = 0.5 * (c_obs[-1] + c_mdl[-1])
+        c_obs /= mx
+        c_mdl /= mx
+
+        p.addXY(c_mdl, c_obs, '%s #%d' % (key_text, index))
+
+    # HACK: this range of numbers is chosen to give reasonable sampling for my
+    # sources, which are typically quite soft.
+    #
+    # Note: this reuses the variables from the last loop iteration.
+    locs = np.array([0, 0.05, 0.08, 0.11, 0.17, 0.3, 0.4, 0.7, 1]) * (kev.size - 2)
+    c0 = 1.05
+    c1 = 1.1
+
+    for loc in locs:
+        i0 = int(np.floor(loc))
+        frac = loc - i0
+        kevval = (1 - frac) * kev[i0] + frac * kev[i0+1]
+        mdlval = (1 - frac) * c_mdl[i0] + frac * c_mdl[i0+1]
+        obsval = (1 - frac) * c_obs[i0] + frac * c_obs[i0+1]
+        p.addXY([mdlval, mdlval], [c0, c1], '%.2f keV' % kevval, dsn=2)
+        p.addXY([c0, c1], [obsval, obsval], None, dsn=2)
+
+    p.setLabels('Cumulative rescaled model', 'Cumulative rescaled data')
     p.defaultKeyOverlay.vAlign = 0.3
     return p
 
@@ -502,6 +568,13 @@ def make_spectrum_plot(model_plot, data_plot, desc, xmin_clamp=0.01,
     model_x[0] = max(model_x[0], xmin_clamp)
     model_y = np.concatenate((model_plot.y, [0.]))
 
+    # Sigh, sometimes Sherpa gives us bad values.
+    is_bad = ~np.isfinite(model_y)
+    if is_bad.sum():
+        from .cli import warn
+        warn('bad Sherpa model Y value(s) at: %r', np.where(is_bad)[0])
+        model_y[is_bad] = 0
+
     data_left_edges = data_plot.x - 0.5 * data_plot.xerr
     data_left_edges[0] = max(data_left_edges[0], xmin_clamp)
     data_hist_x = np.concatenate((data_left_edges, [data_plot.x[-1] + 0.5 * data_plot.xerr[-1]]))
@@ -528,6 +601,114 @@ def make_spectrum_plot(model_plot, data_plot, desc, xmin_clamp=0.01,
     p.addXYErr(data_plot.x, data_plot.y, data_plot.yerr, desc + ' Data', lines=0, dsn=1)
 
     p.setLabels(data_plot.xlabel, data_plot.ylabel)
+    p.setLinLogAxes(True, False)
+    p.setBounds (xlow, xhigh)
+    return p, xlow, xhigh
+
+
+def make_multi_spectrum_plots(model_plot, plotids, data_getter, desc, xmin_clamp=0.01,
+                              min_valid_x=None, max_valid_x=None):
+    """Make a plot of multiple spectral models and data.
+
+    *model_plot*
+      A model plot object returned by Sherpa from a call like
+      ``ui.get_model_plot()`` or ``ui.get_bkg_model_plot()``.
+    *data_plots*
+      An iterable of data plot objects returned by Sherpa from calls like
+      ``ui.get_source_plot(id)`` or ``ui.get_bkg_plot(id)``.
+    *desc*
+      Text describing the origin of the data; will be shown in the plot legend
+      (with "Model" and "Data #<number>" appended).
+    *xmin_clamp*
+      The smallest "x" (energy axis) value that will be plotted; default is 0.01.
+      This is needed to allow the plot to be shown on a logarithmic scale if
+      the energy axes of the model go all the way to 0.
+    *min_valid_x*
+      Either None, or the smallest "x" (energy axis) value in which the model and
+      data are valid; this could correspond to a range specified in the "notice"
+      command during analysis. If specified, a gray band will be added to the plot
+      showing the invalidated regions.
+    *max_valid_x*
+      Like *min_valid_x* but for the largest "x" (energy axis) value in which the
+      model and data are valid.
+    Returns:
+      A tuple ``(plot, xlow, xhigh)``, where *plot* an OmegaPlot RectPlot
+      instance, *xlow* is the left edge of the plot bounds, and *xhigh* is the
+      right edge of the plot bounds.
+
+    TODO: not happy about the code duplication with :func:`make_spectrum_plot`
+    but here we are.
+
+    """
+    import omega as om
+    from omega.stamps import DataThemedStamp, WithYErrorBars
+
+    model_x = np.concatenate((model_plot.xlo, [model_plot.xhi[-1]]))
+    model_x[0] = max(model_x[0], xmin_clamp)
+    model_y = np.concatenate((model_plot.y, [0.]))
+
+    # Sigh, sometimes Sherpa gives us bad values.
+    is_bad = ~np.isfinite(model_y)
+    if is_bad.sum():
+        from .cli import warn
+        warn('bad Sherpa model Y value(s) at: %r', np.where(is_bad)[0])
+        model_y[is_bad] = 0
+
+    p = om.RectPlot()
+    data_csps = []
+    data_lines = []
+    xlow = xhigh = None
+
+    for index, plotid in enumerate(plotids):
+        data_plot = data_getter(plotid)
+        data_left_edges = data_plot.x - 0.5 * data_plot.xerr
+        data_left_edges[0] = max(data_left_edges[0], xmin_clamp)
+        data_hist_x = np.concatenate((data_left_edges, [data_plot.x[-1] + 0.5 * data_plot.xerr[-1]]))
+        data_hist_y = np.concatenate((data_plot.y, [0.]))
+
+        if xlow is None:
+            xlow = model_x[0]
+            xhigh = model_x[-1]
+        else:
+            xlow = min(xlow, model_x[0])
+            xhigh = max(xhigh, model_x[-1])
+
+        csp = om.rect.ContinuousSteppedPainter(keyText=None)
+        csp.setFloats(data_hist_x, data_hist_y)
+        data_csps.append(csp)
+
+        inner_stamp = DataThemedStamp(None)
+        stamp = WithYErrorBars(inner_stamp)
+
+        lines = om.rect.XYDataPainter(
+            lines = False,
+            pointStamp = stamp,
+            keyText = '%s Data #%d' % (desc, index)
+        )
+        lines.setFloats(data_plot.x, data_plot.y,
+                        data_plot.y + data_plot.yerr,
+                        data_plot.y - data_plot.yerr)
+        inner_stamp.setHolder(lines)
+        data_lines.append(lines)
+
+    log_bounds_pad_factor = 0.9
+    xlow *= log_bounds_pad_factor
+    xhigh /= log_bounds_pad_factor
+
+    if min_valid_x is not None:
+        p.add(om.rect.XBand(1e-3 * xlow, min_valid_x, keyText=None), zheight=-1, dsn=1)
+    if max_valid_x is not None:
+        p.add(om.rect.XBand(max_valid_x, xhigh * 1e3, keyText=None), zheight=-1, dsn=1)
+
+    model_csp = om.rect.ContinuousSteppedPainter(keyText=desc + ' Model')
+    model_csp.setFloats(model_x, model_y)
+    p.add(model_csp)
+
+    for index, (data_csp, lines) in enumerate(zip(data_csps, data_lines)):
+        p.add(data_csp, dsn=index + 1)
+        p.add(lines, dsn=index + 1)
+
+    p.setLabels(data_plot.xlabel, data_plot.ylabel) # data_plot = last one from the for loop
     p.setLinLogAxes(True, False)
     p.setBounds (xlow, xhigh)
     return p, xlow, xhigh

@@ -40,13 +40,17 @@ Tools for Plotting with Sherpa Data Objects
    get_source_qq_data
    get_bkg_qq_data
    make_qq_plot
+   make_multi_qq_plots
    make_spectrum_plot
+   make_multi_spectrum_plots
 
 
 .. autofunction:: get_source_qq_data
 .. autofunction:: get_bkg_qq_data
 .. autofunction:: make_qq_plot
+.. autofunction:: make_multi_qq_plots
 .. autofunction:: make_spectrum_plot
+.. autofunction:: make_multi_spectrum_plots
 
 
 .. _sherpa-data-structure-utilities:
