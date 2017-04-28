@@ -158,8 +158,8 @@ class Holder (object):
     def __repr__ (self):
         d = self.__dict__
         s = sorted (six.iterkeys (d))
-        return b'%s(%s)' % (self.__class__.__name__,
-                            b', '.join (b'%s=%r' % (k, d[k]) for k in s))
+        return '%s(%s)' % (self.__class__.__name__,
+                            ', '.join ('%s=%r' % (k, d[k]) for k in s))
 
     def __iter__ (self):
         return six.iteritems (self.__dict__)
