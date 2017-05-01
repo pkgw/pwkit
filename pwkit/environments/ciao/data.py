@@ -319,6 +319,48 @@ class Events (GTIData):
         return vb
 
 
+    def print_lightcurve (self, ccd_id=None, header=True):
+        from ...bblocks import tt_bblock
+
+        if ccd_id is None:
+            if len (self.gti) != 1:
+                raise Exception ('must specify ccd_id')
+            ccd_id = list(self.gti.keys())[0]
+
+        kev = self.events['energy'] * 1e-3
+
+        bbinfo = tt_bblock (
+            self.gti[ccd_id]['start_dmjd'],
+            self.gti[ccd_id]['stop_dmjd'],
+            self.events['dmjd'],
+            intersect_with_bins = True,
+        )
+        cps = bbinfo.rates / 86400
+        tprev = None
+
+        if header:
+            print('%6s  %8s  %8s  %4s  %5s  %4s' % ('Gap', 'Tstart', 'Tstop', 'Nevt', 'Ct/s', 'keV'))
+
+        for i in range(bbinfo.rates.size):
+            tstart = bbinfo.ledges[i]
+            tstop = bbinfo.redges[i]
+            rate = cps[i]
+
+            if tprev is None:
+                gapstr = ''
+            elif tstart == tprev:
+                gapstr = '--'
+            else:
+                gapstr = '%6.4f' % (tstart - tprev)
+
+            subset = self.events[(self.events['dmjd'] >= tstart) & (self.events['dmjd'] < tstop)]
+            n = subset.shape[0]
+            kev = subset['energy'].median() * 1e-3
+
+            print('%6s  %8.4f  %8.4f  %4d  %5.2f  %4.1f' % (gapstr, tstart, tstop, n, rate, kev))
+            tprev = tstop
+
+
 class OIFData (BaseCIAOData):
     contents = None
     """DataFrame giving information about the various files in a Chandra dataset.
