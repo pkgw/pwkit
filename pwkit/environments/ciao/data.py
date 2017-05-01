@@ -72,8 +72,11 @@ class BaseCIAOData (object):
         with Path (path).read_fits () as hdulist:
             self._process_main (hdulist, hdulist[0].header)
             assert self.mjdref is not None
+            assert np.isfinite(self.mjdref)
             assert self.t0 is not None
+            assert np.isfinite(self.t0)
             assert self.mjd0 is not None
+            assert np.isfinite(self.mjd0)
 
             for hdu in hdulist[1:]:
                 self._process_hdu (hdu)
@@ -143,6 +146,9 @@ class GTIData (BaseCIAOData):
 
         gti = self.gti[ccdnum]
         ngti = gti.shape[0]
+        if ngti == 0:
+            return
+
         gti0 = gti.at[0,'start_'+tunit]
         gti1 = gti.at[ngti-1,'stop_'+tunit]
         smallofs = (gti1 - gti0) * 0.03
@@ -213,6 +219,9 @@ class Events (GTIData):
 
         if self.t0 is None:
             self.t0 = self.events.time.min ()
+            if not np.isfinite(self.t0):
+                # Can happen if there are zero events!
+                self.t0 = 51544.5 # J2000 epoch as MJD
 
         if self.mjd0 is None:
             self.mjd0 = np.floor (self.t0 / 86400 + self.mjdref)
@@ -279,39 +288,49 @@ class Events (GTIData):
             ccd_id = list(self.gti.keys())[0]
 
         kev = self.events['energy'] * 1e-3
-
-        bbinfo = tt_bblock (
-            self.gti[ccd_id]['start_dmjd'],
-            self.gti[ccd_id]['stop_dmjd'],
-            self.events['dmjd'],
-            intersect_with_bins = True,
-        )
-        cps = bbinfo.rates / 86400
-
-        tmin, tmax = tight_bounds (bbinfo.ledges[0], bbinfo.redges[-1])
-        emin, emax = tight_bounds (kev.min (), kev.max ())
-        rmin, rmax = tight_bounds (cps.min (), cps.max ())
-
         vb = om.layout.VBox (2)
 
-        vb[0] = om.RectPlot ()
-        csp = om.rect.ContinuousSteppedPainter (keyText='%d events' % (self.events.shape[0]))
-        csp.setFloats (np.concatenate ((bbinfo.ledges, bbinfo.redges[-1:])),
-                       np.concatenate ((cps, [0])))
-        vb[0].add (csp)
+        if kev.size == 0:
+            vb[0] = om.RectPlot()
+            vb[1] = om.RectPlot()
+            tmin = self.gti[ccd_id]['start_dmjd'].min()
+            tmax = self.gti[ccd_id]['stop_dmjd'].max()
+            if np.isnan(tmin):
+                tmin, tmax = -1., 1.
+            emin, emax = -1., 1.
+            rmin, rmax = -1., 1.
+        else:
+            bbinfo = tt_bblock (
+                self.gti[ccd_id]['start_dmjd'],
+                self.gti[ccd_id]['stop_dmjd'],
+                self.events['dmjd'],
+                intersect_with_bins = True,
+            )
+            cps = bbinfo.rates / 86400
+
+            tmin, tmax = tight_bounds (bbinfo.ledges[0], bbinfo.redges[-1])
+            emin, emax = tight_bounds (kev.min (), kev.max ())
+            rmin, rmax = tight_bounds (cps.min (), cps.max ())
+
+            vb[0] = om.RectPlot ()
+            csp = om.rect.ContinuousSteppedPainter (keyText='%d events' % (self.events.shape[0]))
+            csp.setFloats (np.concatenate ((bbinfo.ledges, bbinfo.redges[-1:])),
+                           np.concatenate ((cps, [0])))
+            vb[0].add (csp)
+
+            if bin_energies:
+                vb[1] = self._plot_binned_event_energies(
+                    bbinfo,
+                    energy_scale = 1e-3,
+                    dsn = 0
+                )
+            else:
+                vb[1] = om.quickXY (self.events['dmjd'], kev, None, lines=0)
+
         vb[0].setBounds (tmin, tmax, rmin, rmax)
         vb[0].setYLabel ('Count rate (ct/s)')
         vb[0].bpainter.paintLabels = False
         self._plot_add_gtis (vb[0], ccd_id)
-
-        if bin_energies:
-            vb[1] = self._plot_binned_event_energies(
-                bbinfo,
-                energy_scale = 1e-3,
-                dsn = 0
-            )
-        else:
-            vb[1] = om.quickXY (self.events['dmjd'], kev, None, lines=0)
 
         vb[1].setBounds (tmin, tmax, emin, emax)
         vb[1].setLabels ('MJD - %d' % self.mjd0, 'Energy (keV)')
