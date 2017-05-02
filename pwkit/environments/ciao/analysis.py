@@ -1,9 +1,8 @@
 # -*- mode: python; coding: utf-8 -*-
-# Copyright 2016 Peter Williams <peter@newton.cx> and collaborators
+# Copyright 2016-2017 Peter Williams <peter@newton.cx> and collaborators
 # Licensed under the MIT License
 
-"""Compute a table of expected background counts in different X-ray energy
-bands.
+"""Various helpers for X-ray analysis that rely on CIAO tools.
 
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
@@ -12,6 +11,7 @@ __all__ = str('''
 get_region_area
 count_events
 compute_bgband
+simple_srcflux
 ''').split ()
 
 
@@ -127,3 +127,73 @@ def compute_bgband (evtpath, srcreg, bkgreg, ebins, env=None):
     df['src_sigma'] = np.sqrt (2) * erfcinv (np.exp (df['log_prob_bkg']))
     df['nsrc_subbed'] = df['nsrc'] - df['nbkg_scaled']
     return df
+
+
+def _rmtree_error (func, path, excinfo):
+    from ...cli import warn
+    warn ('couldn\'t delete temporary file %s: %s (%s)', path, excinfo[0], func)
+
+def simple_srcflux(env, infile=None, psfmethod='arfcorr', conf=0.68,
+                   verbose=0, **kwargs):
+    """Run the CIAO "srcflux" script and retrieve its results.
+
+    *infile*
+      The input events file; must be specified. The computation is done
+      in a temporary directory, so this path — and all others passed in
+      as arguments — **must be made absolute**.
+    *psfmethod* = "arfcorr"
+      The PSF modeling method to be used; see the "srcflux" documentation.
+    *conf* = 0.68
+      The confidence limit to detect. We default to 1 sigma, instead of
+      the 90% mark, which is the srcflux default.
+    *verbose* = 0
+      The level of verbosity to be used by the tool.
+    *kwargs*
+      Remaining keyword arguments are passed to the tool as command-line
+      keyword arguments, with values stringified.
+    Returns:
+      A :class:`pandas.DataFrame` extracted from the results table generated
+      by the tool. There is one row for each source analyzed; in common usage,
+      this means that there will be one row.
+
+    """
+    from ...io import Path
+    import shutil, signal, tempfile
+
+    if infile is None:
+        raise ValueError('must specify infile')
+
+    kwargs.update(dict(
+        infile = infile,
+        psfmethod = psfmethod,
+        conf = conf,
+        verbose = verbose,
+        clobber = 'yes',
+        outroot = 'sf',
+    ))
+
+    argv = ['srcflux'] + ['%s=%s' % t for t in kwargs.items()]
+    argstr = ' '.join(argv)
+    tempdir = None
+
+    try:
+        tempdir = tempfile.mkdtemp(prefix='srcflux')
+
+        proc = env.launch(argv, cwd=tempdir, shell=False)
+        retcode = proc.wait()
+
+        if retcode > 0:
+            raise RuntimeError('command "%s" failed with exit code %d' % (argstr, retcode))
+        elif retcode == -signal.SIGINT:
+            raise KeyboardInterrupt()
+        elif retcode < 0:
+            raise RuntimeError('command "%s" killed by signal %d' % (argstr, -retcode))
+
+        tables = list(Path(tempdir).glob('*.flux'))
+        if len(tables) != 1:
+            raise RuntimeError('expected exactly one flux table from srcflux; got %d' % len(tables))
+
+        return tables[0].read_fits_bintable(hdu=1)
+    finally:
+        if tempdir is not None:
+            shutil.rmtree(tempdir, onerror=_rmtree_error)
