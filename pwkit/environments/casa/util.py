@@ -139,7 +139,11 @@ def datadir (*subdirs):
         else:
             data = os.path.join (os.path.dirname (casadef.task_directory), 'data')
             if not os.path.isdir (data):
-                data = None
+                # Sigh, hack for CASA 4.7 + Conda; should be straightened out:
+                dn = os.path.dirname
+                data = os.path.join(dn(dn(dn(casadef.task_directory))), 'lib', 'casa', 'data')
+                if not os.path.isdir (data):
+                    data = None
 
     if data is None:
         import casac
