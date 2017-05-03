@@ -358,7 +358,7 @@ class Events (GTIData):
         tprev = None
 
         if header:
-            print('%6s  %8s  %8s  %4s  %5s  %4s' % ('Gap', 'Tstart', 'Tstop', 'Nevt', 'Ct/s', 'keV'))
+            print('%7s  %8s  %8s  %5s  %7s  %4s' % ('Gap', 'Tstart', 'Tstop', 'Nevt', 'Ct/s', 'keV'))
 
         for i in range(bbinfo.rates.size):
             tstart = bbinfo.ledges[i]
@@ -370,13 +370,13 @@ class Events (GTIData):
             elif tstart == tprev:
                 gapstr = '--'
             else:
-                gapstr = '%6.4f' % (tstart - tprev)
+                gapstr = '%7.5f' % (tstart - tprev)
 
             subset = self.events[(self.events['dmjd'] >= tstart) & (self.events['dmjd'] < tstop)]
             n = subset.shape[0]
             kev = subset['energy'].median() * 1e-3
 
-            print('%6s  %8.4f  %8.4f  %4d  %5.2f  %4.1f' % (gapstr, tstart, tstop, n, rate, kev))
+            print('%7s  %8.5f  %8.5f  %5d  %7.4f  %4.1f' % (gapstr, tstart, tstop, n, rate, kev))
             tprev = tstop
 
 
