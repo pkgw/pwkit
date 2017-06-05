@@ -25,6 +25,8 @@ closures_doc = \
 """
 casatask closures vis=MS [keywords...]
 
+THIS TASK IS CURRENTLY BROKEN AND WILL REFUSE TO RUN.
+
 Plot diagnostics related to phase closure triple.
 
 vis=
@@ -559,6 +561,7 @@ def grid_bp_data (bps, items, mask=True):
 class ClosureCalculator (object):
     def process (self, cfg):
         # Initialize whole-run buffers.
+        raise Exception('BROKEN: NEEDS UPDATE TO SELECT ON DATA_DESC_ID')
 
         self.all_aps = set ()
         self.all_bps = set ()
@@ -626,6 +629,8 @@ class ClosureCalculator (object):
         colnames = b(colnames)
 
         for ddid in ddids:
+            raise Exception('UPDATE TO SELECT ON DATA_DESC_ID BECAUSE CASA IS BROKEN')
+
             ms.selectinit (ddid)
             ms.iterinit (maxrows=4096)
             ms.iterorigin ()

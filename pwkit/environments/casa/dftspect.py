@@ -177,11 +177,15 @@ def dftspect (cfg):
     # time is (nchunk)
     # axis_info.corr_axis is (ncorr)
     # axis_info.freq_axis.chan_freq is (nchan, 1) [for now?]
+    #
+    # Note that we apply msselect() again when reading the data because
+    # selectinit() is broken, but the invocation here is good because it
+    # affects the results from ms.range() and friends.
 
     ms.open (b(cfg.vis))
-    sels = dict ((n, cfg.get (n)) for n in util.msselect_keys
-                 if cfg.get (n) is not None)
-    ms.msselect (b(sels))
+    ms_sels = dict ((n, cfg.get (n)) for n in util.msselect_keys
+                    if cfg.get (n) is not None)
+    ms.msselect (b(ms_sels))
 
     rangeinfo = ms.range (b'data_desc_id field_id'.split ())
     ddids = rangeinfo['data_desc_id']
@@ -231,6 +235,12 @@ def dftspect (cfg):
     colnames = b(colnames)
 
     for ddid in ddids:
+        # Starting in CASA 4.6, selectinit(ddid) stopped actually filtering
+        # your data to match the specified DDID! What garbage. Work around
+        # with our own filtering.
+        ms_sels['taql'] = 'DATA_DESC_ID == %d' % ddid
+        ms.msselect(b(ms_sels))
+
         ms.selectinit (ddid)
         if cfg.polarization is not None:
             ms.selectpolarization (b(cfg.polarization.split (',')))
@@ -246,9 +256,11 @@ def dftspect (cfg):
             cols = ms.getdata (items=colnames)
 
             if rephase:
+                # With appropriate spw/DDID selection, `freqs` has shape
+                # (nchan, 1). Convert to m^-1 so we can multiply against UVW
+                # directly.
                 freqs = cols['axis_info']['freq_axis']['chan_freq']
                 assert freqs.shape[1] == 1, 'internal inconsistency, chan_freq??'
-                # convert to m^-1 so we can multiply against UVW directly:
                 freqs = freqs[:,0] * util.INVERSE_C_MS
 
             for i in xrange (cols['flag'].shape[-1]): # all records
@@ -290,6 +302,8 @@ def dftspect (cfg):
 
             if not ms.iternext ():
                 break
+
+        ms.reset() # reset selection filter so we can get next DDID
 
     ms.close ()
 
