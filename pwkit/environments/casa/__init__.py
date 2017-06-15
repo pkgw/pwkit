@@ -94,18 +94,18 @@ class CasaEnvironment (Environment):
         def path (*args):
             return os.path.join (self._rootdir, *args)
 
-        env[b'CASAROOT'] = path ()
-        env[b'CASAPATH'] = ' '.join ([path (),
+        env['CASAROOT'] = path ()
+        env['CASAPATH'] = ' '.join ([path (),
                                       os.uname ()[0].lower (),
                                       'local',
                                       os.uname ()[1]])
 
         if is_rpm_install:
-            env[b'CASA_INSTALLATION_TYPE'] = b'rpm-installation'
-            prepend_environ_path (env, b'PATH', b'/usr/lib64/casa/01/bin')
-            prepend_environ_path (env, b'PATH', path ('bin'))
+            env['CASA_INSTALLATION_TYPE'] = b'rpm-installation'
+            prepend_environ_path (env, 'PATH', b'/usr/lib64/casa/01/bin')
+            prepend_environ_path (env, 'PATH', path ('bin'))
         else:
-            env[b'CASA_INSTALLATION_TYPE'] = b'tar-installation'
+            env['CASA_INSTALLATION_TYPE'] = b'tar-installation'
 
             lib = 'lib64' if os.path.isdir (path ('lib64')) else 'lib'
             # 4.3.1 comes with both python2.6 and python2.7???
@@ -113,29 +113,29 @@ class CasaEnvironment (Environment):
 
             tcldir = path ('share', 'tcl')
             if os.path.isdir (tcldir):
-                env[b'TCL_LIBRARY'] = tcldir
+                env['TCL_LIBRARY'] = tcldir
             else:
                 tcl_versioned_dirs = glob.glob (path ('share', 'tcl*'))
                 if len (tcl_versioned_dirs):
-                    env[b'TCL_LIBRARY'] = tcl_versioned_dirs[-1]
+                    env['TCL_LIBRARY'] = tcl_versioned_dirs[-1]
 
             bindir = path (lib, 'casa', 'bin')
             if not os.path.isdir (bindir):
                 bindir = path (lib, 'casapy', 'bin')
-            prepend_environ_path (env, b'PATH', bindir)
+            prepend_environ_path (env, 'PATH', bindir)
 
-            env[b'CASA_INSTALLATION_DIRECTORY'] = env[b'CASAROOT']
-            env[b'__CASAPY_PYTHONDIR'] = pydir
-            env[b'MATPLOTLIBRC'] = path ('share', 'matplotlib')
-            env[b'PYTHONHOME'] = env[b'CASAROOT']
-            env[b'TK_LIBRARY'] = path ('share', 'tk')
-            env[b'QT_PLUGIN_PATH'] = path (lib, 'qt4', 'plugins')
+            env['CASA_INSTALLATION_DIRECTORY'] = env['CASAROOT']
+            env['__CASAPY_PYTHONDIR'] = pydir
+            env['MATPLOTLIBRC'] = path ('share', 'matplotlib')
+            env['PYTHONHOME'] = env['CASAROOT']
+            env['TK_LIBRARY'] = path ('share', 'tk')
+            env['QT_PLUGIN_PATH'] = path (lib, 'qt4', 'plugins')
 
-            prepend_environ_path (env, b'LD_LIBRARY_PATH', path (lib))
+            prepend_environ_path (env, 'LD_LIBRARY_PATH', path (lib))
             # should we overwite PYTHONPATH instead?
-            prepend_environ_path (env, b'PYTHONPATH', os.path.join (pydir, 'site-packages'))
-            prepend_environ_path (env, b'PYTHONPATH', os.path.join (pydir, 'heuristics'))
-            prepend_environ_path (env, b'PYTHONPATH', pydir)
+            prepend_environ_path (env, 'PYTHONPATH', os.path.join (pydir, 'site-packages'))
+            prepend_environ_path (env, 'PYTHONPATH', os.path.join (pydir, 'heuristics'))
+            prepend_environ_path (env, 'PYTHONPATH', pydir)
 
         return env
 
