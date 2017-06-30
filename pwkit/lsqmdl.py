@@ -52,7 +52,8 @@ try:
 except ImportError:
     import numpy.polynomial as npoly
 
-from six.moves import range
+from six import get_function_code
+from six.moves import range, reduce
 from . import binary_type, text_type
 
 
@@ -274,8 +275,9 @@ class Model (_ModelBase):
 
 
     def set_simple_func (self, func, args=()):
-        npar = func.func_code.co_argcount - len (args)
-        pnames = func.func_code.co_varnames[:npar]
+        code = get_function_code(func)
+        npar = code.co_argcount - len (args)
+        pnames = code.co_varnames[:npar]
 
         def wrapper (params, *args):
             return func (*(tuple (params) + args))
