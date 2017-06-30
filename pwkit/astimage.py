@@ -1068,7 +1068,7 @@ class FITSImage (AstroImage):
         self._checkOpen ()
         data = np.ma.asarray (self._handle[0].data)
         # Are there other standards for expressing masking in FITS?
-        data.mask = -np.isfinite (data.data)
+        data.mask = ~np.isfinite (data.data)
 
         if flip:
             data = data[...,::-1,:]
