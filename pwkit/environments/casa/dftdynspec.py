@@ -1,21 +1,22 @@
 # -*- mode: python; coding: utf-8 -*-
-# Copyright 2013, 2016 Peter Williams <peter@newton.cx> and collaborators
+# Copyright 2013, 2016-2017 Peter Williams <peter@newton.cx> and collaborators
 # Licensed under the MIT License.
 
 # NB. This is super-redundant with both dftphotom and dftspect; things are
 # getting a little silly here. But I think it's faster to copy/paste/hack than
 # it is to merge everything into one uberprogram.
 
-"""Extract a dynamic spectrum from the visibilities in a measurement set.
-
-CASA doesn't have a task to do this.
+"""This module provides code to extract dynamic spectra from CASA Measurement
+Sets. CASA doesn't have a task that does this.
 
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = str ('Config dftdynspec dftdynspec_cli').split ()
+__all__ = str ('Config Loader dftdynspec dftdynspec_cli').split ()
 
-import six, sys, os.path, numpy as np
+import io, os.path, sys
+import numpy as np
+import six
 from six.moves import range
 
 from ... import binary_type, text_type
@@ -72,7 +73,10 @@ contributions from the source (though you can resample the Stokes
 parameters on the fly, so this is not quite the same thing as
 requiring the source be unpolarized).
 
-XXX: doc output format.
+The output data are stored as a file containing several serialized Numpy
+arrays. The Python class `pwkit.environments.casa.dftdynspec.Loader` can be
+used to load the data into a Python program.
+
 """
 
 class Config (ParseKeywords):
@@ -336,3 +340,62 @@ def dftdynspec_cli (argv):
     cfg = Config ().parse (argv[1:])
     util.logger (cfg.loglevel)
     dftdynspec (cfg)
+
+
+class Loader(object):
+    """Read in a dynamic-spectrum file produced by the `dftdynspec` task.
+
+    *path*
+      The path of the file to read.
+
+    Attributes:
+
+    *mjds*
+      A 1D sorted array of the MJDs of the data samples.
+    *n_mjds*
+      The size of the MJD axis of the data arrays; an integer.
+    *freqs*
+      A 1D sorted array of the frequencies of the data samples, measured in GHz.
+    *n_freqs*
+      The size of the frequency axis of the data arrays; an integer.
+    *reals*
+      A 2D array of the real parts of the averaged visibilities. Shape is
+      `(mjds.size, freqs.size)`.
+    *u_reals*
+      A 2D array of the estimated uncertainties on the real parts of the averaged
+      visibilities. Shape is `(mjds.size, freqs.size)`.
+    *imags*
+      A 2D array of the imaginary parts of the averaged visibilities. Shape is
+      `(mjds.size, freqs.size)`.
+    *u_imags*
+      A 2D array of the estimated uncertainties on the imaginary parts of the
+      averaged visibilities. Shape is `(mjds.size, freqs.size)`.
+    *counts*
+      A 2D array recording the number of visibilities that went into each
+      average. Shape is `(mjds.size, freqs.size)`.
+
+    """
+    mjds = None
+    freqs = None
+    reals = None
+    u_reals = None
+    imags = None
+    u_imags = None
+    counts = None
+
+    def __init__(self, path):
+        with io.open(path, 'rb') as f:
+            self.mjds = np.load(f)
+            self.freqs = np.load(f)
+            cube = np.load(f)
+            self.reals, self.u_reals, self.imags, self.u_imags, self.counts = cube
+
+
+    @property
+    def n_mjds(self):
+        return self.mjds.size
+
+
+    @property
+    def n_freqs(self):
+        return self.freqs.size

@@ -19,6 +19,7 @@ More detailed documentation
 
    tasks.rst
    utilities.rst
+   dftdynspec.rst
    ../../pwkit/environments/casa/dftphotom.rst
    ../../pwkit/environments/casa/scripting.rst
    ../../pwkit/environments/casa/spwglue.rst
