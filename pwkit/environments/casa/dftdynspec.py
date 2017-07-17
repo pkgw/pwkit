@@ -20,9 +20,10 @@ import six
 from six.moves import range
 
 from ... import binary_type, text_type
-from ...astutil import *
-from ...cli import check_usage, die
-from ...kwargv import ParseKeywords, Custom
+# Note: zany spacing so that Sphinx can parse the file correctly.
+from . ..astutil import *
+from . ..cli import check_usage, die
+from . ..kwargv import ParseKeywords, Custom
 from . import util
 from .util import sanitize_unicode as b
 
@@ -345,44 +346,43 @@ def dftdynspec_cli (argv):
 class Loader(object):
     """Read in a dynamic-spectrum file produced by the `dftdynspec` task.
 
+    **Constructor arguments**
+
     *path*
       The path of the file to read.
 
-    Attributes:
-
-    *mjds*
-      A 1D sorted array of the MJDs of the data samples.
-    *n_mjds*
-      The size of the MJD axis of the data arrays; an integer.
-    *freqs*
-      A 1D sorted array of the frequencies of the data samples, measured in GHz.
-    *n_freqs*
-      The size of the frequency axis of the data arrays; an integer.
-    *reals*
-      A 2D array of the real parts of the averaged visibilities. Shape is
-      `(mjds.size, freqs.size)`.
-    *u_reals*
-      A 2D array of the estimated uncertainties on the real parts of the averaged
-      visibilities. Shape is `(mjds.size, freqs.size)`.
-    *imags*
-      A 2D array of the imaginary parts of the averaged visibilities. Shape is
-      `(mjds.size, freqs.size)`.
-    *u_imags*
-      A 2D array of the estimated uncertainties on the imaginary parts of the
-      averaged visibilities. Shape is `(mjds.size, freqs.size)`.
-    *counts*
-      A 2D array recording the number of visibilities that went into each
-      average. Shape is `(mjds.size, freqs.size)`.
-
     """
     mjds = None
-    freqs = None
-    reals = None
-    u_reals = None
-    imags = None
-    u_imags = None
-    counts = None
+    "A 1D sorted array of the MJDs of the data samples."
 
+    freqs = None
+    "A 1D sorted array of the frequencies of the data samples, measured in GHz."
+
+    reals = None
+    """A 2D array of the real parts of the averaged visibilities. Shape is
+    `(mjds.size, freqs.size)`.
+
+    """
+    u_reals = None
+    """A 2D array of the estimated uncertainties on the real parts of the averaged
+    visibilities. Shape is `(mjds.size, freqs.size)`.
+
+    """
+    imags = None
+    """A 2D array of the imaginary parts of the averaged visibilities. Shape is
+    `(mjds.size, freqs.size)`.
+
+    """
+    u_imags = None
+    """A 2D array of the estimated uncertainties on the imaginary parts of the
+    averaged visibilities. Shape is `(mjds.size, freqs.size)`.
+
+    """
+    counts = None
+    """A 2D array recording the number of visibilities that went into each
+    average. Shape is `(mjds.size, freqs.size)`.
+
+    """
     def __init__(self, path):
         with io.open(path, 'rb') as f:
             self.mjds = np.load(f)
@@ -393,9 +393,11 @@ class Loader(object):
 
     @property
     def n_mjds(self):
+        "The size of the MJD axis of the data arrays; an integer."
         return self.mjds.size
 
 
     @property
     def n_freqs(self):
+        "The size of the frequency axis of the data arrays; an integer."
         return self.freqs.size

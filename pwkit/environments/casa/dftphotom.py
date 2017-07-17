@@ -15,9 +15,10 @@ import six, sys, os.path, numpy as np
 from six.moves import range
 
 from ... import binary_type, text_type
-from ...astutil import *
-from ...cli import check_usage, die, warn
-from ...kwargv import ParseKeywords, Custom
+# Note: zany spacing so that Sphinx can parse the file correctly.
+from . ..astutil import *
+from . ..cli import check_usage, die, warn
+from . ..kwargv import ParseKeywords, Custom
 from . import util
 from .util import sanitize_unicode as b
 

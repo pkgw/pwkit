@@ -41,3 +41,6 @@ the various arrays described below::
   print('Maximum real part:', ds.reals.max())
 
 .. autoclass:: Loader
+   :members:
+
+   **Members**
