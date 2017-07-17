@@ -50,6 +50,10 @@ scanintent=, spw=, taql=, time=, uvdist=
   is 'RR,LL'. All polarizations are averaged together, so mixing parallel- and
   cross-hand pols is almost never what you want to do.
 
+  NOTE: only whole spectral windows can be selected. If you attempt to select
+  channels within a window, a warning will be printed and that component of
+  the selection will be ignored.
+
 datacol=
   Name of the column to use for visibility data. Defaults to 'data'. You might
   want it to be 'corrected_data'.
@@ -133,6 +137,10 @@ def dftdynspec (cfg):
     # Note that we apply msselect() again when reading the data because
     # selectinit() is broken, but the invocation here is good because it
     # affects the results from ms.range() and friends.
+
+    if ':' in (cfg.spw or ''):
+        warn('it looks like you are attempting to select channels within one or more spws')
+        warn('this is NOT IMPLEMENTED; I will process the whole spw instead')
 
     ms.open (b(cfg.vis))
     totrows = ms.nrow ()
