@@ -137,7 +137,7 @@ def latexify (obj, **kwargs):
         return obj.__pk_latex__ (**kwargs)
 
     if isinstance (obj, text_type):
-        from unicode_to_latex import unicode_to_latex
+        from .unicode_to_latex import unicode_to_latex
         return unicode_to_latex (obj)
 
     if isinstance (obj, bool):
@@ -322,10 +322,10 @@ class TableBuilder (object):
         self._hclines = []
         self._notes = {}
         self._notecounter = 0
-        self.label = label
+        self.label = latexify(label)
 
 
-    def addcol (self, headings, datafunc, formatter=None, colspec=None, numbering='(%d)'):
+    def addcol (self, headings, datafunc, formatter=None, colspec=None, numbering=b'(%d)'):
         """Define a logical column. Arguments:
 
         headings
@@ -370,7 +370,7 @@ class TableBuilder (object):
         else:
             raise ValueError ('datafunc must accept between 0 and 3 args; it takes %d' % nargs)
 
-        ci = Holder (headings=headings, formatter=formatter,
+        ci = Holder (headings=[latexify(h) for h in headings], formatter=formatter,
                      wdatafunc=wrapped, colspec=colspec, numbering=numbering)
         self._colinfo.append (ci)
         return self
@@ -438,7 +438,7 @@ class TableBuilder (object):
                 # This is more about convenience for columns that don't have
                 # fancy alignment requirements, rather than about allowing
                 # overriding.
-                colspecpart = ci.colspec
+                colspecpart = latexify(ci.colspec)
 
             if colspecpart is None:
                 colspecpart = b'c' * ci.nlcol
