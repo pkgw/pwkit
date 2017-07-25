@@ -349,13 +349,15 @@ class TableBuilder (object):
         if isinstance (headings, six.string_types):
             headings = (headings, )
 
-        if hasattr (datafunc, 'func_code'):
-            nargs = datafunc.func_code.co_argcount
-        elif hasattr (datafunc, '__call__'):
-            # This is pretty hacky ...
-            nargs = datafunc.__call__.func_code.co_argcount - 1
-        else:
-            raise ValueError ('datafunc must have a "func_code" field')
+        try:
+            code = six.get_function_code(datafunc)
+            nargs = code.co_argcount
+        except AttributeError:
+            if hasattr (datafunc, '__call__'):
+                # This is pretty hacky ...
+                nargs = six.get_function_code(datafunc.__call__).co_argcount - 1
+            else:
+                raise ValueError ('cannot find code object for datafunc')
 
         if nargs == 3:
             wrapped = datafunc # (item, formatter, builder)
