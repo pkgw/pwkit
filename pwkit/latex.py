@@ -54,6 +54,7 @@ __all__ = str ('''AlignedNumberFormatter BasicFormatter BoolFormatter LimitForma
                   WideHeader latexify_l3col latexify_n2col latexify_u3col
                   latexify''').split ()
 
+import string
 import six
 from six.moves import range
 from . import Holder, PKError, binary_type, msmt, reraise_context, text_type
@@ -129,6 +130,10 @@ class Referencer (object):
 # control keywords that are only specific to certain cells, without causing
 # crashes elsewhere.
 
+
+_printable_ascii = frozenset(string.printable.encode('ascii'))
+
+
 def latexify (obj, **kwargs):
     """Render an object in LaTeX appropriately.
 
@@ -154,6 +159,8 @@ def latexify (obj, **kwargs):
         return b'$%d$' % obj
 
     if isinstance (obj, binary_type):
+        if all(c in _printable_ascii for c in obj):
+            return obj
         raise ValueError ('no safe LaTeXification of binary string %r' % obj)
 
     raise ValueError ('can\'t LaTeXify %r' % obj)
