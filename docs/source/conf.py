@@ -12,7 +12,7 @@ extensions = [
 
 project = u'pwkit'
 version = '0.8' # also edit /setup.py, /pwkit/__init__.py!
-release = '0.8.7'
+release = '0.8.7.99'
 
 copyright = u'2015-2017, Peter K. G. Williams and collaborators'
 author = u'Peter K. G. Williams and collaborators'
