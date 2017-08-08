@@ -1456,7 +1456,7 @@ class Problem (object):
 
         tied = np.asarray ([x is not None for x in self._pinfoo[PI_O_TIEFUNC]])
         self._anytied = np.any (tied)
-        self._ifree = np.where (-(self._getBits (PI_M_FIXED) | tied))[0]
+        self._ifree = np.where (~(self._getBits (PI_M_FIXED) | tied))[0]
 
 
     def get_nfree (self):
