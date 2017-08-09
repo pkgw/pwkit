@@ -41,7 +41,7 @@ __all__ = 'load_spectrum'.split()
 import numpy as np, pandas as pd
 
 
-def load_spectrum(path, smoothing=181):
+def load_spectrum(path, smoothing=181, DF=-8.):
     """Load a Phoenix model atmosphere spectrum.
 
     path : string
@@ -50,6 +50,8 @@ def load_spectrum(path, smoothing=181):
       Smoothing to apply. If None, do not smooth. If an integer, smooth with a
       Hamming window. Otherwise, the variable is assumed to be a different
       smoothing window, and the data will be convolved with it.
+    DF: float
+      Numerical factor used to compute the emergent flux density.
 
     Returns a Pandas DataFrame containing the columns:
 
@@ -57,6 +59,12 @@ def load_spectrum(path, smoothing=181):
       Sample wavelength in Angstrom.
     flam
       Flux density in erg/cm²/s/Å. See `pwkit.synphot` for related tools.
+
+    The values of *flam* returned by this function are computed from the
+    second column of the data file as specified in the documentation: ``flam =
+    10**(col2 + DF)``. The documentation states that the default value, -8, is
+    appropriate for most modern models; but some older models use other
+    values.
 
     Loading takes about 5 seconds on my current laptop. Un-smoothed spectra
     have about 630,000 samples.
@@ -77,7 +85,7 @@ def load_spectrum(path, smoothing=181):
     # Data files do not come sorted!
     z = ang.argsort()
     ang = ang[z]
-    flam = 10**lflam[z]
+    flam = 10**(lflam[z] + DF)
     del z
 
     if smoothing is not None:
