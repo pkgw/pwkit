@@ -1,5 +1,5 @@
 # -*- mode: python; coding: utf-8 -*-
-# Copyright 2014 Peter Williams <peter@newton.cx> and collaborators.
+# Copyright 2014, 2017 Peter Williams <peter@newton.cx> and collaborators.
 # Licensed under the MIT License.
 
 """pwkit.phoenix - Working with Phoenix atmospheric models.
@@ -16,10 +16,10 @@ Therefore, we can safely expect that the model will be accessible as a path on
 the filesystem.
 
 Current BT-Settl models may be downloaded from a SPECTRA directory within `the
-BT-Settl download site <http://phoenix.ens-lyon.fr/Grids/BT-Settl/>`_ (see the
+BT-Settl download site <https://phoenix.ens-lyon.fr/Grids/BT-Settl/>`_ (see the
 README). E.g.::
 
-  http://phoenix.ens-lyon.fr/Grids/BT-Settl/CIFIST2011bc/SPECTRA/
+  https://phoenix.ens-lyon.fr/Grids/BT-Settl/CIFIST2011bc/SPECTRA/
 
 File names are generally::
 
@@ -29,19 +29,19 @@ The first three columns are wavelength in Å, log10(F_λ), and log10(B_λ), wher
 the latter is the blackbody flux for the given Teff. The fluxes can nominally
 be converted into absolute units with an offset of 8 in log space, but I doubt
 that can be trusted much. Subsequent columns are related to various spectral
-lines. See http://phoenix.ens-lyon.fr/Grids/FORMAT .
+lines. See https://phoenix.ens-lyon.fr/Grids/FORMAT .
 
 The files do not come sorted!
 
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
+from __future__ import absolute_import, division, print_function
 
-__all__ = str ('load_spectrum').split ()
+__all__ = 'load_spectrum'.split()
 
 import numpy as np, pandas as pd
 
 
-def load_spectrum (path, smoothing=181):
+def load_spectrum(path, smoothing=181):
     """Load a Phoenix model atmosphere spectrum.
 
     path : string
@@ -62,24 +62,34 @@ def load_spectrum (path, smoothing=181):
     have about 630,000 samples.
 
     """
-    ang, lflam = np.loadtxt (path, usecols=(0,1)).T
+    try:
+        ang, lflam = np.loadtxt(path, usecols=(0,1)).T
+    except ValueError:
+        # In some files, the numbers in the first columns fill up the
+        # whole 12-character column width, and are given in exponential
+        # notation with a 'D' character, so we must be more careful:
+        with open(path, 'rb') as f:
+            def lines():
+                for line in f:
+                    yield line.replace(b'D', b'e')
+            ang, lflam = np.genfromtxt(lines(), delimiter=(13, 12)).T
 
     # Data files do not come sorted!
-    z = ang.argsort ()
+    z = ang.argsort()
     ang = ang[z]
     flam = 10**lflam[z]
     del z
 
     if smoothing is not None:
-        if isinstance (smoothing, int):
-            smoothing = np.hamming (smoothing)
+        if isinstance(smoothing, int):
+            smoothing = np.hamming(smoothing)
         else:
-            smoothing = np.asarray (smoothing)
+            smoothing = np.asarray(smoothing)
 
-        wnorm = np.convolve (np.ones_like (smoothing), smoothing, mode='valid')
+        wnorm = np.convolve(np.ones_like(smoothing), smoothing, mode='valid')
         smoothing = smoothing / wnorm # do not alter original array.
-        smooth = lambda a: np.convolve (a, smoothing, mode='valid')[::smoothing.size]
-        ang = smooth (ang)
-        flam = smooth (flam)
+        smooth = lambda a: np.convolve(a, smoothing, mode='valid')[::smoothing.size]
+        ang = smooth(ang)
+        flam = smooth(flam)
 
-    return pd.DataFrame ({'wlen': ang, 'flam': flam})
+    return pd.DataFrame({'wlen': ang, 'flam': flam})
