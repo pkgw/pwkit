@@ -884,7 +884,7 @@ class WiseBandpass (Bandpass):
         4: (1640, 2550),
     }
 
-    def _load_data (band):
+    def _load_data (self, band):
         """From the WISE All-Sky Explanatory Supplement, IV.4.h.i.1, and Jarrett+
         2011. These are relative response per erg and so can be integrated
         directly against F_nu spectra. Wavelengths are in micron,
