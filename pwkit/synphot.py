@@ -724,7 +724,13 @@ class MkoBandpass (Bandpass):
         # ridiculously strange, setting Vega=0 will be pretty close.
         #
         # Values are in Jy.
+        'J': 1560.,
+        'H': 1040.,
+        'Kp': 686.,
+        'Ks': 670.,
+        'K': 645.,
         'Lp': 249.,
+        'Mp': 163.,
     }
 
     def mag_to_fnu (self, mag):
