@@ -392,6 +392,32 @@ class Bandpass (object):
         return numer / denom
 
 
+    def blackbody(self, T):
+        """Calculate the contribution of a blackbody through this filter. *T* is the
+        blackbody temperature in Kelvin. Returns a band-averaged spectrum in
+        f_λ units.
+
+        We use the composite Simpson's rule to integrate over the points at
+        which the filter response is sampled. Note that this is a different
+        technique than used by `synphot`, and so may give slightly different
+        answers than that function.
+
+        """
+        from scipy.integrate import simps
+
+        d = self._ensure_data()
+
+        # factor of pi is going from specific intensity (sr^-1) to unidirectional
+        # inner factor of 1e-8 is Å to cm
+        # outer factor of 1e-8 is f_λ in cm^-1 to f_λ in Å^-1
+        from .cgs import blambda
+        numer_samples = d.resp * np.pi * blambda(d.wlen * 1e-8, T) * 1e-8
+
+        numer = simps(numer_samples, d.wlen)
+        denom = simps(d.resp, d.wlen)
+        return numer / denom
+
+
 class Registry (object):
     """A registry of known bandpass properties.
 
