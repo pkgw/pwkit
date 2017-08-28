@@ -120,10 +120,14 @@ class Clipper (LazyComputer):
 
         if ismasked:
             def func (src, dest):
-                np.subtract (src, dmin, dest)
-                np.multiply (dest, scale, dest)
-                np.clip (dest, 0, 1, dest)
-                dest.mask[:] = src.mask
+                # As of Numpy 1.13, the `mask` parameter gets turned into a
+                # scalar of we operate on the full MaskedArray object (e.g.,
+                # `dest` not `dest.data`), which causes the vector mask
+                # assignment to fail.
+                np.subtract (src, dmin, dest.data)
+                np.multiply (dest.data, scale, dest.data)
+                np.clip (dest.data, 0, 1, dest.data)
+                dest.mask[...] = src.mask
         else:
             def func (src, dest):
                 np.subtract (src, dmin, dest)
@@ -140,7 +144,7 @@ class Stretcher (LazyComputer):
     """
 
     def passthrough (src, dest):
-        dest[:] = src
+        dest[...] = src
 
     modes = {
         'linear': passthrough,
