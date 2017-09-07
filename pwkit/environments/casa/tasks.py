@@ -3607,7 +3607,7 @@ def tsysplot (cfg):
             antpols = apbyfield[ifield]
             kt = fieldnames[ifield]
 
-            for ispw, isoln in antpols[iant,ipol]:
+            for ispw, isoln in antpols.get((iant,ipol), []):
                 f = flags[ipol,:,isoln]
                 v = vals[ipol,:,isoln]
                 w = np.where (~f)[0]
