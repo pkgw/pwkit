@@ -34,6 +34,7 @@ Added by the toplevel window viewer:
 - Ctrl-1 to set scale to unity
 - Ctrl-S to save the data to "data.png" under the current rendering options
   (but not zoomed to the current view of the data).
+- z/Z to zoom in and out - for when trackpad scrolling motion doesn't work
 
 Added by cycler:
 
@@ -499,6 +500,22 @@ class Viewer (object):
             sys.stdout.flush ()
             self.viewport.write_data_as_png ('data.png')
             print ('done')
+            return True
+
+        if kn == 'z':
+            if isctrl:
+                self.viewport.scale *= 1.2
+            else:
+                self.viewport.scale *= 1.05
+            self.viewport.queue_draw()
+            return True
+
+        if kn == 'Z':
+            if isctrl:
+                self.viewport.scale /= 1.2
+            else:
+                self.viewport.scale /= 1.05
+            self.viewport.queue_draw()
             return True
 
         return False
