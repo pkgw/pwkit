@@ -270,8 +270,7 @@ class Viewport(Gtk.DrawingArea):
         ctxt.restore()
 
         if self.drawoverlay is not None:
-            self.drawoverlay(ctxt, width, height,
-                             -xoffset, -yoffset, self.scale)
+            self.drawoverlay(ctxt, width, height, -xoffset, -yoffset, self.scale)
 
         return False
 
@@ -693,6 +692,8 @@ class Cycler(Viewer):
         self.settuningi(self.i, tunerx, tunery)
         self.needtune.fill(True)
         self.needtune[self.i] = False
+        self.last_tunerx = tunerx
+        self.last_tunery = tunery
 
 
     def set_tuning_setter(self, settuningi):
@@ -797,7 +798,43 @@ class Cycler(Viewer):
 
 
 def cycle(arrays, descs=None, cadence=0.6, toworlds=None,
-          drawoverlay=None, yflip=False, tostatuses=None, run_main=True):
+          drawoverlay=None, yflip=False, tostatuses=None, run_main=True,
+          save_after_viewing=None):
+    """Interactively display a series of 2D data arrays.
+
+    arrays
+      An iterable of 2D arrays (a 3D array works).
+    descs
+      An iterable of text descriptions, one for each array
+    cadence
+      The time delay before the next array is shown, in seconds.
+    tostatuses
+      An iterable of functions that convert cursor positions to a textual
+      status output corresponding to that position. FIXME details needed.
+    toworlds
+      An iterable of functions that convert cursor positions to a
+      latitude/longitude pair that is displayed in the status output.
+      The `tostatuses` keyword is a more generic version of this.
+      FIXME details needed.
+    drawoverlay
+      An optional function that draws an overlay on the display after
+      the underlying data image is presented. FIXME details needed.
+    yflip
+      If true, have the numerical *y* coordinates have 0 refer to the
+      bottom of the image. Note that the data array is still drawn such
+      that its first row appears at the top!
+    run_main
+      If true, run the Gtk mainloop explicitly so that the function does
+      not return until the window is closed. If false, no mainloop is run.
+      If the application happens to already be running a mainloop in the
+      background, the window will appear and the user will be able to
+      interact with it while this thread continues executing.
+    save_after_viewing
+      If set to a string containing an integer percent-formatting specifier,
+      the data will be written to a series of PNG files after the window is
+      closed.
+
+    """
     n = len(arrays)
     amin = amax = h = w = None
 
@@ -928,3 +965,10 @@ def cycle(arrays, descs=None, cadence=0.6, toworlds=None,
         Gtk.main()
     else:
         cycler.win.connect('destroy', lambda e: cycler.win.destroy())
+
+    if save_after_viewing is not None:
+        for i in range(n):
+            filename = save_after_viewing % (i,)
+            settuningi(i, cycler.last_tunerx,  cycler.last_tunery)
+            surface, xoffset, yoffset = getsurfacei(i, 0, 0, w, h)
+            surface.write_to_png(filename)
