@@ -869,7 +869,7 @@ def cycle (arrays, descs=None, cadence=0.6, toworlds=None,
         fmax = int (0x0FFFFFF0 * tunery)
 
         if fmin == fmax:
-            np.add (imgdata[i], 255 * (fixed[i] > fmin), imgdata[i])
+            np.add (imgdata[i], 255 * (fixed[i] > fmin).astype(np.uint32), imgdata[i])
         else:
             np.clip (fixed[i], fmin, fmax, clipped)
             np.subtract (clipped, fmin, clipped)
