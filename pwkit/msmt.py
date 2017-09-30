@@ -2088,7 +2088,7 @@ def fmtinfo (value):
             return 'b', 'y', False
         return 'b', '', False
 
-    if isinstance (value, (int, long)):
+    if isinstance (value, six.integer_types):
         return 'i', text_type (value), False
 
     if isinstance (value, float):

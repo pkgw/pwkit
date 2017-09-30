@@ -51,6 +51,7 @@ __all__ = str('make_parallel_helper').split()
 import functools, signal
 from multiprocessing.pool import Pool
 from multiprocessing import Process, Queue, TimeoutError
+import six
 from six.moves import range
 
 
@@ -446,7 +447,7 @@ def make_parallel_helper(parallel_arg, **kwargs):
     if isinstance(parallel_arg, ParallelHelper):
         return parallel_arg
 
-    if isinstance(parallel_arg, (int, long)):
+    if isinstance(parallel_arg, six.integer_types):
         return MultiprocessingPoolHelper(processes=parallel_arg, **kwargs)
 
     raise ValueError('don\'t understand make_parallel_helper() argument %r'
