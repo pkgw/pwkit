@@ -14,20 +14,20 @@ function an optional ``parallel=True`` keyword argument and use the
 
   from pwkit.parallel import make_parallel_helper
 
-  def my_parallelizable_function (arg1, arg1, parallel=True):
+  def my_parallelizable_function(arg1, arg1, parallel=True):
       # Get a "parallel helper" object that can provide us with a parallelized
       # "map" function. The caller specifies how the parallelization is done;
       # we don't have to know the details.
-      phelp = make_parallel_helper (parallel)
+      phelp = make_parallel_helper(parallel)
       ...
 
       # When used as a context manager, the helper provides a function that
       # acts like the standard library function "map", except it may
       # parallelize its operation.
-      with phelp.get_map () as map:
-         results1 = map (my_subfunc1, subargs1)
+      with phelp.get_map() as map:
+         results1 = map(my_subfunc1, subargs1)
          ...
-         results2 = map (my_subfunc2, subargs2)
+         results2 = map(my_subfunc2, subargs2)
 
       ... do stuff with results1 and results2 ...
 
@@ -46,7 +46,7 @@ in the :mod:`multiprocessing` library.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = str ('make_parallel_helper').split ()
+__all__ = str('make_parallel_helper').split()
 
 import functools, signal
 from multiprocessing.pool import Pool
@@ -54,18 +54,18 @@ from multiprocessing import Process, Queue, TimeoutError
 from six.moves import range
 
 
-def _initializer_wrapper (actual_initializer, *rest):
+def _initializer_wrapper(actual_initializer, *rest):
     """We ignore SIGINT. It's up to our parent to kill us in the typical condition
     of this arising from ``^C`` on a terminal. If someone is manually killing
     us with that signal, well... nothing will happen.
 
     """
-    signal.signal (signal.SIGINT, signal.SIG_IGN)
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
     if actual_initializer is not None:
-        actual_initializer (*rest)
+        actual_initializer(*rest)
 
 
-class InterruptiblePool (Pool):
+class InterruptiblePool(Pool):
     """A modified version of `multiprocessing.pool.Pool` that has better
     behavior with regard to KeyboardInterrupts in the `map` method. Parameters:
 
@@ -97,13 +97,13 @@ class InterruptiblePool (Pool):
     """
     wait_timeout = 3600
 
-    def __init__ (self, processes=None, initializer=None, initargs=(), **kwargs):
-        new_initializer = functools.partial (_initializer_wrapper, initializer)
-        super (InterruptiblePool, self).__init__ (processes, new_initializer,
-                                                  initargs, **kwargs)
+    def __init__(self, processes=None, initializer=None, initargs=(), **kwargs):
+        new_initializer = functools.partial(_initializer_wrapper, initializer)
+        super(InterruptiblePool, self).__init__(processes, new_initializer,
+                                                initargs, **kwargs)
 
 
-    def map (self, func, iterable, chunksize=None):
+    def map(self, func, iterable, chunksize=None):
         """Equivalent of `map` built-in, without swallowing KeyboardInterrupt.
 
         func
@@ -114,21 +114,21 @@ class InterruptiblePool (Pool):
         """
         # The key magic is that we must call r.get() with a timeout, because a
         # Condition.wait() without a timeout swallows KeyboardInterrupts.
-        r = self.map_async (func, iterable, chunksize)
+        r = self.map_async(func, iterable, chunksize)
 
         while True:
             try:
-                return r.get (self.wait_timeout)
+                return r.get(self.wait_timeout)
             except TimeoutError:
                 pass
             except KeyboardInterrupt:
-                self.terminate ()
-                self.join ()
+                self.terminate()
+                self.join()
                 raise
             # Other exceptions propagate up.
 
 
-class ParallelHelper (object):
+class ParallelHelper(object):
     """Object that helps genericize the setup needed for parallel computations.
     Each method returns a context manager that wraps up any resource
     allocation and deallocation that may need to occur to make the
@@ -142,8 +142,8 @@ class ParallelHelper (object):
     Once you have a :class:`ParallelHelper` instance, usage should be
     something like::
 
-        with phelp.get_map () as map:
-            results_arr = map (my_function, my_args)
+        with phelp.get_map() as map:
+            results_arr = map(my_function, my_args)
 
     The partially-Pickling map works around a limitation in the
     multiprocessing library. This library spawns subprocesses and executes
@@ -157,23 +157,23 @@ class ParallelHelper (object):
     usage information.
 
     """
-    def get_map (self):
+    def get_map(self):
         """Get a *context manager* that yields a function with the same call signature
         as the standard library function :func:`map`. Its results are the
         same, but it may evaluate the mapped function in parallel across
         multiple threads or processes --- the calling function should not have
         to particularly care about the details. Example usage is::
 
-            with phelp.get_map () as map:
-                results_arr = map (my_function, my_args)
+            with phelp.get_map() as map:
+                results_arr = map(my_function, my_args)
 
         The passed function and its arguments must be Pickle-able. The alternate
         method :meth:`get_ppmap` relaxes this restriction somewhat.
 
         """
-        raise NotImplementedError ('get_map() not available')
+        raise NotImplementedError('get_map() not available')
 
-    def get_ppmap (self):
+    def get_ppmap(self):
         """Get a *context manager* that yields a "partially-pickling map function". It
         can be used to perform a parallelized :func:`map` operation with some
         un-pickle-able arguments.
@@ -182,8 +182,8 @@ class ParallelHelper (object):
         behavior is functionally equivalent to the following code, except that
         the calls to ``func`` may happen in parallel::
 
-            def ppmap (func, fixed_arg, var_arg_iter):
-                return [func (i, fixed_arg, x) for i, x in enumerate (var_arg_iter)]
+            def ppmap(func, fixed_arg, var_arg_iter):
+                return [func(i, fixed_arg, x) for i, x in enumerate(var_arg_iter)]
 
         The arguments to the ``ppmap`` function are:
 
@@ -211,23 +211,23 @@ class ParallelHelper (object):
         limitations in the :mod:`multiprocessing` library.
 
         """
-        raise NotImplementedError ('get_ppmap() not available')
+        raise NotImplementedError('get_ppmap() not available')
 
 
-class VacuousContextManager (object):
+class VacuousContextManager(object):
     """A context manager that just returns a static value and doesn't do anything
     clever with exceptions.
 
     """
-    def __init__ (self, value):
+    def __init__(self, value):
         self.value = value
-    def __enter__ (self):
+    def __enter__(self):
         return self.value
-    def __exit__ (self, etype, evalue, etb):
+    def __exit__(self, etype, evalue, etb):
         return False
 
 
-def serial_ppmap (func, fixed_arg, var_arg_iter):
+def serial_ppmap(func, fixed_arg, var_arg_iter):
     """A serial implementation of the "partially-pickling map" function returned
     by the :meth:`ParallelHelper.get_ppmap` interface. Its arguments are:
 
@@ -240,8 +240,8 @@ def serial_ppmap (func, fixed_arg, var_arg_iter):
 
     The functionality is::
 
-        def serial_ppmap (func, fixed_arg, var_arg_iter):
-            return [func (i, fixed_arg, x) for i, x in enumerate (var_arg_iter)]
+        def serial_ppmap(func, fixed_arg, var_arg_iter):
+            return [func(i, fixed_arg, x) for i, x in enumerate(var_arg_iter)]
 
     Therefore the arguments to your ``func`` function, which actually does the
     interesting computations, are:
@@ -256,73 +256,73 @@ def serial_ppmap (func, fixed_arg, var_arg_iter):
       ``ppmap``.
 
     """
-    return [func (i, fixed_arg, x) for i, x in enumerate (var_arg_iter)]
+    return [func(i, fixed_arg, x) for i, x in enumerate(var_arg_iter)]
 
 
-class SerialHelper (ParallelHelper):
+class SerialHelper(ParallelHelper):
     """A :class:`ParallelHelper` that actually does serial processing."""
 
-    def __init__ (self, chunksize=None):
+    def __init__(self, chunksize=None):
         # We accept and discard some of the multiprocessing kwargs that turn
         # into noops so that we can present a uniform API.
         pass
 
-    def get_map (self):
-        return VacuousContextManager (map)
+    def get_map(self):
+        return VacuousContextManager(map)
 
-    def get_ppmap (self):
-        return VacuousContextManager (serial_ppmap)
+    def get_ppmap(self):
+        return VacuousContextManager(serial_ppmap)
 
 
-def multiprocessing_ppmap_worker (in_queue, out_queue, func, fixed_arg):
+def multiprocessing_ppmap_worker(in_queue, out_queue, func, fixed_arg):
     """Worker for the :mod:`multiprocessing` ppmap implementation. Strongly
     derived from code posted on StackExchange by "klaus se":
     `<http://stackoverflow.com/a/16071616/3760486>`_.
 
     """
     while True:
-        i, var_arg = in_queue.get ()
+        i, var_arg = in_queue.get()
         if i is None:
             break
-        out_queue.put ((i, func (i, fixed_arg, var_arg)))
+        out_queue.put((i, func(i, fixed_arg, var_arg)))
 
 
-class MultiprocessingPoolHelper (ParallelHelper):
+class MultiprocessingPoolHelper(ParallelHelper):
     """A :class:`ParallelHelper` that parallelizes computations using Python's
     :class:`multiprocessing.Pool` with a configurable number of processes.
     Actually, we use a wrapped version of :class:`multiprocessing.Pool` that
     handles :exc:`KeyboardInterrupt` exceptions more helpfully.
 
     """
-    class InterruptiblePoolContextManager (object):
-        def __init__ (self, methodname, methodkwargs={}, **kwargs):
+    class InterruptiblePoolContextManager(object):
+        def __init__(self, methodname, methodkwargs={}, **kwargs):
             self.methodname = methodname
             self.methodkwargs = methodkwargs
             self.kwargs = kwargs
 
-        def __enter__ (self):
+        def __enter__(self):
             from functools import partial
-            self.pool = InterruptiblePool (**self.kwargs)
-            func = getattr (self.pool, self.methodname)
-            return partial (func, **self.methodkwargs)
+            self.pool = InterruptiblePool(**self.kwargs)
+            func = getattr(self.pool, self.methodname)
+            return partial(func, **self.methodkwargs)
 
-        def __exit__ (self, etype, evalue, etb):
-            self.pool.terminate ()
-            self.pool.join ()
+        def __exit__(self, etype, evalue, etb):
+            self.pool.terminate()
+            self.pool.join()
             return False
 
 
-    def __init__ (self, chunksize=None, **pool_kwargs):
+    def __init__(self, chunksize=None, **pool_kwargs):
         self.chunksize = chunksize
         self.pool_kwargs = pool_kwargs
 
-    def get_map (self):
-        return self.InterruptiblePoolContextManager ('map',
-                                                     {'chunksize': self.chunksize},
-                                                     **self.pool_kwargs)
+    def get_map(self):
+        return self.InterruptiblePoolContextManager('map',
+                                                    {'chunksize': self.chunksize},
+                                                    **self.pool_kwargs)
 
 
-    def _ppmap (self, func, fixed_arg, var_arg_iter):
+    def _ppmap(self, func, fixed_arg, var_arg_iter):
         """The multiprocessing implementation of the partially-Pickling "ppmap"
         function. This doesn't use a Pool like map() does, because the whole
         problem is that Pool chokes on un-Pickle-able values. Strongly derived
@@ -335,50 +335,50 @@ class MultiprocessingPoolHelper (ParallelHelper):
 
         XXX This deadlocks if a child process crashes!!! XXX
         """
-        n_procs = self.pool_kwargs.get ('processes')
+        n_procs = self.pool_kwargs.get('processes')
         if n_procs is None:
             # Logic copied from multiprocessing.pool.Pool.__init__()
             try:
                 from multiprocessing import cpu_count
-                n_procs = cpu_count ()
+                n_procs = cpu_count()
             except NotImplementedError:
                 n_procs = 1
 
-        in_queue = Queue (1)
-        out_queue = Queue ()
-        procs = [Process (target=multiprocessing_ppmap_worker,
-                          args=(in_queue, out_queue, func, fixed_arg))
-                 for _ in range (n_procs)]
+        in_queue = Queue(1)
+        out_queue = Queue()
+        procs = [Process(target=multiprocessing_ppmap_worker,
+                         args=(in_queue, out_queue, func, fixed_arg))
+                 for _ in range(n_procs)]
 
         for p in procs:
             p.daemon = True
-            p.start ()
+            p.start()
 
         i = -1
 
-        for i, var_arg in enumerate (var_arg_iter):
-            in_queue.put ((i, var_arg))
+        for i, var_arg in enumerate(var_arg_iter):
+            in_queue.put((i, var_arg))
 
         n_items = i + 1
         result = [None] * n_items
 
         for p in procs:
-            in_queue.put ((None, None))
+            in_queue.put((None, None))
 
-        for _ in range (n_items):
-            i, value = out_queue.get ()
+        for _ in range(n_items):
+            i, value = out_queue.get()
             result[i] = value
 
         for p in procs:
-            p.join ()
+            p.join()
 
         return result
 
-    def get_ppmap (self):
-        return VacuousContextManager (self._ppmap)
+    def get_ppmap(self):
+        return VacuousContextManager(self._ppmap)
 
 
-def make_parallel_helper (parallel_arg, **kwargs):
+def make_parallel_helper(parallel_arg, **kwargs):
     """Return a :class:`ParallelHelper` object that can be used for easy
     parallelization of computations. *parallel_arg* is an object that lets the
     caller easily specify the kind of parallelization they are interested in.
@@ -406,15 +406,15 @@ def make_parallel_helper (parallel_arg, **kwargs):
 
         from pwkit.parallel import make_parallel_helper
 
-        def sub_operation (arg):
+        def sub_operation(arg):
             ... do some computation ...
             return result
 
-        def my_parallelizable_function (arg1, arg2, parallel=True):
-            phelp = make_parallel_helper (parallel)
+        def my_parallelizable_function(arg1, arg2, parallel=True):
+            phelp = make_parallel_helper(parallel)
 
-            with phelp.get_map () as map:
-                op_results = map (sub_operation, args)
+            with phelp.get_map() as map:
+                op_results = map(sub_operation, args)
 
             ... reduce "op_results" in some way ...
             return final_result
@@ -433,21 +433,21 @@ def make_parallel_helper (parallel_arg, **kwargs):
 
     """
     if parallel_arg is True: # note: (True == 1) is True
-        return MultiprocessingPoolHelper (**kwargs)
+        return MultiprocessingPoolHelper(**kwargs)
 
     if parallel_arg is False or parallel_arg == 1:
-        return SerialHelper (**kwargs)
+        return SerialHelper(**kwargs)
 
     if parallel_arg > 0 and parallel_arg < 1:
         from multiprocessing import cpu_count
-        n = int (round (parallel_arg * cpu_count ()))
-        return MultiprocessingPoolHelper (processes=n, **kwargs)
+        n = int(round(parallel_arg * cpu_count()))
+        return MultiprocessingPoolHelper(processes=n, **kwargs)
 
-    if isinstance (parallel_arg, ParallelHelper):
+    if isinstance(parallel_arg, ParallelHelper):
         return parallel_arg
 
-    if isinstance (parallel_arg, (int, long)):
-        return MultiprocessingPoolHelper (processes=parallel_arg, **kwargs)
+    if isinstance(parallel_arg, (int, long)):
+        return MultiprocessingPoolHelper(processes=parallel_arg, **kwargs)
 
-    raise ValueError ('don\'t understand make_parallel_helper() argument %r'
-                      % parallel_arg)
+    raise ValueError('don\'t understand make_parallel_helper() argument %r'
+                     % parallel_arg)
