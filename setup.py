@@ -10,9 +10,9 @@ from setuptools import setup
 dynamic_requires = []
 import sys
 if sys.version_info[0] < 3:
-    dynamic_requires.append ('pathlib >= 1.0')
+    dynamic_requires.append('pathlib >= 1.0')
 
-setup (
+setup(
     name = 'pwkit',
     version = '0.8.9.99', # also edit pwkit/__init__.py, docs/source/conf.py!
 
