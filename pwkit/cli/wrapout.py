@@ -6,7 +6,7 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = str ('commandline').split ()
+__all__ = str('commandline').split()
 
 import os, signal, sys, time
 
@@ -68,7 +68,7 @@ binary_stdout = get_stdout_bytes()
 binary_stderr = get_stderr_bytes()
 
 
-class Wrapper (object):
+class Wrapper(object):
     # I like !! for errors and ** for info, but those are nigh-un-grep-able.
     markers = [b' -- ', b' EE ', b' II ']
     use_colors = False
@@ -83,43 +83,43 @@ class Wrapper (object):
     _reset = b''
     _kind_prefixes = [b'', b'', b'']
 
-    def __init__ (self, destination=None):
+    def __init__(self, destination=None):
         if destination is None:
             self.destination = binary_stdout
         else:
             self.destination = destination
 
 
-    def output (self, kind, line):
+    def output(self, kind, line):
         self.destination.write(b''.join([
             self._cyan,
-            b't=%07d' % (time.time () - self._t0),
+            b't=%07d' % (time.time() - self._t0),
             self._reset,
             self._kind_prefixes[kind],
             self.markers[kind],
             line,
             self._reset,
         ]))
-        self.destination.flush ()
+        self.destination.flush()
 
 
-    def output_stderr (self, text):
+    def output_stderr(self, text):
         binary_stderr.write(b''.join([
             self._red,
-            b't=%07d' % (time.time () - self._t0),
+            b't=%07d' % (time.time() - self._t0),
             self._reset,
             ' ',
             text,
         ]))
-        binary_stderr.flush ()
+        binary_stderr.flush()
 
 
-    def outpar (self, name, value):
-        line = ('%s = %s\n' % (name, value)).encode ('utf-8')
-        self.output (OUTKIND_EXTRA, line)
+    def outpar(self, name, value):
+        line = ('%s = %s\n' % (name, value)).encode('utf-8')
+        self.output(OUTKIND_EXTRA, line)
 
 
-    def launch (self, cmd, argv, env=None, cwd=None):
+    def launch(self, cmd, argv, env=None, cwd=None):
         slurp_factory = self.slurp_factory
         if slurp_factory is None:
             from ..slurp import Slurper as slurp_factory
@@ -131,16 +131,16 @@ class Wrapper (object):
             self._reset = ansi_reset
             self._kind_prefixes = [b'', self._red, self._bold]
 
-        self._t0 = time.time ()
-        self.outpar ('start_time', time.strftime (rfc3339_fmt))
-        self.outpar ('exec', cmd)
-        self.outpar ('argv', ' '.join (repr (s) for s in argv))
+        self._t0 = time.time()
+        self.outpar('start_time', time.strftime(rfc3339_fmt))
+        self.outpar('exec', cmd)
+        self.outpar('argv', ' '.join(repr(s) for s in argv))
 
         midline_kind = None
         stderr_midline = False
 
-        with slurp_factory (argv=argv, executable=cmd, env=env, cwd=cwd,
-                            propagate_signals=self.propagate_signals) as slurp:
+        with slurp_factory(argv=argv, executable=cmd, env=env, cwd=cwd,
+                           propagate_signals=self.propagate_signals) as slurp:
             # Here's where we get tricky since we want to output partially
             # complete lines, but we may have to switch between different
             # types of output or informational messages.
@@ -148,44 +148,44 @@ class Wrapper (object):
             for etype, data in slurp:
                 if etype == 'forwarded-signal':
                     if self.midline_kind is not None:
-                        self.destination.write (b'\n')
+                        self.destination.write(b'\n')
                         midline_kind = None
-                    self.output (OUTKIND_EXTRA, 'forwarded signal %d to child\n' % data)
+                    self.output(OUTKIND_EXTRA, 'forwarded signal %d to child\n' % data)
                 elif etype in ('stdout', 'stderr'):
-                    if not len (data):
+                    if not len(data):
                         continue # EOF, nothing for us to do.
 
                     kind = OUTKIND_STDERR if etype == 'stderr' else OUTKIND_STDOUT
 
                     if midline_kind is not None and midline_kind != kind:
-                        self.destination.write (b'\n')
+                        self.destination.write(b'\n')
                         midline_kind = None
 
-                    lines = data.split (b'\n')
+                    lines = data.split(b'\n')
 
                     if midline_kind is None:
-                        self.output (kind, lines[0]) # start a new line
+                        self.output(kind, lines[0]) # start a new line
                     else:
                         # If we're here, we must be continuing a line
-                        self.destination.write (lines[0])
+                        self.destination.write(lines[0])
 
                     for line in lines[1:-1]:
                         # mid-lines are straightforward
-                        self.destination.write (b'\n')
-                        self.output (kind, line)
+                        self.destination.write(b'\n')
+                        self.output(kind, line)
 
-                    if len (lines) == 1:
-                        self.destination.flush ()
+                    if len(lines) == 1:
+                        self.destination.flush()
                         midline_kind = kind
-                    elif not len (lines[-1]):
+                    elif not len(lines[-1]):
                         # We ended right on a newline, which is convenient.
-                        self.destination.write (b'\n')
-                        self.destination.flush ()
+                        self.destination.write(b'\n')
+                        self.destination.flush()
                         midline_kind = None
                     else:
                         # We ended with a partial line.
-                        self.destination.write (b'\n')
-                        self.output (kind, lines[-1])
+                        self.destination.write(b'\n')
+                        self.output(kind, lines[-1])
                         midline_kind = kind
 
                     if self.echo_stderr and kind == OUTKIND_STDERR:
@@ -194,62 +194,62 @@ class Wrapper (object):
                         # this should be terser and distinguishable from the
                         # stdout output.
                         if stderr_midline:
-                            binary_stderr.write (lines[0])
+                            binary_stderr.write(lines[0])
                         else:
-                            self.output_stderr (lines[0])
+                            self.output_stderr(lines[0])
 
                         for line in lines[1:-1]:
-                            binary_stderr.write (b'\n')
-                            self.output_stderr (line)
+                            binary_stderr.write(b'\n')
+                            self.output_stderr(line)
 
-                        if len (lines) == 1:
-                            binary_stderr.flush ()
+                        if len(lines) == 1:
+                            binary_stderr.flush()
                             stderr_midline = True
-                        elif not len (lines[-1]):
-                            binary_stderr.write (b'\n')
-                            binary_stderr.flush ()
+                        elif not len(lines[-1]):
+                            binary_stderr.write(b'\n')
+                            binary_stderr.flush()
                             stderr_midline = False
                         else:
-                            binary_stderr.write (b'\n')
-                            self.output_stderr (lines[-1])
+                            binary_stderr.write(b'\n')
+                            self.output_stderr(lines[-1])
                             stderr_midline = True
 
-        self.outpar ('finish_time', time.strftime (rfc3339_fmt))
-        self.outpar ('elapsed_seconds', int (round (time.time () - self._t0)))
-        self.outpar ('exitcode', slurp.proc.returncode)
+        self.outpar('finish_time', time.strftime(rfc3339_fmt))
+        self.outpar('elapsed_seconds', int(round(time.time() - self._t0)))
+        self.outpar('exitcode', slurp.proc.returncode)
 
         # note: subprocess pre-processes exit codes, so shouldn't use
         # os.WIFSIGNALED, os.WTERMSIG, etc.
 
         if slurp.proc.returncode < 0:
             signum = -slurp.proc.returncode
-            self.output (OUTKIND_STDERR,
-                         b'process killed by signal %d\n' % signum)
+            self.output(OUTKIND_STDERR,
+                        b'process killed by signal %d\n' % signum)
 
             if self.propagate_signals:
-                signal.signal (signum, signal.SIG_DFL)
-                os.kill (os.getpid (), signum) # sayonara
+                signal.signal(signum, signal.SIG_DFL)
+                os.kill(os.getpid(), signum) # sayonara
         elif slurp.proc.returncode != 0:
-            self.output (OUTKIND_STDERR, b'process exited with error code\n')
+            self.output(OUTKIND_STDERR, b'process exited with error code\n')
 
         return slurp.proc.returncode
 
 
-def commandline (argv=None):
+def commandline(argv=None):
     if argv is None:
         argv = sys.argv
 
     # NOTE: we do NOT initialize stdout and stderr to be Unicode streams
     # since we're actually intentionally writing raw bytes to them.
-    propagate_sigint ()
+    propagate_sigint()
 
-    args = list (argv[1:])
+    args = list(argv[1:])
     use_colors = None
     echo_stderr = False
     propagate_signals = True
     argv0 = None
 
-    while len (args):
+    while len(args):
         if args[0] == '-c':
             use_colors = True
             args = args[1:]
@@ -260,22 +260,22 @@ def commandline (argv=None):
             propagate_signals = False
             args = args[1:]
         elif args[0] == '-a':
-            if len (args) < 2:
-                die ('another argument must come after the "-a" option')
+            if len(args) < 2:
+                die('another argument must come after the "-a" option')
             argv0 = args[1]
             args = args[2:]
         elif args[0] == '--':
             args = args[1:]
             break
         elif args[0][0] == '-':
-            die ('unrecognized option "%s"', args[0])
+            die('unrecognized option "%s"', args[0])
         else:
             # End of option arguments.
             break
 
-    if len (args) < 1:
-        print (usage.strip (), file=sys.stderr)
-        sys.exit (0)
+    if len(args) < 1:
+        print(usage.strip(), file=sys.stderr)
+        sys.exit(0)
 
     subcommand = args[0]
     subargv = args
@@ -283,16 +283,16 @@ def commandline (argv=None):
         subargv[0] = argv0
 
     if use_colors is None:
-        use_colors = binary_stdout.isatty ()
+        use_colors = binary_stdout.isatty()
 
-    wrapper = Wrapper ()
+    wrapper = Wrapper()
     wrapper.use_colors = use_colors
     wrapper.echo_stderr = echo_stderr
     wrapper.propagate_signals = propagate_signals
-    sys.exit (wrapper.launch (subcommand, subargv))
+    sys.exit(wrapper.launch(subcommand, subargv))
 
 
 if __name__ == '__main__':
     # Note that the standard wrapper created by setup.py does not actually
     # follow this code path! It invokes commandline() directly.
-    commandline ()
+    commandline()
