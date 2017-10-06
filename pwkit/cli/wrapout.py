@@ -129,7 +129,7 @@ class Wrapper (object):
             self._cyan = ansi_cyan
             self._bold = ansi_bold
             self._reset = ansi_reset
-            self._kind_prefixes = ['', self._red, self._bold]
+            self._kind_prefixes = [b'', self._red, self._bold]
 
         self._t0 = time.time ()
         self.outpar ('start_time', time.strftime (rfc3339_fmt))
