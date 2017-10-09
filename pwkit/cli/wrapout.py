@@ -147,7 +147,7 @@ class Wrapper(object):
 
             for etype, data in slurp:
                 if etype == 'forwarded-signal':
-                    if self.midline_kind is not None:
+                    if midline_kind is not None:
                         self.destination.write(b'\n')
                         midline_kind = None
                     self.output(OUTKIND_EXTRA, 'forwarded signal %d to child\n' % data)
