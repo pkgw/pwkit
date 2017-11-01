@@ -96,7 +96,7 @@ class CasapyScript(object):
         self.workdir = tempfile.mkdtemp(prefix='casascript', dir='.')
         self.wrapped = os.path.join(self.workdir, 'wrapped.py')
 
-        with open(self.wrapped, 'wb') as wrapper:
+        with open(self.wrapped, 'w') as wrapper:
             print('_pkcs_script = ' + repr(self.script), file=wrapper)
             print('_pkcs_text = ' + repr(text), file=wrapper)
             print('_pkcs_kwargs = ' + repr(self.kwargs), file=wrapper)
