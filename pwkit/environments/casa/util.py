@@ -8,8 +8,8 @@
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = str ('''INVERSE_C_MS INVERSE_C_MNS pol_names pol_to_miriad msselect_keys
-                  datadir logger forkandlog sanitize_unicode tools''').split ()
+__all__ = str('''INVERSE_C_MS INVERSE_C_MNS pol_names pol_to_miriad msselect_keys
+datadir logger forkandlog sanitize_unicode tools''').split()
 
 import six
 from ... import binary_type, text_type
@@ -55,11 +55,11 @@ pol_is_intensity = {
 # doesn't do what you'd want since records generally contain multiple pols.
 # ms.selectpolarization() should be used instead. Maybe ditto for spw?
 
-msselect_keys = frozenset ('array baseline field observation '
-                           'scan scaninent spw taql time uvdist'.split ())
+msselect_keys = frozenset('array baseline field observation '
+                          'scan scaninent spw taql time uvdist'.split())
 
 
-def sanitize_unicode (item):
+def sanitize_unicode(item):
     """Safely pass string values to the CASA tools.
 
     item
@@ -78,7 +78,7 @@ def sanitize_unicode (item):
     unchanged and recursively transform collections, so you can safely use it
     just about anywhere.
 
-    I usually import this as just ``b`` and write ``tool.method (b(arg))``, in
+    I usually import this as just ``b`` and write ``tool.method(b(arg))``, in
     analogy with the ``b''`` byte string syntax. This leads to code such as::
 
       from pwkit.environments.casa.util import tools, sanitize_unicode as b
@@ -89,23 +89,23 @@ def sanitize_unicode (item):
       tb.open(b(path)) # => works
 
     """
-    if isinstance (item, text_type):
-        return item.encode ('utf8')
-    if isinstance (item, dict):
-        return dict ((sanitize_unicode (k), sanitize_unicode (v)) for k, v in six.iteritems (item))
-    if isinstance (item, (list, tuple)):
-        return item.__class__ (sanitize_unicode (x) for x in item)
+    if isinstance(item, text_type):
+        return item.encode('utf8')
+    if isinstance(item, dict):
+        return dict((sanitize_unicode(k), sanitize_unicode(v)) for k, v in six.iteritems(item))
+    if isinstance(item,(list, tuple)):
+        return item.__class__(sanitize_unicode(x) for x in item)
 
     from ...io import Path
-    if isinstance (item, Path):
-        return binary_type (item)
+    if isinstance(item, Path):
+        return binary_type(item)
 
     return item
 
 
 # Finding the data directory
 
-def datadir (*subdirs):
+def datadir(*subdirs):
     """Get a path within the CASA data directory.
 
     subdirs
@@ -128,7 +128,7 @@ def datadir (*subdirs):
     data = None
 
     if 'CASAPATH' in os.environ:
-        data = os.path.join (os.environ['CASAPATH'].split ()[0], 'data')
+        data = os.path.join(os.environ['CASAPATH'].split()[0], 'data')
 
     if data is None:
         # The Conda CASA directory layout:
@@ -137,30 +137,30 @@ def datadir (*subdirs):
         except ImportError:
             pass
         else:
-            data = os.path.join (os.path.dirname (casadef.task_directory), 'data')
-            if not os.path.isdir (data):
+            data = os.path.join(os.path.dirname(casadef.task_directory), 'data')
+            if not os.path.isdir(data):
                 # Sigh, hack for CASA 4.7 + Conda; should be straightened out:
                 dn = os.path.dirname
                 data = os.path.join(dn(dn(dn(casadef.task_directory))), 'lib', 'casa', 'data')
-                if not os.path.isdir (data):
+                if not os.path.isdir(data):
                     data = None
 
     if data is None:
         import casac
 
         prevp = None
-        p = os.path.dirname (casac.__file__)
-        while len (p) and p != prevp:
-            data = os.path.join (p, 'data')
-            if os.path.isdir (data):
+        p = os.path.dirname(casac.__file__)
+        while len(p) and p != prevp:
+            data = os.path.join(p, 'data')
+            if os.path.isdir(data):
                 break
             prevp = p
-            p = os.path.dirname (p)
+            p = os.path.dirname(p)
 
-    if not os.path.isdir (data):
-        raise RuntimeError ('cannot identify CASA data directory')
+    if not os.path.isdir(data):
+        raise RuntimeError('cannot identify CASA data directory')
 
-    return os.path.join (data, *subdirs)
+    return os.path.join(data, *subdirs)
 
 
 # Trying to use the logging facility in a sane way.
@@ -168,12 +168,12 @@ def datadir (*subdirs):
 # As soon as you create a logsink, it creates a file called casapy.log.
 # So we do some junk to not leave turds all around the filesystem.
 
-def _rmtree_error (func, path, excinfo):
+def _rmtree_error(func, path, excinfo):
     from ...cli import warn
-    warn ('couldn\'t delete temporary file %s: %s (%s)', path, excinfo[0], func)
+    warn('couldn\'t delete temporary file %s: %s (%s)', path, excinfo[0], func)
 
 
-def logger (filter='WARN'):
+def logger(filter='WARN'):
     """Set up CASA to write log messages to standard output.
 
     filter
@@ -190,35 +190,35 @@ def logger (filter='WARN'):
     """
     import os, shutil, tempfile
 
-    cwd = os.getcwd ()
+    cwd = os.getcwd()
     tempdir = None
 
     try:
-        tempdir = tempfile.mkdtemp (prefix='casautil')
+        tempdir = tempfile.mkdtemp(prefix='casautil')
 
         try:
-            os.chdir (tempdir)
-            sink = tools.logsink ()
-            sink.setlogfile (sanitize_unicode (os.devnull))
+            os.chdir(tempdir)
+            sink = tools.logsink()
+            sink.setlogfile(sanitize_unicode(os.devnull))
             try:
-                os.unlink ('casapy.log')
+                os.unlink('casapy.log')
             except OSError as e:
                 if e.errno != 2:
                     raise
                 # otherwise, it's a ENOENT, in which case, no worries.
         finally:
-            os.chdir (cwd)
+            os.chdir(cwd)
     finally:
         if tempdir is not None:
-            shutil.rmtree (tempdir, onerror=_rmtree_error)
+            shutil.rmtree(tempdir, onerror=_rmtree_error)
 
-    sink.showconsole (True)
-    sink.setglobal (True)
-    sink.filter (sanitize_unicode (filter.upper ()))
+    sink.showconsole(True)
+    sink.setglobal(True)
+    sink.filter(sanitize_unicode(filter.upper()))
     return sink
 
 
-def forkandlog (function, filter='INFO5', debug=False):
+def forkandlog(function, filter='INFO5', debug=False):
     """Fork a child process and read its CASA log output.
 
     function
@@ -257,8 +257,8 @@ def forkandlog (function, filter='INFO5', debug=False):
     """
     import sys, os
 
-    readfd, writefd = os.pipe ()
-    pid = os.fork ()
+    readfd, writefd = os.pipe()
+    pid = os.fork()
 
     if pid == 0:
         # Child process. We never leave this branch.
@@ -275,40 +275,40 @@ def forkandlog (function, filter='INFO5', debug=False):
         # caller would have to be much more complex to be able to detect and
         # handle such output.
 
-        os.close (readfd)
+        os.close(readfd)
 
         if not debug:
-            f = open (os.devnull, 'w')
-            os.dup2 (f.fileno (), 1)
-            os.dup2 (f.fileno (), 2)
+            f = open(os.devnull, 'w')
+            os.dup2(f.fileno(), 1)
+            os.dup2(f.fileno(), 2)
 
-        sink = logger (filter=filter)
-        sink.setlogfile (b'/dev/fd/%d' % writefd)
-        function (sink)
-        sys.exit (0)
+        sink = logger(filter=filter)
+        sink.setlogfile(b'/dev/fd/%d' % writefd)
+        function(sink)
+        sys.exit(0)
 
     # Original process.
 
-    os.close (writefd)
+    os.close(writefd)
 
-    with os.fdopen (readfd) as readhandle:
+    with os.fdopen(readfd) as readhandle:
         for line in readhandle:
             yield line
 
-    info = os.waitpid (pid, 0)
+    info = os.waitpid(pid, 0)
 
     if info[1]:
         # Because we're a generator, this is the only way for us to signal if
         # the process died. We could be rewritten as a context manager.
-        e = RuntimeError ('logging child process PID %d exited '
-                          'with error code %d' % tuple (info))
+        e = RuntimeError('logging child process PID %d exited '
+                         'with error code %d' % tuple(info))
         e.pid, e.exitcode = info
         raise e
 
 
 # Tool factories.
 
-class _Tools (object):
+class _Tools(object):
     """This class is structured so that it supports useful tab-completion
     interactively, but also so that new tools can be constructed if the
     underlying library provides them.
@@ -319,28 +319,28 @@ class _Tools (object):
                      functional image imagepol imager logsink measures
                      msmetadata ms msplot mstransformer plotms regionmanager
                      simulator spectralline quanta table tableplot utils
-                     vlafiller vpmanager'''.split ()
+                     vlafiller vpmanager'''.split()
 
-    def __getattribute__ (self, n):
+    def __getattribute__(self, n):
         """Returns factories, not instances."""
         # We need to make this __getattribute__, not __getattr__, only because
         # we set the builtin names in the class __dict__ to enable tab-completion.
         import casac
 
-        if hasattr (casac, 'casac'): # casapy >= 4.0?
-            t = getattr (casac.casac, n, None)
+        if hasattr(casac, 'casac'): # casapy >= 4.0?
+            t = getattr(casac.casac, n, None)
             if t is None:
-                raise AttributeError ('tool "%s" not present' % n)
+                raise AttributeError('tool "%s" not present' % n)
             return t
         else:
             try:
-                return casac.homefinder.find_home_by_name (n + 'Home').create
+                return casac.homefinder.find_home_by_name(n + 'Home').create
             except Exception:
                 # raised exception is class 'homefinder.error'; it appears unavailable
                 # on the Python layer
-                raise AttributeError ('tool "%s" not present' % n)
+                raise AttributeError('tool "%s" not present' % n)
 
 for n in _Tools._builtinNames:
-    setattr (_Tools, n, None) # ease autocompletion
+    setattr(_Tools, n, None) # ease autocompletion
 
-tools = _Tools ()
+tools = _Tools()
