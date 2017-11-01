@@ -291,7 +291,7 @@ def applycal(cfg):
 
     selkws = extractmsselect(cfg)
     selkws['chanmode'] = 'none' # ?
-    cb.selectvis(**b(selkws))
+    cb.selectvis(**selkws)
 
     applyonthefly(cb, cfg)
 
@@ -929,7 +929,7 @@ def flagcmd(cfg):
         flagbackup = cfg.flagbackup,
     )
 
-    with CasapyScript(script, **b(args)):
+    with CasapyScript(script, **args):
         pass
 
 flagcmd_cli = makekwcli(flagcmd_doc, FlagcmdConfig, flagcmd)
@@ -1293,8 +1293,8 @@ def ft(cfg):
     im = util.tools.imager()
 
     im.open(b(cfg.vis), usescratch=cfg.usescratch)
-    im.selectvis(**b(extractmsselect(cfg, haveintent=False,
-                                       taqltomsselect=False)))
+    im.selectvis(**extractmsselect(cfg, haveintent=False,
+                                   taqltomsselect=False))
     nmodel = len(cfg.model)
 
     if nmodel > 1:
@@ -1456,7 +1456,7 @@ def gaincal(cfg):
 
     selkws = extractmsselect(cfg)
     selkws['chanmode'] = 'none' # ?
-    cb.selectvis(**b(selkws))
+    cb.selectvis(**selkws)
 
     applyonthefly(cb, cfg)
 
@@ -1489,11 +1489,11 @@ def gaincal(cfg):
     solkws['type'] = cfg.gaintype.upper()
 
     if solkws['type'] == 'GSPLINE':
-        cb.setsolvegainspline(**b(solkws))
+        cb.setsolvegainspline(**solkws)
     elif solkws['type'] == 'BPOLY':
-        cb.setsolvebandpoly(**b(solkws))
+        cb.setsolvebandpoly(**solkws)
     else:
-        cb.setsolve(**b(solkws))
+        cb.setsolve(**solkws)
 
     cb.solve()
     cb.close()
@@ -2852,7 +2852,7 @@ def mfsclean(cfg):
     # Set up all of this junk
 
     im.open(b(cfg.vis), usescratch=False)
-    im.selectvis(nchan=-1, start=0, step=1, usescratch=False, writeaccess=False, **b(selkws))
+    im.selectvis(nchan=-1, start=0, step=1, usescratch=False, writeaccess=False, **selkws)
     im.defineimage(nx=cfg.imsize[0], ny=cfg.imsize[1],
                     cellx=qa.quantity(b(cfg.cell), b'arcsec'),
                     celly=qa.quantity(b(cfg.cell), b'arcsec'),
@@ -3299,7 +3299,7 @@ def setjy(cfg):
             scalebychan = True, # see below
         )
         print('Farming out to CASA ...')
-        with CasapyScript(script, **b(args)) as cs:
+        with CasapyScript(script, **args) as cs:
             with open(os.path.join(cs.workdir, 'casa_stderr'), 'r') as f:
                 stderr = f.read()
             print(stderr)
@@ -3328,7 +3328,7 @@ def setjy(cfg):
 
     im = util.tools.imager()
     im.open(b(cfg.vis), usescratch=False) # don't think you'll ever want True?
-    im.setjy(**b(kws))
+    im.setjy(**kws)
     im.close()
 
 
@@ -3431,7 +3431,7 @@ def split(cfg):
             workdir = tempfile.mkdtemp(dir=os.path.dirname(cfg.out),
                                         prefix=os.path.basename(cfg.out) + '_')
             kws['outputms'] = os.path.join(workdir, os.path.basename(cfg.out))
-            ms.split(**b(kws))
+            ms.split(**kws)
             os.rename(kws['outputms'], cfg.out)
             renamed = True
         finally:
