@@ -26,7 +26,7 @@ from ...kwargv import ParseKeywords, Custom
 
 # Keep the tasks alphabetized!
 
-__all__ = str ('''
+__all__ = str('''
 applycal applycal_cli ApplycalConfig
 bpplot bpplot_cli BpplotConfig
 clearcal clearcal_cli
@@ -69,7 +69,7 @@ tsysplot tsysplot_cli TsysplotConfig
 uvsub uvsub_cli UvsubConfig
 xyphplot xyphplot_cli XyphplotConfig
 commandline
-''').split ()
+''').split()
 
 
 # Some utilities
@@ -141,9 +141,9 @@ loglevel=
     severe warn info info1 info2 info3 info4 info5 debug1 debug2 debugging
 """
 
-def extractmsselect (cfg, havearray=False, havecorr=False, haveintent=True,
-                     intenttoscanintent=False, taqltomsselect=True,
-                     observationtoobs=False):
+def extractmsselect(cfg, havearray=False, havecorr=False, haveintent=True,
+                    intenttoscanintent=False, taqltomsselect=True,
+                    observationtoobs=False):
     # expects cfg to have:
     #  antenna [correlation] field intent observation scan spw taql timerange uvrange
     # fills a dict with:
@@ -151,89 +151,89 @@ def extractmsselect (cfg, havearray=False, havecorr=False, haveintent=True,
 
     selkws = {}
 
-    direct = 'field scan spw uvrange'.split ()
-    indirect = 'antenna:baseline timerange:time'.split ()
+    direct = 'field scan spw uvrange'.split()
+    indirect = 'antenna:baseline timerange:time'.split()
 
     if havearray:
-        indirect.append ('array:subarray')
+        indirect.append('array:subarray')
 
     if havecorr:
-        direct.append ('correlation')
+        direct.append('correlation')
 
     if haveintent:
         if intenttoscanintent:
-            indirect.append ('intent:scanintent')
+            indirect.append('intent:scanintent')
         else:
-            direct.append ('intent')
+            direct.append('intent')
 
     if observationtoobs:
-        indirect.append ('observation:obs')
+        indirect.append('observation:obs')
     else:
-        direct.append ('observation')
+        direct.append('observation')
 
     if taqltomsselect:
-        indirect.append ('taql:msselect')
+        indirect.append('taql:msselect')
     else:
-        direct.append ('taql')
+        direct.append('taql')
 
     for k in direct:
-        selkws[k] = getattr (cfg, k) or ''
+        selkws[k] = getattr(cfg, k) or ''
 
     for p in indirect:
-        ck, sk = p.split (':')
-        selkws[sk] = getattr (cfg, ck) or ''
+        ck, sk = p.split(':')
+        selkws[sk] = getattr(cfg, ck) or ''
 
     return selkws
 
 
-def applyonthefly (cb, cfg):
+def applyonthefly(cb, cfg):
     # expects cfg to have:
     #   gaintable gainfield interp spwmap opacity gaincurve parang
 
-    n = len (cfg.gaintable)
+    n = len(cfg.gaintable)
 
     # fill in missing values, taking care not to mutate cfg.
 
-    gainfields = list (cfg.gainfield)
-    interps = list (cfg.interp)
-    spwmaps = list (cfg.spwmap)
+    gainfields = list(cfg.gainfield)
+    interps = list(cfg.interp)
+    spwmaps = list(cfg.spwmap)
 
-    if len (gainfields) < n:
-        gainfields += [''] * (n - len (gainfields))
-    elif len (gainfields) > n:
-        raise ValueError ('more "gainfield" entries than "gaintable" entries')
+    if len(gainfields) < n:
+        gainfields += [''] * (n - len(gainfields))
+    elif len(gainfields) > n:
+        raise ValueError('more "gainfield" entries than "gaintable" entries')
 
-    if len (interps) < n:
-        interps += ['linear'] * (n - len (interps))
-    elif len (interps) > n:
-        raise ValueError ('more "interp" entries than "gaintable" entries')
+    if len(interps) < n:
+        interps += ['linear'] * (n - len(interps))
+    elif len(interps) > n:
+        raise ValueError('more "interp" entries than "gaintable" entries')
 
-    if len (spwmaps) < n:
-        spwmaps += [[-1]] * (n - len (spwmaps))
-    elif len (spwmaps) > n:
-        raise ValueError ('more "spwmap" entries than "gaintable" entries')
+    if len(spwmaps) < n:
+        spwmaps += [[-1]] * (n - len(spwmaps))
+    elif len(spwmaps) > n:
+        raise ValueError('more "spwmap" entries than "gaintable" entries')
 
-    for table, field, interp, spwmap in zip (cfg.gaintable, gainfields,
+    for table, field, interp, spwmap in zip(cfg.gaintable, gainfields,
                                              interps, spwmaps):
-        cb.setapply (table=b(table), field=b(field), interp=b(interp), spwmap=b(spwmap),
+        cb.setapply(table=b(table), field=b(field), interp=b(interp), spwmap=b(spwmap),
                      t=0., calwt=True)
 
-    if len (cfg.opacity):
-        cb.setapply (type=b'TOPAC', opacity=b(cfg.opacity), t=-1, calwt=True)
+    if len(cfg.opacity):
+        cb.setapply(type=b'TOPAC', opacity=b(cfg.opacity), t=-1, calwt=True)
 
     if cfg.gaincurve:
-        cb.setapply (type=b'GAINCURVE', t=-1, calwt=True)
+        cb.setapply(type=b'GAINCURVE', t=-1, calwt=True)
 
     if cfg.parang:
-        cb.setapply (type=b'P')
+        cb.setapply(type=b'P')
 
 
-def makekwcli (doc, cfgclass, impl):
-    def kwclifunc (argv):
-        check_usage (doc, argv, usageifnoargs=True)
-        cfg = cfgclass ().parse (argv[1:])
-        util.logger (cfg.loglevel)
-        impl (cfg)
+def makekwcli(doc, cfgclass, impl):
+    def kwclifunc(argv):
+        check_usage(doc, argv, usageifnoargs=True)
+        cfg = cfgclass().parse(argv[1:])
+        util.logger(cfg.loglevel)
+        impl(cfg)
     return kwclifunc
 
 
@@ -255,17 +255,17 @@ calwt=
 """ + precal_doc + stdsel_doc + loglevel_doc
 
 
-class ApplycalConfig (ParseKeywords):
-    vis = Custom (str, required=True)
+class ApplycalConfig(ParseKeywords):
+    vis = Custom(str, required=True)
     calwt = False
     # skipping: flagbackup
 
     gaintable = [str]
-    gainfield = Custom ([str], sep=';')
+    gainfield = Custom([str], sep=';')
     interp = [str]
-    @Custom ([str], sep=';')
-    def spwmap (v):
-        return [map (int, e.split (',')) for e in v]
+    @Custom([str], sep=';')
+    def spwmap(v):
+        return [map(int, e.split(',')) for e in v]
     opacity = [float]
     gaincurve = False
     parang = False
@@ -285,21 +285,21 @@ class ApplycalConfig (ParseKeywords):
     loglevel = 'warn'
 
 
-def applycal (cfg):
-    cb = util.tools.calibrater ()
-    cb.open (filename=b(cfg.vis), compress=False, addcorr=True, addmodel=False)
+def applycal(cfg):
+    cb = util.tools.calibrater()
+    cb.open(filename=b(cfg.vis), compress=False, addcorr=True, addmodel=False)
 
-    selkws = extractmsselect (cfg)
+    selkws = extractmsselect(cfg)
     selkws['chanmode'] = 'none' # ?
-    cb.selectvis (**b(selkws))
+    cb.selectvis(**b(selkws))
 
-    applyonthefly (cb, cfg)
+    applyonthefly(cb, cfg)
 
-    cb.correct (b(cfg.applymode))
-    cb.close ()
+    cb.correct(b(cfg.applymode))
+    cb.close()
 
 
-applycal_cli = makekwcli (applycal_doc, ApplycalConfig, applycal)
+applycal_cli = makekwcli(applycal_doc, ApplycalConfig, applycal)
 
 
 # bpplot
@@ -340,85 +340,85 @@ margins=TOP,RIGHT,LEFT,BOTTOM
 """ + loglevel_doc
 
 
-class BpplotConfig (ParseKeywords):
-    caltable = Custom (str, required=True)
+class BpplotConfig(ParseKeywords):
+    caltable = Custom(str, required=True)
     dest = str
     dims = [1000, 600]
     margins = [4, 4, 4, 4]
     loglevel = 'warn'
 
 
-def bpplot (cfg):
+def bpplot(cfg):
     import omega as om, omega.render
     from ... import numutil
 
-    if isinstance (cfg.dest, omega.render.Pager):
+    if isinstance(cfg.dest, omega.render.Pager):
         # This is for non-CLI invocation.
         pager = cfg.dest
     elif cfg.dest is None:
         import omega.gtk3
-        pager = om.makeDisplayPager ()
+        pager = om.makeDisplayPager()
     else:
-        pager = om.makePager (cfg.dest,
+        pager = om.makePager(cfg.dest,
                               dims=cfg.dims,
                               margins=cfg.margins,
-                              style=om.styles.ColorOnWhiteVector ())
+                              style=om.styles.ColorOnWhiteVector())
 
-    tb = util.tools.table ()
+    tb = util.tools.table()
 
-    tb.open (binary_type (cfg.caltable), nomodify=True)
-    spws = tb.getcol (b'SPECTRAL_WINDOW_ID')
-    ants = tb.getcol (b'ANTENNA1')
-    vals = tb.getcol (b'CPARAM')
-    flags = tb.getcol (b'FLAG')
-    tb.close ()
+    tb.open(binary_type(cfg.caltable), nomodify=True)
+    spws = tb.getcol(b'SPECTRAL_WINDOW_ID')
+    ants = tb.getcol(b'ANTENNA1')
+    vals = tb.getcol(b'CPARAM')
+    flags = tb.getcol(b'FLAG')
+    tb.close()
 
-    tb.open (binary_type (os.path.join (cfg.caltable, 'ANTENNA')), nomodify=True)
-    names = tb.getcol (b'NAME')
-    tb.close ()
+    tb.open(binary_type(os.path.join(cfg.caltable, 'ANTENNA')), nomodify=True)
+    names = tb.getcol(b'NAME')
+    tb.close()
 
     npol, nchan, nsoln = vals.shape
 
     # see what we've got
 
     antpols = {}
-    seenspws = set ()
+    seenspws = set()
 
-    for ipol in range (npol):
-        for isoln in range (nsoln):
-            if not flags[ipol,:,isoln].all ():
+    for ipol in range(npol):
+        for isoln in range(nsoln):
+            if not flags[ipol,:,isoln].all():
                 k = (ants[isoln], ipol)
-                byspw = antpols.get (k)
+                byspw = antpols.get(k)
                 if byspw is None:
                     antpols[k] = byspw = []
 
-                byspw.append ((spws[isoln], isoln))
-                seenspws.add (spws[isoln])
+                byspw.append((spws[isoln], isoln))
+                seenspws.add(spws[isoln])
 
-    seenspws = sorted (seenspws)
-    spw_to_offset = dict ((spwid, spwofs * nchan)
-                          for spwofs, spwid in enumerate (seenspws))
+    seenspws = sorted(seenspws)
+    spw_to_offset = dict((spwid, spwofs * nchan)
+                          for spwofs, spwid in enumerate(seenspws))
 
     # normalize phases to avoid distracting wraps
 
-    for iant, ipol in sorted (six.iterkeys (antpols)):
+    for iant, ipol in sorted(six.iterkeys(antpols)):
         for ispw, isoln in antpols[iant,ipol]:
             f = flags[ipol,:,isoln]
-            meanph = np.angle (vals[ipol,~f,isoln].mean ())
-            vals[ipol,:,isoln] *= np.exp (-1j * meanph)
+            meanph = np.angle(vals[ipol,~f,isoln].mean())
+            vals[ipol,:,isoln] *= np.exp(-1j * meanph)
 
     # find plot limits
 
-    okvals = vals[np.where (~flags)]
+    okvals = vals[np.where(~flags)]
 
-    max_am = np.abs (okvals).max ()
-    min_am = np.abs (okvals).min ()
+    max_am = np.abs(okvals).max()
+    min_am = np.abs(okvals).min()
     span = max_am - min_am
     max_am += 0.05 * span
     min_am -= 0.05 * span
 
-    max_ph = np.angle (okvals, deg=True).max ()
-    min_ph = np.angle (okvals, deg=True).min ()
+    max_ph = np.angle(okvals, deg=True).max()
+    min_ph = np.angle(okvals, deg=True).min()
     span = max_ph - min_ph
     max_ph += 0.05 * span
     min_ph -= 0.05 * span
@@ -431,52 +431,52 @@ def bpplot (cfg):
 
     # plot away
 
-    for iant, ipol in sorted (six.iterkeys (antpols)):
-        p_am = om.RectPlot ()
-        p_ph = om.RectPlot ()
+    for iant, ipol in sorted(six.iterkeys(antpols)):
+        p_am = om.RectPlot()
+        p_ph = om.RectPlot()
 
         for ispw, isoln in antpols[iant,ipol]:
             f = flags[ipol,:,isoln]
-            a = np.abs (vals[ipol,:,isoln])
-            p = np.angle (vals[ipol,:,isoln], deg=True)
-            w = np.where (~f)[0]
+            a = np.abs(vals[ipol,:,isoln])
+            p = np.angle(vals[ipol,:,isoln], deg=True)
+            w = np.where(~f)[0]
 
-            for s in numutil.slice_around_gaps (w, 1):
+            for s in numutil.slice_around_gaps(w, 1):
                 wsub = w[s]
                 if wsub.size == 0:
                     continue # Should never happen, but eh.
                 else:
                     # It'd also be pretty weird to have a spectral window
-                    # containing just one (valid) channel, but it could
+                    # containing just one(valid) channel, but it could
                     # happen.
                     lines = (wsub.size > 1)
 
-                p_am.addXY (wsub + spw_to_offset[ispw], a[wsub], None,
+                p_am.addXY(wsub + spw_to_offset[ispw], a[wsub], None,
                             lines=lines, dsn=ispw)
-                p_ph.addXY (wsub + spw_to_offset[ispw], p[wsub], None,
+                p_ph.addXY(wsub + spw_to_offset[ispw], p[wsub], None,
                             lines=lines, dsn=ispw)
 
-        p_am.setBounds (xmin=0,
-                        xmax=len (seenspws) * nchan,
+        p_am.setBounds(xmin=0,
+                        xmax=len(seenspws) * nchan,
                         ymin=min_am,
                         ymax=max_am)
-        p_ph.setBounds (xmin=0,
-                        xmax=len (seenspws) * nchan,
+        p_ph.setBounds(xmin=0,
+                        xmax=len(seenspws) * nchan,
                         ymin=min_ph,
                         ymax=max_ph)
-        p_am.addKeyItem ('%s %s' % (names[iant], polnames[ipol]))
+        p_am.addKeyItem('%s %s' % (names[iant], polnames[ipol]))
 
         p_am.bpainter.paintLabels = False
-        p_am.setYLabel ('Amplitude')
-        p_ph.setLabels ('Normalized channel', 'De-meaned Phase (deg)')
+        p_am.setYLabel('Amplitude')
+        p_ph.setLabels('Normalized channel', 'De-meaned Phase(deg)')
 
-        vb = om.layout.VBox (2)
+        vb = om.layout.VBox(2)
         vb[0] = p_am
         vb[1] = p_ph
-        vb.setWeight (0, 2.5)
-        pager.send (vb)
+        vb.setWeight(0, 2.5)
+        pager.send(vb)
 
-bpplot_cli = makekwcli (bpplot_doc, BpplotConfig, bpplot)
+bpplot_cli = makekwcli(bpplot_doc, BpplotConfig, bpplot)
 
 
 # clearcal
@@ -485,7 +485,7 @@ clearcal_doc = \
 """
 casatask clearcal [-w] <vis1> [more vises...]
 
-Fill the imaging and calibration columns (MODEL_DATA, CORRECTED_DATA,
+Fill the imaging and calibration columns(MODEL_DATA, CORRECTED_DATA,
 IMAGING_WEIGHT) of each measurement set with default values, creating
 the columns if necessary.
 
@@ -510,52 +510,52 @@ clearcal_imaging_dminfo_tmpl = {'TYPE': 'TiledShapeStMan',
                                 'SPEC': {'DEFAULTTILESHAPE': [32, 128]},
                                 'NAME': 'imagingweight'}
 
-def clearcal (vis, weightonly=False):
-    tb = util.tools.table ()
-    cb = util.tools.calibrater ()
+def clearcal(vis, weightonly=False):
+    tb = util.tools.table()
+    cb = util.tools.calibrater()
 
     # cb.open() will create the tables if they're not present, so
     # if that's the case, we don't actually need to run initcalset()
 
-    tb.open (b(vis), nomodify=False)
-    colnames = tb.colnames ()
-    needinit = ('MODEL_DATA' in colnames) or ('CORRECTED_DATA' in colnames)
+    tb.open(b(vis), nomodify=False)
+    colnames = tb.colnames()
+    needinit = ('MODEL_DATA' in colnames) or('CORRECTED_DATA' in colnames)
     if 'IMAGING_WEIGHT' not in colnames:
-        c = dict (clearcal_imaging_col_tmpl)
-        c['shape'] = tb.getcell (b'DATA', 0).shape[-1:]
-        tb.addcols ({b'IMAGING_WEIGHT': c}, clearcal_imaging_dminfo_tmpl)
-    tb.close ()
+        c = dict(clearcal_imaging_col_tmpl)
+        c['shape'] = tb.getcell(b'DATA', 0).shape[-1:]
+        tb.addcols({b'IMAGING_WEIGHT': c}, clearcal_imaging_dminfo_tmpl)
+    tb.close()
 
     if not weightonly:
-        cb.open (b(vis))
+        cb.open(b(vis))
         if needinit:
-            cb.initcalset ()
-        cb.close ()
+            cb.initcalset()
+        cb.close()
 
 
-def clearcal_cli (argv):
-    check_usage (clearcal_doc, argv, usageifnoargs=True)
+def clearcal_cli(argv):
+    check_usage(clearcal_doc, argv, usageifnoargs=True)
 
-    argv = list (argv)
+    argv = list(argv)
     weightonly = '-w' in argv
     if weightonly:
-        sys.argv.remove ('-w')
+        sys.argv.remove('-w')
 
-    if len (argv) < 2:
-        wrong_usage (clearcal_doc, 'need at least one argument')
+    if len(argv) < 2:
+        wrong_usage(clearcal_doc, 'need at least one argument')
 
-    util.logger ()
+    util.logger()
     for vis in argv[1:]:
-        clearcal (b(vis), weightonly=weightonly)
+        clearcal(b(vis), weightonly=weightonly)
 
 
 # closures
 #
 # Shim for a separate module
 
-def closures_cli (argv):
+def closures_cli(argv):
     from .closures import closures_cli
-    closures_cli (argv)
+    closures_cli(argv)
 
 
 # concat
@@ -572,50 +572,50 @@ Concatenate the visibility measurement sets.
 concat_freqtol = 1e-5
 concat_dirtol = 1e-5
 
-def concat (invises, outvis, timesort=False):
-    tb = util.tools.table ()
-    ms = util.tools.ms ()
+def concat(invises, outvis, timesort=False):
+    tb = util.tools.table()
+    ms = util.tools.ms()
 
-    if os.path.exists (outvis):
-        raise RuntimeError ('output "%s" already exists' % outvis)
+    if os.path.exists(outvis):
+        raise RuntimeError('output "%s" already exists' % outvis)
 
     for invis in invises:
-        if not os.path.isdir (invis):
-            raise RuntimeError ('input "%s" does not exist' % invis)
+        if not os.path.isdir(invis):
+            raise RuntimeError('input "%s" does not exist' % invis)
 
-    tb.open (b(invises[0]))
-    tb.copy (b(outvis), deep=True, valuecopy=True)
-    tb.close ()
+    tb.open(b(invises[0]))
+    tb.copy(b(outvis), deep=True, valuecopy=True)
+    tb.close()
 
-    ms.open (b(outvis), nomodify=False)
+    ms.open(b(outvis), nomodify=False)
 
     for invis in invises[1:]:
-        ms.concatenate (msfile=b(invis), freqtol=b(concat_freqtol),
+        ms.concatenate(msfile=b(invis), freqtol=b(concat_freqtol),
                         dirtol=b(concat_dirtol))
 
-    ms.writehistory (message=b'taskname=tasklib.concat', origin=b'tasklib.concat')
-    ms.writehistory (message=b('vis = ' + ', '.join (invises)), origin=b'tasklib.concat')
-    ms.writehistory (message=b('timesort = ' + 'FT'[int (timesort)]), origin=b'tasklib.concat')
+    ms.writehistory(message=b'taskname=tasklib.concat', origin=b'tasklib.concat')
+    ms.writehistory(message=b('vis = ' + ', '.join(invises)), origin=b'tasklib.concat')
+    ms.writehistory(message=b('timesort = ' + 'FT'[int(timesort)]), origin=b'tasklib.concat')
 
     if timesort:
-        ms.timesort ()
+        ms.timesort()
 
-    ms.close ()
+    ms.close()
 
 
-def concat_cli (argv):
-    check_usage (concat_doc, argv, usageifnoargs=True)
+def concat_cli(argv):
+    check_usage(concat_doc, argv, usageifnoargs=True)
 
-    argv = list (argv)
+    argv = list(argv)
     timesort = '-s' in argv
     if timesort:
-        sys.argv.remove ('-s')
+        sys.argv.remove('-s')
 
-    if len (argv) < 3:
-        wrong_usage (concat_doc, 'need at least two arguments')
+    if len(argv) < 3:
+        wrong_usage(concat_doc, 'need at least two arguments')
 
-    util.logger ()
-    concat (argv[1:-1], argv[-1], timesort)
+    util.logger()
+    concat(argv[1:-1], argv[-1], timesort)
 
 
 # delcal
@@ -631,28 +631,28 @@ Delete the MODEL_DATA and CORRECTED_DATA columns from MSes.
 """
 
 
-def delcal (mspath):
-    wantremove = 'MODEL_DATA CORRECTED_DATA'.split ()
-    tb = util.tools.table ()
-    tb.open (b(mspath), nomodify=False)
-    cols = frozenset (tb.colnames ())
+def delcal(mspath):
+    wantremove = 'MODEL_DATA CORRECTED_DATA'.split()
+    tb = util.tools.table()
+    tb.open(b(mspath), nomodify=False)
+    cols = frozenset(tb.colnames())
     toremove = [b(c) for c in wantremove if c in cols]
-    if len (toremove):
-        tb.removecols (toremove)
-    tb.close ()
+    if len(toremove):
+        tb.removecols(toremove)
+    tb.close()
     return toremove
 
 
-def delcal_cli (argv):
-    check_usage (delcal_doc, argv, usageifnoargs=True)
-    util.logger ()
+def delcal_cli(argv):
+    check_usage(delcal_doc, argv, usageifnoargs=True)
+    util.logger()
 
     for mspath in argv[1:]:
-        removed = delcal (mspath)
-        if len (removed):
-            print ('%s: removed %s' % (mspath, ', '.join (removed)))
+        removed = delcal(mspath)
+        if len(removed):
+            print('%s: removed %s' % (mspath, ', '.join(removed)))
         else:
-            print ('%s: nothing to remove' % mspath)
+            print('%s: nothing to remove' % mspath)
 
 
 # delmod
@@ -670,44 +670,44 @@ between wanting better terminology and not wanting to be
 gratuitously different from CASA.
 """
 
-def delmod_cli (argv, alter_logger=True):
-    check_usage (delmod_doc, argv, usageifnoargs=True)
+def delmod_cli(argv, alter_logger=True):
+    check_usage(delmod_doc, argv, usageifnoargs=True)
     if alter_logger:
-        util.logger ()
+        util.logger()
 
-    cb = util.tools.calibrater ()
+    cb = util.tools.calibrater()
 
     for mspath in argv[1:]:
-        cb.open (b(mspath), addcorr=False, addmodel=False)
-        cb.delmod (otf=True, scr=False)
-        cb.close ()
+        cb.open(b(mspath), addcorr=False, addmodel=False)
+        cb.delmod(otf=True, scr=False)
+        cb.close()
 
 
 # dftdynspec
 #
 # Shim for a separate module
 
-def dftdynspec_cli (argv):
+def dftdynspec_cli(argv):
     from .dftdynspec import dftdynspec_cli
-    dftdynspec_cli (argv)
+    dftdynspec_cli(argv)
 
 
 # dftphotom
 #
 # Shim for a separate module
 
-def dftphotom_cli (argv):
+def dftphotom_cli(argv):
     from .dftphotom import dftphotom_cli
-    dftphotom_cli (argv)
+    dftphotom_cli(argv)
 
 
 # dftspect
 #
 # Shim for a separate module
 
-def dftspect_cli (argv):
+def dftspect_cli(argv):
     from .dftspect import dftspect_cli
-    dftspect_cli (argv)
+    dftspect_cli(argv)
 
 
 # elplot
@@ -731,7 +731,7 @@ dest=PATH
 
 dims=WIDTH,HEIGHT
   If saving to a file, the dimensions of a each page. These are in points
-  for vector formats (PDF, PS) and pixels for bitmaps (PNG). Defaults to
+  for vector formats(PDF, PS) and pixels for bitmaps(PNG). Defaults to
   1000, 600.
 
 margins=TOP,RIGHT,LEFT,BOTTOM
@@ -740,79 +740,79 @@ margins=TOP,RIGHT,LEFT,BOTTOM
 """ + loglevel_doc
 
 
-class ElplotConfig (ParseKeywords):
-    vis = Custom (str, required=True)
+class ElplotConfig(ParseKeywords):
+    vis = Custom(str, required=True)
     dest = str
     dims = [1000, 600]
     margins = [4, 4, 4, 4]
     loglevel = 'warn'
 
 
-def elplot (cfg):
+def elplot(cfg):
     import omega as om, omega.render
 
-    if isinstance (cfg.dest, omega.render.Pager):
+    if isinstance(cfg.dest, omega.render.Pager):
         # This is for non-CLI invocation.
         pager = cfg.dest
     elif cfg.dest is None:
         import omega.gtk3
-        pager = om.makeDisplayPager ()
+        pager = om.makeDisplayPager()
     else:
-        pager = om.makePager (cfg.dest,
+        pager = om.makePager(cfg.dest,
                               dims=cfg.dims,
                               margins=cfg.margins,
-                              style=om.styles.ColorOnWhiteVector ())
+                              style=om.styles.ColorOnWhiteVector())
 
-    ms = util.tools.ms ()
-    me = util.tools.measures ()
+    ms = util.tools.ms()
+    me = util.tools.measures()
 
-    ms.open (binary_type (cfg.vis), nomodify=True)
-    scans = ms.range ([b'scan_number'])['scan_number']
+    ms.open(binary_type(cfg.vis), nomodify=True)
+    scans = ms.range([b'scan_number'])['scan_number']
 
-    md = ms.metadata ()
-    field_names = md.namesforfields ()
-    obs = md.observatoryposition ()
-    me.doframe (b(obs))
-    timetmpl = md.timerangeforobs (0)['begin']
+    md = ms.metadata()
+    field_names = md.namesforfields()
+    obs = md.observatoryposition()
+    me.doframe(b(obs))
+    timetmpl = md.timerangeforobs(0)['begin']
 
-    mjd0 = int (np.floor (md.timesforscan (scans[0]).min () / 86400))
+    mjd0 = int(np.floor(md.timesforscan(scans[0]).min() / 86400))
 
     field_dsns = {}
 
-    p = om.RectPlot ()
+    p = om.RectPlot()
 
     for scan in scans:
-        mjds = md.timesforscan (scan=scan) / 86400
+        mjds = md.timesforscan(scan=scan) / 86400
 
-        fields = md.fieldsforscan (scan=scan)
+        fields = md.fieldsforscan(scan=scan)
         if fields.size != 1:
             import sys
-            print ('warning: scan %d does not contain one field: %r' % (scan, fields))
+            print('warning: scan %d does not contain one field: %r' % (scan, fields))
         field = fields[0]
 
-        fdir = ms.getfielddirmeas (fieldid=field)
-        els = np.empty (mjds.size)
+        fdir = ms.getfielddirmeas(fieldid=field)
+        els = np.empty(mjds.size)
 
-        for i in xrange (mjds.size):
+        for i in range(mjds.size):
             timetmpl['m0']['value'] = mjds[i]
-            me.doframe (b(timetmpl))
-            els[i] = me.measure (b(fdir), b'AZEL')['m1']['value'] * 180 / np.pi
+            me.doframe(b(timetmpl))
+            els[i] = me.measure(b(fdir), b'AZEL')['m1']['value'] * 180 / np.pi
 
-        dsn = field_dsns.get (field)
+        dsn = field_dsns.get(field)
         kt = None
 
         if dsn is None:
-            dsn = len (field_dsns)
+            dsn = len(field_dsns)
             field_dsns[field] = dsn
             kt = field_names[field]
 
-        p.addXY (mjds - mjd0, els, kt, dsn=dsn)
+        p.addXY(mjds - mjd0, els, kt, dsn=dsn)
 
-    p.setLabels ('MJD - %d (day)' % mjd0, 'Elevation (deg)')
-    pager.send (p)
-    pager.done ()
+    p.setLabels('MJD - %d(day)' % mjd0, 'Elevation(deg)')
+    pager.send(p)
+    pager.done()
 
-elplot_cli = makekwcli (elplot_doc, ElplotConfig, elplot)
+elplot_cli = makekwcli(elplot_doc, ElplotConfig, elplot)
 
 
 # extractbpflags
@@ -840,62 +840,62 @@ We're assuming that the channelization of the bandpass solution and the data
 are the same.
 """
 
-def extractbpflags (calpath, deststream):
-    tb = util.tools.table ()
-    tb.open (b(os.path.join (calpath, 'ANTENNA')))
-    antnames = tb.getcol (b'NAME')
-    tb.close ()
+def extractbpflags(calpath, deststream):
+    tb = util.tools.table()
+    tb.open(b(os.path.join(calpath, 'ANTENNA')))
+    antnames = tb.getcol(b'NAME')
+    tb.close()
 
-    tb.open (b(calpath))
+    tb.open(b(calpath))
     try:
-        t = tb.getkeyword (b'VisCal')
+        t = tb.getkeyword(b'VisCal')
     except RuntimeError:
-        raise PKError ('no "VisCal" keyword in %s; it doesn\'t seem to be a '
+        raise PKError('no "VisCal" keyword in %s; it doesn\'t seem to be a '
                        'bandpass calibration table', calpath)
 
     if t != 'B Jones':
-        raise PKError ('table %s doesn\'t seem to be a bandpass calibration '
+        raise PKError('table %s doesn\'t seem to be a bandpass calibration '
                        'table; its type is "%s"', calpath, t)
 
-    def emit (antidx, spwidx, chanstart, chanend):
+    def emit(antidx, spwidx, chanstart, chanend):
         # Channel ranges are inclusive, unlike Python syntax.
-        print ("antenna='%s&*' spw='%d:%d~%d' reason='BANDPASS_FLAGGED'" % \
-               (antnames[antidx], spwidx, chanstart, chanend), file=deststream)
+        print("antenna='%s&*' spw='%d:%d~%d' reason='BANDPASS_FLAGGED'" % \
+              (antnames[antidx], spwidx, chanstart, chanend), file=deststream)
 
-    for row in range (tb.nrows ()):
-        ant = tb.getcell (b'ANTENNA1', row)
-        spw = tb.getcell (b'SPECTRAL_WINDOW_ID', row)
-        flag = tb.getcell (b'FLAG', row)
+    for row in range(tb.nrows()):
+        ant = tb.getcell(b'ANTENNA1', row)
+        spw = tb.getcell(b'SPECTRAL_WINDOW_ID', row)
+        flag = tb.getcell(b'FLAG', row)
 
         # This is the logical 'or' of the two polarizations: i.e., anything that
         # is flagged in either poln is flagged in this.
-        sqflag = ~((~flag).prod (axis=0, dtype=np.bool))
+        sqflag = ~((~flag).prod(axis=0, dtype=np.bool))
 
         runstart = None
 
-        for i in range (sqflag.size):
+        for i in range(sqflag.size):
             if sqflag[i]:
                 # This channel is flagged. Start a run if not already in one.
                 if runstart is None:
                     runstart = i
             elif runstart is not None:
                 # The current run just ended.
-                emit (ant, spw, runstart, i - 1)
+                emit(ant, spw, runstart, i - 1)
                 runstart = None
 
         if runstart is not None:
-            emit (ant, spw, runstart, i)
+            emit(ant, spw, runstart, i)
 
-    tb.close ()
+    tb.close()
 
 
-def extractbpflags_cli (argv):
-    check_usage (extractbpflags_doc, argv, usageifnoargs='long')
+def extractbpflags_cli(argv):
+    check_usage(extractbpflags_doc, argv, usageifnoargs='long')
 
-    if len (argv) != 2:
-        wrong_usage (extractbpflags_doc, 'expect one MS name as an argument')
+    if len(argv) != 2:
+        wrong_usage(extractbpflags_doc, 'expect one MS name as an argument')
 
-    extractbpflags (argv[1], sys.stdout)
+    extractbpflags(argv[1], sys.stdout)
 
 
 # flagcmd
@@ -908,8 +908,8 @@ Flag data using auto-generated lists of flagging commands.
 
 """
 
-class FlagcmdConfig (ParseKeywords):
-    vis = Custom (str, required=True)
+class FlagcmdConfig(ParseKeywords):
+    vis = Custom(str, required=True)
     inpmode = 'table'
     useapplied = False
     action = 'apply'
@@ -917,11 +917,11 @@ class FlagcmdConfig (ParseKeywords):
     loglevel = 'warn'
 
 
-def flagcmd (cfg):
+def flagcmd(cfg):
     from .scripting import CasapyScript
-    script = os.path.join (os.path.dirname (__file__), 'cscript_flagcmd.py')
+    script = os.path.join(os.path.dirname(__file__), 'cscript_flagcmd.py')
 
-    args = dict (
+    args = dict(
         vis = cfg.vis,
         inpmode = cfg.inpmode,
         useapplied = cfg.useapplied,
@@ -929,14 +929,14 @@ def flagcmd (cfg):
         flagbackup = cfg.flagbackup,
     )
 
-    with CasapyScript (script, **b(args)):
+    with CasapyScript(script, **b(args)):
         pass
 
-flagcmd_cli = makekwcli (flagcmd_doc, FlagcmdConfig, flagcmd)
+flagcmd_cli = makekwcli(flagcmd_doc, FlagcmdConfig, flagcmd)
 
 
 # flaglist. Not quite a CASA task; something like
-# flagcmd (vis=, inpmode='list', inpfile=, flagbackup=False)
+# flagcmd(vis=, inpmode='list', inpfile=, flagbackup=False)
 #
 # We have to reproduce a lot of the dumb logic from the flaghelper.py module
 # because we can't import it because it drags in the whole casapy pile of
@@ -955,14 +955,14 @@ flagging commands and may not be precisely compatible with the CASA
 version.
 """
 
-class FlaglistConfig (ParseKeywords):
-    vis = Custom (str, required=True)
-    inpfile = Custom (str, required=True)
+class FlaglistConfig(ParseKeywords):
+    vis = Custom(str, required=True)
+    inpfile = Custom(str, required=True)
     datacol = 'data'
     loglevel = 'warn'
 
 
-def flaglist (cfg):
+def flaglist(cfg):
     from ast import literal_eval
 
     try:
@@ -970,26 +970,26 @@ def flaglist (cfg):
     except AttributeError:
         factory = util.tools.testflagger
 
-    af = factory ()
-    af.open (b(cfg.vis), 0.0)
-    af.selectdata ()
+    af = factory()
+    af.open(b(cfg.vis), 0.0)
+    af.selectdata()
 
-    for row, origline in enumerate (open (cfg.inpfile)):
-        origline = origline.rstrip ()
-        if not len (origline):
+    for row, origline in enumerate(open(cfg.inpfile)):
+        origline = origline.rstrip()
+        if not len(origline):
             continue
         if origline[0] == '#':
             continue
 
         # emulating flaghelper.py here and elsewhere ...
-        bits = origline.replace ('true', 'True').replace ('false', 'False').split (' ')
+        bits = origline.replace('true', 'True').replace('false', 'False').split(' ')
         params = {}
         lastkey = None
 
         for bit in bits:
-            subbits = bit.split ('=', 1)
+            subbits = bit.split('=', 1)
 
-            if len (subbits) == 1:
+            if len(subbits) == 1:
                 assert lastkey is not None, 'illegal flag list syntax'
                 params[lastkey] += ' ' + bit
             else:
@@ -998,34 +998,34 @@ def flaglist (cfg):
 
         assert 'ntime' not in params, 'cannot handle "ntime" flag key'
 
-        for key in params.keys ():
+        for key in params.keys():
             val = params[key]
 
             try:
-                val = literal_eval (val)
+                val = literal_eval(val)
             except ValueError:
-                val = val.strip ('\'"')
+                val = val.strip('\'"')
 
             params[key] = val
 
         params['name'] = 'agent_%d' % row
-        params['datacolumn'] = cfg.datacol.upper ()
+        params['datacolumn'] = cfg.datacol.upper()
         params['apply'] = True
 
-        params.setdefault ('mode', 'manual')
+        params.setdefault('mode', 'manual')
 
-        if not af.parseagentparameters (b(params)):
-            raise Exception ('cannot parse flag line: %s' % origline)
+        if not af.parseagentparameters(b(params)):
+            raise Exception('cannot parse flag line: %s' % origline)
 
-    af.init ()
+    af.init()
     # A summary report would be nice. run() should return
-    # info but I can't get it to do so. (I'm just trying to
+    # info but I can't get it to do so.(I'm just trying to
     # copy the task_flagdata.py implementation.)
-    af.run (True, True)
-    af.done ()
+    af.run(True, True)
+    af.done()
 
 
-flaglist_cli = makekwcli (flaglist_doc, FlaglistConfig, flaglist)
+flaglist_cli = makekwcli(flaglist_doc, FlaglistConfig, flaglist)
 
 
 # flagmanager. Not really complicated enough to make it worth making a
@@ -1039,68 +1039,68 @@ casatask flagmanager restore <ms> <name>
 casatask flagmanager delete <ms> <name>
 """
 
-def flagmanager_cli (argv, alter_logger=True):
-    check_usage (flagmanager_doc, argv, usageifnoargs=True)
+def flagmanager_cli(argv, alter_logger=True):
+    check_usage(flagmanager_doc, argv, usageifnoargs=True)
 
-    if len (argv) < 3:
-        wrong_usage (flagmanager_doc, 'expect at least a mode and an MS name')
+    if len(argv) < 3:
+        wrong_usage(flagmanager_doc, 'expect at least a mode and an MS name')
 
     mode = argv[1]
     ms = argv[2]
 
     if alter_logger:
         if mode == 'list':
-            util.logger ('info')
+            util.logger('info')
         elif mode == 'delete':
             # it WARNs 'deleting version xxx' ... yargh
-            util.logger ('severe')
+            util.logger('severe')
         else:
-            util.logger ()
+            util.logger()
 
     try:
         factory = util.tools.agentflagger
     except AttributeError:
         factory = util.tools.testflagger
 
-    af = factory ()
-    af.open (b(ms))
+    af = factory()
+    af.open(b(ms))
 
     if mode == 'list':
-        if len (argv) != 3:
-            wrong_usage (flagmanager_doc, 'expect exactly one argument in list mode')
-        af.getflagversionlist ()
+        if len(argv) != 3:
+            wrong_usage(flagmanager_doc, 'expect exactly one argument in list mode')
+        af.getflagversionlist()
     elif mode == 'save':
-        if len (argv) != 4:
-            wrong_usage (flagmanager_doc, 'expect exactly two arguments in save mode')
+        if len(argv) != 4:
+            wrong_usage(flagmanager_doc, 'expect exactly two arguments in save mode')
         from time import strftime
         name = argv[3]
-        af.saveflagversion (versionname=b(name), merge=b'replace',
-                            comment=b('created %s (casatask flagmanager)'
-                                      % strftime ('%Y-%m-%dT%H:%M:%SZ')))
+        af.saveflagversion(versionname=b(name), merge=b'replace',
+                            comment=b('created %s(casatask flagmanager)'
+                                      % strftime('%Y-%m-%dT%H:%M:%SZ')))
     elif mode == 'restore':
-        if len (argv) != 4:
-            wrong_usage (flagmanager_doc, 'expect exactly two arguments in restore mode')
+        if len(argv) != 4:
+            wrong_usage(flagmanager_doc, 'expect exactly two arguments in restore mode')
         name = argv[3]
-        af.restoreflagversion (versionname=b(name), merge=b'replace')
+        af.restoreflagversion(versionname=b(name), merge=b'replace')
     elif mode == 'delete':
-        if len (argv) != 4:
-            wrong_usage (flagmanager_doc, 'expect exactly two arguments in delete mode')
+        if len(argv) != 4:
+            wrong_usage(flagmanager_doc, 'expect exactly two arguments in delete mode')
         name = argv[3]
 
-        if not os.path.isdir (os.path.join (ms + '.flagversions', 'flags.' + name)):
-            # This condition only results in a WARN from deleteflagversion ()!
-            raise RuntimeError ('version "%s" doesn\'t exist in "%s.flagversions"'
+        if not os.path.isdir(os.path.join(ms + '.flagversions', 'flags.' + name)):
+            # This condition only results in a WARN from deleteflagversion()!
+            raise RuntimeError('version "%s" doesn\'t exist in "%s.flagversions"'
                                 % (name, ms))
 
-        af.deleteflagversion (versionname=b(name))
+        af.deleteflagversion(versionname=b(name))
     else:
-        wrong_usage (flagmanager_doc, 'unknown flagmanager mode "%s"' % mode)
+        wrong_usage(flagmanager_doc, 'unknown flagmanager mode "%s"' % mode)
 
-    af.done ()
+    af.done()
 
 
 # flagzeros. Not quite a CASA task; something like
-# flagdata (vis=, mode='clip', clipzeros=True, flagbackup=False)
+# flagdata(vis=, mode='clip', clipzeros=True, flagbackup=False)
 
 flagzeros_doc = \
 """
@@ -1109,34 +1109,34 @@ casatask flagzeros vis= [datacol=]
 Flag zero data points in the specified data column.
 """
 
-class FlagzerosConfig (ParseKeywords):
-    vis = Custom (str, required=True)
+class FlagzerosConfig(ParseKeywords):
+    vis = Custom(str, required=True)
     datacol = 'data'
     loglevel = 'warn'
 
 
-def flagzeros (cfg):
+def flagzeros(cfg):
     try:
         factory = util.tools.agentflagger
     except AttributeError:
         factory = util.tools.testflagger
 
-    af = factory ()
-    af.open (b(cfg.vis), 0.0)
-    af.selectdata ()
-    pars = dict (datacolumn=cfg.datacol.upper (),
+    af = factory()
+    af.open(b(cfg.vis), 0.0)
+    af.selectdata()
+    pars = dict(datacolumn=cfg.datacol.upper(),
                  clipzeros=True, name='CLIP', mode='clip',
                  apply=True)
-    af.parseagentparameters (pars)
-    af.init ()
+    af.parseagentparameters(pars)
+    af.init()
     # A summary report would be nice. run() should return
-    # info but I can't get it to do so. (I'm just trying to
+    # info but I can't get it to do so.(I'm just trying to
     # copy the task_flagdata.py implementation.)
-    af.run (True, True)
-    af.done ()
+    af.run(True, True)
+    af.done()
 
 
-flagzeros_cli = makekwcli (flagzeros_doc, FlagzerosConfig, flagzeros)
+flagzeros_cli = makekwcli(flagzeros_doc, FlagzerosConfig, flagzeros)
 
 
 # fluxscale
@@ -1149,7 +1149,7 @@ Write a new calibation table determining the fluxes for intermediate calibrators
 from known reference sources
 
 vis=
-  The visibility dataset. (Shouldn't be needed, but ...)
+  The visibility dataset.(Shouldn't be needed, but ...)
 
 caltable=
   The preexisting calibration table with gains associated with more than one source.
@@ -1179,16 +1179,16 @@ refspwmap=
 # Not supported in CASA 3.4:
 #incremental=
 #  Boolean, default false. If true, create an "incremental" table where the amplitudes
-#  are correction factors, not absolute gains. (I.e., for the reference sources,
+#  are correction factors, not absolute gains.(I.e., for the reference sources,
 #  the amplitudes will be unity.)
 
 
-class FluxscaleConfig (ParseKeywords):
-    vis = Custom (str, required=True)
-    caltable = Custom (str, required=True)
-    fluxtable = Custom (str, required=True)
-    reference = Custom ([str], required=True)
-    transfer = Custom ([str], required=True)
+class FluxscaleConfig(ParseKeywords):
+    vis = Custom(str, required=True)
+    caltable = Custom(str, required=True)
+    fluxtable = Custom(str, required=True)
+    reference = Custom([str], required=True)
+    transfer = Custom([str], required=True)
 
     listfile = str
     append = False
@@ -1198,32 +1198,32 @@ class FluxscaleConfig (ParseKeywords):
     loglevel = 'warn'
 
 
-def fluxscale (cfg):
-    cb = util.tools.calibrater ()
+def fluxscale(cfg):
+    cb = util.tools.calibrater()
 
     reference = cfg.reference
-    if isinstance (reference, (list, tuple)):
-        reference = ','.join (reference)
+    if isinstance(reference,(list, tuple)):
+        reference = ','.join(reference)
 
     transfer = cfg.transfer
-    if isinstance (transfer, (list, tuple)):
-        transfer = ','.join (transfer)
+    if isinstance(transfer,(list, tuple)):
+        transfer = ','.join(transfer)
 
     refspwmap = cfg.refspwmap
-    if not len (refspwmap):
+    if not len(refspwmap):
         refspwmap = [-1]
 
-    cb.open (b(cfg.vis), compress=False, addcorr=False, addmodel=False)
-    result = cb.fluxscale (tablein=b(cfg.caltable), tableout=b(cfg.fluxtable),
+    cb.open(b(cfg.vis), compress=False, addcorr=False, addmodel=False)
+    result = cb.fluxscale(tablein=b(cfg.caltable), tableout=b(cfg.fluxtable),
                            reference=b(reference), transfer=b(transfer),
                            listfile=b(cfg.listfile or ''),
                            append=cfg.append, refspwmap=b(refspwmap))
                            #incremental=cfg.incremental)
-    cb.close ()
+    cb.close()
     return result
 
 
-fluxscale_cli = makekwcli (fluxscale_doc, FluxscaleConfig, fluxscale)
+fluxscale_cli = makekwcli(fluxscale_doc, FluxscaleConfig, fluxscale)
 
 
 # ft
@@ -1235,7 +1235,7 @@ ft_doc = \
 """
 casatask ft vis=<MS> [keywords]
 
-Fill in (or update) the MODEL_DATA column of a Measurement Set with
+Fill in(or update) the MODEL_DATA column of a Measurement Set with
 visibilities computed from an image or list of components.
 
 vis=
@@ -1243,7 +1243,7 @@ vis=
 
 model=
   Comma-separated list of model images, each giving successive
-  Taylor terms of a spectral model for each source. (It's fine
+  Taylor terms of a spectral model for each source.(It's fine
   to have just one model, and this will do what you want.) The
   reference frequency for the Taylor expansion is taken from
   the first image.
@@ -1269,8 +1269,8 @@ usescratch=
 """ + stdsel_doc + loglevel_doc
 
 
-class FtConfig (ParseKeywords):
-    vis = Custom (str, required=True)
+class FtConfig(ParseKeywords):
+    vis = Custom(str, required=True)
     model = [str]
     complist = str
     incremental = False
@@ -1289,33 +1289,33 @@ class FtConfig (ParseKeywords):
     loglevel = 'warn'
 
 
-def ft (cfg):
-    im = util.tools.imager ()
+def ft(cfg):
+    im = util.tools.imager()
 
-    im.open (b(cfg.vis), usescratch=cfg.usescratch)
-    im.selectvis (**b(extractmsselect (cfg, haveintent=False,
+    im.open(b(cfg.vis), usescratch=cfg.usescratch)
+    im.selectvis(**b(extractmsselect(cfg, haveintent=False,
                                        taqltomsselect=False)))
-    nmodel = len (cfg.model)
+    nmodel = len(cfg.model)
 
     if nmodel > 1:
-        ia = util.tools.image ()
-        ia.open (b(cfg.model[0]))
+        ia = util.tools.image()
+        ia.open(b(cfg.model[0]))
         # This gives Hz:
-        reffreq = ia.coordsys ().referencevalue (type=b'spectral')['numeric'][0]
-        ia.close ()
-        im.settaylorterms (ntaylorterms=nmodel, reffreq=reffreq)
+        reffreq = ia.coordsys().referencevalue(type=b'spectral')['numeric'][0]
+        ia.close()
+        im.settaylorterms(ntaylorterms=nmodel, reffreq=reffreq)
 
     if cfg.wprojplanes is not None:
-        im.defineimage ()
-        im.setoptions (ftmachine=b'wproject', wprojplanes=cfg.wprojplanes)
+        im.defineimage()
+        im.setoptions(ftmachine=b'wproject', wprojplanes=cfg.wprojplanes)
 
-    im.ft (model=b(cfg.model),
+    im.ft(model=b(cfg.model),
            complist=b(cfg.complist or ''),
            incremental=cfg.incremental)
-    im.close ()
+    im.close()
 
 
-ft_cli = makekwcli (ft_doc, FtConfig, ft)
+ft_cli = makekwcli(ft_doc, FtConfig, ft)
 
 
 # gaincal
@@ -1337,11 +1337,11 @@ vis=
   Input dataset
 
 caltable=
-  Output calibration table (can exist if append=True)
+  Output calibration table(can exist if append=True)
 
 gaintype=
   Kind of gain solution:
-    G       - gains per poln and spw (default)
+    G       - gains per poln and spw(default)
     T       - like G, but one value for all polns
     GSPLINE - like G, with a spline fit. "Experimental"
     B       - bandpass
@@ -1360,16 +1360,16 @@ gaintype=
     XYf+QU  - ?
 
 calmode=
-  What parameters to solve for: amplitude ("a"), phase ("p"), or both
-  ("ap"). Default is "ap". Not used in bandpass solutions.
+  What parameters to solve for: amplitude("a"), phase("p"), or both
+ ("ap"). Default is "ap". Not used in bandpass solutions.
 
 solint=
   Solution interval; this is an upper bound, but solutions
   will be broken across certain boundaries according to "combine".
-  'inf'    - solutions as long as possible (the default)
+  'inf'    - solutions as long as possible(the default)
   'int'    - one solution per integration
-  (str)    - a specific time with units (e.g. '5min')
-  (number) - a specific time in seconds
+ (str)    - a specific time with units(e.g. '5min')
+ (number) - a specific time in seconds
 
 combine=
   Comma-separated list of boundary types; solutions will NOT be
@@ -1381,21 +1381,21 @@ refant=
   priority order.
 
 solnorm=
-  Normalize solution amplitudes to 1 after solving (only applies
+  Normalize solution amplitudes to 1 after solving(only applies
   to gaintypes G, T, B). Also normalizes bandpass phases to zero
   when solving for bandpasses. Default: false.
 
 append=
   Whether to append solutions to an existing table. If the table
-  exists and append=False, the table is overwritten! (Default: false)
+  exists and append=False, the table is overwritten!(Default: false)
 """ + precal_doc + """
 *** Low-level parameters:
 
 minblperant=
-  Number of baselines for each ant in order to solve (default: 4)
+  Number of baselines for each ant in order to solve(default: 4)
 
 minsnr=
-  Min. SNR for acceptable solutions (default: 3.0)
+  Min. SNR for acceptable solutions(default: 3.0)
 
 preavg=
   Interval for pre-averaging data within each solution interval,
@@ -1406,9 +1406,9 @@ smodel=I,Q,U,V
 """ + stdsel_doc + loglevel_doc
 
 
-class GaincalConfig (ParseKeywords):
-    vis = Custom (str, required=True)
-    caltable = Custom (str, required=True)
+class GaincalConfig(ParseKeywords):
+    vis = Custom(str, required=True)
+    caltable = Custom(str, required=True)
     gaintype = 'G'
     calmode = 'ap'
 
@@ -1422,16 +1422,16 @@ class GaincalConfig (ParseKeywords):
     preavg = -1.0
 
     gaintable = [str]
-    gainfield = Custom ([str], sep=';')
+    gainfield = Custom([str], sep=';')
     interp = [str]
     opacity = [float]
     gaincurve = False
     parang = False
     smodel = [int]
 
-    @Custom ([str], sep=';')
-    def spwmap (v):
-        return [map (int, e.split (',')) for e in v]
+    @Custom([str], sep=';')
+    def spwmap(v):
+        return [map(int, e.split(',')) for e in v]
 
     # gaincal keywords: splinetime npointaver phasewrap
     # bandpass keywords: fillgaps degamp degphase visnorm maskcenter
@@ -1450,56 +1450,56 @@ class GaincalConfig (ParseKeywords):
     loglevel = 'warn' # teeny hack for CLI
 
 
-def gaincal (cfg):
-    cb = util.tools.calibrater ()
-    cb.open (filename=b(cfg.vis), compress=False, addcorr=False, addmodel=False)
+def gaincal(cfg):
+    cb = util.tools.calibrater()
+    cb.open(filename=b(cfg.vis), compress=False, addcorr=False, addmodel=False)
 
-    selkws = extractmsselect (cfg)
+    selkws = extractmsselect(cfg)
     selkws['chanmode'] = 'none' # ?
-    cb.selectvis (**b(selkws))
+    cb.selectvis(**b(selkws))
 
-    applyonthefly (cb, cfg)
+    applyonthefly(cb, cfg)
 
-    if cfg.smodel is not None and len (cfg.smodel):
-        cb.setptmodel (cfg.smodel)
+    if cfg.smodel is not None and len(cfg.smodel):
+        cb.setptmodel(cfg.smodel)
 
     # Solve
 
     solkws = {}
 
-    for k in 'append preavg minblperant minsnr solnorm'.split ():
-        solkws[k] = getattr (cfg, k)
+    for k in 'append preavg minblperant minsnr solnorm'.split():
+        solkws[k] = getattr(cfg, k)
 
-    for p in 'caltable:table calmode:apmode'.split ():
-        ck, sk = p.split (':')
-        solkws[sk] = getattr (cfg, ck)
+    for p in 'caltable:table calmode:apmode'.split():
+        ck, sk = p.split(':')
+        solkws[sk] = getattr(cfg, ck)
 
-    if isinstance (cfg.solint, (int, float)):
+    if isinstance(cfg.solint,(int, float)):
         solkws['t'] = '%fs' % cfg.solint # sugar
     else:
-        solkws['t'] = str (cfg.solint)
+        solkws['t'] = str(cfg.solint)
 
-    if isinstance (cfg.refant, six.string_types):
+    if isinstance(cfg.refant, six.string_types):
         solkws['refant'] = cfg.refant
     else:
-        solkws['refant'] = ','.join (cfg.refant)
+        solkws['refant'] = ','.join(cfg.refant)
 
-    solkws['combine'] = ','.join (cfg.combine)
+    solkws['combine'] = ','.join(cfg.combine)
     solkws['phaseonly'] = False
-    solkws['type'] = cfg.gaintype.upper ()
+    solkws['type'] = cfg.gaintype.upper()
 
     if solkws['type'] == 'GSPLINE':
-        cb.setsolvegainspline (**b(solkws))
+        cb.setsolvegainspline(**b(solkws))
     elif solkws['type'] == 'BPOLY':
-        cb.setsolvebandpoly (**b(solkws))
+        cb.setsolvebandpoly(**b(solkws))
     else:
-        cb.setsolve (**b(solkws))
+        cb.setsolve(**b(solkws))
 
-    cb.solve ()
-    cb.close ()
+    cb.solve()
+    cb.close()
 
 
-gaincal_cli = makekwcli (gaincal_doc, GaincalConfig, gaincal)
+gaincal_cli = makekwcli(gaincal_doc, GaincalConfig, gaincal)
 
 
 # gencal
@@ -1523,7 +1523,7 @@ vis=
   Input dataset
 
 caltable=
-  Output calibration table (appended to if preexisting)
+  Output calibration table(appended to if preexisting)
 
 caltype=
   The kind of table to generate:
@@ -1534,10 +1534,10 @@ caltype=
   antpos    - antenna position corrections in ITRF; what you want; accepts parameter(s)
   antposvla - antenna position corrections in VLA frame; **not what you want**; accepts parameter(s)
   tsys      - tsys from ALMA syscal table
-  swpow     - EVLA switched-power and requantizer gains ("experimental")
+  swpow     - EVLA switched-power and requantizer gains("experimental")
   opac      - tropospheric opacity; needs parameter
-  gc        - (E)VLA elevation-dependent gain curve
-  eff       - (E)VLA antenna efficiency correction
+  gc        -(E)VLA elevation-dependent gain curve
+  eff       -(E)VLA antenna efficiency correction
   gceff     - combination of "gc" and "eff"
   rq        - EVLA requantizer gains; not what you want
   swp/rq    - EVLA switched-power gains divided by "rq"; not what you want
@@ -1548,9 +1548,9 @@ parameter=
   ph        - phase; degrees
   sbd       - delay; nanosec
   mbd       - delay; nanosec
-  antpos    - position offsets; ITRF meters (or look up automatically for EVLA if unspecified)
+  antpos    - position offsets; ITRF meters(or look up automatically for EVLA if unspecified)
   antposvla - position offsets; meters in VLA reference frame
-  opac      - opacity; dimensionless (nepers?)
+  opac      - opacity; dimensionless(nepers?)
 
 antenna=
 pol=
@@ -1560,10 +1560,10 @@ spw=
 """ + loglevel_doc
 
 
-class GencalConfig (ParseKeywords):
-    vis = Custom (str, required=True)
-    caltable = Custom (str, required=True)
-    caltype = Custom (str, required=True)
+class GencalConfig(ParseKeywords):
+    vis = Custom(str, required=True)
+    caltable = Custom(str, required=True)
+    caltype = Custom(str, required=True)
     parameter = [float]
 
     antenna = str
@@ -1573,9 +1573,9 @@ class GencalConfig (ParseKeywords):
     loglevel = 'warn'
 
 
-def gencal (cfg):
-    cb = util.tools.calibrater ()
-    cb.open (filename=b(cfg.vis), compress=False, addcorr=False, addmodel=False)
+def gencal(cfg):
+    cb = util.tools.calibrater()
+    cb.open(filename=b(cfg.vis), compress=False, addcorr=False, addmodel=False)
 
     antenna = cfg.antenna or ''
     parameter = cfg.parameter
@@ -1586,23 +1586,23 @@ def gencal (cfg):
         import cPickle as pickle
         from .scripting import CasapyScript
 
-        script = os.path.join (os.path.dirname (__file__), 'cscript_genantpos.py')
+        script = os.path.join(os.path.dirname(__file__), 'cscript_genantpos.py')
 
-        with CasapyScript (script, vis=cfg.vis) as cs:
+        with CasapyScript(script, vis=cfg.vis) as cs:
             try:
-                with open (os.path.join (cs.workdir, 'info.pkl'), 'rb') as f:
-                    antenna = pickle.load (f)
-                    parameter = pickle.load (f)
+                with open(os.path.join(cs.workdir, 'info.pkl'), 'rb') as f:
+                    antenna = pickle.load(f)
+                    parameter = pickle.load(f)
             except Exception:
-                reraise_context ('interal casapy script seemingly failed; no info.pkl')
+                reraise_context('interal casapy script seemingly failed; no info.pkl')
 
-    cb.specifycal (caltable=b(cfg.caltable), time=b'', spw=b(cfg.spw or ''),
+    cb.specifycal(caltable=b(cfg.caltable), time=b'', spw=b(cfg.spw or ''),
                    antenna=b(antenna), pol=b(cfg.pol or ''), caltype=b(cfg.caltype),
                    parameter=b(parameter))
-    cb.close ()
+    cb.close()
 
 
-gencal_cli = makekwcli (gencal_doc, GencalConfig, gencal)
+gencal_cli = makekwcli(gencal_doc, GencalConfig, gencal)
 
 
 # getopacities
@@ -1623,42 +1623,42 @@ VLA wideband setup, in which the data come in 16 spectral windows,
 will print 2 values, averaged over 8 spectral windows each.
 """
 
-def getopacities (ms, plotdest):
+def getopacities(ms, plotdest):
     import cPickle as pickle
     from .scripting import CasapyScript
 
-    script = os.path.join (os.path.dirname (__file__), 'cscript_getopacities.py')
+    script = os.path.join(os.path.dirname(__file__), 'cscript_getopacities.py')
 
-    with CasapyScript (script, ms=ms, plotdest=plotdest) as cs:
+    with CasapyScript(script, ms=ms, plotdest=plotdest) as cs:
         try:
-            with open (os.path.join (cs.workdir, 'opac.npy'), 'rb') as f:
-                opac = pickle.load (f)
+            with open(os.path.join(cs.workdir, 'opac.npy'), 'rb') as f:
+                opac = pickle.load(f)
         except Exception:
-            reraise_context ('interal casapy script seemingly failed; no opac.npy')
+            reraise_context('interal casapy script seemingly failed; no opac.npy')
 
     return opac
 
 
-def getopacities_cli (argv):
-    check_usage (getopacities_doc, argv, usageifnoargs=True)
+def getopacities_cli(argv):
+    check_usage(getopacities_doc, argv, usageifnoargs=True)
 
-    if len (argv) not in (3, 4):
-        wrong_usage (getopacities_doc, 'expected 2 or 3 arguments')
+    if len(argv) not in(3, 4):
+        wrong_usage(getopacities_doc, 'expected 2 or 3 arguments')
 
-    opac = getopacities (argv[1], argv[2])
+    opac = getopacities(argv[1], argv[2])
 
-    if len (argv) > 3:
-        spwwidths = [int (x) for x in argv[3].split (',')]
+    if len(argv) > 3:
+        spwwidths = [int(x) for x in argv[3].split(',')]
         averaged = []
         idx = 0
 
         for width in spwwidths:
-            averaged.append (opac[idx:idx+width].mean ())
+            averaged.append(opac[idx:idx+width].mean())
             idx += width
 
         opac = averaged
 
-    print ('opacity = [%s]' % (', '.join ('%.5f' % q for q in opac)))
+    print('opacity = [%s]' % (', '.join('%.5f' % q for q in opac)))
 
 
 # gpdetrend
@@ -1668,7 +1668,7 @@ gpdetrend_doc = \
 casatask gpdetrend caltable=
 
 Remove long-term phase trends from a complex-gain calibration table. For each
-antenna/spw/pol, the complex gains are divided into separate chunks (e.g., the
+antenna/spw/pol, the complex gains are divided into separate chunks(e.g., the
 intention is for one chunk for each visit to the complex-gain calibrator). The
 mean phase within each chunk is divided out. The effect is to remove long-term
 phase trends from the calibration table, but preserve short-term ones.
@@ -1683,24 +1683,24 @@ maxtimegap=int
 """ + loglevel_doc
 
 
-class GpdetrendConfig (ParseKeywords):
-    caltable = Custom (str, required=True)
+class GpdetrendConfig(ParseKeywords):
+    caltable = Custom(str, required=True)
     maxtimegap = int
     loglevel = 'warn'
 
 
-def gpdetrend (cfg):
+def gpdetrend(cfg):
     from ... import numutil
 
-    tb = util.tools.table ()
+    tb = util.tools.table()
 
-    tb.open (binary_type (cfg.caltable), nomodify=False)
-    #fields = tb.getcol (b'FIELD_ID')
-    spws = tb.getcol (b'SPECTRAL_WINDOW_ID')
-    ants = tb.getcol (b'ANTENNA1')
-    vals = tb.getcol (b'CPARAM')
-    flags = tb.getcol (b'FLAG')
-    times = tb.getcol (b'TIME')
+    tb.open(binary_type(cfg.caltable), nomodify=False)
+    #fields = tb.getcol(b'FIELD_ID')
+    spws = tb.getcol(b'SPECTRAL_WINDOW_ID')
+    ants = tb.getcol(b'ANTENNA1')
+    vals = tb.getcol(b'CPARAM')
+    flags = tb.getcol(b'FLAG')
+    times = tb.getcol(b'TIME')
 
     npol, unused, nsoln = vals.shape
     assert unused == 1, 'unexpected gain table structure!'
@@ -1709,58 +1709,58 @@ def gpdetrend (cfg):
 
     # see what we've got
 
-    def seen_values (data):
-        return [idx for idx, count in enumerate (np.bincount (data)) if count]
+    def seen_values(data):
+        return [idx for idx, count in enumerate(np.bincount(data)) if count]
 
-    any_ok = ~(np.all (flags, axis=0)) # mask for solns where at least one pol is unflagged
-    #seenfields = seen_values (fields[any_ok])
-    seenspws = seen_values (spws[any_ok])
-    seenants = seen_values (ants[any_ok])
+    any_ok = ~(np.all(flags, axis=0)) # mask for solns where at least one pol is unflagged
+    #seenfields = seen_values(fields[any_ok])
+    seenspws = seen_values(spws[any_ok])
+    seenants = seen_values(ants[any_ok])
 
     # time gap?
 
     if cfg.maxtimegap is not None:
         maxtimegap = cfg.maxtimegap * 60 # min => seconds
     else:
-        stimes = np.sort (times)
-        dt = np.diff (stimes)
+        stimes = np.sort(times)
+        dt = np.diff(stimes)
         dt = dt[dt > 0]
-        maxtimegap = 4 * dt.min ()
+        maxtimegap = 4 * dt.min()
 
     # Remove average phase of each chunk
 
     for iant in seenants:
-        for ipol in range (npol):
+        for ipol in range(npol):
             filter = (ants == iant) & ~flags[ipol]
 
             for ispw in seenspws:
                 # XXX: do something by field?
-                sfilter = filter & (spws == ispw)
+                sfilter = filter &(spws == ispw)
                 t = times[sfilter]
                 if not t.size:
                     continue
 
-                for s in numutil.slice_around_gaps (t, maxtimegap):
-                    w = np.where (sfilter)[0][s]
-                    meanph = np.angle (vals[ipol,w].mean ())
-                    vals[ipol,w] *= np.exp (-1j * meanph)
+                for s in numutil.slice_around_gaps(t, maxtimegap):
+                    w = np.where(sfilter)[0][s]
+                    meanph = np.angle(vals[ipol,w].mean())
+                    vals[ipol,w] *= np.exp(-1j * meanph)
 
     # Rewrite and we're done.
 
-    tb.putcol (b'CPARAM', vals.reshape ((npol, 1, nsoln)))
-    tb.close ()
+    tb.putcol(b'CPARAM', vals.reshape((npol, 1, nsoln)))
+    tb.close()
 
 
-gpdetrend_cli = makekwcli (gpdetrend_doc, GpdetrendConfig, gpdetrend)
+gpdetrend_cli = makekwcli(gpdetrend_doc, GpdetrendConfig, gpdetrend)
 
 
 # gpdiagnostics
 #
 # Shim for a separate module
 
-def gpdiagnostics_cli (argv):
+def gpdiagnostics_cli(argv):
     from .gpdiagnostics import gpdiagnostics_cli
-    gpdiagnostics_cli (argv)
+    gpdiagnostics_cli(argv)
 
 
 # gpplot
@@ -1788,7 +1788,7 @@ dest=PATH
 
 dims=WIDTH,HEIGHT
   If saving to a file, the dimensions of a each page. These are in points
-  for vector formats (PDF, PS) and pixels for bitmaps (PNG). Defaults to
+  for vector formats(PDF, PS) and pixels for bitmaps(PNG). Defaults to
   1000, 600.
 
 margins=TOP,RIGHT,LEFT,BOTTOM
@@ -1808,8 +1808,8 @@ phaseonly=false
 """ + loglevel_doc
 
 
-class GpplotConfig (ParseKeywords):
-    caltable = Custom (str, required=True)
+class GpplotConfig(ParseKeywords):
+    caltable = Custom(str, required=True)
     dest = str
     dims = [1000, 600]
     margins = [4, 4, 4, 4]
@@ -1819,39 +1819,39 @@ class GpplotConfig (ParseKeywords):
     loglevel = 'warn'
 
 
-def gpplot (cfg):
+def gpplot(cfg):
     import omega as om, omega.render
     from ... import numutil
 
-    if len (cfg.mjdrange) not in (0, 2):
-        raise Exception ('"mjdrange" parameter must provide exactly 0 or 2 numbers')
+    if len(cfg.mjdrange) not in(0, 2):
+        raise Exception('"mjdrange" parameter must provide exactly 0 or 2 numbers')
 
-    if isinstance (cfg.dest, omega.render.Pager):
+    if isinstance(cfg.dest, omega.render.Pager):
         # This is for non-CLI invocation.
         pager = cfg.dest
     elif cfg.dest is None:
         import omega.gtk3
-        pager = om.makeDisplayPager ()
+        pager = om.makeDisplayPager()
     else:
-        pager = om.makePager (cfg.dest,
+        pager = om.makePager(cfg.dest,
                               dims=cfg.dims,
                               margins=cfg.margins,
-                              style=om.styles.ColorOnWhiteVector ())
+                              style=om.styles.ColorOnWhiteVector())
 
-    tb = util.tools.table ()
+    tb = util.tools.table()
 
-    tb.open (binary_type (cfg.caltable), nomodify=True)
-    fields = tb.getcol (b'FIELD_ID')
-    spws = tb.getcol (b'SPECTRAL_WINDOW_ID')
-    ants = tb.getcol (b'ANTENNA1')
-    vals = tb.getcol (b'CPARAM')
-    flags = tb.getcol (b'FLAG')
-    times = tb.getcol (b'TIME')
-    tb.close ()
+    tb.open(binary_type(cfg.caltable), nomodify=True)
+    fields = tb.getcol(b'FIELD_ID')
+    spws = tb.getcol(b'SPECTRAL_WINDOW_ID')
+    ants = tb.getcol(b'ANTENNA1')
+    vals = tb.getcol(b'CPARAM')
+    flags = tb.getcol(b'FLAG')
+    times = tb.getcol(b'TIME')
+    tb.close()
 
-    tb.open (binary_type (os.path.join (cfg.caltable, 'ANTENNA')), nomodify=True)
-    names = tb.getcol (b'NAME')
-    tb.close ()
+    tb.open(binary_type(os.path.join(cfg.caltable, 'ANTENNA')), nomodify=True)
+    names = tb.getcol(b'NAME')
+    tb.close()
 
     npol, unused, nsoln = vals.shape
     assert unused == 1, 'unexpected gain table structure!'
@@ -1862,46 +1862,46 @@ def gpplot (cfg):
 
     times /= 86400. # convert to MJD
 
-    if len (cfg.mjdrange):
-        flags |= (times < cfg.mjdrange[0]) | (times > cfg.mjdrange[1])
+    if len(cfg.mjdrange):
+        flags |= (times < cfg.mjdrange[0]) |(times > cfg.mjdrange[1])
 
     # see what we've got
 
-    def seen_values (data):
-        return [idx for idx, count in enumerate (np.bincount (data)) if count]
+    def seen_values(data):
+        return [idx for idx, count in enumerate(np.bincount(data)) if count]
 
-    any_ok = ~(np.all (flags, axis=0)) # mask for solns where at least one pol is unflagged
-    seenfields = seen_values (fields[any_ok])
-    seenspws = seen_values (spws[any_ok])
-    seenants = seen_values (ants[any_ok])
+    any_ok = ~(np.all(flags, axis=0)) # mask for solns where at least one pol is unflagged
+    seenfields = seen_values(fields[any_ok])
+    seenspws = seen_values(spws[any_ok])
+    seenants = seen_values(ants[any_ok])
 
-    field_offsets = dict ((fieldid, idx) for idx, fieldid in enumerate (seenfields))
-    spw_offsets = dict ((spwid, idx) for idx, spwid in enumerate (seenspws))
-    ant_offsets = dict ((antid, idx) for idx, antid in enumerate (seenants))
+    field_offsets = dict((fieldid, idx) for idx, fieldid in enumerate(seenfields))
+    spw_offsets = dict((spwid, idx) for idx, spwid in enumerate(seenspws))
+    ant_offsets = dict((antid, idx) for idx, antid in enumerate(seenants))
 
     # normalize phases to avoid distracting wraps
 
-    mean_amps = np.ones ((len (seenants), npol, len (seenspws)))
+    mean_amps = np.ones((len(seenants), npol, len(seenspws)))
 
     for iant in seenants:
-        for ipol in range (npol):
+        for ipol in range(npol):
             filter = (ants == iant) & ~flags[ipol]
 
             for ispw in seenspws:
-                sfilter = filter & (spws == ispw)
-                if not sfilter.any ():
+                sfilter = filter &(spws == ispw)
+                if not sfilter.any():
                     continue
 
-                meanph = np.angle (vals[ipol,sfilter].mean ())
-                vals[ipol,sfilter] *= np.exp (-1j * meanph)
-                meanam = np.abs (vals[ipol,sfilter]).mean ()
+                meanph = np.angle(vals[ipol,sfilter].mean())
+                vals[ipol,sfilter] *= np.exp(-1j * meanph)
+                meanam = np.abs(vals[ipol,sfilter]).mean()
                 mean_amps[ant_offsets[iant],ipol,spw_offsets[ispw]] = meanam
 
     # find plot limits
 
-    min_time = times[any_ok].min ()
-    max_time = times[any_ok].max ()
-    mjdref = int (np.floor (min_time))
+    min_time = times[any_ok].min()
+    max_time = times[any_ok].max()
+    mjdref = int(np.floor(min_time))
     times -= mjdref # convert to delta-MJD
     min_time = (min_time - mjdref)
     max_time = (max_time - mjdref)
@@ -1914,9 +1914,9 @@ def gpplot (cfg):
     max_time += 0.05 * span
     min_time -= 0.05 * span
 
-    okvals = vals[np.where (~flags)]
-    max_am = np.abs (okvals).max ()
-    min_am = np.abs (okvals).min ()
+    okvals = vals[np.where(~flags)]
+    max_am = np.abs(okvals).max()
+    min_am = np.abs(okvals).min()
     span = max_am - min_am
     if span <= 0:
         if max_am == 0:
@@ -1926,8 +1926,8 @@ def gpplot (cfg):
     max_am += 0.05 * span
     min_am -= 0.05 * span
 
-    max_ph = np.angle (okvals, deg=True).max ()
-    min_ph = np.angle (okvals, deg=True).min ()
+    max_ph = np.angle(okvals, deg=True).max()
+    min_ph = np.angle(okvals, deg=True).min()
     span = max_ph - min_ph
     if span <= 0:
         if max_ph == 0:
@@ -1945,25 +1945,25 @@ def gpplot (cfg):
     maxtimegap = cfg.maxtimegap / 1440 # => units of days
 
     for iant in seenants:
-        for ipol in range (npol):
+        for ipol in range(npol):
             filter = (ants == iant) & ~flags[ipol]
-            p_am = om.RectPlot ()
-            p_ph = om.RectPlot ()
+            p_am = om.RectPlot()
+            p_ph = om.RectPlot()
             anyseen = False
 
             for ispw in seenspws:
                 # XXX: do something by field
-                sfilter = filter & (spws == ispw)
+                sfilter = filter &(spws == ispw)
                 t = times[sfilter]
                 if not t.size:
                     continue
 
                 v = vals[ipol,sfilter]
-                a = np.abs (v)
-                p = np.angle (v, deg=True)
+                a = np.abs(v)
+                p = np.angle(v, deg=True)
                 kt = '%s %s spw#%d' % (names[iant], polnames[ipol], ispw)
 
-                for s in numutil.slice_around_gaps (t, maxtimegap):
+                for s in numutil.slice_around_gaps(t, maxtimegap):
                     tsub, asub, psub = t[s], a[s], p[s]
                     if tsub.size == 0:
                         continue # Should never happen, but eh.
@@ -1971,45 +1971,45 @@ def gpplot (cfg):
                         lines = (tsub.size > 1)
 
                     if cfg.phaseonly:
-                        p_ph.addXY (tsub, psub, kt, lines=lines, dsn=spw_offsets[ispw])
+                        p_ph.addXY(tsub, psub, kt, lines=lines, dsn=spw_offsets[ispw])
                     else:
-                        p_am.addXY (tsub, asub, kt, lines=lines, dsn=spw_offsets[ispw])
-                        p_ph.addXY (tsub, psub, None, lines=lines, dsn=spw_offsets[ispw])
+                        p_am.addXY(tsub, asub, kt, lines=lines, dsn=spw_offsets[ispw])
+                        p_ph.addXY(tsub, psub, None, lines=lines, dsn=spw_offsets[ispw])
                     anyseen = True
 
                     if kt is not None: # hack for per-spw "anyseen"-type checking
-                        p_am.addHLine (mean_amps[ant_offsets[iant],ipol,spw_offsets[ispw]], None,
+                        p_am.addHLine(mean_amps[ant_offsets[iant],ipol,spw_offsets[ispw]], None,
                                        zheight=-1, lineStyle={'color': 'faint'})
                     kt = None
 
             if not anyseen:
                 continue
 
-            p_ph.addHLine (0, None, zheight=-1, lineStyle={'color': 'faint'})
+            p_ph.addHLine(0, None, zheight=-1, lineStyle={'color': 'faint'})
 
-            p_am.setBounds (xmin=min_time,
+            p_am.setBounds(xmin=min_time,
                             xmax=max_time,
                             ymin=min_am,
                             ymax=max_am)
-            p_ph.setBounds (xmin=min_time,
+            p_ph.setBounds(xmin=min_time,
                             xmax=max_time,
                             ymin=min_ph,
                             ymax=max_ph)
 
             p_am.bpainter.paintLabels = False
-            p_am.setYLabel ('Amplitude')
-            p_ph.setLabels ('Time (MJD - %d)' % mjdref, 'De-meaned Phase (deg)')
+            p_am.setYLabel('Amplitude')
+            p_ph.setLabels('Time(MJD - %d)' % mjdref, 'De-meaned Phase(deg)')
 
             if cfg.phaseonly:
-                pager.send (p_ph)
+                pager.send(p_ph)
             else:
-                vb = om.layout.VBox (2)
+                vb = om.layout.VBox(2)
                 vb[0] = p_am
                 vb[1] = p_ph
-                vb.setWeight (0, 2.5)
-                pager.send (vb)
+                vb.setWeight(0, 2.5)
+                pager.send(vb)
 
-gpplot_cli = makekwcli (gpplot_doc, GpplotConfig, gpplot)
+gpplot_cli = makekwcli(gpplot_doc, GpplotConfig, gpplot)
 
 
 # image2fits
@@ -2024,25 +2024,25 @@ casatask image2fits <input MS image> <output FITS image>
 Convert an image in MS format to FITS format.
 """
 
-def image2fits (mspath, fitspath, velocity=False, optical=False, bitpix=-32,
+def image2fits(mspath, fitspath, velocity=False, optical=False, bitpix=-32,
                 minpix=0, maxpix=-1, overwrite=False, dropstokes=False, stokeslast=True,
                 history=True, **kwargs):
-    ia = util.tools.image ()
-    ia.open (b(mspath))
-    ia.tofits (outfile=b(fitspath), velocity=velocity, optical=optical, bitpix=bitpix,
+    ia = util.tools.image()
+    ia.open(b(mspath))
+    ia.tofits(outfile=b(fitspath), velocity=velocity, optical=optical, bitpix=bitpix,
                minpix=minpix, maxpix=maxpix, overwrite=overwrite, dropstokes=dropstokes,
                stokeslast=stokeslast, history=history, **kwargs)
-    ia.close ()
+    ia.close()
 
 
-def image2fits_cli (argv):
-    check_usage (image2fits_doc, argv, usageifnoargs=True)
-    util.logger ()
+def image2fits_cli(argv):
+    check_usage(image2fits_doc, argv, usageifnoargs=True)
+    util.logger()
 
-    if len (argv) != 3:
-        wrong_usage (image2fits_doc, 'expected exactly 2 arguments')
+    if len(argv) != 3:
+        wrong_usage(image2fits_doc, 'expected exactly 2 arguments')
 
-    image2fits (argv[1], argv[2])
+    image2fits(argv[1], argv[2])
 
 
 # importalma
@@ -2059,21 +2059,21 @@ Convert an ALMA low-level ASDM dataset to Measurement Set format. This
 implementation automatically infers the value of the "tbuff" parameter.
 """
 
-def importalma (asdm, ms):
+def importalma(asdm, ms):
     from .scripting import CasapyScript
 
-    script = os.path.join (os.path.dirname (__file__), 'cscript_importalma.py')
-    with CasapyScript (script, asdm=asdm, ms=ms) as cs:
+    script = os.path.join(os.path.dirname(__file__), 'cscript_importalma.py')
+    with CasapyScript(script, asdm=asdm, ms=ms) as cs:
         pass
 
 
-def importalma_cli (argv):
-    check_usage (importalma_doc, argv, usageifnoargs=True)
+def importalma_cli(argv):
+    check_usage(importalma_doc, argv, usageifnoargs=True)
 
-    if len (argv) != 3:
-        wrong_usage (importalma_doc, 'expected exactly 2 arguments')
+    if len(argv) != 3:
+        wrong_usage(importalma_doc, 'expected exactly 2 arguments')
 
-    importalma (argv[1], argv[2])
+    importalma(argv[1], argv[2])
 
 
 # importevla
@@ -2090,54 +2090,54 @@ Convert an EVLA low-level ASDM dataset to Measurement Set format. This
 implementation automatically infers the value of the "tbuff" parameter.
 """
 
-def importevla (asdm, ms):
+def importevla(asdm, ms):
     from .scripting import CasapyScript
 
     # Here's the best way I can figure to find the recommended value of tbuff
-    # (= 1.5 * integration time). Obviously you might have different
+    #(= 1.5 * integration time). Obviously you might have different
     # integration times in the dataset and such, and we're just going to
     # ignore that possibility.
 
-    bdfstem = os.listdir (os.path.join (asdm, 'ASDMBinary'))[0]
-    bdf = os.path.join (asdm, 'ASDMBinary', bdfstem)
+    bdfstem = os.listdir(os.path.join(asdm, 'ASDMBinary'))[0]
+    bdf = os.path.join(asdm, 'ASDMBinary', bdfstem)
     tbuff = None
 
-    with open (bdf) as f:
-        for linenum, line in enumerate (f):
+    with open(bdf) as f:
+        for linenum, line in enumerate(f):
             if linenum > 60:
-                raise PKError ('cannot find integration time info in %s', bdf)
+                raise PKError('cannot find integration time info in %s', bdf)
 
-            if not line.startswith ('<sdmDataSubsetHeader'):
+            if not line.startswith('<sdmDataSubsetHeader'):
                 continue
 
             try:
-                i1 = line.index ('<interval>') + len ('<interval>')
-                i2 = line.index ('</interval>')
+                i1 = line.index('<interval>') + len('<interval>')
+                i2 = line.index('</interval>')
                 if i2 <= i1:
-                    raise ValueError ()
+                    raise ValueError()
             except ValueError:
-                raise PKError ('cannot parse integration time info in %s', bdf)
+                raise PKError('cannot parse integration time info in %s', bdf)
 
-            tbuff = float (line[i1:i2]) * 1.5e-9 # nanosecs, and want 1.5x
+            tbuff = float(line[i1:i2]) * 1.5e-9 # nanosecs, and want 1.5x
             break
 
     if tbuff is None:
-        raise PKError ('found no integration time info')
+        raise PKError('found no integration time info')
 
-    print ('importevla: %s -> %s with tbuff=%.2f' % (asdm, ms, tbuff))
+    print('importevla: %s -> %s with tbuff=%.2f' % (asdm, ms, tbuff))
 
-    script = os.path.join (os.path.dirname (__file__), 'cscript_importevla.py')
-    with CasapyScript (script, asdm=asdm, ms=ms, tbuff=tbuff) as cs:
+    script = os.path.join(os.path.dirname(__file__), 'cscript_importevla.py')
+    with CasapyScript(script, asdm=asdm, ms=ms, tbuff=tbuff) as cs:
         pass
 
 
-def importevla_cli (argv):
-    check_usage (importevla_doc, argv, usageifnoargs=True)
+def importevla_cli(argv):
+    check_usage(importevla_doc, argv, usageifnoargs=True)
 
-    if len (argv) != 3:
-        wrong_usage (importevla_doc, 'expected exactly 2 arguments')
+    if len(argv) != 3:
+        wrong_usage(importevla_doc, 'expected exactly 2 arguments')
 
-    importevla (argv[1], argv[2])
+    importevla(argv[1], argv[2])
 
 
 # listobs
@@ -2152,57 +2152,57 @@ Generate a standard "listobs" listing of visibility MS contents. If
 standard output is a TTY, the listing will be paged.
 """
 
-def listobs (vis):
+def listobs(vis):
     """Generates a set of lines of output. Errors are only detected by looking
     at the output."""
 
-    def inner_list (sink):
+    def inner_list(sink):
         try:
-            ms = util.tools.ms ()
-            ms.open (vis)
-            ms.summary (verbose=True)
-            ms.close ()
+            ms = util.tools.ms()
+            ms.open(vis)
+            ms.summary(verbose=True)
+            ms.close()
         except Exception as e:
-            sink.post (b'listobs failed: %s' % e, priority=b'SEVERE')
+            sink.post(b'listobs failed: %s' % e, priority=b'SEVERE')
 
-    for line in util.forkandlog (inner_list):
-        info = line.rstrip ().split ('\t', 3) # date, priority, origin, message
-        if len (info) > 3:
+    for line in util.forkandlog(inner_list):
+        info = line.rstrip().split('\t', 3) # date, priority, origin, message
+        if len(info) > 3:
             yield info[3]
         else:
             yield ''
 
 
-def listobs_cli (argv):
-    check_usage (listobs_doc, argv, usageifnoargs=True)
+def listobs_cli(argv):
+    check_usage(listobs_doc, argv, usageifnoargs=True)
 
-    if len (argv) != 2:
-        wrong_usage (listobs_doc, 'expect exactly one argument, the MS path')
+    if len(argv) != 2:
+        wrong_usage(listobs_doc, 'expect exactly one argument, the MS path')
 
     vis = argv[1]
 
     proc = None
     out = sys.stdout
 
-    if sys.stdout.isatty () or \
-           (hasattr (sys.stdout, 'stream') and sys.stdout.stream.isatty ()):
+    if sys.stdout.isatty() or \
+          (hasattr(sys.stdout, 'stream') and sys.stdout.stream.isatty()):
         # Send our output to a pager!
         import subprocess
-        pager = os.environ.get ('PAGER') or 'less -SRFX'
+        pager = os.environ.get('PAGER') or 'less -SRFX'
         try:
-            proc = subprocess.Popen (pager, stdin=subprocess.PIPE, close_fds=True,
+            proc = subprocess.Popen(pager, stdin=subprocess.PIPE, close_fds=True,
                                      shell=True)
         except Exception as e:
-            warn ('couldn\'t start pager %r: %s', pager, e)
+            warn('couldn\'t start pager %r: %s', pager, e)
         else:
             out = proc.stdin
 
-    for line in listobs (vis):
-        print (line, file=out)
+    for line in listobs(vis):
+        print(line, file=out)
 
     if proc is not None:
-        proc.stdin.close ()
-        proc.wait () # ignore return code
+        proc.stdin.close()
+        proc.wait() # ignore return code
 
 
 # listsdm
@@ -2213,7 +2213,7 @@ listsdm_doc = \
 """
 casatask listsdm <MS>
 
-Generate a standard "listsdm" listing of (A)SDM dataset contents. If standard
+Generate a standard "listsdm" listing of(A)SDM dataset contents. If standard
 output is a TTY, the listing will be paged.
 
 The CASA "listsdm" functionality is implemented in pure Python, so unlike the
@@ -2221,7 +2221,7 @@ The CASA "listsdm" functionality is implemented in pure Python, so unlike the
 
 """
 
-def listsdm (sdm, file=None):
+def listsdm(sdm, file=None):
     """This code based on CASA's `task_listsdm.py`, with this version info:
 
     # v1.0: 2010.12.07, M. Krauss
@@ -2233,15 +2233,15 @@ def listsdm (sdm, file=None):
     from xml.dom import minidom
     import string
 
-    def printf (fmt, *args):
-        if len (args):
+    def printf(fmt, *args):
+        if len(args):
             s = fmt % args
         else:
-            s = str (fmt)
-        print (s, file=file)
+            s = str(fmt)
+        print(s, file=file)
 
-    qa = util.tools.quanta ()
-    me = util.tools.measures ()
+    qa = util.tools.quanta()
+    me = util.tools.measures()
 
     list_scans = True
     list_antennas = False
@@ -2334,7 +2334,7 @@ def listsdm (sdm, file=None):
         fieldIdList.append(fieldid)
 
     # read ConfigDescription.xml to relate the configuration
-    # description to a (set) of data description IDs
+    # description to a(set) of data description IDs
     xmlconfig = minidom.parse(sdm+'/ConfigDescription.xml')
     rowlist = xmlconfig.getElementsByTagName('row')
     configDescList = []
@@ -2380,9 +2380,9 @@ def listsdm (sdm, file=None):
     # channels, reference frequency, baseband name, channel width.
     # Interesting that there seem to be multiple fields that give the
     # same information: chanFreqStart=reFreq,
-    # chanFreqStep=chanWidth=resolution.  Why? (Note: all units are Hz)
+    # chanFreqStep=chanWidth=resolution.  Why?(Note: all units are Hz)
     # Note: this is where the script breaks for ALMA data, since there
-    # are different tags in SpectraWindow.xml (for varying channel widths).
+    # are different tags in SpectraWindow.xml(for varying channel widths).
     xmlSpecWin = minidom.parse(sdm+'/SpectralWindow.xml')
     rowlist = xmlSpecWin.getElementsByTagName('row')
     spwIdList = []
@@ -2443,8 +2443,8 @@ def listsdm (sdm, file=None):
         fieldNameList.append(str(rowName[0].childNodes[0].nodeValue))
         fieldCodeList.append(str(rowCode[0].childNodes[0].nodeValue))
         coordInfo = rowCoords[0].childNodes[0].nodeValue.split()
-        RADeg = float(coordInfo[3])*(180.0/np.pi)
-        DecDeg = float(coordInfo[4])*(180.0/np.pi)
+        RADeg = float(coordInfo[3])* (180.0/np.pi)
+        DecDeg = float(coordInfo[4])* (180.0/np.pi)
         RAInp = {'unit': 'deg', 'value': RADeg}
         DecInp = {'unit': 'deg', 'value': DecDeg}
         RAHMS = b(qa.formxxx(b(RAInp), format=b'hms'))
@@ -2577,43 +2577,43 @@ def listsdm (sdm, file=None):
         scandict[scanNum]['baseband'] = bbandOrdList
 
     # report information to the logger
-    printf ('================================================================================')
-    printf ('   SDM File: %s', sdm)
-    printf ('================================================================================')
-    printf ('   Observer: %s', observerName)
-    printf ('   Facility: %s, %s-configuration', telescopeName, configName)
-    printf ('      Observed from %s to %s (UTC)', obsStart, obsEnd)
-    printf ('      Total integration time = %.2f seconds (%.2f hours)', intTime, intTime / 3600)
+    printf('================================================================================')
+    printf('   SDM File: %s', sdm)
+    printf('================================================================================')
+    printf('   Observer: %s', observerName)
+    printf('   Facility: %s, %s-configuration', telescopeName, configName)
+    printf('      Observed from %s to %s(UTC)', obsStart, obsEnd)
+    printf('      Total integration time = %.2f seconds(%.2f hours)', intTime, intTime / 3600)
 
     if list_scans:
-        printf (' ')
-        printf ('Scan listing:')
+        printf(' ')
+        printf('Scan listing:')
 
         maxspwlen = 0
 
-        for scaninfo in scandict.itervalues ():
+        for scaninfo in scandict.itervalues():
             SPWs = []
             for spw in scaninfo['spws']:
                 SPWs += spw
 
-            scaninfo['spwstr'] = str (list (set (SPWs)))
-            maxspwlen = max (maxspwlen, len (scaninfo['spwstr']))
+            scaninfo['spwstr'] = str(list(set(SPWs)))
+            maxspwlen = max(maxspwlen, len(scaninfo['spwstr']))
 
         fmt = '  %-25s  %-4s %-5s %-15s %-*s %s'
-        printf (fmt, 'Timerange (UTC)', 'Scan', 'FldID', 'FieldName', maxspwlen, 'SpwIDs', 'Intent(s)')
+        printf(fmt, 'Timerange(UTC)', 'Scan', 'FldID', 'FieldName', maxspwlen, 'SpwIDs', 'Intent(s)')
 
-        for i, (scanid, scaninfo) in enumerate (scandict.iteritems ()):
-            printf (fmt, startTimeShort[i] + ' - ' + endTimeShort[i], scanid,
+        for i,(scanid, scaninfo) in enumerate(scandict.iteritems()):
+            printf(fmt, startTimeShort[i] + ' - ' + endTimeShort[i], scanid,
                     scaninfo['field'], scaninfo['source'], maxspwlen,
                     scaninfo['spwstr'], scaninfo['intent'])
 
     if list_spws:
-        printf (' ')
-        printf ('Spectral window information:')
-        printf ('  SpwID  #Chans  Ch0(MHz)  ChWidth(kHz) TotBW(MHz)  Baseband')
+        printf(' ')
+        printf('Spectral window information:')
+        printf('  SpwID  #Chans  Ch0(MHz)  ChWidth(kHz) TotBW(MHz)  Baseband')
 
         for i in range(0, len(spwIdList)):
-            printf (' %s %s %s %s %s %s', string.split(spwIdList[i],
+            printf(' %s %s %s %s %s %s', string.split(spwIdList[i],
                                                        '_')[1].ljust(4), str(nChanList[i]).ljust(4),
                     str(refFreqList[i]/1e6).ljust(8),
                     str(np.array(chanWidthList[i])/1e3).ljust(8),
@@ -2621,22 +2621,22 @@ def listsdm (sdm, file=None):
                     basebandList[i].ljust(8))
 
     if list_fields:
-        printf (' ')
-        printf ('Field information:')
-        printf ('  FldID  Code   Name            RA            Dec             SrcID')
+        printf(' ')
+        printf('Field information:')
+        printf('  FldID  Code   Name            RA            Dec             SrcID')
 
         for i in range(0, len(fieldList)):
-            printf ('  %-6d %-6s %-15s %-13s %-15s %-5d', fieldList[i], fieldCodeList[i],
+            printf('  %-6d %-6s %-15s %-13s %-15s %-5d', fieldList[i], fieldCodeList[i],
                     fieldNameList[i], fieldRAList[i], fieldDecList[i],
                     fieldSrcIDList[i])
 
     if list_antennas:
-        printf (' ')
-        printf ('Antennas (%i):' % len(antList))
-        printf ('  ID    Name   Station   Diam.(m)  Lat.          Long.')
+        printf(' ')
+        printf('Antennas(%i):' % len(antList))
+        printf('  ID    Name   Station   Diam.(m)  Lat.          Long.')
 
         for i in range(0, len(antList)):
-            printf (' %s %s %s %s %s %s ', str(antList[i]).ljust(5),
+            printf(' %s %s %s %s %s %s ', str(antList[i]).ljust(5),
                     antNameList[i].ljust(6), assocStatList[i].ljust(5),
                     str(dishDiamList[i]).ljust(5), statLatList[i].ljust(12),
                     statLonList[i].ljust(12))
@@ -2645,35 +2645,35 @@ def listsdm (sdm, file=None):
     return scandict
 
 
-def listsdm_cli (argv):
-    check_usage (listsdm_doc, argv, usageifnoargs=True)
+def listsdm_cli(argv):
+    check_usage(listsdm_doc, argv, usageifnoargs=True)
 
-    if len (argv) != 2:
-        wrong_usage (listsdm_doc, 'expect exactly one argument, the SDM path')
+    if len(argv) != 2:
+        wrong_usage(listsdm_doc, 'expect exactly one argument, the SDM path')
 
     sdm = argv[1]
 
     proc = None
     out = sys.stdout
 
-    if sys.stdout.isatty () or \
-           (hasattr (sys.stdout, 'stream') and sys.stdout.stream.isatty ()):
+    if sys.stdout.isatty() or \
+          (hasattr(sys.stdout, 'stream') and sys.stdout.stream.isatty()):
         # Send our output to a pager!
         import subprocess
-        pager = os.environ.get ('PAGER') or 'less -SRFX'
+        pager = os.environ.get('PAGER') or 'less -SRFX'
         try:
-            proc = subprocess.Popen (pager, stdin=subprocess.PIPE, close_fds=True,
+            proc = subprocess.Popen(pager, stdin=subprocess.PIPE, close_fds=True,
                                      shell=True)
         except Exception as e:
-            warn ('couldn\'t start pager %r: %s', pager, e)
+            warn('couldn\'t start pager %r: %s', pager, e)
         else:
             out = proc.stdin
 
-    listsdm (sdm, file=out)
+    listsdm(sdm, file=out)
 
     if proc is not None:
-        proc.stdin.close ()
-        proc.wait () # ignore return code
+        proc.stdin.close()
+        proc.wait() # ignore return code
 
 
 # mfsclean
@@ -2688,7 +2688,7 @@ casatask mfsclean vis=[] [keywords]
 
 Drive the CASA imager with a very restricted set of options.
 
-For W-projection, set ftmachine='wproject' and wprojplanes=64 (or so).
+For W-projection, set ftmachine='wproject' and wprojplanes=64(or so).
 
 vis=
   Input visibility MS
@@ -2709,14 +2709,14 @@ phasecenter = (blank) or 'J2000 12h34m56.7 -12d34m56.7'
 reffreq = 0 [GHz]
 stokes = I
 threshold = 0 [mJy]
-weighting = 'briggs' (robust=0.5) or 'natural'
+weighting = 'briggs'(robust=0.5) or 'natural'
 wprojplanes = 1
 
-""" + stdsel_doc + loglevel_doc.replace ('warn;', 'info;')
+""" + stdsel_doc + loglevel_doc.replace('warn;', 'info;')
 
-class MfscleanConfig (ParseKeywords):
-    vis = Custom (str, required=True)
-    imbase = Custom (str, required=True)
+class MfscleanConfig(ParseKeywords):
+    vis = Custom(str, required=True)
+    imbase = Custom(str, required=True)
 
     cell = 1. # arcsec
     ftmachine = 'ft'
@@ -2766,15 +2766,15 @@ class MfscleanConfig (ParseKeywords):
     loglevel = 'info'
 
 
-specframenames = 'REST LSRK LSRD BARY GEO TOPO GALACTO LGROUP CMB'.split ()
+specframenames = 'REST LSRK LSRD BARY GEO TOPO GALACTO LGROUP CMB'.split()
 
 
-def mfsclean (cfg):
-    ms = util.tools.ms ()
-    im = util.tools.imager ()
-    tb = util.tools.table ()
-    qa = util.tools.quanta ()
-    ia = util.tools.image ()
+def mfsclean(cfg):
+    ms = util.tools.ms()
+    im = util.tools.imager()
+    tb = util.tools.table()
+    qa = util.tools.quanta()
+    ia = util.tools.image()
 
     # Filenames. TODO: make sure nothing exists
 
@@ -2793,37 +2793,37 @@ def mfsclean (cfg):
         # here.
         models, restoreds, resids, psfs = [], [], [], []
 
-        for i in range (cfg.nterms):
-            models.append (cfg.imbase + 'model.tt%d' % i)
-            restoreds.append (cfg.imbase + 'image.tt%d' % i)
-            resids.append (cfg.imbase + 'residual.tt%d' % i)
-            psfs.append (cfg.imbase + 'psf.tt%d' % i)
+        for i in range(cfg.nterms):
+            models.append(cfg.imbase + 'model.tt%d' % i)
+            restoreds.append(cfg.imbase + 'image.tt%d' % i)
+            resids.append(cfg.imbase + 'residual.tt%d' % i)
+            psfs.append(cfg.imbase + 'psf.tt%d' % i)
 
     # Get info on our selected data for various things we need to figure
     # out later.
 
-    selkws = extractmsselect (cfg, havearray=False, haveintent=False, taqltomsselect=False)
-    ms.open (b(cfg.vis))
-    ms.msselect (b(selkws))
-    rangeinfo = ms.range (b'data_desc_id field_id'.split ())
+    selkws = extractmsselect(cfg, havearray=False, haveintent=False, taqltomsselect=False)
+    ms.open(b(cfg.vis))
+    ms.msselect(b(selkws))
+    rangeinfo = ms.range(b'data_desc_id field_id'.split())
     ddids = rangeinfo['data_desc_id']
     fields = rangeinfo['field_id']
 
     # Get the spectral frame from the first spw of the selected data
 
-    tb.open (b(os.path.join (cfg.vis, 'DATA_DESCRIPTION')))
-    ddspws = tb.getcol (b'SPECTRAL_WINDOW_ID')
-    tb.close ()
+    tb.open(b(os.path.join(cfg.vis, 'DATA_DESCRIPTION')))
+    ddspws = tb.getcol(b'SPECTRAL_WINDOW_ID')
+    tb.close()
     spw0 = ddspws[ddids[0]]
 
-    tb.open (b(os.path.join (cfg.vis, 'SPECTRAL_WINDOW')))
-    specframe = specframenames[tb.getcell (b'MEAS_FREQ_REF', spw0)]
-    tb.close ()
+    tb.open(b(os.path.join(cfg.vis, 'SPECTRAL_WINDOW')))
+    specframe = specframenames[tb.getcell(b'MEAS_FREQ_REF', spw0)]
+    tb.close()
 
     # Choose phase center
 
     if cfg.phasecenter is None:
-        phasecenter = int (fields[0])
+        phasecenter = int(fields[0])
     else:
         phasecenter = cfg.phasecenter
 
@@ -2833,57 +2833,57 @@ def mfsclean (cfg):
             # Using hm/dm instead of ::/:: as separators makes it parse
             # correctly. No idea how the colons manage to parse both
             # without warning and totally wrongly.
-            warn ('you moron, who uses colons in sexagesimal?')
-            tmp1 = phasecenter.split ()
+            warn('you moron, who uses colons in sexagesimal?')
+            tmp1 = phasecenter.split()
             twiddled = False
-            if len (tmp1) == 3:
-                tmp2 = tmp1[1].split (':')
-                tmp3 = tmp1[2].split (':')
-                if len (tmp2) == 3 and len (tmp3) == 3:
+            if len(tmp1) == 3:
+                tmp2 = tmp1[1].split(':')
+                tmp3 = tmp1[2].split(':')
+                if len(tmp2) == 3 and len(tmp3) == 3:
                     tmp2 = tmp2[0] + 'h' + tmp2[1] + 'm' + tmp2[2]
                     tmp3 = tmp3[0] + 'd' + tmp3[1] + 'm' + tmp3[2]
-                    phasecenter = ' '.join ([tmp1[0], tmp2, tmp3])
+                    phasecenter = ' '.join([tmp1[0], tmp2, tmp3])
                     twiddled = True
             if twiddled:
-                warn ('attempted to fix it up: "%s"\n\n', phasecenter)
+                warn('attempted to fix it up: "%s"\n\n', phasecenter)
             else:
-                warn ('couldn\'t parse, left as-is; good luck\n\n')
+                warn('couldn\'t parse, left as-is; good luck\n\n')
 
     # Set up all of this junk
 
-    im.open (b(cfg.vis), usescratch=False)
-    im.selectvis (nchan=-1, start=0, step=1, usescratch=False, writeaccess=False, **b(selkws))
-    im.defineimage (nx=cfg.imsize[0], ny=cfg.imsize[1],
-                    cellx=qa.quantity (b(cfg.cell), b'arcsec'),
-                    celly=qa.quantity (b(cfg.cell), b'arcsec'),
+    im.open(b(cfg.vis), usescratch=False)
+    im.selectvis(nchan=-1, start=0, step=1, usescratch=False, writeaccess=False, **b(selkws))
+    im.defineimage(nx=cfg.imsize[0], ny=cfg.imsize[1],
+                    cellx=qa.quantity(b(cfg.cell), b'arcsec'),
+                    celly=qa.quantity(b(cfg.cell), b'arcsec'),
                     outframe=b(specframe), phasecenter=b(phasecenter),
                     stokes=cfg.stokes,
-                    spw=-1, # to verify: selectvis (spw=) good enough?
+                    spw=-1, # to verify: selectvis(spw=) good enough?
                     restfreq=b'', mode=b'mfs', veltype=b'radio',
                     nchan=-1, start=0, step=1, facets=1)
 
     if cfg.weighting == 'briggs':
-        im.weight (type=b'briggs', rmode=b'norm', robust=0.5, npixels=0) #noise=, mosaic=
+        im.weight(type=b'briggs', rmode=b'norm', robust=0.5, npixels=0) #noise=, mosaic=
     elif cfg.weighting == 'natural':
-        im.weight (type=b'natural', rmode=b'none')
+        im.weight(type=b'natural', rmode=b'none')
     else:
-        raise ValueError ('unknown weighting type "%s"' % cfg.weighting)
+        raise ValueError('unknown weighting type "%s"' % cfg.weighting)
 
-    # im.filter (...)
-    im.setscales (scalemethod=b'uservector', uservector=[0])
-    im.setsmallscalebias (0.6)
-    im.setmfcontrol ()
-    im.setvp (dovp=True)
-    im.makeimage (type=b'pb', image=b(pb), compleximage=b'', verbose=False)
-    im.setvp (dovp=False, verbose=False)
-    im.setoptions (ftmachine=b(cfg.ftmachine), wprojplanes=b(cfg.wprojplanes),
+    # im.filter(...)
+    im.setscales(scalemethod=b'uservector', uservector=[0])
+    im.setsmallscalebias(0.6)
+    im.setmfcontrol()
+    im.setvp(dovp=True)
+    im.makeimage(type=b'pb', image=b(pb), compleximage=b'', verbose=False)
+    im.setvp(dovp=False, verbose=False)
+    im.setoptions(ftmachine=b(cfg.ftmachine), wprojplanes=b(cfg.wprojplanes),
                    freqinterp=b'linear', padding=1.2, pastep=360.0, pblimit=b(cfg.minpb),
                    applypointingoffsets=False, dopbgriddingcorrections=True)
 
     if cfg.nterms > 1:
-        im.settaylorterms (ntaylorterms=cfg.nterms, reffreq=cfg.reffreq * 1e9)
+        im.settaylorterms(ntaylorterms=cfg.nterms, reffreq=cfg.reffreq * 1e9)
 
-    im.setmfcontrol (stoplargenegatives=-1, cyclefactor=1.5,
+    im.setmfcontrol(stoplargenegatives=-1, cyclefactor=1.5,
                      cyclespeedup=-1, minpb=cfg.minpb)
 
     # Create the mask
@@ -2892,37 +2892,37 @@ def mfsclean (cfg):
         maskstr = ''
     else:
         maskstr = mask
-        im.make (b(mask))
-        ia.open (b(mask))
-        maskcs = ia.coordsys ()
-        maskcs.setreferencecode (b(specframe), b'spectral', True)
-        ia.setcoordsys (maskcs.torecord ())
+        im.make(b(mask))
+        ia.open(b(mask))
+        maskcs = ia.coordsys()
+        maskcs.setreferencecode(b(specframe), b'spectral', True)
+        ia.setcoordsys(maskcs.torecord())
 
         if cfg.mask is not None:
-            rg = util.tools.regionmanager ()
-            regions = rg.fromtextfile (filename=b(cfg.mask),
-                                       shape=ia.shape (),
-                                       csys=maskcs.torecord ())
-            im.regiontoimagemask (mask=b(mask), region=regions)
+            rg = util.tools.regionmanager()
+            regions = rg.fromtextfile(filename=b(cfg.mask),
+                                       shape=ia.shape(),
+                                       csys=maskcs.torecord())
+            im.regiontoimagemask(mask=b(mask), region=regions)
 
-        ia.close ()
+        ia.close()
 
     # Create blank model(s). Diverging from task_clean even more
     # significantly than usual here.
 
     for model in models:
-        im.make (b(model))
+        im.make(b(model))
 
     # Go!
 
-    im.clean (algorithm=b'msmfs', niter=cfg.niter, gain=cfg.gain,
-              threshold=qa.quantity (b(cfg.threshold), b'mJy'),
+    im.clean(algorithm=b'msmfs', niter=cfg.niter, gain=cfg.gain,
+              threshold=qa.quantity(b(cfg.threshold), b'mJy'),
               model=b(models), residual=b(resids), image=b(restoreds),
               psfimage=b(psfs), mask=b(maskstr), interactive=False)
-    im.close ()
+    im.close()
 
 
-mfsclean_cli = makekwcli (mfsclean_doc, MfscleanConfig, mfsclean)
+mfsclean_cli = makekwcli(mfsclean_doc, MfscleanConfig, mfsclean)
 
 
 # mjd2date
@@ -2934,22 +2934,22 @@ casatask mjd2date <date>
 Convert an MJD to a date in the format used by CASA.
 
 """
-def mjd2date (mjd, precision=3):
+def mjd2date(mjd, precision=3):
     from astropy.time import Time
-    dt = Time (mjd, format='mjd', scale='utc').to_datetime ()
-    fracsec = ('%.*f' % (precision, 1e-6 * dt.microsecond)).split ('.')[1]
+    dt = Time(mjd, format='mjd', scale='utc').to_datetime()
+    fracsec = ('%.*f' % (precision, 1e-6 * dt.microsecond)).split('.')[1]
     return '%04d/%02d/%02d/%02d:%02d:%02d.%s' % (
         dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second, fracsec
     )
 
 
-def mjd2date_cli (argv):
-    check_usage (mjd2date_doc, argv, usageifnoargs=True)
+def mjd2date_cli(argv):
+    check_usage(mjd2date_doc, argv, usageifnoargs=True)
 
-    if len (argv) != 2:
-        wrong_usage (mjd2date_doc, 'expect exactly one argument')
+    if len(argv) != 2:
+        wrong_usage(mjd2date_doc, 'expect exactly one argument')
 
-    print (mjd2date (float (argv[1])))
+    print(mjd2date(float(argv[1])))
 
 
 # mstransform
@@ -2999,9 +2999,9 @@ timespan=<undefined>
 
 """ + stdsel_doc + loglevel_doc
 
-class MstransformConfig (ParseKeywords):
-    vis = Custom (str, required=True)
-    out = Custom (str, required=True)
+class MstransformConfig(ParseKeywords):
+    vis = Custom(str, required=True)
+    out = Custom(str, required=True)
 
     datacolumn = 'corrected'
     realmodelcol = False
@@ -3030,50 +3030,50 @@ class MstransformConfig (ParseKeywords):
     loglevel = 'warn'
 
 
-def mstransform (cfg):
-    mt = util.tools.mstransformer ()
-    qa = util.tools.quanta ()
+def mstransform(cfg):
+    mt = util.tools.mstransformer()
+    qa = util.tools.quanta()
 
-    mtconfig = extractmsselect (cfg, havearray=True, havecorr=True, taqltomsselect=False)
+    mtconfig = extractmsselect(cfg, havearray=True, havecorr=True, taqltomsselect=False)
     mtconfig['inputms'] = cfg.vis
     mtconfig['outputms'] = cfg.out
 
     if not cfg.keepflags:
-        if len (mtconfig.get ('taql', '')):
-            mtconfig['taql'] += 'AND NOT (FLAG_ROW OR ALL(FLAG))'
+        if len(mtconfig.get('taql', '')):
+            mtconfig['taql'] += 'AND NOT(FLAG_ROW OR ALL(FLAG))'
         else:
-            mtconfig['taql'] = 'NOT (FLAG_ROW OR ALL(FLAG))'
+            mtconfig['taql'] = 'NOT(FLAG_ROW OR ALL(FLAG))'
 
     mtconfig['datacolumn'] = cfg.datacolumn
 
-    if 'MODEL' in cfg.datacolumn.upper () or cfg.datacolumn.upper () == 'ALL':
+    if 'MODEL' in cfg.datacolumn.upper() or cfg.datacolumn.upper() == 'ALL':
         mtconfig['realmodelcol'] = cfg.realmodelcol
 
-    mtconfig['combinespws'] = bool (cfg.combinespws)
-    mtconfig['hanning'] = bool (cfg.hanning)
+    mtconfig['combinespws'] = bool(cfg.combinespws)
+    mtconfig['hanning'] = bool(cfg.hanning)
 
     if cfg.chanaverage:
-        raise NotImplementedError ('mstransform: chanaverage')
+        raise NotImplementedError('mstransform: chanaverage')
 
     if cfg.regridms:
-        raise NotImplementedError ('mstransform: regridms')
+        raise NotImplementedError('mstransform: regridms')
 
     if cfg.timebin is not None:
         mtconfig['timeaverage'] = True
-        mtconfig['timebin'] = str (cfg.timebin) + 's'
-        mtconfig['timespan'] = ','.join (cfg.timespan)
+        mtconfig['timebin'] = str(cfg.timebin) + 's'
+        mtconfig['timespan'] = ','.join(cfg.timespan)
         # not implemented: maxuvwdistance
 
-    mt.config (b(mtconfig))
-    mt.open ()
-    mt.run ()
-    mt.done ()
+    mt.config(b(mtconfig))
+    mt.open()
+    mt.run()
+    mt.done()
 
     # not implemented: updating FLAG_CMD table
     # not implemented: updating history
 
 
-mstransform_cli = makekwcli (mstransform_doc, MstransformConfig, mstransform)
+mstransform_cli = makekwcli(mstransform_doc, MstransformConfig, mstransform)
 
 
 # plotants
@@ -3085,22 +3085,22 @@ casatask plotants <MS> <figfile>
 Plot the physical layout of the antennas described in the MS.
 """
 
-def plotants (vis, figfile):
+def plotants(vis, figfile):
     from .scripting import CasapyScript
 
-    script = os.path.join (os.path.dirname (__file__), 'cscript_plotants.py')
+    script = os.path.join(os.path.dirname(__file__), 'cscript_plotants.py')
 
-    with CasapyScript (script, vis=vis, figfile=figfile) as cs:
+    with CasapyScript(script, vis=vis, figfile=figfile) as cs:
         pass
 
 
-def plotants_cli (argv):
-    check_usage (plotants_doc, argv, usageifnoargs=True)
+def plotants_cli(argv):
+    check_usage(plotants_doc, argv, usageifnoargs=True)
 
-    if len (argv) != 3:
-        wrong_usage (plotants_doc, 'expect exactly two arguments')
+    if len(argv) != 3:
+        wrong_usage(plotants_doc, 'expect exactly two arguments')
 
-    plotants (argv[1], argv[2])
+    plotants(argv[1], argv[2])
 
 
 # plotcal
@@ -3142,8 +3142,8 @@ figfile=
 """ + loglevel_doc
 
 
-class PlotcalConfig (ParseKeywords):
-    caltable = Custom (str, required=True)
+class PlotcalConfig(ParseKeywords):
+    caltable = Custom(str, required=True)
     xaxis = 'time'
     yaxis = 'amp'
     iteration = ''
@@ -3164,53 +3164,53 @@ class PlotcalConfig (ParseKeywords):
     timerange = ''
 
 
-def plotcal (cfg):
+def plotcal(cfg):
     # casa-tools plotting relies on invoking matplotlib in an internal Python
-    # interpreter (!), and it uses a very old version of matplotlib that's
+    # interpreter(!), and it uses a very old version of matplotlib that's
     # essentially incompatible with what's available in any up-to-date Python
-    # environment (e.g. Anaconda). Therefore we have to launch any plotcal
+    # environment(e.g. Anaconda). Therefore we have to launch any plotcal
     # operations as casapy scripts to ensure compatibility.
 
     from .scripting import CasapyScript
 
-    script = os.path.join (os.path.dirname (__file__), 'cscript_plotcal.py')
+    script = os.path.join(os.path.dirname(__file__), 'cscript_plotcal.py')
 
-    selectcals = b(dict (antenna = cfg.antenna,
+    selectcals = b(dict(antenna = cfg.antenna,
                          field = cfg.field,
-                         poln = cfg.poln.upper (),
+                         poln = cfg.poln.upper(),
                          spw = cfg.spw,
                          time = cfg.timerange))
 
-    plotoptions = b(dict (iteration = cfg.iteration,
+    plotoptions = b(dict(iteration = cfg.iteration,
                           plotrange = [0.0]*4,
                           plotsymbol = cfg.plotsymbol,
                           plotcolor = cfg.plotcolor,
                           markersize = cfg.markersize,
                           fontsize = cfg.fontsize))
 
-    with CasapyScript (script,
+    with CasapyScript(script,
                        caltable=b(cfg.caltable),
                        selectcals=selectcals,
                        plotoptions=plotoptions,
-                       xaxis=b(cfg.xaxis.upper ()),
-                       yaxis=b(cfg.yaxis.upper ()),
+                       xaxis=b(cfg.xaxis.upper()),
+                       yaxis=b(cfg.yaxis.upper()),
                        figfile=b(cfg.figfile)) as cs:
         pass
 
 
-def plotcal_cli (argv):
-    check_usage (plotcal_doc, argv, usageifnoargs=True)
-    cfg = PlotcalConfig ().parse (argv[1:])
-    plotcal (cfg)
+def plotcal_cli(argv):
+    check_usage(plotcal_doc, argv, usageifnoargs=True)
+    cfg = PlotcalConfig().parse(argv[1:])
+    plotcal(cfg)
 
 
 # polmodel
 #
 # Shim for a separate module
 
-def polmodel_cli (argv):
+def polmodel_cli(argv):
     from .polmodel import polmodel_cli
-    polmodel_cli (argv)
+    polmodel_cli(argv)
 
 
 # setjy
@@ -3225,8 +3225,8 @@ and scalebychan=True. You probably want to specify "field".
 fluxdensity=
   Up to four comma-separated numbers giving Stokes IQUV intensities in
   Jy. Default values are [-1, 0, 0, 0]. If the Stokes I intensity is
-  negative (i.e., the default), a "sensible default" will be used:
-  detailed spectral models if the source is known (see "standard"), or
+  negative(i.e., the default), a "sensible default" will be used:
+  detailed spectral models if the source is known(see "standard"), or
   1 otherwise. If it is zero and "modimage" is used, the flux density
   of the model image is used. The built-in standards do NOT have
   polarimetric information, so for pol cal you do need to manually
@@ -3235,7 +3235,7 @@ fluxdensity=
 
 modimage=
   An image to use as the basis for the source's spatial structure and,
-  potentialy, flux density (if fluxdensity=0). Only usable for Stokes
+  potentialy, flux density(if fluxdensity=0). Only usable for Stokes
   I.  If the verbatim value of "modimage" can't be opened as a path,
   it is assumed to be relative to the CASA data directory; a typical
   value might be "nrao/VLA/CalModels/3C286_C.im".
@@ -3262,8 +3262,8 @@ spw=
 timerange=
 """ + loglevel_doc
 
-class SetjyConfig (ParseKeywords):
-    vis = Custom (str, required=True)
+class SetjyConfig(ParseKeywords):
+    vis = Custom(str, required=True)
     modimage = str
     fluxdensity = [-1., 0., 0., 0.]
     spindex = 0.
@@ -3279,7 +3279,7 @@ class SetjyConfig (ParseKeywords):
     loglevel = 'warn'
 
 
-def setjy (cfg):
+def setjy(cfg):
     if cfg.standard == 'Butler-JPL-Horizons 2012':
         # The CASA C++ code has stuff that fakes you into thinking that the
         # solar system flux density cal implementation is all in C++, but
@@ -3287,8 +3287,8 @@ def setjy (cfg):
         # CASA distribution. It'd be a real pain to duplicate so we farm it
         # out to a CASA distribution.
         from .scripting import CasapyScript
-        script = os.path.join (os.path.dirname (__file__), 'cscript_setjy.py')
-        args = dict (
+        script = os.path.join(os.path.dirname(__file__), 'cscript_setjy.py')
+        args = dict(
             vis = cfg.vis,
             standard = cfg.standard,
             field = cfg.field,
@@ -3298,41 +3298,41 @@ def setjy (cfg):
             timerange = cfg.timerange,
             scalebychan = True, # see below
         )
-        print ('Farming out to CASA ...')
-        with CasapyScript (script, **b(args)) as cs:
-            with open (os.path.join (cs.workdir, 'casa_stderr'), 'r') as f:
-                stderr = f.read ()
-            print (stderr)
+        print('Farming out to CASA ...')
+        with CasapyScript(script, **b(args)) as cs:
+            with open(os.path.join(cs.workdir, 'casa_stderr'), 'r') as f:
+                stderr = f.read()
+            print(stderr)
         return
 
     kws = {}
 
-    for kw in 'field fluxdensity observation scan spw standard'.split ():
-        kws[kw] = getattr (cfg, kw) or ''
+    for kw in 'field fluxdensity observation scan spw standard'.split():
+        kws[kw] = getattr(cfg, kw) or ''
 
     kws['time'] = cfg.timerange or ''
-    kws['reffreq'] = str (cfg.reffreq) + 'GHz'
+    kws['reffreq'] = str(cfg.reffreq) + 'GHz'
     kws['spix'] = cfg.spindex
     kws['scalebychan'] = True # don't think you'd ever want false??
 
     if cfg.modimage is None:
         kws['modimage'] = ''
     else:
-        if os.path.isdir (cfg.modimage):
+        if os.path.isdir(cfg.modimage):
             mi = cfg.modimage
         else:
-            mi = util.datadir (cfg.modimage)
-            if not os.path.isdir (mi):
-                raise RuntimeError ('no model image "%s" or "%s"' % (cfg.modimage, mi))
+            mi = util.datadir(cfg.modimage)
+            if not os.path.isdir(mi):
+                raise RuntimeError('no model image "%s" or "%s"' % (cfg.modimage, mi))
         kws['modimage'] = mi
 
-    im = util.tools.imager ()
-    im.open (b(cfg.vis), usescratch=False) # don't think you'll ever want True?
-    im.setjy (**b(kws))
-    im.close ()
+    im = util.tools.imager()
+    im.open(b(cfg.vis), usescratch=False) # don't think you'll ever want True?
+    im.setjy(**b(kws))
+    im.close()
 
 
-setjy_cli = makekwcli (setjy_doc, SetjyConfig, setjy)
+setjy_cli = makekwcli(setjy_doc, SetjyConfig, setjy)
 
 
 # split
@@ -3360,9 +3360,9 @@ combine=[col1,col2,...]
     scan state
 """ + stdsel_doc + loglevel_doc
 
-class SplitConfig (ParseKeywords):
-    vis = Custom (str, required=True)
-    out = Custom (str, required=True)
+class SplitConfig(ParseKeywords):
+    vis = Custom(str, required=True)
+    out = Custom(str, required=True)
 
     timebin = float # seconds
     step = 1
@@ -3384,22 +3384,22 @@ class SplitConfig (ParseKeywords):
     loglevel = 'warn'
 
 
-def split (cfg):
+def split(cfg):
     import tempfile, shutil
 
-    kws = extractmsselect (cfg, havearray=True, havecorr=True,
+    kws = extractmsselect(cfg, havearray=True, havecorr=True,
                            observationtoobs=True, taqltomsselect=False)
     kws['whichcol'] = cfg.col
-    kws['combine'] = ','.join (cfg.combine)
+    kws['combine'] = ','.join(cfg.combine)
     kws['step'] = [cfg.step] # can be done on per-spw basis; we skip that
 
     if cfg.timebin is None:
         kws['timebin'] = '-1s'
     else:
-        kws['timebin'] = str (cfg.timebin) + 's'
+        kws['timebin'] = str(cfg.timebin) + 's'
 
-    ms = util.tools.ms ()
-    ms.open (b(cfg.vis))
+    ms = util.tools.ms()
+    ms.open(b(cfg.vis))
 
     # split() will merrily overwrite an existing MS, which I think is
     # very bad behavior. We try to prevent this in two steps: 1) claim
@@ -3425,38 +3425,38 @@ def split (cfg):
     workdir = None
 
     try:
-        didntmakeit = os.mkdir (cfg.out, 0) # error raised if already exists.
+        didntmakeit = os.mkdir(cfg.out, 0) # error raised if already exists.
 
         try:
-            workdir = tempfile.mkdtemp (dir=os.path.dirname (cfg.out),
-                                        prefix=os.path.basename (cfg.out) + '_')
-            kws['outputms'] = os.path.join (workdir, os.path.basename (cfg.out))
-            ms.split (**b(kws))
-            os.rename (kws['outputms'], cfg.out)
+            workdir = tempfile.mkdtemp(dir=os.path.dirname(cfg.out),
+                                        prefix=os.path.basename(cfg.out) + '_')
+            kws['outputms'] = os.path.join(workdir, os.path.basename(cfg.out))
+            ms.split(**b(kws))
+            os.rename(kws['outputms'], cfg.out)
             renamed = True
         finally:
             if workdir is not None:
-                shutil.rmtree (workdir, ignore_errors=True)
+                shutil.rmtree(workdir, ignore_errors=True)
     finally:
         if not didntmakeit and not renamed:
             try:
-                os.rmdir (cfg.out)
+                os.rmdir(cfg.out)
             except:
                 pass
 
-    ms.close ()
+    ms.close()
 
 
-split_cli = makekwcli (split_doc, SplitConfig, split)
+split_cli = makekwcli(split_doc, SplitConfig, split)
 
 
 # spwglue
 #
 # Shim for a separate module
 
-def spwglue_cli (argv):
+def spwglue_cli(argv):
     from .spwglue import spwglue_cli
-    spwglue_cli (argv)
+    spwglue_cli(argv)
 
 
 # tsysplot
@@ -3468,7 +3468,7 @@ tsysplot_doc = \
 """
 casatask tsysplot caltable= dest=
 
-Plot a system temperature (Tsys) calibration table.
+Plot a system temperature(Tsys) calibration table.
 
 caltable=MS
   The input calibration Measurement Set
@@ -3480,7 +3480,7 @@ dest=PATH
 
 dims=WIDTH,HEIGHT
   If saving to a file, the dimensions of a each page. These are in points
-  for vector formats (PDF, PS) and pixels for bitmaps (PNG). Defaults to
+  for vector formats(PDF, PS) and pixels for bitmaps(PNG). Defaults to
   1000, 600.
 
 margins=TOP,RIGHT,LEFT,BOTTOM
@@ -3489,88 +3489,88 @@ margins=TOP,RIGHT,LEFT,BOTTOM
 """ + loglevel_doc
 
 
-class TsysplotConfig (ParseKeywords):
-    caltable = Custom (str, required=True)
+class TsysplotConfig(ParseKeywords):
+    caltable = Custom(str, required=True)
     dest = str
     dims = [1000, 600]
     margins = [4, 4, 4, 4]
     loglevel = 'warn'
 
 
-def tsysplot (cfg):
+def tsysplot(cfg):
     import omega as om, omega.render
     from ... import numutil
 
-    if isinstance (cfg.dest, omega.render.Pager):
+    if isinstance(cfg.dest, omega.render.Pager):
         # This is for non-CLI invocation.
         pager = cfg.dest
     elif cfg.dest is None:
         import omega.gtk3
-        pager = om.makeDisplayPager ()
+        pager = om.makeDisplayPager()
     else:
-        pager = om.makePager (cfg.dest,
+        pager = om.makePager(cfg.dest,
                               dims=cfg.dims,
                               margins=cfg.margins,
-                              style=om.styles.ColorOnWhiteVector ())
+                              style=om.styles.ColorOnWhiteVector())
 
-    tb = util.tools.table ()
+    tb = util.tools.table()
 
-    tb.open (binary_type (cfg.caltable), nomodify=True)
-    fields = tb.getcol (b'FIELD_ID')
-    spws = tb.getcol (b'SPECTRAL_WINDOW_ID')
-    ants = tb.getcol (b'ANTENNA1')
-    vals = tb.getcol (b'FPARAM')
-    flags = tb.getcol (b'FLAG')
-    times = tb.getcol (b'TIME')
-    tb.close ()
+    tb.open(binary_type(cfg.caltable), nomodify=True)
+    fields = tb.getcol(b'FIELD_ID')
+    spws = tb.getcol(b'SPECTRAL_WINDOW_ID')
+    ants = tb.getcol(b'ANTENNA1')
+    vals = tb.getcol(b'FPARAM')
+    flags = tb.getcol(b'FLAG')
+    times = tb.getcol(b'TIME')
+    tb.close()
 
-    tb.open (binary_type (os.path.join (cfg.caltable, 'ANTENNA')), nomodify=True)
-    antnames = tb.getcol (b'NAME')
-    tb.close ()
+    tb.open(binary_type(os.path.join(cfg.caltable, 'ANTENNA')), nomodify=True)
+    antnames = tb.getcol(b'NAME')
+    tb.close()
 
-    tb.open (binary_type (os.path.join (cfg.caltable, 'FIELD')), nomodify=True)
-    fieldnames = tb.getcol (b'NAME')
-    tb.close ()
+    tb.open(binary_type(os.path.join(cfg.caltable, 'FIELD')), nomodify=True)
+    fieldnames = tb.getcol(b'NAME')
+    tb.close()
 
     npol, nchan, nsoln = vals.shape
 
     # see what we've got
 
-    def seen_values (data):
-        return [idx for idx, count in enumerate (np.bincount (data)) if count]
+    def seen_values(data):
+        return [idx for idx, count in enumerate(np.bincount(data)) if count]
 
-    any_ok = ~(np.all (flags, axis=(0, 1)))
-    seenfields = seen_values (fields[any_ok])
-    field_offsets = dict ((fieldid, idx) for idx, fieldid in enumerate (seenfields))
-    seenants = seen_values (ants[any_ok])
-    ant_offsets = dict ((antid, idx) for idx, antid in enumerate (seenants))
+    any_ok = ~(np.all(flags, axis=(0, 1)))
+    seenfields = seen_values(fields[any_ok])
+    field_offsets = dict((fieldid, idx) for idx, fieldid in enumerate(seenfields))
+    seenants = seen_values(ants[any_ok])
+    ant_offsets = dict((antid, idx) for idx, antid in enumerate(seenants))
 
     apbyfield = {}
-    seenspws = set ()
+    seenspws = set()
 
     for ifield in seenfields:
         antpols = apbyfield[ifield] = {}
 
-        for ipol in range (npol):
-            for isoln in np.where (fields == ifield)[0]:
-                if not flags[ipol,:,isoln].all ():
+        for ipol in range(npol):
+            for isoln in np.where(fields == ifield)[0]:
+                if not flags[ipol,:,isoln].all():
                     k = (ants[isoln], ipol)
-                    byspw = antpols.get (k)
+                    byspw = antpols.get(k)
                     if byspw is None:
                         antpols[k] = byspw = []
 
-                    byspw.append ((spws[isoln], isoln))
-                    seenspws.add (spws[isoln])
+                    byspw.append((spws[isoln], isoln))
+                    seenspws.add(spws[isoln])
 
-    seenspws = sorted (seenspws)
-    spw_to_offset = dict ((spwid, spwofs * nchan)
-                          for spwofs, spwid in enumerate (seenspws))
+    seenspws = sorted(seenspws)
+    spw_to_offset = dict((spwid, spwofs * nchan)
+                          for spwofs, spwid in enumerate(seenspws))
 
     # find plot limits
 
-    min_time = times[any_ok].min ()
-    max_time = times[any_ok].max ()
-    mjdref = int (np.floor (min_time))
+    min_time = times[any_ok].min()
+    max_time = times[any_ok].max()
+    mjdref = int(np.floor(min_time))
     times -= mjdref # convert to delta-MJD
     min_time = (min_time - mjdref)
     max_time = (max_time - mjdref)
@@ -3583,9 +3583,9 @@ def tsysplot (cfg):
     max_time += 0.05 * span
     min_time -= 0.05 * span
 
-    okvals = vals[np.where (~flags)]
-    max_val = okvals.max ()
-    min_val = okvals.min ()
+    okvals = vals[np.where(~flags)]
+    max_val = okvals.max()
+    min_val = okvals.min()
     span = max_val - min_val
     if span <= 0:
         if max_val == 0:
@@ -3599,9 +3599,9 @@ def tsysplot (cfg):
 
     # plot away
 
-    for iant, ipol in sorted (six.iterkeys (antpols)):
-        p = om.RectPlot ()
-        p.addKeyItem ('%s %s' % (antnames[iant], polnames[ipol]))
+    for iant, ipol in sorted(six.iterkeys(antpols)):
+        p = om.RectPlot()
+        p.addKeyItem('%s %s' % (antnames[iant], polnames[ipol]))
 
         for ifield in seenfields:
             antpols = apbyfield[ifield]
@@ -3610,31 +3610,31 @@ def tsysplot (cfg):
             for ispw, isoln in antpols.get((iant,ipol), []):
                 f = flags[ipol,:,isoln]
                 v = vals[ipol,:,isoln]
-                w = np.where (~f)[0]
+                w = np.where(~f)[0]
 
-                for s in numutil.slice_around_gaps (w, 1):
+                for s in numutil.slice_around_gaps(w, 1):
                     wsub = w[s]
                     if wsub.size == 0:
                         continue # Should never happen, but eh.
                     else:
                         # It'd also be pretty weird to have a spectral window
-                        # containing just one (valid) channel, but it could
+                        # containing just one(valid) channel, but it could
                         # happen.
                         lines = (wsub.size > 1)
 
-                    p.addXY (wsub + spw_to_offset[ispw], v[wsub], kt,
+                    p.addXY(wsub + spw_to_offset[ispw], v[wsub], kt,
                              lines=lines, dsn=ifield)
                     kt = None
 
-        p.setBounds (xmin=0,
-                     xmax=len (seenspws) * nchan,
+        p.setBounds(xmin=0,
+                     xmax=len(seenspws) * nchan,
                      ymin=min_val,
                      ymax=max_val)
-        p.setLabels ('Normalized channel', 'System temperature (K)')
-        pager.send (p)
+        p.setLabels('Normalized channel', 'System temperature(K)')
+        pager.send(p)
 
 
-tsysplot_cli = makekwcli (tsysplot_doc, TsysplotConfig, tsysplot)
+tsysplot_cli = makekwcli(tsysplot_doc, TsysplotConfig, tsysplot)
 
 
 # uvsub
@@ -3657,8 +3657,8 @@ reverse=
 """ + stdsel_doc + loglevel_doc
 
 
-class UvsubConfig (ParseKeywords):
-    vis = Custom (str, required=True)
+class UvsubConfig(ParseKeywords):
+    vis = Custom(str, required=True)
     reverse = False
 
     antenna = str
@@ -3675,19 +3675,19 @@ class UvsubConfig (ParseKeywords):
     loglevel = 'warn'
 
 
-def uvsub (cfg):
-    ms = util.tools.ms ()
+def uvsub(cfg):
+    ms = util.tools.ms()
 
-    ms.open (b(cfg.vis), nomodify=False)
-    ms.msselect (b(extractmsselect (cfg,
+    ms.open(b(cfg.vis), nomodify=False)
+    ms.msselect(b(extractmsselect(cfg,
                                     havearray=True,
                                     intenttoscanintent=True,
                                     taqltomsselect=False)))
-    ms.uvsub (reverse=cfg.reverse)
-    ms.close ()
+    ms.uvsub(reverse=cfg.reverse)
+    ms.close()
 
 
-uvsub_cli = makekwcli (uvsub_doc, UvsubConfig, uvsub)
+uvsub_cli = makekwcli(uvsub_doc, UvsubConfig, uvsub)
 
 
 # xyphplot
@@ -3710,7 +3710,7 @@ dest=PATH
 
 dims=WIDTH,HEIGHT
   If saving to a file, the dimensions of a each page. These are in points
-  for vector formats (PDF, PS) and pixels for bitmaps (PNG). Defaults to
+  for vector formats(PDF, PS) and pixels for bitmaps(PNG). Defaults to
   1000, 600.
 
 margins=TOP,RIGHT,LEFT,BOTTOM
@@ -3719,54 +3719,54 @@ margins=TOP,RIGHT,LEFT,BOTTOM
 """ + loglevel_doc
 
 
-class XyphplotConfig (ParseKeywords):
-    caltable = Custom (str, required=True)
+class XyphplotConfig(ParseKeywords):
+    caltable = Custom(str, required=True)
     dest = str
     dims = [1000, 600]
     margins = [4, 4, 4, 4]
     loglevel = 'warn'
 
 
-def xyphplot (cfg):
+def xyphplot(cfg):
     import omega as om, omega.render
     from ... import numutil
 
-    if isinstance (cfg.dest, omega.render.Pager):
+    if isinstance(cfg.dest, omega.render.Pager):
         # This is for non-CLI invocation.
         pager = cfg.dest
     elif cfg.dest is None:
         import omega.gtk3
-        pager = om.makeDisplayPager ()
+        pager = om.makeDisplayPager()
     else:
-        pager = om.makePager (cfg.dest,
+        pager = om.makePager(cfg.dest,
                               dims=cfg.dims,
                               margins=cfg.margins,
-                              style=om.styles.ColorOnWhiteVector ())
+                              style=om.styles.ColorOnWhiteVector())
 
-    tb = util.tools.table ()
+    tb = util.tools.table()
 
     # Every antenna has the same solution, and only the first of two
     # polarizations is not just unity. And the solution is phase only. So this
     # is prett simple to plot!
 
-    tb.open (binary_type (cfg.caltable), nomodify=True)
-    spws = tb.getcol (b'SPECTRAL_WINDOW_ID')
-    vals = tb.getcol (b'CPARAM')
-    flags = tb.getcol (b'FLAG')
-    tb.close ()
+    tb.open(binary_type(cfg.caltable), nomodify=True)
+    spws = tb.getcol(b'SPECTRAL_WINDOW_ID')
+    vals = tb.getcol(b'CPARAM')
+    flags = tb.getcol(b'FLAG')
+    tb.close()
 
     npol, nchan, nsoln = vals.shape
 
-    seenspws = np.unique (spws) # assume all available
-    spw_to_offset = dict ((spwid, spwofs * nchan)
-                          for spwofs, spwid in enumerate (seenspws))
+    seenspws = np.unique(spws) # assume all available
+    spw_to_offset = dict((spwid, spwofs * nchan)
+                          for spwofs, spwid in enumerate(seenspws))
 
     # find plot limits
 
-    okvals = vals[np.where (~flags)]
+    okvals = vals[np.where(~flags)]
 
-    max_ph = np.angle (okvals, deg=True).max ()
-    min_ph = np.angle (okvals, deg=True).min ()
+    max_ph = np.angle(okvals, deg=True).max()
+    min_ph = np.angle(okvals, deg=True).min()
     span = max_ph - min_ph
     max_ph += 0.05 * span
     min_ph -= 0.05 * span
@@ -3779,71 +3779,71 @@ def xyphplot (cfg):
 
     # plot away
 
-    p = om.RectPlot ()
+    p = om.RectPlot()
 
     for ispw in seenspws:
         ipol = 0
-        isoln = np.where ((spws == ispw) & ~np.all (flags, axis=(0,1)))[0][0]
+        isoln = np.where((spws == ispw) & ~np.all(flags, axis=(0,1)))[0][0]
 
         f = flags[ipol,:,isoln]
-        ph = np.angle (vals[ipol,:,isoln], deg=True)
-        w = np.where (~f)[0]
+        ph = np.angle(vals[ipol,:,isoln], deg=True)
+        w = np.where(~f)[0]
 
-        for s in numutil.slice_around_gaps (w, 1):
+        for s in numutil.slice_around_gaps(w, 1):
             wsub = w[s]
             if wsub.size == 0:
                 continue # Should never happen, but eh.
             else:
                 # It'd also be pretty weird to have a spectral window
-                # containing just one (valid) channel, but it could
+                # containing just one(valid) channel, but it could
                 # happen.
                 lines = (wsub.size > 1)
 
-            p.addXY (wsub + spw_to_offset[ispw], ph[wsub], None,
-                     lines=lines, dsn=ispw)
+            p.addXY(wsub + spw_to_offset[ispw], ph[wsub], None,
+                    lines=lines, dsn=ispw)
 
-        p.setBounds (xmin=0,
-                     xmax=len (seenspws) * nchan,
+        p.setBounds(xmin=0,
+                     xmax=len(seenspws) * nchan,
                      ymin=min_ph,
                      ymax=max_ph)
-        p.setLabels ('Normalized channel', 'Phase (deg)')
+        p.setLabels('Normalized channel', 'Phase(deg)')
 
-    pager.send (p)
+    pager.send(p)
 
-xyphplot_cli = makekwcli (xyphplot_doc, XyphplotConfig, xyphplot)
+xyphplot_cli = makekwcli(xyphplot_doc, XyphplotConfig, xyphplot)
 
 
 # Driver for command-line access. I wrote this before multitool, and it
 # doesn't seem particularly valuable to convert them to Multitool since the
 # current system works fine.
 
-def cmdline_usage (stream, exitcode):
-    print ('usage: casatask <task> [task-specific arguments]', file=stream)
-    print (file=stream)
-    print ('Supported tasks:', file=stream)
-    print (file=stream)
+def cmdline_usage(stream, exitcode):
+    print('usage: casatask <task> [task-specific arguments]', file=stream)
+    print(file=stream)
+    print('Supported tasks:', file=stream)
+    print(file=stream)
 
-    for name in sorted (six.iterkeys (globals ())):
-        if name.endswith ('_cli'):
-            print (name[:-4], file=stream)
+    for name in sorted(six.iterkeys(globals())):
+        if name.endswith('_cli'):
+            print(name[:-4], file=stream)
 
-    raise SystemExit (exitcode)
+    raise SystemExit(exitcode)
 
 
-def commandline (argv=None):
+def commandline(argv=None):
     if argv is None:
         argv = sys.argv
         from ... import cli
-        cli.propagate_sigint ()
-        cli.backtrace_on_usr1 ()
-        cli.unicode_stdio ()
+        cli.propagate_sigint()
+        cli.backtrace_on_usr1()
+        cli.unicode_stdio()
 
-    if len (argv) < 2 or argv[1] == '--help':
-        cmdline_usage (sys.stdout, 0)
+    if len(argv) < 2 or argv[1] == '--help':
+        cmdline_usage(sys.stdout, 0)
 
-    driver = globals ().get (argv[1] + '_cli')
+    driver = globals().get(argv[1] + '_cli')
     if driver is None:
-        die ('unknown task "%s"; run with no arguments for a list', argv[1])
+        die('unknown task "%s"; run with no arguments for a list', argv[1])
 
-    subargv = [' '.join (argv[:2])] + argv[2:]
-    driver (subargv)
+    subargv = [' '.join(argv[:2])] + argv[2:]
+    driver(subargv)
