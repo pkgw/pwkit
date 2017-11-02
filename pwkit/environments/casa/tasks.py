@@ -366,14 +366,14 @@ def bpplot(cfg):
 
     tb = util.tools.table()
 
-    tb.open(binary_type(cfg.caltable), nomodify=True)
+    tb.open(cfg.caltable, nomodify=True)
     spws = tb.getcol(b'SPECTRAL_WINDOW_ID')
     ants = tb.getcol(b'ANTENNA1')
     vals = tb.getcol(b'CPARAM')
     flags = tb.getcol(b'FLAG')
     tb.close()
 
-    tb.open(binary_type(os.path.join(cfg.caltable, 'ANTENNA')), nomodify=True)
+    tb.open(os.path.join(cfg.caltable, 'ANTENNA'), nomodify=True)
     names = tb.getcol(b'NAME')
     tb.close()
 
@@ -766,7 +766,7 @@ def elplot(cfg):
     ms = util.tools.ms()
     me = util.tools.measures()
 
-    ms.open(binary_type(cfg.vis), nomodify=True)
+    ms.open(cfg.vis, nomodify=True)
     scans = ms.range([b'scan_number'])['scan_number']
 
     md = ms.metadata()
@@ -1694,7 +1694,7 @@ def gpdetrend(cfg):
 
     tb = util.tools.table()
 
-    tb.open(binary_type(cfg.caltable), nomodify=False)
+    tb.open(cfg.caltable, nomodify=False)
     #fields = tb.getcol(b'FIELD_ID')
     spws = tb.getcol(b'SPECTRAL_WINDOW_ID')
     ants = tb.getcol(b'ANTENNA1')
@@ -1840,7 +1840,7 @@ def gpplot(cfg):
 
     tb = util.tools.table()
 
-    tb.open(binary_type(cfg.caltable), nomodify=True)
+    tb.open(cfg.caltable, nomodify=True)
     fields = tb.getcol(b'FIELD_ID')
     spws = tb.getcol(b'SPECTRAL_WINDOW_ID')
     ants = tb.getcol(b'ANTENNA1')
@@ -1849,7 +1849,7 @@ def gpplot(cfg):
     times = tb.getcol(b'TIME')
     tb.close()
 
-    tb.open(binary_type(os.path.join(cfg.caltable, 'ANTENNA')), nomodify=True)
+    tb.open(os.path.join(cfg.caltable, 'ANTENNA'), nomodify=True)
     names = tb.getcol(b'NAME')
     tb.close()
 
@@ -3515,7 +3515,7 @@ def tsysplot(cfg):
 
     tb = util.tools.table()
 
-    tb.open(binary_type(cfg.caltable), nomodify=True)
+    tb.open(cfg.caltable, nomodify=True)
     fields = tb.getcol(b'FIELD_ID')
     spws = tb.getcol(b'SPECTRAL_WINDOW_ID')
     ants = tb.getcol(b'ANTENNA1')
@@ -3524,11 +3524,11 @@ def tsysplot(cfg):
     times = tb.getcol(b'TIME')
     tb.close()
 
-    tb.open(binary_type(os.path.join(cfg.caltable, 'ANTENNA')), nomodify=True)
+    tb.open(os.path.join(cfg.caltable, 'ANTENNA'), nomodify=True)
     antnames = tb.getcol(b'NAME')
     tb.close()
 
-    tb.open(binary_type(os.path.join(cfg.caltable, 'FIELD')), nomodify=True)
+    tb.open(os.path.join(cfg.caltable, 'FIELD'), nomodify=True)
     fieldnames = tb.getcol(b'NAME')
     tb.close()
 
@@ -3750,7 +3750,7 @@ def xyphplot(cfg):
     # polarizations is not just unity. And the solution is phase only. So this
     # is prett simple to plot!
 
-    tb.open(binary_type(cfg.caltable), nomodify=True)
+    tb.open(cfg.caltable, nomodify=True)
     spws = tb.getcol(b'SPECTRAL_WINDOW_ID')
     vals = tb.getcol(b'CPARAM')
     flags = tb.getcol(b'FLAG')

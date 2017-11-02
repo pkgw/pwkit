@@ -12,7 +12,7 @@ __all__ = str('''INVERSE_C_MS INVERSE_C_MNS pol_names pol_to_miriad msselect_key
 datadir logger forkandlog sanitize_unicode tools''').split()
 
 import six
-from ... import binary_type, text_type
+from ... import text_type
 
 # Some constants that can be useful.
 
@@ -98,7 +98,7 @@ def sanitize_unicode(item):
 
     from ...io import Path
     if isinstance(item, Path):
-        return binary_type(item)
+        return str(item)
 
     return item
 
