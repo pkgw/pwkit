@@ -1583,7 +1583,10 @@ def gencal(cfg):
     if cfg.caltype == 'antpos' and cfg.antenna is None:
         # There's a Python module in casapy that implements this; I don't want
         # to shadow it entirely ...
-        import cPickle as pickle
+        try:
+            import cPickle as pickle
+        except ImportError:
+            import pickle
         from .scripting import CasapyScript
 
         script = os.path.join(os.path.dirname(__file__), 'cscript_genantpos.py')
@@ -1624,7 +1627,10 @@ will print 2 values, averaged over 8 spectral windows each.
 """
 
 def getopacities(ms, plotdest):
-    import cPickle as pickle
+    try:
+        import cPickle as pickle
+    except ImportError:
+        import pickle
     from .scripting import CasapyScript
 
     script = os.path.join(os.path.dirname(__file__), 'cscript_getopacities.py')

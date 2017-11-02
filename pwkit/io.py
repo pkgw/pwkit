@@ -910,7 +910,7 @@ class Path (_ParentPath):
 
 
     def read_pickle (self):
-        """Open the file, unpickle one object from it using :mod:`cPickle`, and return
+        """Open the file, unpickle one object from it using :mod:`pickle`, and return
         it.
 
         """
@@ -925,7 +925,11 @@ class Path (_ParentPath):
         until EOF is reached.
 
         """
-        import cPickle as pickle
+        try:
+            import cPickle as pickle
+        except ImportError:
+            import pickle
+
         with self.open (mode='rb') as f:
             while True:
                 try:
@@ -1015,7 +1019,11 @@ class Path (_ParentPath):
         using :mod:`cPickle`.
 
         """
-        import cPickle as pickle
+        try:
+            import cPickle as pickle
+        except ImportError:
+            import pickle
+
         with self.open (mode='wb') as f:
             for obj in objs:
                 pickle.dump (obj, f)
