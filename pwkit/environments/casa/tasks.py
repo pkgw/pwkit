@@ -1627,10 +1627,6 @@ will print 2 values, averaged over 8 spectral windows each.
 """
 
 def getopacities(ms, plotdest):
-    try:
-        import cPickle as pickle
-    except ImportError:
-        import pickle
     from .scripting import CasapyScript
 
     script = os.path.join(os.path.dirname(__file__), 'cscript_getopacities.py')
@@ -1638,7 +1634,7 @@ def getopacities(ms, plotdest):
     with CasapyScript(script, ms=ms, plotdest=plotdest) as cs:
         try:
             with open(os.path.join(cs.workdir, 'opac.npy'), 'rb') as f:
-                opac = pickle.load(f)
+                opac = np.load(f)
         except Exception:
             reraise_context('interal casapy script seemingly failed; no opac.npy')
 

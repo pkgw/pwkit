@@ -9,21 +9,21 @@ It is also useless to run directly via pkcasascript. Use
 
 """
 
-def in_casapy (helper, ms=None, plotdest=None):
+def in_casapy(helper, ms=None, plotdest=None):
     """This function is run inside the weirdo casapy IPython environment! A
     strange set of modules is available, and the
     `pwkit.environments.casa.scripting` system sets up a very particular
     environment to allow encapsulated scripting.
 
     """
-    import numpy as np, os, cPickle as pickle
+    import numpy as np, os
 
     if ms is None:
-        raise ValueError ('ms')
+        raise ValueError('ms')
     if plotdest is None:
-        raise ValueError ('plotdest')
+        raise ValueError('plotdest')
 
-    opac = helper.casans.plotweather (vis=ms, plotName=plotdest)
-    opac = np.asarray (opac)
-    with open (helper.temppath ('opac.npy'), 'wb') as f:
-        pickle.dump (opac, f)
+    opac = helper.casans.plotweather(vis=ms, plotName=plotdest)
+    opac = np.asarray(opac)
+    with open(helper.temppath('opac.npy'), 'wb') as f:
+        np.save(f, opac)
