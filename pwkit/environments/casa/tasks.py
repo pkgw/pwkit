@@ -3605,8 +3605,7 @@ def tsysplot(cfg):
 
         for ifield in seenfields:
             antpols = apbyfield[ifield]
-            # this seems to be the only way to properly stringify a text-y numby.bytes 1D array:
-            kt = ''.join(chr(c) for c in fieldnames[ifield])
+            kt = fieldnames[ifield]
 
             for ispw, isoln in antpols.get((iant,ipol), []):
                 f = flags[ipol,:,isoln]
