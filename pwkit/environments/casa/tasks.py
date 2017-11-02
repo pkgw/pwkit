@@ -1583,10 +1583,6 @@ def gencal(cfg):
     if cfg.caltype == 'antpos' and cfg.antenna is None:
         # There's a Python module in casapy that implements this; I don't want
         # to shadow it entirely ...
-        try:
-            import cPickle as pickle
-        except ImportError:
-            import pickle
         from .scripting import CasapyScript
 
         script = os.path.join(os.path.dirname(__file__), 'cscript_genantpos.py')
@@ -1594,8 +1590,8 @@ def gencal(cfg):
         with CasapyScript(script, vis=cfg.vis) as cs:
             try:
                 with open(os.path.join(cs.workdir, 'info.pkl'), 'rb') as f:
-                    antenna = pickle.load(f)
-                    parameter = pickle.load(f)
+                    antenna = np.load(f)
+                    parameter = np.load(f)
             except Exception:
                 reraise_context('interal casapy script seemingly failed; no info.pkl')
 
