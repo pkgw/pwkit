@@ -2102,17 +2102,17 @@ def importevla(asdm, ms):
     bdf = os.path.join(asdm, 'ASDMBinary', bdfstem)
     tbuff = None
 
-    with open(bdf) as f:
+    with open(bdf, 'rb') as f:
         for linenum, line in enumerate(f):
             if linenum > 60:
                 raise PKError('cannot find integration time info in %s', bdf)
 
-            if not line.startswith('<sdmDataSubsetHeader'):
+            if not line.startswith(b'<sdmDataSubsetHeader'):
                 continue
 
             try:
-                i1 = line.index('<interval>') + len('<interval>')
-                i2 = line.index('</interval>')
+                i1 = line.index(b'<interval>') + len(b'<interval>')
+                i2 = line.index(b'</interval>')
                 if i2 <= i1:
                     raise ValueError()
             except ValueError:
