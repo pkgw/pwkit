@@ -1,5 +1,5 @@
 # -*- mode: python; coding: utf-8 -*-
-# Copyright 2013-2015 Peter Williams <peter@newton.cx> and collaborators
+# Copyright 2013-2015, 2017 Peter Williams <peter@newton.cx> and collaborators
 # Licensed under the MIT License
 
 """pwkit.environments.casa.spwglue - merge spectral windows in a MeasurementSet
@@ -58,7 +58,7 @@ class Progress(object):
         self.prefix = prefix
         self.tstart = time.time()
         self.tlastprint = 0
-        self.unbufout = os.fdopen(os.dup(1), 'w', 0)
+        self.unbufout = os.fdopen(os.dup(1), 'wb', 0)
 
 
     def progress(self, curitems):
@@ -81,7 +81,8 @@ class Progress(object):
                   (pct, li, curitems, self.totitems, _sfmt(elapsed),
                    _sfmt(eta), _sfmt(total))
 
-        print(self.prefix, msg.ljust(60), end='\r', file=self.unbufout)
+        full_msg = '%s %s\r' % (self.prefix, msg.ljust(60))
+        self.unbufout.write(full_msg.encode('utf8'))
         self.tlastprint = now
 
 
@@ -96,7 +97,8 @@ class Progress(object):
             msg = '100.0%% (%d/%d) elapsed %s ETA 0s total %s' % \
                   (self.totitems, self.totitems, _sfmt(self.elapsed),
                    _sfmt(self.elapsed))
-            print(self.prefix, msg.ljust(60), file=self.unbufout)
+            full_msg = '%s %s\n' % (self.prefix, msg.ljust(60))
+            self.unbufout.write(full_msg.encode('utf8'))
 
         self.unbufout.close()
         self.tstart = self.unbufout = None
