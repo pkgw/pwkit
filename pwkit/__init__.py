@@ -1,5 +1,5 @@
 # -*- mode: python; coding: utf-8 -*-
-# Copyright 2014-2016 Peter Williams <peter@newton.cx> and collaborators.
+# Copyright 2014-2017 Peter Williams <peter@newton.cx> and collaborators.
 # Licensed under the MIT License.
 
 """A toolkit for science and astronomy in Python.
@@ -234,7 +234,7 @@ class Holder(object):
         elif format == 'repr':
             template = '%-*s = %r'
         else:
-            raise ValueError('unrecognied value for "format": %r' % format)
+            raise ValueError('unrecognized value for "format": %r' % format)
 
         d = self.__dict__
         maxlen = 0
