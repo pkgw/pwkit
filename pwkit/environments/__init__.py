@@ -25,14 +25,14 @@ Standard usage is to create an `Environment` instance, then use its
 standard ways.
 
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
+from __future__ import absolute_import, division, print_function
 
 """For reference: the Python docs state that Python automatically decodes
 Unicode environment variables as UTF-8 on non-Windows, so we don't need to be
 crazy about bytes-ifying values.
 
 """
-__all__ = str('Environment prepend_environ_path prepend_path user_data_path').split()
+__all__ = 'Environment prepend_environ_path prepend_path user_data_path'.split()
 
 import os, subprocess, sys
 
@@ -119,9 +119,11 @@ def prepend_environ_path(env, name, text, pathsep=os.pathsep):
 
     Example::
 
-      prepend_environ_path(env, str('PATH'), str('/mypackage/bin'))
+      prepend_environ_path(env, 'PATH', '/mypackage/bin')
 
-    The `str` calls are necessary for Python 2/3 compatibility.
+    The `name` and `text` arguments should be `str` objects; that is, bytes in
+    Python 2 and Unicode in Python 3. Literal strings will be OK unless you
+    use the ``from __future__ import unicode_literals`` feature.
 
     """
     env[name] = prepend_path(env.get(name), text, pathsep=pathsep)
@@ -129,8 +131,7 @@ def prepend_environ_path(env, name, text, pathsep=os.pathsep):
 
 
 def _make_user_data_pather():
-    datadir = os.environ.get(str('XDG_DATA_HOME'),
-                             str(os.path.expanduser('~/.local/share')))
+    datadir = os.environ.get('XDG_DATA_HOME', os.path.expanduser('~/.local/share'))
 
     def pathfunc(*args):
         return os.path.join(datadir, *args)

@@ -54,9 +54,9 @@ This package provides several kinds of functionality.
   currently available in the :mod:`~pwkit.environments.casa.tasks` module.
 
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
+from __future__ import absolute_import, division, print_function
 
-__all__ = str('CasaEnvironment CasaTool commandline').split()
+__all__ = 'CasaEnvironment CasaTool commandline'.split()
 
 import glob, io, os.path
 
@@ -101,11 +101,11 @@ class CasaEnvironment(Environment):
                                     os.uname()[1]])
 
         if is_rpm_install:
-            env['CASA_INSTALLATION_TYPE'] = b'rpm-installation'
-            prepend_environ_path(env, 'PATH', b'/usr/lib64/casa/01/bin')
+            env['CASA_INSTALLATION_TYPE'] = 'rpm-installation'
+            prepend_environ_path(env, 'PATH', '/usr/lib64/casa/01/bin')
             prepend_environ_path(env, 'PATH', path('bin'))
         else:
-            env['CASA_INSTALLATION_TYPE'] = b'tar-installation'
+            env['CASA_INSTALLATION_TYPE'] = 'tar-installation'
 
             lib = 'lib64' if os.path.isdir(path('lib64')) else 'lib'
             # 4.3.1 comes with both python2.6 and python2.7???
