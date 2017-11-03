@@ -5,14 +5,9 @@
 """A toolkit for science and astronomy in Python.
 
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
+from __future__ import absolute_import, division, print_function
 
-# In Python 2, the items in __all__ should be bytes strings. In Python 3, they
-# should be Unicode. (http://stackoverflow.com/a/19913680/3760486) If you
-# don't use __future__.unicode_literals, you can just write `__all__ =
-# ["foo"]` and it's fine, but we do, which causes problems on Py 2.
-# Fortunately, to work on both cases we just need to do this:
-__all__ = str ('''Holder PKError binary_type reraise_context text_type unicode_to_str''').split ()
+__all__ = 'Holder PKError binary_type reraise_context text_type unicode_to_str'.split ()
 
 __version__ = '0.8.12.99' # also edit ../setup.py, ../docs/source/conf.py!
 
@@ -151,7 +146,7 @@ class Holder (object):
     def __unicode__ (self):
         d = self.__dict__
         s = sorted (six.iterkeys (d))
-        return '{' + ', '.join ('%s=%s' % (k, d[k]) for k in s) + '}'
+        return u'{' + u', '.join (u'%s=%s' % (k, d[k]) for k in s) + u'}'
 
     __str__ = unicode_to_str
 
