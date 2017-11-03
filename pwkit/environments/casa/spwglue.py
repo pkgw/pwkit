@@ -139,7 +139,7 @@ hackfield=
   a list of fields.
 
 meanbp=
-  Path to a pickled numpy array giving the mean amplitude bandpass of the
+  Path to a saved numpy array giving the mean amplitude bandpass of the
   *glued* SPWs. The data are divided by the square of this array, thereby
   taking out this effect. (Each visibility is affected by the bandpasses of
   the two antennas contributing to its baseline, which is why we square the
