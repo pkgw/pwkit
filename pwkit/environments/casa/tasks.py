@@ -265,7 +265,7 @@ class ApplycalConfig(ParseKeywords):
     interp = [str]
     @Custom([str], sep=';')
     def spwmap(v):
-        return [map(int, e.split(',')) for e in v]
+        return [list(map(int, e.split(','))) for e in v]
     opacity = [float]
     gaincurve = False
     parang = False
@@ -1003,7 +1003,7 @@ def flaglist(cfg):
 
         assert 'ntime' not in params, 'cannot handle "ntime" flag key'
 
-        for key in params.keys():
+        for key in list(params.keys()):
             val = params[key]
 
             try:
@@ -1436,7 +1436,7 @@ class GaincalConfig(ParseKeywords):
 
     @Custom([str], sep=';')
     def spwmap(v):
-        return [map(int, e.split(',')) for e in v]
+        return [list(map(int, e.split(','))) for e in v]
 
     # gaincal keywords: splinetime npointaver phasewrap
     # bandpass keywords: fillgaps degamp degphase visnorm maskcenter
@@ -2594,7 +2594,7 @@ def listsdm(sdm, file=None):
 
         maxspwlen = 0
 
-        for scaninfo in scandict.itervalues():
+        for scaninfo in scandict.values():
             SPWs = []
             for spw in scaninfo['spws']:
                 SPWs += spw
@@ -2605,7 +2605,7 @@ def listsdm(sdm, file=None):
         fmt = '  %-25s  %-4s %-5s %-15s %-*s %s'
         printf(fmt, 'Timerange(UTC)', 'Scan', 'FldID', 'FieldName', maxspwlen, 'SpwIDs', 'Intent(s)')
 
-        for i,(scanid, scaninfo) in enumerate(scandict.iteritems()):
+        for i,(scanid, scaninfo) in enumerate(scandict.items()):
             printf(fmt, startTimeShort[i] + ' - ' + endTimeShort[i], scanid,
                     scaninfo['field'], scaninfo['source'], maxspwlen,
                     scaninfo['spwstr'], scaninfo['intent'])

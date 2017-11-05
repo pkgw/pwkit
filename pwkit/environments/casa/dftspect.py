@@ -204,7 +204,7 @@ def dftspect (cfg):
 
     tb.open (b(os.path.join (cfg.vis, 'SPECTRAL_WINDOW')))
     spwmfreqs = np.zeros (tb.nrows ())
-    for i in xrange (spwmfreqs.size):
+    for i in range (spwmfreqs.size):
         spwmfreqs[i] = tb.getcell (b'CHAN_FREQ', i).mean () * 1e-9 # -> GHz
     tb.close ()
 
@@ -263,12 +263,12 @@ def dftspect (cfg):
                 assert freqs.shape[1] == 1, 'internal inconsistency, chan_freq??'
                 freqs = freqs[:,0] * util.INVERSE_C_MS
 
-            for i in xrange (cols['flag'].shape[-1]): # all records
+            for i in range (cols['flag'].shape[-1]): # all records
                 if rephase:
                     uvw = cols['uvw'][:,i]
                     ph = np.exp ((0-2j) * np.pi * np.dot (lmn, uvw) * freqs)
 
-                for j in xrange (cols['flag'].shape[0]): # all polns
+                for j in range (cols['flag'].shape[0]): # all polns
                     data = cols[cfg.datacol][j,:,i]
                     flags = cols['flag'][j,:,i]
 

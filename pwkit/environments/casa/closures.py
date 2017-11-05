@@ -14,7 +14,7 @@ __all__ = str ('Config ClosureCalculator closures_cli').split ()
 
 import collections
 import six, numpy as np
-from six.moves import range
+from six.moves import range, zip
 
 from ...cli import check_usage, die
 from ...kwargv import ParseKeywords, Custom
@@ -598,7 +598,7 @@ class ClosureCalculator (object):
 
         tb.open (b(cfg.vis + '/POLARIZATION'), nomodify=True)
         polid_to_polns = {}
-        for i in xrange (tb.nrows ()):
+        for i in range (tb.nrows ()):
             polid_to_polns[i] = tb.getcell (b'CORR_TYPE', i)
         tb.close ()
 
@@ -703,7 +703,7 @@ class ClosureCalculator (object):
         XXX: we should only process independent triples. Are we???
 
         """
-        for fpol, aps in self.ap_by_fpol.iteritems ():
+        for fpol, aps in self.ap_by_fpol.items ():
             aps = sorted (aps)
             nap = len (aps)
 
@@ -793,7 +793,7 @@ class ClosureCalculator (object):
         data = []
         descs = []
 
-        for ddid, stats in self.ap_time_stats_by_ddid.iteritems ():
+        for ddid, stats in self.ap_time_stats_by_ddid.items ():
             mean, scat = postproc (stats.finish (self.all_times, self.all_aps))
             data.append (mean / scat)
             descs.append ('DDID %d' % ddid)
@@ -805,7 +805,7 @@ class ClosureCalculator (object):
         data = []
         descs = []
 
-        for ddid, stats in self.ap_spec_stats_by_ddid.iteritems ():
+        for ddid, stats in self.ap_spec_stats_by_ddid.items ():
             mean, scat = postproc (stats.finish (self.all_aps))
             data.append (mean / scat)
             descs.append ('DDID %d' % ddid)
@@ -816,7 +816,7 @@ class ClosureCalculator (object):
         # Antpols by DDID
         p = om.RectPlot ()
 
-        for ddid, stats in self.ap_stats_by_ddid.iteritems ():
+        for ddid, stats in self.ap_stats_by_ddid.items ():
             ok, mean, scat = postproc_mask (stats.finish (self.all_aps))
             p.addXYErr (np.arange (len (self.all_aps))[ok], mean, scat, 'DDID %d' % ddid)
 
@@ -843,12 +843,11 @@ class ClosureCalculator (object):
                 return '%s-%s %s' % (ni, nj, util.pol_names[pol1])
             return '%s-%s %s' % (nj, ni, util.pol_names[pol2])
 
-        for ddid, stats in self.bp_stats_by_ddid.iteritems ():
+        for ddid, stats in self.bp_stats_by_ddid.items ():
             mean, scat = postproc (stats.finish (self.all_bps))
             nmean = mean / scat
-            from itertools import izip
             pol1, pol2, ants, grid = grid_bp_data (self.all_bps,
-                                                   izip (self.all_bps, nmean))
+                                                   zip(self.all_bps, nmean))
             data.append (grid)
             descs.append ('DDID %d' % ddid)
             tostatuses.append (lambda yx: bpgrid_status (pol1, pol2, ants, yx))

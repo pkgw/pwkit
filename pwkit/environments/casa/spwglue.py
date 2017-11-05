@@ -161,9 +161,9 @@ class Config(ParseKeywords):
     @Custom([str], required=True)
     def mapping(bits):
         def parse(item):
-            t1, t2 = map(int, item.split('-'))
+            t1, t2 = list(map(int, item.split('-')))
             assert t2 >= t1, 'can\'t do reverse-order mappings'
-            return range(t1, t2 + 1)
+            return list(range(t1, t2 + 1))
         try:
             return [parse(b) for b in bits]
         except Exception as e:

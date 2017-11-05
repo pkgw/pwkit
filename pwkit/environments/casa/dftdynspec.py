@@ -175,7 +175,7 @@ def dftdynspec (cfg):
     tb.open (b(os.path.join (cfg.vis, 'SPECTRAL_WINDOW')))
     nspw = tb.nrows ()
     spwfreqs = []
-    for i in xrange (nspw):
+    for i in range (nspw):
         spwfreqs.append (tb.getcell (b'CHAN_FREQ', i) * 1e-9) # -> GHz
     tb.close ()
 
@@ -186,7 +186,7 @@ def dftdynspec (cfg):
     nfreq = allfreqs.size
 
     freqmaps = []
-    for i in xrange (nspw):
+    for i in range (nspw):
         freqmaps.append (np.searchsorted (allfreqs, spwfreqs[i]))
 
     if rephase:
@@ -241,7 +241,7 @@ def dftdynspec (cfg):
                 assert freqs.shape[1] == 1, 'internal inconsistency, chan_freq??'
                 freqs = freqs[:,0] * util.INVERSE_C_MS
 
-            for i in xrange (cols['time'].size): # all records
+            for i in range (cols['time'].size): # all records
                 time = cols['time'][i]
                 # get out of UTC as fast as we can! For some reason
                 # giving 'unit=s' below doesn't do what one might hope it would.
@@ -260,7 +260,7 @@ def dftdynspec (cfg):
                     uvw = cols['uvw'][:,i]
                     ph = np.exp ((0-2j) * np.pi * np.dot (lmn, uvw) * freqs)
 
-                for j in xrange (cols['flag'].shape[0]): # all polns
+                for j in range (cols['flag'].shape[0]): # all polns
                     # We just average together all polarizations right now!
                     # (Not actively, but passively by just iterating over them.)
                     data = cols[cfg.datacol][j,:,i]
@@ -303,7 +303,7 @@ def dftdynspec (cfg):
     smjd = np.asarray (sorted (six.iterkeys (tbins)))
     data = np.zeros ((5, smjd.size, nfreq))
 
-    for tid in xrange (smjd.size):
+    for tid in range (smjd.size):
         mjd = smjd[tid]
 
         wr, wi, wr2, wi2, wt, wt2, n = tbins[mjd].T
