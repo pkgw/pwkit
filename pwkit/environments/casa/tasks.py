@@ -527,6 +527,11 @@ def clearcal(vis, weightonly=False):
     tb.close()
 
     if not weightonly:
+        import casadef
+
+        if casadef.casa_version.startswith('5.'):
+            cb.setvi(old=True, quiet=False)
+
         cb.open(b(vis))
         if needinit:
             cb.initcalset()
