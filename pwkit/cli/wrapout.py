@@ -108,7 +108,7 @@ class Wrapper(object):
             self._red,
             b't=%07d' % (time.time() - self._t0),
             self._reset,
-            ' ',
+            b' ',
             text,
         ]))
         binary_stderr.flush()
@@ -150,7 +150,7 @@ class Wrapper(object):
                     if midline_kind is not None:
                         self.destination.write(b'\n')
                         midline_kind = None
-                    self.output(OUTKIND_EXTRA, 'forwarded signal %d to child\n' % data)
+                    self.output(OUTKIND_EXTRA, b'forwarded signal %d to child\n' % data)
                 elif etype in ('stdout', 'stderr'):
                     if not len(data):
                         continue # EOF, nothing for us to do.
