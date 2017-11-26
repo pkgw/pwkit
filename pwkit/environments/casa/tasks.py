@@ -2200,6 +2200,10 @@ def listobs_cli(argv):
         else:
             out = proc.stdin
 
+            if not six.PY2:
+                import codecs
+                out = codecs.getwriter('utf8')(out)
+
     for line in listobs(vis):
         print(line, file=out)
 
