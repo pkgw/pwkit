@@ -91,6 +91,7 @@ class Wrapper(object):
 
 
     def output(self, kind, line):
+        "*line* should be bytes"
         self.destination.write(b''.join([
             self._cyan,
             b't=%07d' % (time.time() - self._t0),
@@ -104,6 +105,7 @@ class Wrapper(object):
 
 
     def output_stderr(self, text):
+        "*text* should be bytes"
         binary_stderr.write(b''.join([
             self._red,
             b't=%07d' % (time.time() - self._t0),
