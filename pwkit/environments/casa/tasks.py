@@ -233,6 +233,19 @@ Python lists, and so on.
 %(bulk)s
 """
 
+def makecfgdoc(taskname, doc):
+    """In Python 2.x you can't alter the __doc__ of a class after you define it,
+    so we need to provide a function that does the munging when we define each
+    class. This is that function.
+
+    """
+    doc_args = dict(
+        bulk = '\n'.join(l for l in doc.splitlines() if not l.startswith ('casatask ')),
+        taskname = taskname
+    )
+
+    return _kwcli_cfg_class_doc_template % doc_args
+
 _kwcli_impl_doc_template = """\
 The ``%(taskname)s`` task.
 
@@ -271,7 +284,6 @@ def makekwcli(doc, cfgclass, impl):
         taskname = impl.__name__,
     )
 
-    cfgclass.__doc__ = _kwcli_cfg_class_doc_template % doc_args
     impl.__doc__ = _kwcli_impl_doc_template % doc_args
 
     return kwclifunc
@@ -296,6 +308,8 @@ calwt=
 
 
 class ApplycalConfig(ParseKeywords):
+    __doc__ = makecfgdoc('applycal', applycal_doc)
+
     vis = Custom(str, required=True)
     calwt = False
     # skipping: flagbackup
@@ -381,6 +395,8 @@ margins=TOP,RIGHT,LEFT,BOTTOM
 
 
 class BpplotConfig(ParseKeywords):
+    __doc__ = makecfgdoc('bpplot', bpplot_doc)
+
     caltable = Custom(str, required=True)
     dest = str
     dims = [1000, 600]
@@ -848,6 +864,8 @@ margins=TOP,RIGHT,LEFT,BOTTOM
 
 
 class ElplotConfig(ParseKeywords):
+    __doc__ = makecfgdoc('elplot', elplot_doc)
+
     vis = Custom(str, required=True)
     dest = str
     dims = [1000, 600]
@@ -1029,6 +1047,8 @@ Flag data using auto-generated lists of flagging commands.
 """
 
 class FlagcmdConfig(ParseKeywords):
+    __doc__ = makecfgdoc('flagcmd', flagcmd_doc)
+
     vis = Custom(str, required=True)
     inpmode = 'table'
     useapplied = False
@@ -1076,6 +1096,8 @@ version.
 """
 
 class FlaglistConfig(ParseKeywords):
+    __doc__ = makecfgdoc('flaglist', flaglist_doc)
+
     vis = Custom(str, required=True)
     inpfile = Custom(str, required=True)
     datacol = 'data'
@@ -1239,6 +1261,8 @@ Flag zero data points in the specified data column.
 """
 
 class FlagzerosConfig(ParseKeywords):
+    __doc__ = makecfgdoc('flagzeros', flagzeros_doc)
+
     vis = Custom(str, required=True)
     datacol = 'data'
     loglevel = 'warn'
@@ -1313,6 +1337,8 @@ refspwmap=
 
 
 class FluxscaleConfig(ParseKeywords):
+    __doc__ = makecfgdoc('fluxscale', fluxscale_doc)
+
     vis = Custom(str, required=True)
     caltable = Custom(str, required=True)
     fluxtable = Custom(str, required=True)
@@ -1399,6 +1425,8 @@ usescratch=
 
 
 class FtConfig(ParseKeywords):
+    __doc__ = makecfgdoc('ft', ft_doc)
+
     vis = Custom(str, required=True)
     model = [str]
     complist = str
@@ -1535,6 +1563,8 @@ smodel=I,Q,U,V
 
 
 class GaincalConfig(ParseKeywords):
+    __doc__ = makecfgdoc('gaincal', gaincal_doc)
+
     vis = Custom(str, required=True)
     caltable = Custom(str, required=True)
     gaintype = 'G'
@@ -1693,6 +1723,8 @@ spw=
 
 
 class GencalConfig(ParseKeywords):
+    __doc__ = makecfgdoc('gencal', gencal_doc)
+
     vis = Custom(str, required=True)
     caltable = Custom(str, required=True)
     caltype = Custom(str, required=True)
@@ -1814,6 +1846,8 @@ maxtimegap=int
 
 
 class GpdetrendConfig(ParseKeywords):
+    __doc__ = makecfgdoc('gpdetrend', gpdetrend_doc)
+
     caltable = Custom(str, required=True)
     maxtimegap = int
     loglevel = 'warn'
@@ -1939,6 +1973,8 @@ phaseonly=false
 
 
 class GpplotConfig(ParseKeywords):
+    __doc__ = makecfgdoc('gpplot', gpplot_doc)
+
     caltable = Custom(str, required=True)
     dest = str
     dims = [1000, 600]
@@ -2938,6 +2974,8 @@ wprojplanes = 1
 """ + stdsel_doc + loglevel_doc.replace('warn;', 'info;')
 
 class MfscleanConfig(ParseKeywords):
+    __doc__ = makecfgdoc('mfsclean', mfsclean_doc)
+
     vis = Custom(str, required=True)
     imbase = Custom(str, required=True)
 
@@ -3240,6 +3278,8 @@ timespan=<undefined>
 """ + stdsel_doc + loglevel_doc
 
 class MstransformConfig(ParseKeywords):
+    __doc__ = makecfgdoc('mstransform', mstransform_doc)
+
     vis = Custom(str, required=True)
     out = Custom(str, required=True)
 
@@ -3392,6 +3432,8 @@ To be documented. These keywords control the plot appearance: ``plotsymbol``,
 
 
 class PlotcalConfig(ParseKeywords):
+    __doc__ = makecfgdoc('plotcal', plotcal_doc)
+
     caltable = Custom(str, required=True)
     xaxis = 'time'
     yaxis = 'amp'
@@ -3507,6 +3549,8 @@ Only a subset of the standard data selection keywords are supported:
 """ + loglevel_doc
 
 class SetjyConfig(ParseKeywords):
+    __doc__ = makecfgdoc('setjy', setjy_doc)
+
     vis = Custom(str, required=True)
     modimage = str
     fluxdensity = [-1., 0., 0., 0.]
@@ -3604,6 +3648,8 @@ combine=[col1,col2,...]
 """ + stdsel_doc + loglevel_doc
 
 class SplitConfig(ParseKeywords):
+    __doc__ = makecfgdoc('split', split_doc)
+
     vis = Custom(str, required=True)
     out = Custom(str, required=True)
 
@@ -3733,6 +3779,8 @@ margins=TOP,RIGHT,LEFT,BOTTOM
 
 
 class TsysplotConfig(ParseKeywords):
+    __doc__ = makecfgdoc('tsysplot', tsysplot_doc)
+
     caltable = Custom(str, required=True)
     dest = str
     dims = [1000, 600]
@@ -3901,6 +3949,8 @@ reverse=
 
 
 class UvsubConfig(ParseKeywords):
+    __doc__ = makecfgdoc('uvsub', uvsub_doc)
+
     vis = Custom(str, required=True)
     reverse = False
 
@@ -3963,6 +4013,8 @@ margins=TOP,RIGHT,LEFT,BOTTOM
 
 
 class XyphplotConfig(ParseKeywords):
+    __doc__ = makecfgdoc('xyphplot', xyphplot_doc)
+
     caltable = Custom(str, required=True)
     dest = str
     dims = [1000, 600]
