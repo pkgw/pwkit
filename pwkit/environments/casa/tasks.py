@@ -57,7 +57,7 @@ importevla importevla_cli
 listobs listobs_cli
 listsdm listsdm_cli
 mfsclean mfsclean_cli MfscleanConfig
-mjd2date_cli
+mjd2date mjd2date_cli
 mstransform mstransform_cli MstransformConfig
 plotants plotants_cli
 plotcal plotcal_cli PlotcalConfig
@@ -78,7 +78,7 @@ from .util import sanitize_unicode as b
 
 precal_doc = \
 """
-*** Pre-applied calibrations:
+**Pre-applied calibrations**
 
 gaintable=
   Comma-separated list of calibration tables to apply on-the-fly
@@ -92,8 +92,7 @@ gainfield=
 interp=
   COMMA-separated list of interpolation types to use for each gain
   table. If there are fewer items, the list is padded with 'linear'
-  entries. Allowed values:
-    nearest linear cubic spline
+  entries. Allowed values: nearest linear cubic spline
 
 spwmap=
   SEMICOLON-separated list of spectral window mappings for each
@@ -119,26 +118,19 @@ parang=
 
 stdsel_doc = \
 """
-*** Standard data selection keywords:
-
-antenna=
-array=
-correlation=
-field=
-intent=
-observation=
-scan=
-spw=
-taql=
-timerange=
-uvrange=
+Standard data selection keywords
+  This task can filter input data using any of the following keywords,
+  specified as in the standard CASA interface: ``antenna``, ``array``,
+  ``correlation``, ``field``, ``intent``, ``observation``, ``scan``, ``spw``,
+  ``taql``, ``timerange``, ``uvrange``.
 """
 
 loglevel_doc = \
 """
 loglevel=
-  Level of detail from CASA logging system. Default: warn; allowed:
-    severe warn info info1 info2 info3 info4 info5 debug1 debug2 debugging
+  Level of detail from CASA logging system. Default value is ``warn``. Allowed
+  values are: ``severe``, ``warn``, ``info``, ``info1``, ``info2``, ``info3``,
+  ``info4``, ``info5``, ``debug1``, ``debug2``, ``debugging``.
 """
 
 def extractmsselect(cfg, havearray=False, havecorr=False, haveintent=True,
@@ -228,12 +220,60 @@ def applyonthefly(cb, cfg):
         cb.setapply(type=b'P')
 
 
+_kwcli_cfg_class_doc_template = """\
+This is a configuration object for the ``%(taskname)s`` task. This object
+contains no methods. Rather it contains placeholders (and default values) for
+parameters that can be passed to :func:`%(taskname)s`.
+
+The following documentation is written to target the **command-line** version
+of this task, which may be invoked as ``casatask %(taskname)s``. “Keywords”
+refer attributes of this structure, “comma-separated lists” should become
+Python lists, and so on.
+
+%(bulk)s
+"""
+
+_kwcli_impl_doc_template = """\
+The ``%(taskname)s`` task.
+
+cfg
+    A :class:`%(cfgname)s` object.
+
+This function runs the ``%(taskname)s`` task. *For documentation of the
+general functionality of this task and the parameters it takes*, see the
+documentation for the :class:`%(cfgname)s` object below. Example::
+
+    from pwkit.environments.casa import tasks
+
+    cfg = tasks.%(cfgname)s()
+    cfg.vis = 'mydataset.ms'
+    # ... set other parameters ...
+    tasks.%(taskname)s(cfg)
+
+This task may also be invoked through the command line, as ``casatask
+%(taskname)s``. Run ``casatask %(taskname)s --help`` to see another version of
+the documentation provided below.
+
+"""
+
 def makekwcli(doc, cfgclass, impl):
     def kwclifunc(argv):
         check_usage(doc, argv, usageifnoargs=True)
         cfg = cfgclass().parse(argv[1:])
         util.logger(cfg.loglevel)
         impl(cfg)
+
+    # Doc magic
+
+    doc_args = dict(
+        bulk = '\n'.join(l for l in doc.splitlines() if not l.startswith ('casatask ')),
+        cfgname = cfgclass.__name__,
+        taskname = impl.__name__,
+    )
+
+    cfgclass.__doc__ = _kwcli_cfg_class_doc_template % doc_args
+    impl.__doc__ = _kwcli_impl_doc_template % doc_args
+
     return kwclifunc
 
 
@@ -485,7 +525,7 @@ clearcal_doc = \
 """
 casatask clearcal [-w] <vis1> [more vises...]
 
-Fill the imaging and calibration columns(MODEL_DATA, CORRECTED_DATA,
+Fill the imaging and calibration columns (MODEL_DATA, CORRECTED_DATA,
 IMAGING_WEIGHT) of each measurement set with default values, creating
 the columns if necessary.
 
@@ -511,6 +551,26 @@ clearcal_imaging_dminfo_tmpl = {'TYPE': 'TiledShapeStMan',
                                 'NAME': 'imagingweight'}
 
 def clearcal(vis, weightonly=False):
+    """Fill the imaging and calibration columns (``MODEL_DATA``,
+    ``CORRECTED_DATA``, ``IMAGING_WEIGHT``) of each measurement set with
+    default values, creating the columns if necessary.
+
+    vis (string)
+      Path to the input measurement set
+    weightonly (boolean)
+      If true, just create the ``IMAGING_WEIGHT`` column; do not fill
+      in the visibility data columns.
+
+    If you want to reset calibration models, these days you probably want
+    :func:`delmod_cli`. If you want to quickly make the columns go away, you
+    probably want :func:`delcal`.
+
+    Example::
+
+      from pwkit.environments.casa import tasks
+      tasks.clearcal('myvis.ms')
+
+    """
     tb = util.tools.table()
     cb = util.tools.calibrater()
 
@@ -578,6 +638,21 @@ concat_freqtol = 1e-5
 concat_dirtol = 1e-5
 
 def concat(invises, outvis, timesort=False):
+    """Concatenate visibility measurement sets.
+
+    invises (list of str)
+      Paths to the input measurement sets
+    outvis (str)
+      Path to the output measurement set.
+    timesort (boolean)
+      If true, sort the output in time after concatenation.
+
+    Example::
+
+      from pwkit.environments.casa import tasks
+      tasks.concat(['epoch1.ms', 'epoch2.ms'], 'combined.ms')
+
+    """
     tb = util.tools.table()
     ms = util.tools.ms()
 
@@ -637,6 +712,17 @@ Delete the MODEL_DATA and CORRECTED_DATA columns from MSes.
 
 
 def delcal(mspath):
+    """Delete the ``MODEL_DATA`` and ``CORRECTED_DATA`` columns from a measurement set.
+
+    mspath (str)
+      The path to the MS to modify
+
+    Example::
+
+      from pwkit.environments.casa import tasks
+      tasks.delcal('dataset.ms')
+
+    """
     wantremove = 'MODEL_DATA CORRECTED_DATA'.split()
     tb = util.tools.table()
     tb.open(b(mspath), nomodify=False)
@@ -676,6 +762,22 @@ gratuitously different from CASA.
 """
 
 def delmod_cli(argv, alter_logger=True):
+    """Command-line access to ``delmod`` functionality.
+
+    The ``delmod`` task deletes "on-the-fly" model information from a
+    Measurement Set. It is so easy to implement that a standalone
+    function is essentially unnecessary. Just write::
+
+      from pwkit.environments.casa import util
+      cb = util.tools.calibrater()
+      cb.open('datasaet.ms', addcorr=False, addmodel=False)
+      cb.delmod(otf=True, scr=False)
+      cb.close()
+
+    If you want to delete the scratch columns, use :func:`delcal`. If you want
+    to clear the scratch columns, use :func:`clearcal`.
+
+    """
     check_usage(delmod_doc, argv, usageifnoargs=True)
     if alter_logger:
         util.logger()
@@ -846,6 +948,17 @@ are the same.
 """
 
 def extractbpflags(calpath, deststream):
+    """Make a flags file out of a bandpass calibration table
+
+    calpath (str)
+      The path to the bandpass calibration table
+    deststream (stream-like object, e.g. an opened file)
+      Where to write the flags data
+
+    Below is documentation written for the command-line interface to this
+    functionality:
+
+    """
     tb = util.tools.table()
     tb.open(b(os.path.join(calpath, 'ANTENNA')))
     antnames = tb.getcol(b'NAME')
@@ -892,6 +1005,8 @@ def extractbpflags(calpath, deststream):
             emit(ant, spw, runstart, i)
 
     tb.close()
+
+extractbpflags.__doc__ += extractbpflags_doc
 
 
 def extractbpflags_cli(argv):
@@ -1045,6 +1160,15 @@ casatask flagmanager delete <ms> <name>
 """
 
 def flagmanager_cli(argv, alter_logger=True):
+    """Command-line access to ``flagmanager`` functionality.
+
+    The ``flagmanager`` task manages tables of flags associated with
+    measurement sets. Its features are easy to implement that a standalone
+    library function is essentially unnecessary. See the source code to this
+    function for the tool calls that implement different parts of the
+    ``flagmanager`` functionality.
+
+    """
     check_usage(flagmanager_doc, argv, usageifnoargs=True)
 
     if len(argv) < 3:
@@ -1342,7 +1466,7 @@ vis=
   Input dataset
 
 caltable=
-  Output calibration table(can exist if append=True)
+  Output calibration table (can exist if append=True)
 
 gaintype=
   Kind of gain solution:
@@ -1366,41 +1490,40 @@ gaintype=
 
 calmode=
   What parameters to solve for: amplitude("a"), phase("p"), or both
- ("ap"). Default is "ap". Not used in bandpass solutions.
+  ("ap"). Default is "ap". Not used in bandpass solutions.
 
 solint=
   Solution interval; this is an upper bound, but solutions
   will be broken across certain boundaries according to "combine".
   'inf'    - solutions as long as possible(the default)
   'int'    - one solution per integration
- (str)    - a specific time with units(e.g. '5min')
- (number) - a specific time in seconds
+  (str)    - a specific time with units(e.g. '5min')
+  (number) - a specific time in seconds
 
 combine=
-  Comma-separated list of boundary types; solutions will NOT be
-  broken across these boundaries. Types are:
-    field scan spw
+  Comma-separated list of boundary types; solutions will NOT be broken across
+  these boundaries. Types are: ``field``, ``scan``, ``spw``.
 
 refant=
   Comma-separated list of reference antennas in decreasing
   priority order.
 
 solnorm=
-  Normalize solution amplitudes to 1 after solving(only applies
+  Normalize solution amplitudes to 1 after solving (only applies
   to gaintypes G, T, B). Also normalizes bandpass phases to zero
   when solving for bandpasses. Default: false.
 
 append=
   Whether to append solutions to an existing table. If the table
-  exists and append=False, the table is overwritten!(Default: false)
+  exists and append=False, the table is overwritten! (Default: false)
 """ + precal_doc + """
-*** Low-level parameters:
+**Low-level parameters**
 
 minblperant=
-  Number of baselines for each ant in order to solve(default: 4)
+  Number of baselines for each ant in order to solve (default: 4)
 
 minsnr=
-  Min. SNR for acceptable solutions(default: 3.0)
+  Min. SNR for acceptable solutions (default: 3.0)
 
 preavg=
   Interval for pre-averaging data within each solution interval,
@@ -1528,7 +1651,7 @@ vis=
   Input dataset
 
 caltable=
-  Output calibration table(appended to if preexisting)
+  Output calibration table (appended to if preexisting)
 
 caltype=
   The kind of table to generate:
@@ -1541,8 +1664,8 @@ caltype=
   tsys      - tsys from ALMA syscal table
   swpow     - EVLA switched-power and requantizer gains("experimental")
   opac      - tropospheric opacity; needs parameter
-  gc        -(E)VLA elevation-dependent gain curve
-  eff       -(E)VLA antenna efficiency correction
+  gc        - (E)VLA elevation-dependent gain curve
+  eff       - (E)VLA antenna efficiency correction
   gceff     - combination of "gc" and "eff"
   rq        - EVLA requantizer gains; not what you want
   swp/rq    - EVLA switched-power gains divided by "rq"; not what you want
@@ -1558,10 +1681,14 @@ parameter=
   opac      - opacity; dimensionless(nepers?)
 
 antenna=
-pol=
-spw=
-  Selection keywords governing which solutions to generate and controlling shape
+  Selection keyword, governing which solutions to generate and controlling shape
   of "parameter" keyword.
+
+pol=
+  Analogous to "antenna"
+
+spw=
+  Analogous to "antenna"
 """ + loglevel_doc
 
 
@@ -2030,6 +2157,35 @@ Convert an image in MS format to FITS format.
 def image2fits(mspath, fitspath, velocity=False, optical=False, bitpix=-32,
                 minpix=0, maxpix=-1, overwrite=False, dropstokes=False, stokeslast=True,
                 history=True, **kwargs):
+    """Convert an image in MS format to FITS format.
+
+    mspath (str)
+      The path to the input MS.
+    fitspath (str)
+      The path to the output FITS file.
+    velocity (boolean)
+      (To be documented.)
+    optical (boolean)
+      (To be documented.)
+    bitpix (integer)
+      (To be documented.)
+    minpix (integer)
+      (To be documented.)
+    maxpix (integer)
+      (To be documented.)
+    overwrite (boolean)
+      Whether the task is allowed to overwrite an existing destination file.
+    dropstokes (boolean)
+      Whether the "Stokes" (polarization) axis of the image should be dropped.
+    stokeslast (boolean)
+      Whether the "Stokes" (polarization) axis of the image should be placed as the last
+      (innermost?) axis of the image cube.
+    history (boolean)
+      (To be documented.)
+    ``**kwargs``
+      Forwarded on to the ``tofits`` function of the CASA ``image`` tool.
+
+    """
     ia = util.tools.image()
     ia.open(b(mspath))
     ia.tofits(outfile=b(fitspath), velocity=velocity, optical=optical, bitpix=bitpix,
@@ -2063,6 +2219,22 @@ implementation automatically infers the value of the "tbuff" parameter.
 """
 
 def importalma(asdm, ms):
+    """Convert an ALMA low-level ASDM dataset to Measurement Set format.
+
+    asdm (str)
+      The path to the input ASDM dataset.
+    ms (str)
+      The path to the output MS dataset.
+
+    This implementation automatically infers the value of the "tbuff"
+    parameter.
+
+    Example::
+
+      from pwkit.environments.casa import tasks
+      tasks.importalma('myalma.asdm', 'myalma.ms')
+
+    """
     from .scripting import CasapyScript
 
     script = os.path.join(os.path.dirname(__file__), 'cscript_importalma.py')
@@ -2094,6 +2266,22 @@ implementation automatically infers the value of the "tbuff" parameter.
 """
 
 def importevla(asdm, ms):
+    """Convert an EVLA low-level SDM dataset to Measurement Set format.
+
+    asdm (str)
+      The path to the input ASDM dataset.
+    ms (str)
+      The path to the output MS dataset.
+
+    This implementation automatically infers the value of the "tbuff"
+    parameter.
+
+    Example::
+
+      from pwkit.environments.casa import tasks
+      tasks.importevla('myvla.sdm', 'myvla.ms')
+
+    """
     from .scripting import CasapyScript
 
     # Here's the best way I can figure to find the recommended value of tbuff
@@ -2156,9 +2344,21 @@ standard output is a TTY, the listing will be paged.
 """
 
 def listobs(vis):
-    """Generates a set of lines of output. Errors are only detected by looking
-    at the output."""
+    """Textually describe the contents of a measurement set.
 
+    vis (str)
+      The path to the dataset.
+    Returns
+      A generator of lines of human-readable output
+
+    Errors can only be detected by looking at the output. Example::
+
+      from pwkit.environments.casa import tasks
+
+      for line in tasks.listobs('mydataset.ms'):
+        print(line)
+
+    """
     def inner_list(sink):
         try:
             ms = util.tools.ms()
@@ -2229,12 +2429,28 @@ The CASA "listsdm" functionality is implemented in pure Python, so unlike the
 """
 
 def listsdm(sdm, file=None):
-    """This code based on CASA's `task_listsdm.py`, with this version info:
+    """Generate a standard "listsdm" listing of(A)SDM dataset contents.
 
-    # v1.0: 2010.12.07, M. Krauss
-    # v1.1: 2011.02.23, M. Krauss: added functionality for ALMA data
-    #
-    # Original code based on readscans.py, courtesy S. Meyers
+    sdm (str)
+      The path to the (A)SDM dataset to parse
+    file (stream-like object, such as an opened file)
+      Where to print the human-readable listing. If unspecified, results
+      go to :data:`sys.stdout`.
+    Returns
+      A dictionary of information about the dataset. Contents not yet
+      documented.
+
+    Example::
+
+      from pwkit.environments.casa import tasks
+      tasks.listsdm('myalmaa.asdm')
+
+    This code based on CASA's `task_listsdm.py`, with this version info::
+
+      # v1.0: 2010.12.07, M. Krauss
+      # v1.1: 2011.02.23, M. Krauss: added functionality for ALMA data
+      #
+      # Original code based on readscans.py, courtesy S. Meyers
 
     """
     from xml.dom import minidom
@@ -2942,6 +3158,24 @@ Convert an MJD to a date in the format used by CASA.
 
 """
 def mjd2date(mjd, precision=3):
+    """Convert an MJD to a data string in the format used by CASA.
+
+    mjd (numeric)
+      An MJD value in the UTC timescale.
+    precision (integer, default 3)
+      The number of digits of decimal precision in the seconds portion of
+      the returned string
+    Returns
+      A string representing the input argument in CASA format:
+      ``YYYY/MM/DD/HH:MM:SS.SSS``.
+
+    Example::
+
+      from pwkit.environment.casa import tasks
+      print(tasks.mjd2date(55555))
+      # yields '2010/12/25/00:00:00.000'
+
+    """
     from astropy.time import Time
     dt = Time(mjd, format='mjd', scale='utc').to_datetime()
     fracsec = ('%.*f' % (precision, 1e-6 * dt.microsecond)).split('.')[1]
@@ -2972,8 +3206,8 @@ out=
   Output visibility MS
 
 datacolumn=corrected
-  The data column on which to operate. Comma-separated list of:
-    data, model, corrected, float_data, lag_data, all
+  The data column on which to operate. Comma-separated list of: ``data``,
+  ``model``, ``corrected``, ``float_data``, ``lag_data``, ``all``
 
 realmodelcol=False
   If true, turn a virtual model column into a real one.
@@ -3001,8 +3235,7 @@ timebin=<seconds>
 
 timespan=<undefined>
   Allow averaging to span over potential discontinuities in the data set.
-  Comma-separated list of options; allowed values are:
-    scan, state
+  Comma-separated list of options; allowed values are: ``scan``, ``state``
 
 """ + stdsel_doc + loglevel_doc
 
@@ -3093,6 +3326,20 @@ Plot the physical layout of the antennas described in the MS.
 """
 
 def plotants(vis, figfile):
+    """Plot the physical layout of the antennas described in the MS.
+
+    vis (str)
+      Path to the input dataset
+    figfile (str)
+      Path to the output image file.
+
+    The output image format will be inferred from the extension of *figfile*.
+    Example::
+
+      from pwkit.environments.casa import tasks
+      tasks.plotants('dataset.ms', 'antennas.png')
+
+    """
     from .scripting import CasapyScript
 
     script = os.path.join(os.path.dirname(__file__), 'cscript_plotants.py')
@@ -3130,21 +3377,16 @@ yaxis=
 iteration=
   antenna field spw time
 
-*** Data selection
+**Supported data selection keywords**
 
-antenna=
-field=
-poln=
-  RL R L XY X Y '/'
-spw=
-timerange=
+Limited data selection is supported. Allowed keywords are ``antenna``,
+``field``, ``poln``, ``spw``, and ``timerange``. The ``poln`` keyword may take
+on the values ``RL``, ``R``, ``L``, ``XY``, ``X``, ``Y``, and ``/``.
 
-*** Plot appearance options
+**Plot appearance options**
 
-plotsymbol=
-plotcolor=
-fontsize=
-figfile=
+To be documented. These keywords control the plot appearance: ``plotsymbol``,
+``plotcolor``, ``fontsize``, ``figfile``.
 
 """ + loglevel_doc
 
@@ -3205,10 +3447,7 @@ def plotcal(cfg):
         pass
 
 
-def plotcal_cli(argv):
-    check_usage(plotcal_doc, argv, usageifnoargs=True)
-    cfg = PlotcalConfig().parse(argv[1:])
-    plotcal(cfg)
+plotcal_cli = makekwcli(plotcal_doc, PlotcalConfig, plotcal)
 
 
 # polmodel
@@ -3232,8 +3471,8 @@ and scalebychan=True. You probably want to specify "field".
 fluxdensity=
   Up to four comma-separated numbers giving Stokes IQUV intensities in
   Jy. Default values are [-1, 0, 0, 0]. If the Stokes I intensity is
-  negative(i.e., the default), a "sensible default" will be used:
-  detailed spectral models if the source is known(see "standard"), or
+  negative (i.e., the default), a "sensible default" will be used:
+  detailed spectral models if the source is known (see "standard"), or
   1 otherwise. If it is zero and "modimage" is used, the flux density
   of the model image is used. The built-in standards do NOT have
   polarimetric information, so for pol cal you do need to manually
@@ -3242,17 +3481,18 @@ fluxdensity=
 
 modimage=
   An image to use as the basis for the source's spatial structure and,
-  potentialy, flux density(if fluxdensity=0). Only usable for Stokes
+  potentialy, flux density (if fluxdensity=0). Only usable for Stokes
   I.  If the verbatim value of "modimage" can't be opened as a path,
   it is assumed to be relative to the CASA data directory; a typical
   value might be "nrao/VLA/CalModels/3C286_C.im".
 
 spindex=
+  If using ``fluxdensity``, these specify the spectral dependence of the values,
+  such that ``S = fluxdensity * (freq/reffreq)**spindex``. Reffreq is in GHz.
+  Default values are 0 and 1, giving no spectral dependence.
+
 reffreq=
-  If using fluxdensity, these specify the spectral dependence of the
-  values, such that S = fluxdensity * (freq/reffreq)**spindex. Reffreq
-  is in GHz. Default values are 0 and 1, giving no spectral
-  dependence.
+  See ``spindex``.
 
 standard='Perley-Butler 2013'
   Acceptable values are: Baars, Perley 90, Perley-Taylor 95,
@@ -3260,13 +3500,10 @@ standard='Perley-Butler 2013'
   specify the solar-system standard "Butler-JPL-Horizons 2012", but
   doing so farms out the work to a stock CASA installation.
 
-*** Supported data selection keywords:
+**Supported data selection keywords**
 
-field=
-observation=
-scan=
-spw=
-timerange=
+Only a subset of the standard data selection keywords are supported:
+``field``, ``observation``, ``scan``, ``spw``, ``timerange``..
 """ + loglevel_doc
 
 class SetjyConfig(ParseKeywords):
@@ -3358,13 +3595,12 @@ step=
 
 col=all
   Extract the column "col" as the DATA column. If "all", copy all available
-  columns without renaming. Possible values:
-    all DATA MODEL_DATA CORRECTED_DATA FLOAT_DATA LAG_DATA
+  columns without renaming. Possible values: ``all``, ``DATA``, ``MODEL_DATA``,
+  ``CORRECTED_DATA``, ``FLOAT_DATA``, ``LAG_DATA``.
 
 combine=[col1,col2,...]
   When time-averaging, don't start a new bin when the specified columns change.
-  Acceptable column names:
-    scan state
+  Acceptable column names: ``scan``, ``state``.
 """ + stdsel_doc + loglevel_doc
 
 class SplitConfig(ParseKeywords):

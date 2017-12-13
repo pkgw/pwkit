@@ -12,6 +12,26 @@ Programmatic access to CASA tasks (:mod:`pwkit.environments.casa.tasks`)
 
 .. currentmodule:: pwkit.environments.casa.tasks
 
+Example programmatic usage::
+
+  from pwkit.environments.casa import tasks
+
+  vis_path = 'mydataset.ms'
+
+  # A basic listobs:
+
+  for output_line in tasks.listobs(vis_path):
+      print(output_line)
+
+  # Split a dataset with filtering and averaging:
+
+  cfg = tasks.SplitConfig()
+  cfg.vis = vis_path
+  cfg.out = 'new-' + vis_path
+  cfg.spw = '0~8'
+  cfg.timebin = 60 # seconds
+  tasks.split(cfg)
+
 This module implements the following analysis tasks. Some of them are
 extremely close to CASA tasks of the same name; some are streamlined; some are
 not provided in CASA at all.
@@ -82,177 +102,230 @@ The following tasks are provided by the associated command line program,
 Tasks
 -----
 
-The documentation scheme for the CASA task wrappers is a work in progress. For
-now, the best way to get the best documentation is from the command-line
-interface. Run ``casatask taskname --help``, replacing ``taskname`` with the
-name of the task of interest.
+This documentation is automatically generated from text that is targeted at
+the command-line tasks, and so may read a bit strangely at times.
 
 .. _task-applycal:
 
 applycal
 ~~~~~~~~~~~~~~~~~~~
+.. autofunction:: applycal
+.. autoclass:: ApplycalConfig
+
 
 .. _task-bpplot:
 
 bpplot
 ~~~~~~~~~~~~~~~~~~~
+.. autofunction:: bpplot
+.. autoclass:: BpplotConfig
 
 .. _task-clearcal:
 
 clearcal
 ~~~~~~~~~~~~~~~~~~~
+.. autofunction:: clearcal
 
 .. _task-concat:
 
 concat
 ~~~~~~~~~~~~~~~~~~~
+.. autofunction:: concat
 
 .. _task-delcal:
 
 delcal
 ~~~~~~~~~~~~~~~~~~~
+.. autofunction:: delcal
 
 .. _task-delmod:
 
 delmod
 ~~~~~~~~~~~~~~~~~~~
+.. autofunction:: delmod_cli
 
 .. _task-elplot:
 
 elplot
 ~~~~~~~~~~~~~~~~~~~
+.. autofunction:: elplot
+.. autoclass:: ElplotConfig
 
 .. _task-extractbpflags:
 
 extractbpflags
 ~~~~~~~~~~~~~~~~~~~
+.. autofunction:: extractbpflags
 
 .. _task-flagcmd:
 
 flagcmd
 ~~~~~~~~~~~~~~~~~~~
+.. autofunction:: flagcmd
+.. autoclass:: FlagcmdConfig
 
 .. _task-flaglist:
 
 flaglist
 ~~~~~~~~~~~~~~~~~~~
+.. autofunction:: flaglist
+.. autoclass:: FlaglistConfig
 
 .. _task-flagmanager:
 
 flagmanager
 ~~~~~~~~~~~~~~~~~~~
+.. autofunction:: flagmanager_cli
 
 .. _task-flagzeros:
 
 flagzeros
 ~~~~~~~~~~~~~~~~~~~
+.. autofunction:: flagzeros
+.. autoclass:: FlagzerosConfig
 
 .. _task-fluxscale:
 
 fluxscale
 ~~~~~~~~~~~~~~~~~~~
+.. autofunction:: fluxscale
+.. autoclass:: FluxscaleConfig
 
 .. _task-ft:
 
 ft
 ~~~~~~~~~~~~~~~~~~~
+.. autofunction:: ft
+.. autoclass:: FtConfig
 
 .. _task-gaincal:
 
 gaincal
 ~~~~~~~~~~~~~~~~~~~
+.. autofunction:: gaincal
+.. autoclass:: GaincalConfig
 
 .. _task-gencal:
 
 gencal
 ~~~~~~~~~~~~~~~~~~~
+.. autofunction:: gencal
+.. autoclass:: GencalConfig
 
 .. _task-getopacities:
 
 getopacities
 ~~~~~~~~~~~~~~~~~~~
+.. autofunction:: getopacities
 
 .. _task-gpdetrend:
 
 gpdetrend
 ~~~~~~~~~~~~~~~~~~~
+.. autofunction:: gpdetrend
+.. autoclass:: GpdetrendConfig
 
 .. _task-gpplot:
 
 gpplot
 ~~~~~~~~~~~~~~~~~~~
+.. autofunction:: gpplot
+.. autoclass:: GpplotConfig
 
 .. _task-image2fits:
 
 image2fits
 ~~~~~~~~~~~~~~~~~~~
+.. autofunction:: image2fits
 
 .. _task-importalma:
 
 importalma
 ~~~~~~~~~~~~~~~~~~~
+.. autofunction:: importalma
 
 .. _task-importevla:
 
 importevla
 ~~~~~~~~~~~~~~~~~~~
+.. autofunction:: importevla
 
 .. _task-listobs:
 
 listobs
 ~~~~~~~~~~~~~~~~~~~
+.. autofunction:: listobs
 
 .. _task-listsdm:
 
 listsdm
 ~~~~~~~~~~~~~~~~~~~
+.. autofunction:: listsdm
 
 .. _task-mfsclean:
 
 mfsclean
 ~~~~~~~~~~~~~~~~~~~
+.. autofunction:: mfsclean
+.. autoclass:: MfscleanConfig
 
 .. _task-mjd2date:
 
 mjd2date
 ~~~~~~~~~~~~~~~~~~~
+.. autofunction:: mjd2date
 
 .. _task-mstransform:
 
 mstransform
 ~~~~~~~~~~~~~~~~~~~
+.. autofunction:: mstransform
+.. autoclass:: MstransformConfig
 
 .. _task-plotants:
 
 plotants
 ~~~~~~~~~~~~~~~~~~~
+.. autofunction:: plotants
 
 .. _task-plotcal:
 
 plotcal
 ~~~~~~~~~~~~~~~~~~~
+.. autofunction:: plotcal
+.. autoclass:: PlotcalConfig
 
 .. _task-setjy:
 
 setjy
 ~~~~~~~~~~~~~~~~~~~
+.. autofunction:: setjy
+.. autoclass:: SetjyConfig
 
 .. _task-split:
 
 split
 ~~~~~~~~~~~~~~~~~~~
+.. autofunction:: split
+.. autoclass:: SplitConfig
 
 .. _task-tsysplot:
 
 tsysplot
 ~~~~~~~~~~~~~~~~~~~
+.. autofunction:: tsysplot
+.. autoclass:: TsysplotConfig
 
 .. _task-uvsub:
 
 uvsub
 ~~~~~~~~~~~~~~~~~~~
+.. autofunction:: uvsub
+.. autoclass:: UvsubConfig
 
 .. _task-xyphplot:
 
 xyphplot
 ~~~~~~~~~~~~~~~~~~~
+.. autofunction:: xyphplot
+.. autoclass:: XyphplotConfig
