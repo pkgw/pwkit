@@ -418,7 +418,7 @@ class Viewer(object):
     def __init__(self, title='Array Viewer', default_width=DEFAULT_WIN_WIDTH,
                  default_height=DEFAULT_WIN_HEIGHT):
         self.viewport = Viewport()
-        self.win = Gtk.Window(Gtk.WindowType.TOPLEVEL)
+        self.win = Gtk.Window(type=Gtk.WindowType.TOPLEVEL)
         self.win.set_title(title)
         self.win.set_default_size(default_width, default_height)
         self.win.connect('key-press-event', self._on_key_press)
