@@ -629,7 +629,7 @@ class Cycler(Viewer):
         self.cadence = cadence
 
         self.viewport = Viewport()
-        self.win = Gtk.Window(Gtk.WindowType.TOPLEVEL)
+        self.win = Gtk.Window(type=Gtk.WindowType.TOPLEVEL)
         self.win.set_title(title)
         self.win.set_default_size(default_width, default_height)
         self.win.connect('key-press-event', self._on_key_press)
@@ -648,7 +648,7 @@ class Cycler(Viewer):
         hb.pack_start(self.plane_label, True, True, 2)
         self.desc_label = Gtk.Label()
         hb.pack_start(self.desc_label, True, True, 2)
-        self.cycle_tbutton = Gtk.ToggleButton('Cycle')
+        self.cycle_tbutton = Gtk.ToggleButton(label='Cycle')
         hb.pack_start(self.cycle_tbutton, False, True, 2)
         self.win.add(vb)
 
