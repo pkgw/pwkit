@@ -3,22 +3,22 @@
 
 """unicode_to_latex - what it says
 
-Provides unicode_to_latex(u) and unicode_to_latex_string(u).
+Provides ``unicode_to_latex(u)``, ``unicode_to_latex_bytes(u)``, and
+``unicode_to_latex_string(u)``.
 
-unicode_to_latex returns ASCII bytes that can be fed to LaTeX to
+``unicode_to_latex_bytes`` returns ASCII bytes that can be fed to LaTeX to
 reproduce the Unicode string 'u' as closely as possible.
 
-unicode_to_latex_string returns a Unicode string rather than bytes.
-That is::
+``unicode_to_latex_string`` returns a Unicode string rather than bytes.
 
-  unicode_to_latex(u) = unicode_to_latex_string(u).encode('ascii').
+``unicode_to_latex`` returns the ``str`` type: bytes on Python 2, Unicode on
+Python 3.
+
 """
 
-from __future__ import absolute_import, division, print_function, unicode_literals
+from __future__ import absolute_import, division, print_function
 
-__all__ = str ('unicode_to_latex unicode_to_latex_string').split ()
-
-from . import text_type
+__all__ = 'unicode_to_latex unicode_to_latex_bytes unicode_to_latex_string'.split()
 
 # Based on https://gist.github.com/798549 (owned by github user piquadrat),
 # but modified to make a table usable with unicode.translate(). I had to
@@ -2395,8 +2395,13 @@ unicode_to_latex_table_base = {
 #    u"\u2AC6\u0338": r"\nsupseteqq",
 #    u"\u2AFD\u20E5": r"{\rlap{\textbackslash}{{/}\!\!{/}}}",
 
-from six import iteritems
-unicode_to_latex_table = dict ((ord (k), text_type (v))
-                               for k, v in iteritems (unicode_to_latex_table_base))
-unicode_to_latex_string = lambda u: u.translate (unicode_to_latex_table)
-unicode_to_latex = lambda u: u.translate (unicode_to_latex_table).encode ('ascii')
+from six import PY2, iteritems, text_type
+
+unicode_to_latex_table = dict((ord(k), v.decode('ascii')) for k, v in iteritems(unicode_to_latex_table_base))
+unicode_to_latex_string = lambda u: u.translate(unicode_to_latex_table)
+unicode_to_latex_bytes = lambda u: u.translate(unicode_to_latex_table).encode('ascii')
+
+if PY2:
+    unicode_to_latex = unicode_to_latex_bytes
+else:
+    unicode_to_latex = unicode_to_latex_string
