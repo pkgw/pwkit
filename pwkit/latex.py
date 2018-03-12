@@ -1,5 +1,5 @@
 # -*- mode: python; coding: utf-8 -*-
-# Copyright 2013-2014 Peter Williams <peter@newton.cx> and collaborators.
+# Copyright 2013-2018 Peter Williams <peter@newton.cx> and collaborators.
 # Licensed under the MIT License.
 
 """pwkit.latex - various helpers for the LaTeX typesetting system.
@@ -60,20 +60,20 @@ from six.moves import range
 from . import Holder, PKError, binary_type, msmt, reraise_context, text_type
 
 
-def _reftext (key):
+def _reftext(key):
     if key[0] == '*':
-        return key[1:].encode ('ascii')
-    return b'\\citet{%s}' % key.encode ('ascii')
+        return key[1:].encode('ascii')
+    return b'\\citet{%s}' % key.encode('ascii')
 
 
-class Referencer (object):
+class Referencer(object):
     """Accumulate a numbered list of bibtex references. Methods:
 
-    refkey (bibkey)
+    refkey(bibkey)
       Return a string that should be used to give
       a numbered reference to the given bibtex
       key. "thiswork" is handled specially.
-    dump ()
+    dump()
       Return a string with \citet{} commands identifing
       all of the numbered references.
 
@@ -91,12 +91,12 @@ class Referencer (object):
     thisworktext = b'this work'
     thisworkmarker = b'$\\star$'
 
-    def __init__ (self):
+    def __init__(self):
         self.bibkeys = []
         self.seenthiswork = False
 
 
-    def refkey (self, bibkey):
+    def refkey(self, bibkey):
         if bibkey is None:
             return ''
 
@@ -105,17 +105,17 @@ class Referencer (object):
             return self.thisworkmarker
 
         try:
-            idx = self.bibkeys.index (bibkey)
+            idx = self.bibkeys.index(bibkey)
         except ValueError:
-            idx = len (self.bibkeys)
-            self.bibkeys.append (bibkey)
+            idx = len(self.bibkeys)
+            self.bibkeys.append(bibkey)
 
-        return text_type (idx + 1).encode ('ascii')
+        return text_type(idx + 1).encode('ascii')
 
 
-    def dump (self):
-        s = b', '.join (b'[%d] %s' % (i + 1, _reftext (self.bibkeys[i]))
-                       for i in range (len (self.bibkeys)))
+    def dump(self):
+        s = b', '.join(b'[%d] %s' % (i + 1, _reftext(self.bibkeys[i]))
+                       for i in range(len(self.bibkeys)))
 
         if self.seenthiswork:
             s = (b'[%s]: %s, ' % (self.thisworkmarker, self.thisworktext)) + s
@@ -134,39 +134,39 @@ class Referencer (object):
 _printable_ascii = frozenset(string.printable.encode('ascii'))
 
 
-def latexify (obj, **kwargs):
+def latexify(obj, **kwargs):
     """Render an object in LaTeX appropriately.
 
     """
-    if hasattr (obj, '__pk_latex__'):
-        return obj.__pk_latex__ (**kwargs)
+    if hasattr(obj, '__pk_latex__'):
+        return obj.__pk_latex__(**kwargs)
 
-    if isinstance (obj, text_type):
+    if isinstance(obj, text_type):
         from .unicode_to_latex import unicode_to_latex
-        return unicode_to_latex (obj)
+        return unicode_to_latex(obj)
 
-    if isinstance (obj, bool):
-        # isinstance (True, int) = True, so gotta handle this first.
-        raise ValueError ('no well-defined LaTeXification of bool %r' % obj)
+    if isinstance(obj, bool):
+        # isinstance(True, int) = True, so gotta handle this first.
+        raise ValueError('no well-defined LaTeXification of bool %r' % obj)
 
-    if isinstance (obj, float):
-        nplaces = kwargs.get ('nplaces')
+    if isinstance(obj, float):
+        nplaces = kwargs.get('nplaces')
         if nplaces is None:
             return b'$%f$' % obj
         return b'$%.*f$' % (nplaces, obj)
 
-    if isinstance (obj, int):
+    if isinstance(obj, int):
         return b'$%d$' % obj
 
-    if isinstance (obj, binary_type):
+    if isinstance(obj, binary_type):
         if all(c in _printable_ascii for c in obj):
             return obj
-        raise ValueError ('no safe LaTeXification of binary string %r' % obj)
+        raise ValueError('no safe LaTeXification of binary string %r' % obj)
 
-    raise ValueError ('can\'t LaTeXify %r' % obj)
+    raise ValueError('can\'t LaTeXify %r' % obj)
 
 
-def latexify_n2col (x, nplaces=None, **kwargs):
+def latexify_n2col(x, nplaces=None, **kwargs):
     """Render a number into LaTeX in a 2-column format, where the columns split
     immediately to the left of the decimal point. This gives nice alignment of
     numbers in a table.
@@ -180,11 +180,11 @@ def latexify_n2col (x, nplaces=None, **kwargs):
     if b'.' not in t:
         return b'$%s$ &' % t
 
-    left, right = t.split (b'.')
+    left, right = t.split(b'.')
     return b'$%s$ & $.%s$' % (left, right)
 
 
-def latexify_u3col (obj, **kwargs):
+def latexify_u3col(obj, **kwargs):
     """Convert an object to special LaTeX for uncertainty tables.
 
     This conversion is meant for uncertain values in a table. The return value
@@ -196,16 +196,16 @@ def latexify_u3col (obj, **kwargs):
     schema, it can be wrapped in something like '\multicolumn{3}{c}{...}'.
 
     """
-    if hasattr (obj, '__pk_latex_u3col__'):
-        return obj.__pk_latex_u3col__ (**kwargs)
+    if hasattr(obj, '__pk_latex_u3col__'):
+        return obj.__pk_latex_u3col__(**kwargs)
 
     # TODO: there are reasonable ways to format many basic types, but I'm not
     # going to implement them until I need to.
 
-    raise ValueError ('can\'t LaTeXify %r in 3-column uncertain format' % obj)
+    raise ValueError('can\'t LaTeXify %r in 3-column uncertain format' % obj)
 
 
-def latexify_l3col (obj, **kwargs):
+def latexify_l3col(obj, **kwargs):
     """Convert an object to special LaTeX for limit tables.
 
     This conversion is meant for limit values in a table. The return value
@@ -217,26 +217,26 @@ def latexify_l3col (obj, **kwargs):
     '\multicolumn{3}{c}{...}'.
 
     """
-    if hasattr (obj, '__pk_latex_l3col__'):
-        return obj.__pk_latex_l3col__ (**kwargs)
+    if hasattr(obj, '__pk_latex_l3col__'):
+        return obj.__pk_latex_l3col__(**kwargs)
 
-    if isinstance (obj, bool):
-        # isinstance (True, int) = True, so gotta handle this first.
-        raise ValueError ('no well-defined l3col LaTeXification of bool %r' % obj)
+    if isinstance(obj, bool):
+        # isinstance(True, int) = True, so gotta handle this first.
+        raise ValueError('no well-defined l3col LaTeXification of bool %r' % obj)
 
-    if isinstance (obj, float):
-        return b'&' + latexify_n2col (obj, **kwargs)
+    if isinstance(obj, float):
+        return b'&' + latexify_n2col(obj, **kwargs)
 
-    if isinstance (obj, int):
+    if isinstance(obj, int):
         return b'& $%d$ &' % obj
 
-    raise ValueError ('can\'t LaTeXify %r in 3-column limit format' % obj)
+    raise ValueError('can\'t LaTeXify %r in 3-column limit format' % obj)
 
 
 
 # Building nice deluxetables.
 
-class WideHeader (object):
+class WideHeader(object):
     """Information needed for constructing wide table headers.
 
     nlogcols - Number of logical columns consumed by this header.
@@ -248,26 +248,26 @@ class WideHeader (object):
     `nlogcols` if certain logical columns span multiple LaTeX columns.
 
     """
-    def __init__ (self, nlogcols, content, align=b'c'):
+    def __init__(self, nlogcols, content, align=b'c'):
         self.nlogcols = nlogcols
         self.align = align
         self.content = content
 
 
-class TableBuilder (object):
+class TableBuilder(object):
     """Build and then emit a nice deluxetable.
 
     Methods:
 
-    addcol (headings, datafunc, formatter=None, colspec=None, numbering='(%d)')
+    addcol(headings, datafunc, formatter=None, colspec=None, numbering='(%d)')
        Define a logical column.
-    addnote (key, text)
+    addnote(key, text)
        Define a table note that can appear in cells.
-    addhcline (headerrowix, logcolidx, latexdeltastart, latexdeltaend)
+    addhcline(headerrowix, logcolidx, latexdeltastart, latexdeltaend)
        Add a horizontal line between columns.
-    notemark (key)
+    notemark(key)
        Return a \\tablenotemark{} command for the specified note key.
-    emit (stream, items)
+    emit(stream, items)
        Write the table, with one row for each thing in `items`, to the stream.
 
     If an item has an attribute `tb_row_preamble`, that text is written verbatim
@@ -324,7 +324,7 @@ class TableBuilder (object):
     numbercols = True
     final_double_backslash = False
 
-    def __init__ (self, label):
+    def __init__(self, label):
         self._colinfo = []
         self._hclines = []
         self._notes = {}
@@ -332,7 +332,7 @@ class TableBuilder (object):
         self.label = latexify(label)
 
 
-    def addcol (self, headings, datafunc, formatter=None, colspec=None, numbering=b'(%d)'):
+    def addcol(self, headings, datafunc, formatter=None, colspec=None, numbering=b'(%d)'):
         """Define a logical column. Arguments:
 
         headings
@@ -351,44 +351,44 @@ class TableBuilder (object):
 
         """
         if formatter is None:
-            formatter = BasicFormatter ()
+            formatter = BasicFormatter()
 
-        if isinstance (headings, six.string_types):
+        if isinstance(headings, six.string_types):
             headings = (headings, )
 
         try:
             code = six.get_function_code(datafunc)
             nargs = code.co_argcount
         except AttributeError:
-            if hasattr (datafunc, '__call__'):
+            if hasattr(datafunc, '__call__'):
                 # This is pretty hacky ...
                 nargs = six.get_function_code(datafunc.__call__).co_argcount - 1
             else:
-                raise ValueError ('cannot find code object for datafunc')
+                raise ValueError('cannot find code object for datafunc')
 
         if nargs == 3:
             wrapped = datafunc # (item, formatter, builder)
         elif nargs == 2:
-            wrapped = lambda i, f, b: datafunc (i, f)
+            wrapped = lambda i, f, b: datafunc(i, f)
         elif nargs == 1:
-            wrapped = lambda i, f, b: datafunc (i)
+            wrapped = lambda i, f, b: datafunc(i)
         elif nargs == 0: # why not
-            wrapped = lambda i, f, b: datafunc ()
+            wrapped = lambda i, f, b: datafunc()
         else:
-            raise ValueError ('datafunc must accept between 0 and 3 args; it takes %d' % nargs)
+            raise ValueError('datafunc must accept between 0 and 3 args; it takes %d' % nargs)
 
-        ci = Holder (headings=[latexify(h) for h in headings], formatter=formatter,
-                     wdatafunc=wrapped, colspec=colspec, numbering=numbering)
-        self._colinfo.append (ci)
+        ci = Holder(headings=[latexify(h) for h in headings], formatter=formatter,
+                    wdatafunc=wrapped, colspec=colspec, numbering=numbering)
+        self._colinfo.append(ci)
         return self
 
 
-    def addnote (self, key, text):
+    def addnote(self, key, text):
         self._notes[key] = [None, text]
         return self
 
 
-    def addhcline (self, headerrowidx, logcolidx, latexdeltastart, latexdeltaend):
+    def addhcline(self, headerrowidx, logcolidx, latexdeltastart, latexdeltaend):
         """Adds a horizontal line below a limited range of columns in the header section.
         Arguments:
 
@@ -408,26 +408,26 @@ class TableBuilder (object):
                           latexdeltaend = latexdeltastart + 2.
 
         """
-        self._hclines.append ((headerrowidx, logcolidx, latexdeltastart, latexdeltaend))
+        self._hclines.append((headerrowidx, logcolidx, latexdeltastart, latexdeltaend))
         return self
 
 
-    def notemark (self, key):
-        noteinfo = self._notes.get (key)
+    def notemark(self, key):
+        noteinfo = self._notes.get(key)
         if noteinfo is None:
-            raise ValueError ('unrecognized note key "%s"' % key)
+            raise ValueError('unrecognized note key "%s"' % key)
 
         if noteinfo[0] is None:
             if self._notecounter > 25:
-                raise PKError ('maximum number of table notes exceeded')
+                raise PKError('maximum number of table notes exceeded')
 
             noteinfo[0] = self._notecounter
             self._notecounter += 1
 
-        return b'\\tablenotemark{%c}' % chr (ord (b'a') + noteinfo[0]).encode ('ascii')
+        return b'\\tablenotemark{%c}' % chr(ord(b'a') + noteinfo[0]).encode('ascii')
 
 
-    def emit (self, stream, items):
+    def emit(self, stream, items):
         from six import itervalues
         write = stream.write
         colinfo = self._colinfo
@@ -438,7 +438,7 @@ class TableBuilder (object):
         curlatexcol = 1
 
         for ci in colinfo:
-            ci.nlcol, colspecpart, ci.headprefix = ci.formatter.colinfo (self)
+            ci.nlcol, colspecpart, ci.headprefix = ci.formatter.colinfo(self)
             ci.latexcol = curlatexcol
 
             if ci.colspec is not None:
@@ -452,72 +452,72 @@ class TableBuilder (object):
 
             ncols += ci.nlcol
             colspec += colspecpart
-            nheadrows = max (nheadrows, len (ci.headings))
+            nheadrows = max(nheadrows, len(ci.headings))
             curlatexcol += ci.nlcol
 
-        write (b'% TableBuilder table\n')
-        write (br'\begin{')
-        write (self.environment)
-        write (b'}{')
-        write (colspec)
-        write (b'}\n%custom preamble\n')
-        write (self.preamble)
-        write (b'\n%hardcoded preamble\n\\tablecolumns{')
-        write (text_type (ncols).encode ('ascii'))
-        write (b'}\n\\tablewidth{')
-        write (self.widthspec)
-        write (b'}\n\\tablecaption{')
-        write (self.title)
-        write (b'\\label{')
-        write (self.label)
-        write (b'}}\n\\tablehead{\n')
+        write(b'% TableBuilder table\n')
+        write(br'\begin{')
+        write(self.environment)
+        write(b'}{')
+        write(colspec)
+        write(b'}\n%custom preamble\n')
+        write(self.preamble)
+        write(b'\n%hardcoded preamble\n\\tablecolumns{')
+        write(text_type(ncols).encode('ascii'))
+        write(b'}\n\\tablewidth{')
+        write(self.widthspec)
+        write(b'}\n\\tablecaption{')
+        write(self.title)
+        write(b'\\label{')
+        write(self.label)
+        write(b'}}\n\\tablehead{\n')
 
         cr = b''
 
-        for i in range (nheadrows):
-            write (cr)
+        for i in range(nheadrows):
+            write(cr)
 
             for hidx, cidx, lds, lde in self._hclines:
                 # Note super inefficiency. Who cares?
                 if hidx == i - 1:
                     latexcolbase = colinfo[cidx].latexcol
-                    write (b' \\cline{')
-                    write (text_type (latexcolbase + lds).encode ('ascii'))
-                    write (b'-')
-                    write (text_type (latexcolbase + lde - 1).encode ('ascii'))
-                    write (b'} ')
+                    write(b' \\cline{')
+                    write(text_type(latexcolbase + lds).encode('ascii'))
+                    write(b'-')
+                    write(text_type(latexcolbase + lde - 1).encode('ascii'))
+                    write(b'} ')
 
             sep = b''
             nlefttoskip = 0
 
-            for cidx, ci in enumerate (colinfo):
-                write (sep)
+            for cidx, ci in enumerate(colinfo):
+                write(sep)
 
                 if nlefttoskip < 1:
-                    if len (ci.headings) <= i:
-                        write (b' & ' * (ci.nlcol - 1))
+                    if len(ci.headings) <= i:
+                        write(b' & ' * (ci.nlcol - 1))
                     else:
                         h = ci.headings[i]
 
-                        if isinstance (h, WideHeader):
+                        if isinstance(h, WideHeader):
                             nlefttoskip = h.nlogcols
 
                             nlatex = 0
-                            for j in range (h.nlogcols):
+                            for j in range(h.nlogcols):
                                 nlatex += colinfo[cidx + j].nlcol
 
-                            write (b'\\multicolumn{')
-                            write (text_type (nlatex).encode ('ascii'))
-                            write (b'}{')
-                            write (h.align)
-                            write (b'}{')
-                            write (h.content)
-                            write (b'}')
+                            write(b'\\multicolumn{')
+                            write(text_type(nlatex).encode('ascii'))
+                            write(b'}{')
+                            write(h.align)
+                            write(b'}{')
+                            write(h.content)
+                            write(b'}')
                         else:
-                            write (ci.headprefix)
-                            write (b'{')
-                            write (h)
-                            write (b'}')
+                            write(ci.headprefix)
+                            write(b'{')
+                            write(h)
+                            write(b'}')
 
                 nlefttoskip -= 1
 
@@ -531,75 +531,75 @@ class TableBuilder (object):
         if self.numbercols:
             colnum = 1
             sep = b''
-            write (b' \\\\ \\\\\n')
+            write(b' \\\\ \\\\\n')
 
             for ci in colinfo:
-                write (sep)
-                write (b'\\multicolumn{')
-                write (text_type (ci.nlcol).encode ('ascii'))
-                write (b'}{c}{')
+                write(sep)
+                write(b'\\multicolumn{')
+                write(text_type(ci.nlcol).encode('ascii'))
+                write(b'}{c}{')
                 if ci.numbering is False:
                     pass
                 elif b'%d' in ci.numbering:
-                    write (ci.numbering % colnum)
+                    write(ci.numbering % colnum)
                     colnum += 1
                 else:
-                    write (ci.numbering)
-                write (b'}')
+                    write(ci.numbering)
+                write(b'}')
                 sep = b' & '
 
-        write (b'\n}\n\\startdata\n')
+        write(b'\n}\n\\startdata\n')
 
         cr = b''
 
         for item in items:
-            write (cr)
+            write(cr)
             sep = b''
 
-            rp = getattr (item, 'tb_row_preamble', None)
+            rp = getattr(item, 'tb_row_preamble', None)
             if rp is not None:
-                write (rp)
+                write(rp)
 
             for ci in colinfo:
-                write (sep)
-                formatted = ci.wdatafunc (item, ci.formatter, self)
+                write(sep)
+                formatted = ci.wdatafunc(item, ci.formatter, self)
                 try:
-                    write (formatted)
+                    write(formatted)
                 except Exception:
-                    reraise_context ('while writing %r (from %r with %r)',
-                                     formatted, item, ci.formatter)
+                    reraise_context('while writing %r (from %r with %r)',
+                                    formatted, item, ci.formatter)
                 sep = b' & '
 
             cr = b' \\\\\n'
 
         if self.final_double_backslash:
-            write (b' \\\\')
-        write (b'\n\\enddata\n')
+            write(b' \\\\')
+        write(b'\n\\enddata\n')
 
-        if self.note is not None and len (self.note):
-            write (b'\\tablecomments{')
-            write (self.note)
-            write (b'}\n')
+        if self.note is not None and len(self.note):
+            write(b'\\tablecomments{')
+            write(self.note)
+            write(b'}\n')
 
-        if self.refs is not None and len (self.refs):
-            write (b'\\tablerefs{')
-            write (self.refs)
-            write (b'}\n')
+        if self.refs is not None and len(self.refs):
+            write(b'\\tablerefs{')
+            write(self.refs)
+            write(b'}\n')
 
-        for noteinfo in sorted ((ni for ni in itervalues (self._notes)
+        for noteinfo in sorted((ni for ni in itervalues(self._notes)
                                  if ni[0] is not None), key=lambda ni: ni[0]):
-            write (b'\\tablenotetext{')
-            write (chr (ord ('a') + noteinfo[0]).encode ('ascii'))
-            write (b'}{')
-            write (noteinfo[1])
-            write (b'}\n')
+            write(b'\\tablenotetext{')
+            write(chr(ord('a') + noteinfo[0]).encode('ascii'))
+            write(b'}{')
+            write(noteinfo[1])
+            write(b'}\n')
 
-        write (br'\end{')
-        write (self.environment)
-        write (b'}\n% end TableBuilder table\n')
+        write(br'\end{')
+        write(self.environment)
+        write(b'}\n% end TableBuilder table\n')
 
 
-class BasicFormatter (object):
+class BasicFormatter(object):
     """Base class for formatting table cells in a TableBuilder.
 
     Generally a formatter will also provide methods for turning input data
@@ -607,7 +607,7 @@ class BasicFormatter (object):
     function".
 
     """
-    def colinfo (self, builder):
+    def colinfo(self, builder):
         """Return (nlcol, colspec, headprefix), where:
 
         nlcol      - The number of LaTeX columns encompassed by this logical
@@ -622,7 +622,7 @@ class BasicFormatter (object):
 
 
 
-class BoolFormatter (BasicFormatter):
+class BoolFormatter(BasicFormatter):
     """Format booleans. Attributes `truetext` and `falsetext` set what shows up
     for true and false values, respectively.
 
@@ -630,63 +630,63 @@ class BoolFormatter (BasicFormatter):
     truetext = b'$\\bullet$'
     falsetext = b''
 
-    def colinfo (self, builder):
+    def colinfo(self, builder):
         return 1, b'c', b'\\colhead'
 
-    def format (self, value):
+    def format(self, value):
         if value:
             return self.truetext
         return self.falsetext
 
 
-class MaybeNumberFormatter (BasicFormatter):
+class MaybeNumberFormatter(BasicFormatter):
     """Format Python objects. If it's a number, format it as such, without any
     fancy column alignment, but with a specifiable number of decimal places.
     Otherwise, call latexify() on it.
 
     """
-    def __init__ (self, nplaces=1, align=b'c'):
+    def __init__(self, nplaces=1, align=b'c'):
         self.nplaces = nplaces
         self.align = align
 
-    def colinfo (self, builder):
+    def colinfo(self, builder):
         return 1, self.align, b'\\colhead'
 
-    def format (self, datum, nplaces=None):
+    def format(self, datum, nplaces=None):
         if datum is None:
             return b''
 
         try:
-            v = float (datum)
+            v = float(datum)
         except TypeError:
-            return latexify (datum)
+            return latexify(datum)
         else:
             if nplaces is None:
                 nplaces = self.nplaces
             return b'$%.*f$' % (nplaces, v)
 
 
-class AlignedNumberFormatter (BasicFormatter):
+class AlignedNumberFormatter(BasicFormatter):
     """Format numbers. Allows the number of decimal places to be specified, and
     aligns the numbers at the decimal point.
 
     """
-    def __init__ (self, nplaces=1):
+    def __init__(self, nplaces=1):
         self.nplaces = nplaces
 
-    def colinfo (self, builder):
+    def colinfo(self, builder):
         return 2, b'r@{}l', b'\\multicolumn{2}{c}'
 
-    def format (self, datum, nplaces=None):
+    def format(self, datum, nplaces=None):
         if datum is None:
             return b' & '
         if nplaces is None:
             nplaces = self.nplaces
 
-        return latexify_n2col (float (datum), nplaces=nplaces)
+        return latexify_n2col(float(datum), nplaces=nplaces)
 
 
-class UncertFormatter (BasicFormatter):
+class UncertFormatter(BasicFormatter):
     """Format measurements (cf. pwkit.msmt) with detailed uncertainty information,
     possibly including asymmetric uncertainties. Because of the latter
     possibility, table rows have to be made extra-high to maintain evenness.
@@ -694,16 +694,16 @@ class UncertFormatter (BasicFormatter):
     """
     strut = br'\rule{0pt}{3ex}'
 
-    def colinfo (self, builder):
+    def colinfo(self, builder):
         return 3, b'r@{}l@{\,}l', b'\\multicolumn{3}{c}'
 
-    def format (self, datum, **kwargs):
+    def format(self, datum, **kwargs):
         if datum is None:
             return b' & & ' + self.strut
-        return latexify_u3col (datum, **kwargs) + self.strut
+        return latexify_u3col(datum, **kwargs) + self.strut
 
 
-class LimitFormatter (BasicFormatter):
+class LimitFormatter(BasicFormatter):
     """Format measurements (cf pwkit.msmt) with nice-looking limit information.
     Specific uncertainty information is discarded. The default formats do not
     involve fancy subscripts or superscripts, so row struts are not needed ...
@@ -712,10 +712,10 @@ class LimitFormatter (BasicFormatter):
     """
     strut = br''
 
-    def colinfo (self, builder):
+    def colinfo(self, builder):
         return 3, br'r@{\,}r@{}l', br'\multicolumn{3}{c}'
 
-    def format (self, datum, **kwargs):
+    def format(self, datum, **kwargs):
         if datum is None:
             return b' & & ' + self.strut
-        return latexify_l3col (datum, **kwargs) + self.strut
+        return latexify_l3col(datum, **kwargs) + self.strut
