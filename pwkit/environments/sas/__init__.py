@@ -90,9 +90,9 @@ See the ``make-*-aliases`` commands for tools that generate symlinks with saner
 names.
 
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
+from __future__ import absolute_import, division, print_function
 
-__all__ = str ('').split ()
+__all__ = ''.split()
 
 import io, os.path, six
 
@@ -153,25 +153,25 @@ class SasEnvironment (Environment):
         def path (*args):
             return os.path.join (self._installdir, *args)
 
-        env[b'SAS_DIR'] = path ()
-        env[b'SAS_PATH'] = env[b'SAS_DIR']
-        env[b'SAS_CCFPATH'] = path ('ccf')
-        env[b'SAS_ODF'] = str (self._sumsas) # but see _preexec
-        env[b'SAS_CCF'] = str (self._odfdir / 'ccf.cif')
+        env['SAS_DIR'] = path ()
+        env['SAS_PATH'] = env['SAS_DIR']
+        env['SAS_CCFPATH'] = path ('ccf')
+        env['SAS_ODF'] = str (self._sumsas) # but see _preexec
+        env['SAS_CCF'] = str (self._odfdir / 'ccf.cif')
 
-        prepend_environ_path (env, b'PATH', path ('bin'))
-        prepend_environ_path (env, b'LD_LIBRARY_PATH', path ('libextra'))
-        prepend_environ_path (env, b'LD_LIBRARY_PATH', path ('lib'))
-        prepend_environ_path (env, b'PERL5LIB', path ('lib', 'perl5'))
+        prepend_environ_path (env, 'PATH', path ('bin'))
+        prepend_environ_path (env, 'LD_LIBRARY_PATH', path ('libextra'))
+        prepend_environ_path (env, 'LD_LIBRARY_PATH', path ('lib'))
+        prepend_environ_path (env, 'PERL5LIB', path ('lib', 'perl5'))
 
-        env[b'SAS_BROWSER'] = b'firefox' # yay hardcoding
-        env[b'SAS_IMAGEVIEWER'] = b'ds9'
-        env[b'SAS_SUPPRESS_WARNING'] = b'1'
-        env[b'SAS_VERBOSITY'] = b'4'
+        env['SAS_BROWSER'] = 'firefox' # yay hardcoding
+        env['SAS_IMAGEVIEWER'] = 'ds9'
+        env['SAS_SUPPRESS_WARNING'] = '1'
+        env['SAS_VERBOSITY'] = '4'
 
         # These can be helpful:
-        env[b'PWKIT_SAS_REVNUM'] = self._revnum
-        env[b'PWKIT_SAS_OBSID'] = self._obsid
+        env['PWKIT_SAS_REVNUM'] = self._revnum
+        env['PWKIT_SAS_OBSID'] = self._obsid
 
         return env
 
@@ -181,7 +181,7 @@ class SasEnvironment (Environment):
 
         # Need to compile the CCF info?
 
-        cif = env[b'SAS_CCF']
+        cif = env['SAS_CCF']
         if not os.path.exists (cif):
             if printbuilds:
                 print ('[building %s]' % cif)
@@ -647,7 +647,7 @@ set.'''
         env = SasEnvironment (args[0])
 
         from tempfile import NamedTemporaryFile
-        with NamedTemporaryFile (delete=False) as f:
+        with NamedTemporaryFile (delete=False, mode='wt') as f:
             print ('''[ -e ~/.bashrc ] && source ~/.bashrc
 PS1="SAS(%s) $PS1"
 rm %s''' % (env._obsid, f.name), file=f)
