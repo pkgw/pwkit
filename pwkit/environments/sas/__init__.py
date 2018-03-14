@@ -120,6 +120,11 @@ class SasEnvironment(Environment):
         self._installdir = os.path.abspath(installdir)
         self._heaenv = heaenv
 
+        # TODO: I used to read the manifest file to infer both the revolution
+        # number and obsid, but in the case of 0673000145, the obsid mentioned
+        # in the manifest is different! (But close: 0673000101.) So now I glob
+        # the containing directory for that.
+
         manifest = Path(manifest)
 
         for line in manifest.read_lines():
@@ -131,12 +136,16 @@ class SasEnvironment(Environment):
                 continue
 
             self._revnum = bits[0] # note: kept as a string; not an int
+            break
+
+        self._odfdir = Path(manifest).resolve().parent
+
+        for p in self._odfdir.glob('%s_*_*.FIT' % self._revnum):
+            bits = p.name.split('_')
             self._obsid = bits[1]
             break
 
-        self._odfdir = manifest.resolve().parent
-        self._sumsas = self._odfdir / ('%s_%s_SCX00000SUM.SAS' % (self._revnum,
-                                                                  self._obsid))
+        self._sumsas = self._odfdir / ('%s_%s_SCX00000SUM.SAS' % (self._revnum, self._obsid))
 
 
     def _default_installdir(self):
