@@ -1,5 +1,5 @@
 # -*- mode: python; coding: utf-8 -*-
-# Copyright 2015 Peter Williams <peter@newton.cx> and collaborators.
+# Copyright 2015-2018 Peter Williams <peter@newton.cx> and collaborators.
 # Licensed under the MIT License.
 
 """sas - running software in the SAS environment
@@ -102,7 +102,7 @@ from ...io import Path
 from .. import Environment, prepend_environ_path, user_data_path
 
 
-class SasEnvironment (Environment):
+class SasEnvironment(Environment):
     _odfdir = None
     _revnum = None
     _obsid = None
@@ -110,59 +110,59 @@ class SasEnvironment (Environment):
     _installdir = None
     _heaenv = None
 
-    def __init__ (self, manifest, installdir=None, heaenv=None):
+    def __init__(self, manifest, installdir=None, heaenv=None):
         if installdir is None:
-            installdir = self._default_installdir ()
+            installdir = self._default_installdir()
         if heaenv is None:
             from .. import heasoft
-            heaenv = heasoft.HeasoftEnvironment ()
+            heaenv = heasoft.HeasoftEnvironment()
 
-        self._installdir = os.path.abspath (installdir)
+        self._installdir = os.path.abspath(installdir)
         self._heaenv = heaenv
 
-        manifest = Path (manifest)
+        manifest = Path(manifest)
 
-        for line in manifest.read_lines ():
-            if not line.startswith ('File '):
+        for line in manifest.read_lines():
+            if not line.startswith('File '):
                 continue
 
-            bits = line.split ()[1].split ('_')
-            if len (bits) < 3:
+            bits = line.split()[1].split('_')
+            if len(bits) < 3:
                 continue
 
             self._revnum = bits[0] # note: kept as a string; not an int
             self._obsid = bits[1]
             break
 
-        self._odfdir = manifest.resolve ().parent
+        self._odfdir = manifest.resolve().parent
         self._sumsas = self._odfdir / ('%s_%s_SCX00000SUM.SAS' % (self._revnum,
                                                                   self._obsid))
 
 
-    def _default_installdir (self):
-        d = os.environ.get ('PWKIT_SAS')
+    def _default_installdir(self):
+        d = os.environ.get('PWKIT_SAS')
         if d is None:
-            raise PKError ('SAS installation directory must be specified '
-                           'in the $PWKIT_SAS environment variable')
+            raise PKError('SAS installation directory must be specified '
+                          'in the $PWKIT_SAS environment variable')
         return d
 
 
-    def modify_environment (self, env):
-        self._heaenv.modify_environment (env)
+    def modify_environment(self, env):
+        self._heaenv.modify_environment(env)
 
-        def path (*args):
-            return os.path.join (self._installdir, *args)
+        def path(*args):
+            return os.path.join(self._installdir, *args)
 
-        env['SAS_DIR'] = path ()
+        env['SAS_DIR'] = path()
         env['SAS_PATH'] = env['SAS_DIR']
-        env['SAS_CCFPATH'] = path ('ccf')
-        env['SAS_ODF'] = str (self._sumsas) # but see _preexec
-        env['SAS_CCF'] = str (self._odfdir / 'ccf.cif')
+        env['SAS_CCFPATH'] = path('ccf')
+        env['SAS_ODF'] = str(self._sumsas) # but see _preexec
+        env['SAS_CCF'] = str(self._odfdir / 'ccf.cif')
 
-        prepend_environ_path (env, 'PATH', path ('bin'))
-        prepend_environ_path (env, 'LD_LIBRARY_PATH', path ('libextra'))
-        prepend_environ_path (env, 'LD_LIBRARY_PATH', path ('lib'))
-        prepend_environ_path (env, 'PERL5LIB', path ('lib', 'perl5'))
+        prepend_environ_path(env, 'PATH', path('bin'))
+        prepend_environ_path(env, 'LD_LIBRARY_PATH', path('libextra'))
+        prepend_environ_path(env, 'LD_LIBRARY_PATH', path('lib'))
+        prepend_environ_path(env, 'PERL5LIB', path('lib', 'perl5'))
 
         env['SAS_BROWSER'] = 'firefox' # yay hardcoding
         env['SAS_IMAGEVIEWER'] = 'ds9'
@@ -176,52 +176,52 @@ class SasEnvironment (Environment):
         return env
 
 
-    def _preexec (self, env, printbuilds=True):
+    def _preexec(self, env, printbuilds=True):
         from ...cli import wrapout
 
         # Need to compile the CCF info?
 
         cif = env['SAS_CCF']
-        if not os.path.exists (cif):
+        if not os.path.exists(cif):
             if printbuilds:
-                print ('[building %s]' % cif)
+                print('[building %s]' % cif)
 
-            env['SAS_ODF'] = str (self._odfdir)
+            env['SAS_ODF'] = str(self._odfdir)
             log = self._odfdir / 'cifbuild.log'
 
-            with log.open ('wb') as f:
-                w = wrapout.Wrapper (f)
+            with log.open('wb') as f:
+                w = wrapout.Wrapper(f)
                 w.use_colors = True
-                if w.launch ('cifbuild', ['cifbuild'], env=env, cwd=str (self._odfdir)):
-                    raise PKError ('failed to build CIF; see %s', log)
+                if w.launch('cifbuild', ['cifbuild'], env=env, cwd=str(self._odfdir)):
+                    raise PKError('failed to build CIF; see %s', log)
 
-            if not os.path.exists (cif):
+            if not os.path.exists(cif):
                 # cifbuild can exit with status 0 whilst still having failed
-                raise PKError ('failed to build CIF; see %s', log)
+                raise PKError('failed to build CIF; see %s', log)
 
-            env['SAS_ODF'] = str (self._sumsas)
+            env['SAS_ODF'] = str(self._sumsas)
 
         # Need to generate SUM.SAS file?
 
-        if not self._sumsas.exists ():
+        if not self._sumsas.exists():
             if printbuilds:
-                print ('[building %s]' % self._sumsas)
+                print('[building %s]' % self._sumsas)
 
-            env['SAS_ODF'] = str (self._odfdir)
+            env['SAS_ODF'] = str(self._odfdir)
             log = self._odfdir / 'odfingest.log'
 
-            with log.open ('wb') as f:
-                w = wrapout.Wrapper (f)
+            with log.open('wb') as f:
+                w = wrapout.Wrapper(f)
                 w.use_colors = True
-                if w.launch ('odfingest', ['odfingest'], env=env, cwd=str (self._odfdir)):
-                    raise PKError ('failed to build CIF; see %s', log)
+                if w.launch('odfingest', ['odfingest'], env=env, cwd=str(self._odfdir)):
+                    raise PKError('failed to build CIF; see %s', log)
 
-            env['SAS_ODF'] = str (self._sumsas)
+            env['SAS_ODF'] = str(self._sumsas)
 
 
 # Command-line interface
 
-class Exec (multitool.Command):
+class Exec(multitool.Command):
     name = 'exec'
     argspec = '<manifest> <command> [args...]'
     summary = 'Run a program in SAS.'
@@ -229,30 +229,30 @@ class Exec (multitool.Command):
 directory must be specified, and all operations work on the specified data
 set.'''
 
-    def invoke (self, args, **kwargs):
-        if len (args) < 2:
-            raise multitool.UsageError ('exec requires at least 2 arguments')
+    def invoke(self, args, **kwargs):
+        if len(args) < 2:
+            raise multitool.UsageError('exec requires at least 2 arguments')
 
         manifest = args[0]
         progargv = args[1:]
 
-        env = SasEnvironment (manifest)
-        env.execvpe (progargv)
+        env = SasEnvironment(manifest)
+        env.execvpe(progargv)
 
 
-class MakeEPICAliases (multitool.Command):
+class MakeEPICAliases(multitool.Command):
     name = 'make-epic-aliases'
     argspec = '<srcdir> <destdir>'
     summary = 'Generate user-friendly aliases to XMM-Newton EPIC data files.'
     more_help = '''destdir should already not exist and will be created. <srcdir> should
 be the ODF directory, containing a file named MANIFEST.<numbers> and many others.'''
 
-    INSTRUMENT = slice (16, 18)
-    EXPFLAG = slice (18, 19) # 'S': sched, 'U': unsched; 'X': N/A
-    EXPNO = slice (19, 22)
-    CCDNO = slice (22, 24)
-    DTYPE = slice (24, 27)
-    EXTENSION = slice (28, None)
+    INSTRUMENT = slice(16, 18)
+    EXPFLAG = slice(18, 19) # 'S': sched, 'U': unsched; 'X': N/A
+    EXPNO = slice(19, 22)
+    CCDNO = slice(22, 24)
+    DTYPE = slice(24, 27)
+    EXTENSION = slice(28, None)
 
     instrmap = {
         'M1': 'mos1',
@@ -291,39 +291,39 @@ be the ODF directory, containing a file named MANIFEST.<numbers> and many others
         'tie': 'timing',
     }
 
-    def invoke (self, args, **kwargs):
-        if len (args) != 2:
-            raise multitool.UsageError ('make-epic-aliases requires exactly 2 arguments')
+    def invoke(self, args, **kwargs):
+        if len(args) != 2:
+            raise multitool.UsageError('make-epic-aliases requires exactly 2 arguments')
 
-        srcdir = Path (args[0])
-        destdir = Path (args[1])
+        srcdir = Path(args[0])
+        destdir = Path(args[1])
 
-        srcpaths = [x for x in srcdir.iterdir () if len (x.name) > 28]
+        srcpaths = [x for x in srcdir.iterdir() if len(x.name) > 28]
 
         # Sorted list of exposure numbers.
 
-        expnos = dict ((i, set ()) for i in six.iterkeys (self.instrmap))
+        expnos = dict((i, set()) for i in six.iterkeys(self.instrmap))
 
         for p in srcpaths:
             instr = p.name[self.INSTRUMENT]
             if instr not in self.instrmap:
                 continue
 
-            expno = int (p.name[self.EXPNO])
+            expno = int(p.name[self.EXPNO])
             dtype = p.name[self.DTYPE]
 
             if expno > 0 and dtype not in ('DLI', 'ODI'):
-                expnos[instr].add (expno)
+                expnos[instr].add(expno)
 
         expseqs = {}
 
-        for k, v in six.iteritems (expnos):
-            expseqs[self.instrmap[k]] = dict ((n, i) for i, n in enumerate (sorted (v)))
+        for k, v in six.iteritems(expnos):
+            expseqs[self.instrmap[k]] = dict((n, i) for i, n in enumerate(sorted(v)))
 
         # Do it.
 
-        stems = set ()
-        destdir.mkdir () # intentionally crash if exists; easiest approach
+        stems = set()
+        destdir.mkdir() # intentionally crash if exists; easiest approach
 
         for p in srcpaths:
             instr = p.name[self.INSTRUMENT]
@@ -337,8 +337,8 @@ be the ODF directory, containing a file named MANIFEST.<numbers> and many others
             ext = p.name[self.EXTENSION]
 
             instr = self.instrmap[instr]
-            expno = int (expno)
-            dtype = self.dtypemap[dtype.lower ()]
+            expno = int(expno)
+            dtype = self.dtypemap[dtype.lower()]
             ext = self.extmap[ext]
 
             if expno > 0 and dtype not in ('discarded_lines', 'offset_data'):
@@ -357,26 +357,26 @@ be the ODF directory, containing a file named MANIFEST.<numbers> and many others
                 stem = '%s_e%03d_c%s_%s.%s' % (instr, expno, ccdno, dtype, ext)
 
             if stem in stems:
-                cli.die ('short identifier clash: %r', stem)
-            stems.add (stem)
+                cli.die('short identifier clash: %r', stem)
+            stems.add(stem)
 
-            (destdir / stem).rellink_to (p)
+            (destdir / stem).rellink_to(p)
 
 
-class MakeOMAliases (multitool.Command):
+class MakeOMAliases(multitool.Command):
     name = 'make-om-aliases'
     argspec = '<srcdir> <destdir>'
     summary = 'Generate user-friendly aliases to XMM-Newton OM data files.'
     more_help = 'destdir should already not exist and will be created.'
 
-    PROD_TYPE = slice (0, 1) # 'P': final product; 'F': intermediate
-    OBSID = slice (1, 11)
-    EXPFLAG = slice (11, 12) # 'S': sched, 'U': unsched; 'X': N/A
-    EXPNO = slice (14, 17) # (12-14 is the string 'OM')
-    DTYPE = slice (17, 23)
-    WINNUM = slice (23, 24)
-    SRCNUM = slice (24, 27)
-    EXTENSION = slice (28, None)
+    PROD_TYPE = slice(0, 1) # 'P': final product; 'F': intermediate
+    OBSID = slice(1, 11)
+    EXPFLAG = slice(11, 12) # 'S': sched, 'U': unsched; 'X': N/A
+    EXPNO = slice(14, 17) # (12-14 is the string 'OM')
+    DTYPE = slice(17, 23)
+    WINNUM = slice(23, 24)
+    SRCNUM = slice(24, 27)
+    EXTENSION = slice(28, None)
 
     extmap = {
         'ASC': 'txt',
@@ -394,31 +394,31 @@ class MakeOMAliases (multitool.Command):
         'tstrts': 'tracking_stars',
     }
 
-    def invoke (self, args, **kwargs):
-        if len (args) != 2:
-            raise multitool.UsageError ('make-om-aliases requires exactly 2 arguments')
+    def invoke(self, args, **kwargs):
+        if len(args) != 2:
+            raise multitool.UsageError('make-om-aliases requires exactly 2 arguments')
 
         from fnmatch import fnmatch
         srcdir, destdir = args
 
-        srcfiles = [x for x in os.listdir (srcdir)
-                    if x[0] == 'P' and len (x) > 28]
+        srcfiles = [x for x in os.listdir(srcdir)
+                    if x[0] == 'P' and len(x) > 28]
 
         # Sorted list of exposure numbers.
 
-        expnos = set ()
+        expnos = set()
 
         for f in srcfiles:
-            if not fnmatch (f, 'P*IMAGE_*.FIT'):
+            if not fnmatch(f, 'P*IMAGE_*.FIT'):
                 continue
-            expnos.add (f[self.EXPNO])
+            expnos.add(f[self.EXPNO])
 
-        expseqs = dict ((n, i) for i, n in enumerate (sorted (expnos)))
+        expseqs = dict((n, i) for i, n in enumerate(sorted(expnos)))
 
         # Do it.
 
-        idents = set ()
-        os.mkdir (destdir) # intentionally crash if exists; easiest approach
+        idents = set()
+        os.mkdir(destdir) # intentionally crash if exists; easiest approach
 
         for f in srcfiles:
             ptype = f[self.PROD_TYPE]
@@ -431,7 +431,7 @@ class MakeOMAliases (multitool.Command):
             ext = f[self.EXTENSION]
 
             seq = expseqs[expno]
-            dtype = self.dtypemap[dtype.lower ()]
+            dtype = self.dtypemap[dtype.lower()]
             ext = self.extmap[ext]
 
             # There's only one clash, and it's easy:
@@ -440,27 +440,27 @@ class MakeOMAliases (multitool.Command):
 
             ident = (seq, dtype)
             if ident in idents:
-                cli.die ('short identifier clash: %r', ident)
-            idents.add (ident)
+                cli.die('short identifier clash: %r', ident)
+            idents.add(ident)
 
-            oldpath = os.path.join (srcdir, f)
-            newpath = os.path.join (destdir, '%s.%02d.%s' % (dtype, seq, ext))
-            os.symlink (os.path.relpath (oldpath, destdir), newpath)
+            oldpath = os.path.join(srcdir, f)
+            newpath = os.path.join(destdir, '%s.%02d.%s' % (dtype, seq, ext))
+            os.symlink(os.path.relpath(oldpath, destdir), newpath)
 
 
-class MakeRGSAliases (multitool.Command):
+class MakeRGSAliases(multitool.Command):
     name = 'make-rgs-aliases'
     argspec = '<srcdir> <destdir>'
     summary = 'Generate user-friendly aliases to XMM-Newton RGS data files.'
     more_help = '''destdir should already not exist and will be created. <srcdir> should
 be the ODF directory, containing a file named MANIFEST.<numbers> and many others.'''
 
-    INSTRUMENT = slice (16, 18)
-    EXPFLAG = slice (18, 19) # 'S': sched, 'U': unsched; 'X': N/A
-    EXPNO = slice (19, 22)
-    CCDNO = slice (22, 24)
-    DTYPE = slice (24, 27)
-    EXTENSION = slice (28, None)
+    INSTRUMENT = slice(16, 18)
+    EXPFLAG = slice(18, 19) # 'S': sched, 'U': unsched; 'X': N/A
+    EXPNO = slice(19, 22)
+    CCDNO = slice(22, 24)
+    DTYPE = slice(24, 27)
+    EXTENSION = slice(28, None)
 
     instrmap = {
         'R1': 'rgs1',
@@ -483,36 +483,36 @@ be the ODF directory, containing a file named MANIFEST.<numbers> and many others
         'spe': 'spectra',
     }
 
-    def invoke (self, args, **kwargs):
-        if len (args) != 2:
-            raise multitool.UsageError ('make-rgs-aliases requires exactly 2 arguments')
+    def invoke(self, args, **kwargs):
+        if len(args) != 2:
+            raise multitool.UsageError('make-rgs-aliases requires exactly 2 arguments')
 
-        srcdir = Path (args[0])
-        destdir = Path (args[1])
-        srcpaths = [x for x in srcdir.iterdir () if len (x.name) > 28]
+        srcdir = Path(args[0])
+        destdir = Path(args[1])
+        srcpaths = [x for x in srcdir.iterdir() if len(x.name) > 28]
 
         # Sorted list of exposure numbers.
 
-        expnos = dict ((i, set ()) for i in six.iterkeys (self.instrmap))
+        expnos = dict((i, set()) for i in six.iterkeys(self.instrmap))
 
         for p in srcpaths:
             instr = p.name[self.INSTRUMENT]
             if instr not in self.instrmap:
                 continue
 
-            expno = int (p.name[self.EXPNO])
+            expno = int(p.name[self.EXPNO])
             if expno > 0 and expno < 900:
-                expnos[instr].add (expno)
+                expnos[instr].add(expno)
 
         expseqs = {}
 
-        for k, v in six.iteritems (expnos):
-            expseqs[self.instrmap[k]] = dict ((n, i) for i, n in enumerate (sorted (v)))
+        for k, v in six.iteritems(expnos):
+            expseqs[self.instrmap[k]] = dict((n, i) for i, n in enumerate(sorted(v)))
 
         # Do it.
 
-        stems = set ()
-        destdir.mkdir () # intentionally crash if exists; easiest approach
+        stems = set()
+        destdir.mkdir() # intentionally crash if exists; easiest approach
 
         for p in srcpaths:
             instr = p.name[self.INSTRUMENT]
@@ -526,8 +526,8 @@ be the ODF directory, containing a file named MANIFEST.<numbers> and many others
             ext = p.name[self.EXTENSION]
 
             instr = self.instrmap[instr]
-            expno = int (expno)
-            dtype = self.dtypemap[dtype.lower ()]
+            expno = int(expno)
+            dtype = self.dtypemap[dtype.lower()]
             ext = self.extmap[ext]
 
             if expno > 0 and expno < 900:
@@ -543,25 +543,25 @@ be the ODF directory, containing a file named MANIFEST.<numbers> and many others
                 stem = '%s_e%03d_c%s_%s.%s' % (instr, expno, ccdno, dtype, ext)
 
             if stem in stems:
-                cli.die ('short identifier clash: %r', stem)
-            stems.add (stem)
+                cli.die('short identifier clash: %r', stem)
+            stems.add(stem)
 
-            (destdir / stem).rellink_to (p)
+            (destdir / stem).rellink_to(p)
 
 
-class MakeSCAliases (multitool.Command):
+class MakeSCAliases(multitool.Command):
     name = 'make-sc-aliases'
     argspec = '<srcdir> <destdir>'
     summary = 'Generate user-friendly aliases to XMM-Newton spacecraft (SC) data files.'
     more_help = '''destdir should already not exist and will be created. <srcdir> should
 be the ODF directory, containing a file named MANIFEST.<numbers> and many others.'''
 
-    INSTRUMENT = slice (16, 18)
-    EXPFLAG = slice (18, 19) # 'S': sched, 'U': unsched; 'X': N/A
-    EXPNO = slice (19, 22)
-    CCDNO = slice (22, 24)
-    DTYPE = slice (24, 27)
-    EXTENSION = slice (28, None)
+    INSTRUMENT = slice(16, 18)
+    EXPFLAG = slice(18, 19) # 'S': sched, 'U': unsched; 'X': N/A
+    EXPNO = slice(19, 22)
+    CCDNO = slice(22, 24)
+    DTYPE = slice(24, 27)
+    EXTENSION = slice(28, None)
 
     extmap = {
         'ASC': 'txt',
@@ -589,19 +589,19 @@ be the ODF directory, containing a file named MANIFEST.<numbers> and many others
         'tcx': 'recon_time_corr',
     }
 
-    def invoke (self, args, **kwargs):
-        if len (args) != 2:
-            raise multitool.UsageError ('make-sc-aliases requires exactly 2 arguments')
+    def invoke(self, args, **kwargs):
+        if len(args) != 2:
+            raise multitool.UsageError('make-sc-aliases requires exactly 2 arguments')
 
-        srcdir = Path (args[0])
-        destdir = Path (args[1])
+        srcdir = Path(args[0])
+        destdir = Path(args[1])
 
-        srcfiles = [x for x in srcdir.iterdir () if len (x.name) > 28]
+        srcfiles = [x for x in srcdir.iterdir() if len(x.name) > 28]
 
         # Do it.
 
-        idents = set ()
-        destdir.mkdir () # intentionally crash if exists; easiest approach
+        idents = set()
+        destdir.mkdir() # intentionally crash if exists; easiest approach
 
         for p in srcfiles:
             instr = p.name[self.INSTRUMENT]
@@ -619,18 +619,18 @@ be the ODF directory, containing a file named MANIFEST.<numbers> and many others
             if dtype == 'SUM' and ext == 'ASC':
                 continue
 
-            dtype = self.dtypemap[dtype.lower ()]
+            dtype = self.dtypemap[dtype.lower()]
             ext = self.extmap[ext]
 
             ident = dtype
             if ident in idents:
-                cli.die ('short identifier clash: %r', ident)
-            idents.add (ident)
+                cli.die('short identifier clash: %r', ident)
+            idents.add(ident)
 
-            (destdir / (dtype + '.' + ext)).rellink_to (p)
+            (destdir / (dtype + '.' + ext)).rellink_to(p)
 
 
-class Shell (multitool.Command):
+class Shell(multitool.Command):
     # XXX we hardcode bash! and we copy/paste from environments/__init__.py
     name = 'shell'
     argspec = '<manifest>'
@@ -640,55 +640,55 @@ class Shell (multitool.Command):
 directory must be specified, and all operations work on the specified data
 set.'''
 
-    def invoke (self, args, **kwargs):
-        if len (args) != 1:
-            raise multitool.UsageError ('shell expects exactly 1 argument')
+    def invoke(self, args, **kwargs):
+        if len(args) != 1:
+            raise multitool.UsageError('shell expects exactly 1 argument')
 
-        env = SasEnvironment (args[0])
+        env = SasEnvironment(args[0])
 
         from tempfile import NamedTemporaryFile
-        with NamedTemporaryFile (delete=False, mode='wt') as f:
-            print ('''[ -e ~/.bashrc ] && source ~/.bashrc
+        with NamedTemporaryFile(delete=False, mode='wt') as f:
+            print('''[ -e ~/.bashrc ] && source ~/.bashrc
 PS1="SAS(%s) $PS1"
 rm %s''' % (env._obsid, f.name), file=f)
 
-        env.execvpe (['bash', '--rcfile', f.name, '-i'])
+        env.execvpe(['bash', '--rcfile', f.name, '-i'])
 
 
-class UpdateCcf (multitool.Command):
+class UpdateCcf(multitool.Command):
     name = 'update-ccf'
     argspec = ''
     summary = 'Update the SAS "current calibration files".'
     more_help = 'This executes an rsync command to make sure the files are up-to-date.'
     help_if_no_args = False
 
-    def invoke (self, args, **kwargs):
-        if len (args):
-            raise multitool.UsageError ('update-ccf expects no arguments')
+    def invoke(self, args, **kwargs):
+        if len(args):
+            raise multitool.UsageError('update-ccf expects no arguments')
 
-        sasdir = os.environ.get ('PWKIT_SAS')
+        sasdir = os.environ.get('PWKIT_SAS')
         if sasdir is None:
-            cli.die ('environment variable $PWKIT_SAS must be set')
+            cli.die('environment variable $PWKIT_SAS must be set')
 
-        os.chdir (os.path.join (sasdir, 'ccf'))
-        os.execvp ('rsync', ['rsync',
-                             '-av',
-                             '--delete',
-                             '--delete-after',
-                             '--force',
-                             '--include=*.CCF',
-                             '--exclude=*/',
-                             'xmm.esac.esa.int::XMM_VALID_CCF',
-                             '.'])
+        os.chdir(os.path.join(sasdir, 'ccf'))
+        os.execvp('rsync', ['rsync',
+                            '-av',
+                            '--delete',
+                            '--delete-after',
+                            '--force',
+                            '--include=*.CCF',
+                            '--exclude=*/',
+                            'xmm.esac.esa.int::XMM_VALID_CCF',
+                            '.'])
 
 
-class SasTool (multitool.Multitool):
+class SasTool(multitool.Multitool):
     cli_name = 'pkenvtool sas'
     summary = 'Run tools in the SAS environment.'
 
 
-def commandline (argv):
+def commandline(argv):
     from six import itervalues
-    tool = SasTool ()
-    tool.populate (itervalues (globals ()))
-    tool.commandline (argv)
+    tool = SasTool()
+    tool.populate(itervalues(globals()))
+    tool.commandline(argv)
