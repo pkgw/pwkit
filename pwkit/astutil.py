@@ -745,47 +745,51 @@ def load_skyfield_data():
 # Hack to implement epochs-of-position. For what it's worth, Skyfield is
 # MIT-licensed like us.
 
-from skyfield.api import Star, T0
+try:
+    from skyfield.api import Star, T0
+except ImportError:
+    def PromoEpochStar(**kwargs):
+        raise NotImplementedError('the "skyfield" package is required for this functionality')
+else:
+    class PromoEpochStar(Star):
+        """A customized version of the Skyfield Star class that accepts a new
+        epoch-of-position parameter.
 
-class PromoEpochStar(Star):
-    """A customized version of the Skyfield Star class that accepts a new
-    epoch-of-position parameter.
+        Derived from the Skyfield source as of commit 49c2467b (2018 Mar 28).
 
-    Derived from the Skyfield source as of commit 49c2467b (2018 Mar 28).
+        """
+        def __init__(self, jd_of_position=T0, **kwargs):
+            super(PromoEpochStar, self).__init__(**kwargs)
+            self.jd_of_position = jd_of_position
 
-    """
-    def __init__(self, jd_of_position=T0, **kwargs):
-        super(PromoEpochStar, self).__init__(**kwargs)
-        self.jd_of_position = jd_of_position
+        def __repr__(self):
+            opts = []
+            for name in 'ra_mas_per_year dec_mas_per_year parallax_mas radial_km_per_s jd_of_position names'.split():
+                value = getattr(self, name)
+                if value:
+                    opts.append(', {0}={1!r}'.format(name, value))
+            return 'PromoEpochStar(ra_hours={0!r}, dec_degrees={1!r}{2})'.format(
+                self.ra.hours, self.dec.degrees, ''.join(opts))
 
-    def __repr__(self):
-        opts = []
-        for name in 'ra_mas_per_year dec_mas_per_year parallax_mas radial_km_per_s jd_of_position names'.split():
-            value = getattr(self, name)
-            if value:
-                opts.append(', {0}={1!r}'.format(name, value))
-        return 'PromoEpochStar(ra_hours={0!r}, dec_degrees={1!r}{2})'.format(
-            self.ra.hours, self.dec.degrees, ''.join(opts))
+        def _observe_from_bcrs(self, observer):
+            from numpy import outer
+            from skyfield.constants import C_AUDAY
+            from skyfield.functions import length_of
+            from skyfield.relativity import light_time_difference
 
-    def _observe_from_bcrs(self, observer):
-        from numpy import outer
-        from skyfield.constants import C_AUDAY
-        from skyfield.functions import length_of
-        from skyfield.relativity import light_time_difference
+            position, velocity = self._position_au, self._velocity_au_per_d
+            t = observer.t
+            dt = light_time_difference(position, observer.position.au)
+            if t.shape:
+                position = (outer(velocity, t.tdb + dt - self.jd_of_position).T + position).T
+            else:
+                position = position + velocity * (t.tdb + dt - self.jd_of_position)
+            vector = position - observer.position.au
+            distance = length_of(vector)
+            light_time = distance / C_AUDAY
+            return vector, (observer.velocity.au_per_d.T - velocity).T, light_time
 
-        position, velocity = self._position_au, self._velocity_au_per_d
-        t = observer.t
-        dt = light_time_difference(position, observer.position.au)
-        if t.shape:
-            position = (outer(velocity, t.tdb + dt - self.jd_of_position).T + position).T
-        else:
-            position = position + velocity * (t.tdb + dt - self.jd_of_position)
-        vector = position - observer.position.au
-        distance = length_of(vector)
-        light_time = distance / C_AUDAY
-        return vector, (observer.velocity.au_per_d.T - velocity).T, light_time
-
-del Star, T0
+    del Star, T0
 
 
 _vizurl = 'http://vizier.u-strasbg.fr/viz-bin/asu-tsv'
