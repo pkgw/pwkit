@@ -742,6 +742,52 @@ def load_skyfield_data():
     return planets, ts
 
 
+# Hack to implement epochs-of-position. For what it's worth, Skyfield is
+# MIT-licensed like us.
+
+from skyfield.api import Star, T0
+
+class PromoEpochStar(Star):
+    """A customized version of the Skyfield Star class that accepts a new
+    epoch-of-position parameter.
+
+    Derived from the Skyfield source as of commit 49c2467b (2018 Mar 28).
+
+    """
+    def __init__(self, jd_of_position=T0, **kwargs):
+        super(PromoEpochStar, self).__init__(**kwargs)
+        self.jd_of_position = jd_of_position
+
+    def __repr__(self):
+        opts = []
+        for name in 'ra_mas_per_year dec_mas_per_year parallax_mas radial_km_per_s jd_of_position names'.split():
+            value = getattr(self, name)
+            if value:
+                opts.append(', {0}={1!r}'.format(name, value))
+        return 'PromoEpochStar(ra_hours={0!r}, dec_degrees={1!r}{2})'.format(
+            self.ra.hours, self.dec.degrees, ''.join(opts))
+
+    def _observe_from_bcrs(self, observer):
+        from numpy import outer
+        from skyfield.constants import C_AUDAY
+        from skyfield.functions import length_of
+        from skyfield.relativity import light_time_difference
+
+        position, velocity = self._position_au, self._velocity_au_per_d
+        t = observer.t
+        dt = light_time_difference(position, observer.position.au)
+        if t.shape:
+            position = (outer(velocity, t.tdb + dt - self.jd_of_position).T + position).T
+        else:
+            position = position + velocity * (t.tdb + dt - self.jd_of_position)
+        vector = position - observer.position.au
+        distance = length_of(vector)
+        light_time = distance / C_AUDAY
+        return vector, (observer.velocity.au_per_d.T - velocity).T, light_time
+
+del Star, T0
+
+
 _vizurl = 'http://vizier.u-strasbg.fr/viz-bin/asu-tsv'
 
 def get_2mass_epoch (tmra, tmdec, debug=False):
@@ -979,6 +1025,10 @@ class AstrometryInfo (object):
             self.pos_u_maj, self.pos_u_min = self.pos_u_min, self.pos_u_maj
             self.pos_u_pa += 0.5 * np.pi
 
+        if self.pos_epoch is None:
+            if complain:
+                print_('AstrometryInfo: assuming epoch of position is J2000.0', file=sys.stderr)
+
         if self.promo_ra is None:
             if complain:
                 print_ ('AstrometryInfo: assuming zero proper motion', file=sys.stderr)
@@ -1026,9 +1076,8 @@ class AstrometryInfo (object):
 
         """
         import sys
-        from skyfield.api import Star
 
-        self.verify (complain=complain)
+        self.verify(complain=complain)
 
         planets, ts = load_skyfield_data() # might download stuff from the internet
         earth = planets['earth']
@@ -1042,14 +1091,8 @@ class AstrometryInfo (object):
             'dec_degrees': self.dec * R2D,
         }
 
-        if self.pos_epoch is not None and self.pos_epoch != 51544.5:
-            print_ ('AstrometryInfo.predict_without_uncertainties(): '
-                    'ignoring epoch of position!', file=sys.stderr)
-            ### o.promoepoch = self.pos_epoch + 2400000.5
-        ###else:
-        ###    if complain:
-        ###        print_ ('AstrometryInfo.predict(): assuming epoch of position is J2000.0', file=sys.stderr)
-        ###    o.promoepoch = 2451545.0 # J2000.0
+        if self.pos_epoch is not None:
+            args['jd_of_position'] = self.pos_epoch + 2400000.5
 
         if self.promo_ra is not None:
             args['ra_mas_per_year'] = self.promo_ra
@@ -1059,7 +1102,7 @@ class AstrometryInfo (object):
         if self.vradial is not None:
             args['radial_km_per_s'] = self.vradial
 
-        bestra, bestdec, _ = earth.at(t).observe(Star(**args)).radec()
+        bestra, bestdec, _ = earth.at(t).observe(PromoEpochStar(**args)).radec()
         return bestra.radians, bestdec.radians
 
 
@@ -1079,7 +1122,6 @@ class AstrometryInfo (object):
 
         """
         import sys
-        from skyfield.api import Star
         from . import ellipses
 
         self.verify (complain=complain)
@@ -1095,13 +1137,8 @@ class AstrometryInfo (object):
             'dec_degrees': self.dec * R2D,
         }
 
-        if self.pos_epoch is not None and self.pos_epoch != 51544.5:
-            print_ ('AstrometryInfo.predict(): ignoring epoch of position!', file=sys.stderr)
-            ### o.promoepoch = self.pos_epoch + 2400000.5
-        ###else:
-        ###    if complain:
-        ###        print_ ('AstrometryInfo.predict(): assuming epoch of position is J2000.0', file=sys.stderr)
-        ###    o.promoepoch = 2451545.0 # J2000.0
+        if self.pos_epoch is not None:
+            args['jd_of_position'] = self.pos_epoch + 2400000.5
 
         if self.promo_ra is not None:
             args['ra_mas_per_year'] = self.promo_ra
@@ -1111,7 +1148,7 @@ class AstrometryInfo (object):
         if self.vradial is not None:
             args['radial_km_per_s'] = self.vradial
 
-        bestra, bestdec, _ = earth.at(t).observe(Star(**args)).radec()
+        bestra, bestdec, _ = earth.at(t).observe(PromoEpochStar(**args)).radec()
         bestra = bestra.radians
         bestdec = bestdec.radians
 
@@ -1167,7 +1204,7 @@ class AstrometryInfo (object):
             args['dec_mas_per_year'] = pmdecs[i]
             args['parallax_mas'] = parallaxes[i]
             args['radial_km_per_s'] = vradials[i]
-            ara, adec, _ = earth.at(t).observe(Star(**args)).radec()
+            ara, adec, _ = earth.at(t).observe(PromoEpochStar(**args)).radec()
             results[i] = adec.radians, ara.radians
 
         maj, min, pa = ellipses.bivell (*ellipses.databiv (results))
