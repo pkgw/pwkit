@@ -335,6 +335,68 @@ class Events (GTIData, RegionData):
         return p
 
 
+    def plot_lightcurve (self, ccd_id=None, bin_energies=False):
+        # XXX CIAO COPY/PASTE DOES THIS EVEN WORK???
+        import omega as om
+        from ...bblocks import tt_bblock
+        from ..ciao.data import tight_bounds
+
+        if ccd_id is None:
+            if len (self.gti) != 1:
+                raise Exception ('must specify ccd_id')
+            ccd_id = list(self.gti.keys())[0]
+
+        kev = self.events['pi'] * 1e-3 # XXXXXXX
+        vb = om.layout.VBox (2)
+
+        if kev.size == 0:
+            vb[0] = om.RectPlot()
+            vb[1] = om.RectPlot()
+            tmin = self.gti[ccd_id]['start_dmjd'].min()
+            tmax = self.gti[ccd_id]['stop_dmjd'].max()
+            if np.isnan(tmin):
+                tmin, tmax = -1., 1.
+            emin, emax = -1., 1.
+            rmin, rmax = -1., 1.
+        else:
+            bbinfo = tt_bblock (
+                self.gti[ccd_id]['start_dmjd'],
+                self.gti[ccd_id]['stop_dmjd'],
+                self.events['dmjd'].sort_values(),
+                intersect_with_bins = True,
+            )
+            cps = bbinfo.rates / 86400
+
+            tmin, tmax = tight_bounds (bbinfo.ledges[0], bbinfo.redges[-1])
+            emin, emax = tight_bounds (kev.min (), kev.max ())
+            rmin, rmax = tight_bounds (cps.min (), cps.max ())
+
+            vb[0] = om.RectPlot ()
+            csp = om.rect.ContinuousSteppedPainter (keyText='%d events' % (self.events.shape[0]))
+            csp.setFloats (np.concatenate ((bbinfo.ledges, bbinfo.redges[-1:])),
+                           np.concatenate ((cps, [0])))
+            vb[0].add (csp)
+
+            if bin_energies:
+                vb[1] = self._plot_binned_event_energies(
+                    bbinfo,
+                    energy_scale = 1e-3,
+                    dsn = 0
+                )
+            else:
+                vb[1] = om.quickXY (self.events['dmjd'], kev, None, lines=0)
+
+        vb[0].setBounds (tmin, tmax, rmin, rmax)
+        vb[0].setYLabel ('Count rate (ct/s)')
+        vb[0].bpainter.paintLabels = False
+        self._plot_add_gtis (vb[0], ccd_id)
+
+        vb[1].setBounds (tmin, tmax, emin, emax)
+        vb[1].setLabels ('MJD - %d' % self.mjd0, 'Energy (keV)')
+        self._plot_add_gtis (vb[1], ccd_id)
+        return vb
+
+
 class Lightcurve (GTIData, RegionData):
     filter = None
     "Filter used as a string; e.g. 'Medium'."
