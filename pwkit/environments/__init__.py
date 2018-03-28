@@ -56,7 +56,7 @@ class Environment(object):
 
     def launch(self, argv, stdin=None, stdout=None, stderr=None,
                close_fds=False, env=None, shell=False, cwd=None,
-               preexec_fn=None, **kwargs):
+               preexec_fn=None, executable=None, **kwargs):
         if env is None:
             env = os.environ
 
@@ -65,7 +65,7 @@ class Environment(object):
         return subprocess.Popen(argv, stdin=stdin, stdout=stdout,
                                 stderr=stderr, close_fds=close_fds,
                                 env=env, shell=shell, cwd=cwd,
-                                preexec_fn=preexec_fn)
+                                preexec_fn=preexec_fn, executable=executable)
 
     def execvpe(self, argv, env=None, **kwargs):
         if env is None:
