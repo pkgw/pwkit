@@ -7,7 +7,10 @@
 Note that the gyrosynchrotron and relativistic synchrotron expressions can
 give *very* different answers! For s=20, delta=3, theta=0.7, the results
 differ by three orders of magnitude for η! The paper is a bit vague but
-mentions that the gyrosynchrotron case is when "γ <~ 2 or 3".
+mentions that the gyrosynchrotron case is when "γ <~ 2 or 3". The synchrotron
+functions give results compatible with Symphony/Rimphony; the gyrosynchrotron
+ones do not, although I've only tentatively explored what happens if you given
+Symphony/Rimphony very low cuts on their gamma values.
 
 """
 from __future__ import absolute_import, division, print_function
@@ -23,6 +26,10 @@ calc_gs_kappa
 calc_gs_nu_pk
 calc_gs_snu_ujy
 calc_gsff_snu_ujy
+calc_synch_eta
+calc_synch_kappa
+calc_synch_nu_pk
+calc_synch_snu_ujy
 '''.split()
 
 import numpy as np
@@ -234,6 +241,159 @@ def calc_gs_snu_ujy(b, ne, delta, sinth, width, elongation, dist, ghz):
     hz = ghz * 1e9
     eta = calc_gs_eta(b, ne, delta, sinth, hz)
     kappa = calc_gs_kappa(b, ne, delta, sinth, hz)
+    snu = calc_snu(eta, kappa, width, elongation, dist)
+    ujy = snu * cgs.jypercgs * 1e6
+    return ujy
+
+
+# Full-on highly relativistic synchrotron
+
+def calc_synch_eta(b, ne, delta, sinth, nu, E0=1.):
+    """Calculate the relativistic synchrotron emission coefficient η_ν.
+
+    This is Dulk (1985) equation 40, which is an approximation assuming a
+    power-law electron population. Arguments are:
+
+    b
+      Magnetic field strength in Gauss
+    ne
+      The density of electrons per cubic centimeter with energies greater than E0.
+    delta
+      The power-law index defining the energy distribution of the electron population,
+      with ``n(E) ~ E^(-delta)``. The equation is valid for ``2 <~ delta <~ 5``.
+    sinth
+      The sine of the angle between the line of sight and the magnetic field direction.
+      It's not specified for what range of values the expressions work well.
+    nu
+      The frequency at which to calculate η, in Hz. The equation is valid for
+      It's not specified for what range of values the expressions work well.
+    E0
+      The minimum energy of electrons to consider, in MeV. Defaults to 1 so that
+      these functions can be called identically to the gyrosynchrotron functions.
+
+    The return value is the emission coefficient (AKA "emissivity"), in units
+    of ``erg s^-1 Hz^-1 cm^-3 sr^-1``.
+
+    No complaints are raised if you attempt to use the equation outside of its
+    range of validity.
+
+    """
+    s = nu / calc_nu_b(b)
+    return (b * ne *
+            8.6e-24 * (delta - 1) * sinth *
+            (0.175 * s / (E0**2 * sinth))**(0.5 * (1 - delta)))
+
+
+def calc_synch_kappa(b, ne, delta, sinth, nu, E0=1.):
+    """Calculate the relativstic synchrotron absorption coefficient κ_ν.
+
+    This is Dulk (1985) equation 41, which is a fitting function assuming a
+    power-law electron population. Arguments are:
+
+    b
+      Magnetic field strength in Gauss
+    ne
+      The density of electrons per cubic centimeter with energies greater than E0.
+    delta
+      The power-law index defining the energy distribution of the electron population,
+      with ``n(E) ~ E^(-delta)``. The equation is valid for ``2 <~ delta <~ 5``.
+    sinth
+      The sine of the angle between the line of sight and the magnetic field direction.
+      It's not specified for what range of values the expressions work well.
+    nu
+      The frequency at which to calculate η, in Hz. The equation is valid for
+      It's not specified for what range of values the expressions work well.
+    E0
+      The minimum energy of electrons to consider, in MeV. Defaults to 1 so that
+      these functions can be called identically to the gyrosynchrotron functions.
+
+    The return value is the absorption coefficient, in units of ``cm^-1``.
+
+    No complaints are raised if you attempt to use the equation outside of its
+    range of validity.
+
+    """
+    s = nu / calc_nu_b(b)
+    return (ne / b *
+            8.7e-12 * (delta - 1) / sinth *
+            E0**(delta - 1) *
+            (8.7e-2 * s / sinth)**(-0.5 * (delta + 4)))
+
+
+def calc_synch_nu_pk(b, ne, delta, sinth, depth, E0=1.):
+    """Calculate the frequency of peak synchrotron emission, ν_pk.
+
+    This is Dulk (1985) equation 43, which is a fitting function assuming a
+    power-law electron population. Arguments are:
+
+    b
+      Magnetic field strength in Gauss
+    ne
+      The density of electrons per cubic centimeter with energies greater than 10 keV.
+    delta
+      The power-law index defining the energy distribution of the electron population,
+      with ``n(E) ~ E^(-delta)``. The equation is valid for ``2 <~ delta <~ 5``.
+    sinth
+      The sine of the angle between the line of sight and the magnetic field direction.
+      It's not specified for what range of values the expressions work well.
+    depth
+      The path length through the emitting medium, in cm.
+    E0
+      The minimum energy of electrons to consider, in MeV. Defaults to 1 so that
+      these functions can be called identically to the gyrosynchrotron functions.
+
+    The return value is peak frequency in Hz.
+
+    No complaints are raised if you attempt to use the equation outside of its
+    range of validity.
+
+    """
+    coldens = ne * depth
+    return (3.2e7 * sinth *
+            E0**((2 * delta - 2) / (delta + 4)) *
+            (8.7e-12 * (delta - 1) * coldens / sinth)**(2./(delta + 4)) *
+            b**((delta + 2) / (delta + 4)))
+
+
+def calc_synch_snu_ujy(b, ne, delta, sinth, width, elongation, dist, ghz, E0=1.):
+    """Calculate a flux density from pure gyrosynchrotron emission.
+
+    This combines Dulk (1985) equations 40 and 41, which are fitting functions
+    assuming a power-law electron population, with standard radiative transfer
+    through a uniform medium. Arguments are:
+
+    b
+      Magnetic field strength in Gauss
+    ne
+      The density of electrons per cubic centimeter with energies greater than 10 keV.
+    delta
+      The power-law index defining the energy distribution of the electron population,
+      with ``n(E) ~ E^(-delta)``. The equation is valid for ``2 <~ delta <~ 5``.
+    sinth
+      The sine of the angle between the line of sight and the magnetic field direction.
+      It's not specified for what range of values the expressions work well.
+    width
+      The characteristic cross-sectional width of the emitting region, in cm.
+    elongation
+      The the elongation of the emitting region; ``depth = width * elongation``.
+    dist
+      The distance to the emitting region, in cm.
+    ghz
+      The frequencies at which to evaluate the spectrum, **in GHz**.
+    E0
+      The minimum energy of electrons to consider, in MeV. Defaults to 1 so that
+      these functions can be called identically to the gyrosynchrotron functions.
+
+    The return value is the flux density **in μJy**. The arguments can be
+    Numpy arrays.
+
+    No complaints are raised if you attempt to use the equations outside of
+    their range of validity.
+
+    """
+    hz = ghz * 1e9
+    eta = calc_synch_eta(b, ne, delta, sinth, hz, E0=E0)
+    kappa = calc_synch_kappa(b, ne, delta, sinth, hz, E0=E0)
     snu = calc_snu(eta, kappa, width, elongation, dist)
     ujy = snu * cgs.jypercgs * 1e6
     return ujy

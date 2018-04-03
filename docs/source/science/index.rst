@@ -1,4 +1,4 @@
-.. Copyright 2015 Peter K. G. Williams <peter@newton.cx> and collaborators.
+.. Copyright 2015-2018 Peter K. G. Williams <peter@newton.cx> and collaborators.
    This file licensed under the Creative Commons Attribution-ShareAlike 3.0
    Unported License (CC-BY-SA).
 
@@ -14,6 +14,7 @@ This documentation has a lot of stubs.
    pwkit-astimage.rst
    pwkit-bblocks.rst
    pwkit-cgs.rst
+   dulk-models.rst
    pwkit-ellipses.rst
    pwkit-immodel.rst
    pwkit-kbn_conf.rst
