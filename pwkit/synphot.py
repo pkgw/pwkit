@@ -1,8 +1,8 @@
 # -*- mode: python; coding: utf-8 -*-
-# Copyright 2014 Peter Williams <peter@newton.cx> and collaborators.
+# Copyright 2014-2018 Peter Williams <peter@newton.cx> and collaborators.
 # Licensed under the MIT License.
 
-"""pwkit.synphot - Synthetic photometry and database of instrumental bandpasses.
+"""Synthetic photometry and database of instrumental bandpasses.
 
 The basic structure is that we have a registry of bandpass info. You can use
 it to create Bandpass objects that can perform various calculations,
@@ -11,34 +11,53 @@ Some key attributes of each bandpass are pre-computed so that certain
 operations can be done without needing to load the actual bandpass profile
 (though so far none of these profiles are very large at all).
 
-Classes:
+The bandpass definitions built into this module are:
 
-AlreadyDefinedError - Raised when re-registering bandpass info.
-Bandpass            - Performs standard computations given a bandpass profile.
-NotDefinedError     - Raised when needed bandpass info is unavailable.
-Registry            - A registry of known bandpass profiles.
+* 2MASS (JHK)
+* Bessell (UBVRI)
+* GALEX (NUV, FUV)
+* LMIRCam on LBT
+* MEarth
+* Mauna Kea Observatory (MKO) (JHKLM)
+* SDSS (u' g' r' i' z')
+* Swift (UVW1)
+* WISE (1234)
 
-Functions:
 
-get_std_registry - Retrieve a Registry pre-filled with builtin telescope info.
-(unlisted)       - Various internal utilities may be useful for reference.
+**Classes:**
 
-Variables:
+.. autosummary::
+   AlreadyDefinedError
+   Bandpass
+   NotDefinedError
+   Registry
 
-builtin_registrars - Hashtable of functions to register the builtin telescopes.
+**Functions:**
+
+.. autosummary::
+   get_std_registry
+
+Various internal utilities may be useful for reference but are not documented here.
+
+**Variables:**
+
+.. autosummary::
+   builtin_registrars
 
 
 Example
 -------
 
-from pwkit import synphot as ps, cgs as pc, msmt as pm
-reg = ps.get_std_registry ()
-print (reg.telescopes ()) # list known telescopes
-print (reg.bands ('2MASS')) # list known 2MASS bands
-bp = reg.get ('2MASS', 'Ks')
-mag = 12.83
-mjy = pm.repval (bp.mag_to_fnu (mag) * pc.jypercgs * 1e3)
-print ('%.2f mag is %.2f mjy in 2MASS/Ks' % (mag, mjy))
+::
+
+  from pwkit import synphot as ps, cgs as pc, msmt as pm
+  reg = ps.get_std_registry()
+  print(reg.telescopes()) # list known telescopes
+  print(reg.bands('2MASS')) # list known 2MASS bands
+  bp = reg.get('2MASS', 'Ks')
+  mag = 12.83
+  mjy = pm.repval(bp.mag_to_fnu(mag) * pc.jypercgs * 1e3)
+  print('%.2f mag is %.2f mjy in 2MASS/Ks' % (mag, mjy))
 
 
 Conventions
@@ -75,7 +94,7 @@ References
 ----------
 
 Casagrande & VandenBerg (2014; arxiv:1407.6095) has a lot of good stuff; see
-  also references therein.
+also references therein.
 
 References for specific bandpasses are given in their implementation
 docstrings.
@@ -216,50 +235,38 @@ def interpolated_halfmax_points (x, y):
 # Organized storage of the bandpass info. This way we're extensible (ooh aah)
 # and we don't have to run a bunch of code on module import.
 
-class AlreadyDefinedError (PKError):
-    pass
+class AlreadyDefinedError(PKError):
+    """Raised when re-registering bandpass info."""
 
-class NotDefinedError (PKError):
-    pass
+class NotDefinedError(PKError):
+    """Raised when needed bandpass info is unavailable."""
 
 
 class Bandpass (object):
     """Computations regarding a particular filter bandpass.
 
-    Functions:
-
-    calc_halfmax_points   - Calculate the wavelengths of the filter half-maximum values.
-    calc_pivot_wavelength - Calculate the filter's pivot wavelength.
-    halfmax_points        - Get the filter half-maximum points (calculated if not cached).
-    jy_to_flam            - Convert Jy in this filter to a f_λ.
-    mag_to_flam           - Convert a magnitude in this filter to a f_λ.
-    mag_to_fnu            - Convert a magnitude in this filter to a f_ν.
-    pivot_wavelength      - Get the filter's pivot wavelength (calculated if not cached).
-    synphot               - Compute synthetic photometry given a model spectrum.
-
-    Attributes:
-
-    band             - The name of this bandpass' associated band.
-    native_flux_kind - Which kind of flux this bandpass is calibrated to: 'flam', 'fnu', or 'none'.
-    registry         - This object's parent Registry instance.
-    telescope        - The name of this bandpass' associated telescope.
-
     The underlying bandpass shape is assumed to be sampled at discrete points.
-    It is stored in _data and loaded on-demand. The object is a Pandas
-    DataFrame containing at least the columns 'wlen' and 'resp'. The former
-    holds the wavelengths of the sample points, in Ångström and in ascending
-    order. The latter gives the response curve in the EE convention. No
-    particular normalization is assumed. Other columns may be present but are
-    not used generically.
+    It is stored in ``_data`` and loaded on-demand. The object is a Pandas
+    DataFrame containing at least the columns ``wlen`` and ``resp``. The
+    former holds the wavelengths of the sample points, in Ångström and in
+    ascending order. The latter gives the response curve in the EE convention.
+    No particular normalization is assumed. Other columns may be present but
+    are not used generically.
 
     """
     _data = None
     native_flux_kind = 'none'
+    "Which kind of flux this bandpass is calibrated to: 'flam', 'fnu', or 'none'."
 
     # These are set by the registry on construction:
     registry = None
+    "This object's parent Registry instance."
+
     telescope = None
+    "The name of this bandpass' associated telescope."
+
     band = None
+    "The name of this bandpass' associated band."
 
     def _ensure_data (self):
         if self._data is None:
@@ -296,6 +303,9 @@ class Bandpass (object):
 
 
     def calc_halfmax_points (self):
+        """Calculate the wavelengths of the filter half-maximum values.
+
+        """
         d = self._ensure_data ()
         return interpolated_halfmax_points (d.wlen, d.resp)
 
@@ -421,15 +431,6 @@ class Bandpass (object):
 class Registry (object):
     """A registry of known bandpass properties.
 
-    Methods:
-
-    bands                     - Return a list of bands associated with a telescope.
-    get                       - Get a Bandpass object for a known telescope and filter.
-    register_bpass            - Register a Bandpass class.
-    register_halfmaxes        - Register precomputed half-max points.
-    register_pivot_wavelength - Register precomputed pivot wavelengths.
-    telescopes                - Return a list of telescopes known to this registry.
-
     """
     def __init__ (self):
         self._pivot_wavelengths = {}
@@ -458,6 +459,7 @@ class Registry (object):
 
 
     def register_pivot_wavelength (self, telescope, band, wlen):
+        """Register precomputed pivot wavelengths."""
         if (telescope, band) in self._pivot_wavelengths:
             raise AlreadyDefinedError ('pivot wavelength for %s/%s already '
                                        'defined', telescope, band)
@@ -467,6 +469,8 @@ class Registry (object):
 
 
     def register_halfmaxes (self, telescope, band, lower, upper):
+        """Register precomputed half-max points."""
+
         if (telescope, band) in self._halfmaxes:
             raise AlreadyDefinedError ('half-max points for %s/%s already '
                                        'defined', telescope, band)
@@ -476,6 +480,8 @@ class Registry (object):
 
 
     def register_bpass (self, telescope, klass):
+        """Register a Bandpass class."""
+
         if telescope in self._bpass_classes:
             raise AlreadyDefinedError ('bandpass class for %s already '
                                        'defined', telescope)
@@ -485,6 +491,8 @@ class Registry (object):
 
 
     def get (self, telescope, band):
+        """Get a Bandpass object for a known telescope and filter."""
+
         klass = self._bpass_classes.get (telescope)
         if klass is None:
             raise NotDefinedError ('bandpass data for %s not defined', telescope)
@@ -497,7 +505,7 @@ class Registry (object):
 
 
 builtin_registrars = {}
-
+"Hashtable of functions to register the builtin telescopes."
 
 def get_std_registry ():
     """Get a Registry object pre-filled with information for standard

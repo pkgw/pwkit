@@ -25,5 +25,5 @@ This documentation has a lot of stubs.
    pwkit-phoenix.rst
    pwkit-radio_cal_models.rst
    sherpa.rst
-   pwkit-synphot.rst
+   synphot.rst
    pwkit-ucd_physics.rst
