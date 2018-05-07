@@ -332,8 +332,8 @@ def dftphotom (cfg):
 
     for mjd in smjd:
         wd, wd2, wt, wt2, n = tbins[mjd]
-        if n == 0:
-            continue # could be all flagged
+        if n < 3: # not enough data for meaningful statistics
+            continue
 
         dtmin = 1440 * (mjd - smjd[0])
         r_sc = wd.real / wt * cfg.datascale

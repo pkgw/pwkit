@@ -308,8 +308,8 @@ def dftdynspec (cfg):
 
         wr, wi, wr2, wi2, wt, wt2, n = tbins[mjd].T
         w = np.where (n > 0)[0]
-        if w.size == 0:
-            continue # could be all flagged
+        if w.size < 3: # not enough data for meaningful statistics
+            continue
 
         r = wr[w] / wt[w]
         i = wi[w] / wt[w]

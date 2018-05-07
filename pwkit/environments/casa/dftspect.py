@@ -312,8 +312,8 @@ def dftspect (cfg):
 
     for spw in spws:
         wd, wd2, wt, wt2, n = spwbins[spw]
-        if n == 0:
-            continue # could be all flagged
+        if n < 3: # not enough data for meaningful statistics
+            continue
 
         r_sc = wd.real / wt * cfg.datascale
         i_sc = wd.imag / wt * cfg.datascale
