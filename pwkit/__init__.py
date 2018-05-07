@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 
 __all__ = 'Holder PKError binary_type reraise_context text_type unicode_to_str'.split()
 
-__version__ = '0.8.19' # also edit ../setup.py, ../docs/source/conf.py!
+__version__ = '0.8.19.99' # also edit ../setup.py, ../docs/source/conf.py!
 
 # Simultaneous Python 2/3 compatibility through the 'six' module. I started
 # out hoping that I could do this all "in-house" without adding the dep, but
