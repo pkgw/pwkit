@@ -1753,15 +1753,17 @@ def gencal(cfg):
 
         with CasapyScript(script, vis=cfg.vis) as cs:
             try:
-                with open(os.path.join(cs.workdir, 'info.pkl'), 'rb') as f:
+                with open(os.path.join(cs.workdir, 'info.npy'), 'rb') as f:
                     antenna = np.load(f)
                     parameter = np.load(f)
             except Exception:
-                reraise_context('interal casapy script seemingly failed; no info.pkl')
+                reraise_context('interal casapy script seemingly failed; no info.npy')
+
+        antenna = antenna.tostring()
 
     cb.specifycal(caltable=b(cfg.caltable), time=b'', spw=b(cfg.spw or ''),
-                   antenna=b(antenna), pol=b(cfg.pol or ''), caltype=b(cfg.caltype),
-                   parameter=b(parameter))
+                  antenna=b(antenna), pol=b(cfg.pol or ''), caltype=b(cfg.caltype),
+                  parameter=b(parameter))
     cb.close()
 
 
