@@ -110,8 +110,11 @@ class ModelBase(object):
     mdata = None
     "After fitting, the modeled data at the best parameters."
 
+    chisq = None
+    "After fitting, the χ² of the fit."
+
     rchisq = None
-    "After fitting, the reduced χ² of the fit."
+    "After fitting, the reduced χ² of the fit, or None if there are no degrees of freedom."
 
     resids = None
     "After fitting, the residuals: ``resids = data - mdata``."
@@ -152,10 +155,12 @@ class ModelBase(object):
                 frac = abs(100. * err / val)
                 print('%s: %14g +/- %14g (%.2f%%)' % (pn.rjust(lmax), val, err, frac))
 
-        if self.rchisq is None:
-            print('%s: unknown/undefined' % ('r chi sq'.rjust(lmax)))
-        else:
+        if self.rchisq is not None:
             print('%s: %14g' % ('r chi sq'.rjust(lmax), self.rchisq))
+        elif self.chisq is not None:
+            print('%s: %14g' % ('chi sq'.rjust(lmax), self.chisq))
+        else:
+            print('%s: unknown/undefined' % ('r chi sq'.rjust(lmax)))
         return self
 
 
@@ -246,7 +251,7 @@ class Model(ModelBase):
 
       x = [1, 2, 3]
       data = [10, 14, 15.8]
-      soln = Model(func, data, args=(x,)).solve(guess).print_soln()
+      mdl = Model(func, data, args=(x,)).solve(guess).print_soln()
 
     The :class:`Model` constructor can take an optional argument ``invsigma``
     after ``data``; it specifies *inverse sigmas*, **not** inverse *variances*
@@ -369,11 +374,11 @@ class Model(ModelBase):
         self.resids = soln.fvec.reshape(self.data.shape) / self.invsigma
         self.mdata = self.data - self.resids
 
+        # lm_soln.fnorm can be unreliable ("max(fnorm, fnorm1)" branch)
+        self.chisq = (self.lm_soln.fvec**2).sum()
         if soln.ndof > 0:
-            # lm_soln.fnorm can be unreliable ("max(fnorm, fnorm1)" branch)
-            self.rchisq = (self.lm_soln.fvec**2).sum() / soln.ndof
-        else:
-            self.rchisq = None
+            self.rchisq = self.chisq / soln.ndof
+
         return self
 
 
@@ -413,11 +418,9 @@ class PolynomialModel(ModelBase):
         self.mdata = self.mfunc(self.x)
         self.resids = self.data - self.mdata
 
+        self.chisq = ((self.resids * self.invsigma)**2).sum()
         if self.x.size > self.maxexponent + 1:
-            self.rchisq = (((self.resids * self.invsigma)**2).sum()
-                           / (self.x.size - (self.maxexponent + 1)))
-        else:
-            self.rchisq = None
+            self.rchisq = self.chisq / (self.x.size - (self.maxexponent + 1))
 
         return self
 
@@ -466,7 +469,8 @@ class ScaleModel(ModelBase):
         self.mfunc = lambda x: m * x
         self.mdata = m * self.x
         self.resids = self.data - self.mdata
-        self.rchisq = ((self.resids * self.invsigma)**2).sum() / (self.x.size - 1)
+        self.chisq = ((self.resids * self.invsigma)**2).sum()
+        self.rchisq = self.chisq / (self.x.size - 1)
         return self
 
 
@@ -611,9 +615,10 @@ class ComposedModel(ModelBase):
         self.resids = self.lm_soln.fvec.reshape(self.data.shape) / self.invsigma
         self.mdata = self.data - self.resids
 
+        # lm_soln.fnorm can be unreliable ("max(fnorm, fnorm1)" branch)
+        self.chisq = (self.lm_soln.fvec**2).sum()
         if soln.ndof > 0:
-            # lm_soln.fnorm can be unreliable ("max(fnorm, fnorm1)" branch)
-            self.rchisq = (self.lm_soln.fvec**2).sum() / soln.ndof
+            self.rchisq = self.chisq / soln.ndof
 
         self.component.extract(soln.params, soln.perror, soln.covar)
         return self
