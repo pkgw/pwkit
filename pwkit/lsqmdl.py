@@ -10,7 +10,7 @@ optimization.
 """
 from __future__ import absolute_import, division, print_function
 
-__all__ = 'Model PolynomialModel ScaleModel'.split()
+__all__ = 'ModelBase Model ComposedModel PolynomialModel ScaleModel'.split()
 
 import numpy as np
 try:
@@ -25,19 +25,11 @@ from . import binary_type, text_type
 
 
 class Parameter(object):
-    """Information about a parameter in a least-squares model. These data may only
-    be obtained after solving least-squares problem.
+    """Information about a parameter in a least-squares model.
 
-    These objects reference information from their parent objects, so changing
-    the parent will alter the apparent contents of these objects.
-
-    Properties:
-
-    index  - The parameter's index in the Model's arrays.
-    name   - The parameter's name.
-    value  - The parameter's value.
-    uncert - The uncertainty in value.
-    uval   - Accesses ``value`` and ``uncert`` as a ``pwkit.msmt.Uval``.
+    These data may only be obtained after solving least-squares problem. These
+    objects reference information from their parent objects, so changing the
+    parent will alter the apparent contents of these objects.
 
     """
     def __init__(self, owner, index):
@@ -49,51 +41,39 @@ class Parameter(object):
 
     @property
     def index(self): # make this read-only
+        "The parameter's index in the Model's arrays."
         return self._index
 
     @property
     def name(self):
+        "The parameter's name."
         return self._owner.pnames[self._index]
 
     @property
     def value(self):
+        "The parameter's value."
         return self._owner.params[self._index]
 
     @property
     def uncert(self):
+        "The uncertainty in :attr:`value`."
         return self._owner.puncerts[self._index]
 
     @property
     def uval(self):
+        "Accesses :attr:`value` and :attr:`uncert` as a :class:`pwkit.msmt.Uval`."
         from .msmt import Uval
         return Uval.from_norm(self.value, self.uncert)
 
 
-class _ModelBase(object):
-    """Data and a model for least-squares fitting. Attributes:
+class ModelBase(object):
+    """An abstract base class holding data and a model for least-squares fitting.
 
-    data     - The data to be modeled.
-    invsigma - Weights: 1/σ for each data point.
-    params   - ndarray of solved model parameters.
-    puncerts - ndarray of 1-sigma uncerts on params.
-    pnames   - list of string names for parameters.
-    covar    - Covariance matrix of parameters.
-    mfunc    - A function f(...) evaluating model fixed at best params.
-    mdata    - The modeled data at the best params.
-    rchisq   - Reduced χ² of the fit.
-    resids   - resids = data - mdata.
+    The models implemented in this module all derive from this class and so
+    inherit the attributes and methods described below.
 
-    Methods:
-
-    plot       - Plot the data and model (requires `omega`; assumes 1D data).
-    print_soln - Print information about the model solution.
-    set_data   - Set the data to be modeled.
-    show_cov   - Show the parameter covariance matrix with `pwkit.ndshow_gtk2`.
-    show_corr  - Show the parameter correlation matrix with `pwkit.ndshow_gtk2`.
-    solve      - Fit the model to the data.
-
-    A ``Parameter`` data structure may be obtained by indexing this object
-    with either the parameter's numerical index or its name. I.e.,
+    A :class:`Parameter` data structure may be obtained by indexing this
+    object with either the parameter's numerical index or its name. I.e.::
 
       m = Model(...).solve(...)
       p = m['slope']
@@ -101,21 +81,51 @@ class _ModelBase(object):
 
     """
     data = None
+    "The data to be modeled; an *n*-dimensional Numpy array."
+
     invsigma = None
+    "Data weights: 1/σ for each data point."
+
     params = None
+    "After fitting, a Numpy ndarray of solved model parameters."
+
     puncerts = None
+    "After fitting, a Numpy ndarray of 1σ uncertainties on the model parameters."
+
     pnames = None
+    "A list of textual names for the parameters."
+
     covar = None
+    """After fitting, the variance-covariance matrix representing the parameter
+    uncertainties.
+
+    """
     mfunc = None
+    """After fitting, a callable function evaluating the model fixed at best params.
+
+    The resulting function may or may not take arguments depending on the particular
+    kind of model being evaluated.
+
+    """
     mdata = None
+    "After fitting, the modeled data at the best parameters."
+
     rchisq = None
+    "After fitting, the reduced χ² of the fit."
+
     resids = None
+    "After fitting, the residuals: ``resids = data - mdata``."
 
     def __init__(self, data, invsigma=None):
         self.set_data(data, invsigma)
 
 
     def set_data(self, data, invsigma=None):
+        """Set the data to be modeled.
+
+        Returns *self*.
+
+        """
         self.data = np.array(data, dtype=np.float, ndmin=1)
 
         if invsigma is None:
@@ -127,8 +137,11 @@ class _ModelBase(object):
         if self.invsigma.shape != self.data.shape:
             raise ValueError('data values and inverse-sigma values must have same shape')
 
+        return self
+
 
     def print_soln(self):
+        """Print information about the model solution."""
         lmax = reduce(max,(len(x) for x in self.pnames), len('r chi sq'))
 
         if self.puncerts is None:
@@ -169,8 +182,10 @@ class _ModelBase(object):
 
     def plot(self, modelx, dlines=False, xmin=None, xmax=None,
              ymin=None, ymax=None, **kwargs):
-        """This assumes that `data` is 1D and that `mfunc` takes one argument that
-        should be treated as the X variable.
+        """Plot the data and model (requires `omega`).
+
+        This assumes that `data` is 1D and that `mfunc` takes one argument
+        that should be treated as the X variable.
 
         """
         import omega as om
@@ -205,20 +220,22 @@ class _ModelBase(object):
 
 
     def show_cov(self):
+        "Show the parameter covariance matrix with `pwkit.ndshow_gtk3`."
         # would be nice: labels with parameter names (hard because this is
         # ndshow, not omegaplot)
-        from .ndshow_gtk2 import view
+        from .ndshow_gtk3 import view
         view(self.covar, title='Covariance Matrix')
 
 
     def show_corr(self):
-        from .ndshow_gtk2 import view
+        "Show the parameter correlation matrix with `pwkit.ndshow_gtk3`."
+        from .ndshow_gtk3 import view
         d = np.diag(self.covar) ** -0.5
         corr = self.covar * d[np.newaxis,:] * d[:,np.newaxis]
         view(corr, title='Correlation Matrix')
 
 
-class Model(_ModelBase):
+class Model(ModelBase):
     """Models data with a generic nonlinear optimizer
 
     Basic usage is::
@@ -247,6 +264,13 @@ class Model(_ModelBase):
     ``data`` vector.
 
     """
+    lm_prob = None
+    """A :class:`pwkit.lmmin.Problem` instance describing the problem to be solved.
+
+    After setting up the data-generating function, you can access this item to
+    tune the solver.
+
+    """
     def __init__(self, simple_func, data, invsigma=None, args=()):
         if simple_func is not None:
             self.set_simple_func(simple_func, args)
@@ -255,8 +279,18 @@ class Model(_ModelBase):
 
 
     def set_func(self, func, pnames, args=()):
-        """This function creates the `lmmin.Problem` so that the caller can futz with
-        it before calling solve(), if so desired.
+        """Set the model function to use an efficient but tedious calling convention.
+
+        The function should obey the following convention::
+
+            def func(param_vec, *args):
+                modeled_data = { do something using param_vec }
+                return modeled_data
+
+        This function creates the :class:`pwkit.lmmin.Problem` so that the
+        caller can futz with it before calling :meth:`solve`, if so desired.
+
+        Returns *self*.
 
         """
         from .lmmin import Problem
@@ -269,6 +303,18 @@ class Model(_ModelBase):
 
 
     def set_simple_func(self, func, args=()):
+        """Set the model function to use a simple but somewhat inefficient calling
+        convention.
+
+        The function should obey the following convention::
+
+            def func(param0, param1, ..., paramN, *args):
+                modeled_data = { do something using the parameters }
+                return modeled_data
+
+        Returns *self*.
+
+        """
         code = get_function_code(func)
         npar = code.co_argcount - len(args)
         pnames = code.co_varnames[:npar]
@@ -284,8 +330,8 @@ class Model(_ModelBase):
         remaining arguments are left free and must be provided when the
         function is called.
 
-        This just applies `functools.partial` to the `func` property of this
-        object.
+        This just applies :func:`functools.partial` to the :attr:`func`
+        property of this object.
 
         """
         params = np.array(params, dtype=np.float, ndmin=1)
@@ -294,6 +340,14 @@ class Model(_ModelBase):
 
 
     def solve(self, guess):
+        """Solve for the parameters, using an initial guess.
+
+        This uses the Levenberg-Marquardt optimizer described in
+        :mod:`pwkit.lmmin`.
+
+        Returns *self*.
+
+        """
         guess = np.array(guess, dtype=np.float, ndmin=1)
         f = self.func
         args = self._args
@@ -323,7 +377,7 @@ class Model(_ModelBase):
         return self
 
 
-class PolynomialModel(_ModelBase):
+class PolynomialModel(ModelBase):
     """Least-squares polynomial fit.
 
     Because this is a very specialized kind of problem, we don't need an
@@ -391,7 +445,7 @@ class PolynomialModel(_ModelBase):
         return nlm
 
 
-class ScaleModel(_ModelBase):
+class ScaleModel(ModelBase):
     """Solve `data = m * x` for `m`."""
 
     def __init__(self, x, data, invsigma=None):
@@ -483,7 +537,7 @@ class ModelComponent(object):
         return result
 
 
-class ComposedModel(_ModelBase):
+class ComposedModel(ModelBase):
     def __init__(self, component, data, invsigma=None):
         if component is not None:
             self.set_component(component)

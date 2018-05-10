@@ -17,6 +17,16 @@ There are four basic approaches all offering a common programming interface:
  - :ref:`scale-factor`
  - :ref:`component-based`
 
+.. autosummary::
+   ModelBase
+   Parameter
+
+.. autoclass:: ModelBase
+   :members:
+.. autoclass:: Parameter
+   :members:
+
+
 .. _generic-nonlinear:
 
 Generic Nonlinear Modeling
@@ -27,8 +37,6 @@ Generic Nonlinear Modeling
    Parameter
 
 .. autoclass:: Model
-   :members:
-.. autoclass:: Parameter
    :members:
 
 
