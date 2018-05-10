@@ -2,43 +2,10 @@
 # Copyright 2012-2018 Peter Williams <peter@newton.cx> and collaborators.
 # Licensed under the MIT License.
 
-"""pwkit.lsqmdl - model data with least-squares fitting
+"""Model data with least-squares fitting
 
-Classes:
-
-Model                  - Modeling with any function using Levenberg-Marquardt.
-Parameter              - Information about a specific model parameter.
-PolynomialModel        - Modeling with polynomials.
-ScaleModel             - Modeling with a single scale factor.
-ComposedModel          - Modeling with combinations of pluggable components.
-
-ModelComponent         - Base class for ComposedModel components.
-AddConstantComponent   - Adds a single value to all data points.
-AddValuesComponent     - Adds a parameter for every data point.
-AddPolynomialComponent - Adds a polynomial.
-SeriesComponent        - Apply a set of subcomponents in series.
-MatMultComponent       - Combine subcomponents in a matrix multiplication.
-ScaleComponent         - Multiplies the data by a single value.
-
-Usage::
-
-  m = Model(func, data, [invsigma], [args]).solve(guess).print_soln()
-      # func takes (p1, p2, p3[, *args]) and returns model data
-  m = PolynomialModel(maxexponent, x, data, [invsigma]).solve().plot()
-  m = ScaleModel(x, data, [invsigma]).solve().show_cov()
-      # data = m*x
-
-The invsigma are *inverse sigmas*, NOT inverse *variances* (the usual
-statistical weights). Since most applications deal in sigmas, take care to
-write::
-
-  m = Model(func, data, 1./uncerts) # right!
-
-not::
-
-  m = Model(func, data, uncerts) # WRONG
-
-If you have zero uncertainty on a measurement, too bad.
+This module provides tools for fitting models to data using least-squares
+optimization.
 
 """
 from __future__ import absolute_import, division, print_function
@@ -103,7 +70,6 @@ class Parameter(object):
 
 
 class _ModelBase(object):
-
     """Data and a model for least-squares fitting. Attributes:
 
     data     - The data to be modeled.
@@ -253,6 +219,34 @@ class _ModelBase(object):
 
 
 class Model(_ModelBase):
+    """Models data with a generic nonlinear optimizer
+
+    Basic usage is::
+
+      def func(p1, p2, x):
+          simulated_data = p1 * x + p2
+          return simulated_data
+
+      x = [1, 2, 3]
+      data = [10, 14, 15.8]
+      soln = Model(func, data, args=(x,)).solve(guess).print_soln()
+
+    The :class:`Model` constructor can take an optional argument ``invsigma``
+    after ``data``; it specifies *inverse sigmas*, **not** inverse *variances*
+    (the usual statistical weights), for the data points. Since most
+    applications deal in sigmas, take care to write::
+
+      m = Model(func, data, 1. / uncerts) # right!
+
+    not::
+
+      m = Model(func, data, uncerts) # WRONG
+
+    If you have zero uncertainty on a measurement, you must wind a way to
+    express that constraint without including that measurement as part of the
+    ``data`` vector.
+
+    """
     def __init__(self, simple_func, data, invsigma=None, args=()):
         if simple_func is not None:
             self.set_simple_func(simple_func, args)

@@ -19,7 +19,7 @@ This documentation has a lot of stubs.
    pwkit-immodel.rst
    pwkit-kbn_conf.rst
    pwkit-lmmin.rst
-   pwkit-lsqmdl.rst
+   least-squares-modeling.rst
    pwkit-msmt.rst
    pwkit-pdm.rst
    pwkit-phoenix.rst
