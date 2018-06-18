@@ -387,7 +387,8 @@ class Summfits (multitool.Command):
 
     _commentary_card_names = frozenset (('HISTORY', 'COMMENT'))
     _skip_headers = frozenset (('XTENSION', 'BITPIX', 'SIMPLE', 'EXTEND',
-                                'EXTNAME', 'PCOUNT', 'GCOUNT', 'TFIELDS'))
+                                'EXTNAME', 'PCOUNT', 'GCOUNT', 'TFIELDS',
+                                '')) # <= STScI FITS files can use blank keys for spacing
     _skip_prefixes = frozenset (('NAXIS', 'TTYPE', 'TFORM', 'TDIM', 'TUNIT'))
 
     def invoke (self, args, **kwargs):
@@ -441,15 +442,16 @@ class Summfits (multitool.Command):
 
             output (2, '%d headers (some omitted)', len (hdu.header))
 
-            for k in hdu.header.keys ():
+            for k, value, comment in hdu.header.cards:
                 if k in self._commentary_card_names or k in self._skip_headers:
                     continue
+
                 for pfx in self._skip_prefixes:
-                    if k.startswith (pfx):
+                    if k.startswith(pfx):
                         break
                 else:
                     # We did not break out of the loop -> shouldn't be skipped.
-                    output (3, '%-8s = %r # %s', k, hdu.header[k], hdu.header.comments[k])
+                    output(3, '%-8s = %r # %s', k, value, comment)
 
             for ck in self._commentary_card_names:
                 # hacky linewrapping logic here
