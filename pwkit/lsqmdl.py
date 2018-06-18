@@ -164,6 +164,17 @@ class ModelBase(object):
         return self
 
 
+    def make_frozen_func(self, params):
+        """Return a data-generating model function frozen at the specified parameters.
+
+        As with the :attr:`mfunc` attribute, the resulting function may or may
+        not take arguments depending on the particular kind of model being
+        evaluated.
+
+        """
+        raise NotImplementedError()
+
+
     def __getitem__(self, key):
         if isinstance(key, binary_type):
             # If you're not using the unicode_literals __future__, things get
@@ -331,12 +342,13 @@ class Model(ModelBase):
 
 
     def make_frozen_func(self, params):
-        """Returns a model function frozen to the specified parameter values. Any
-        remaining arguments are left free and must be provided when the
+        """Returns a model function frozen to the specified parameter values.
+
+        Any remaining arguments are left free and must be provided when the
         function is called.
 
-        This just applies :func:`functools.partial` to the :attr:`func`
-        property of this object.
+        For this model, the returned function is the application of
+        :func:`functools.partial` to the :attr:`func` property of this object.
 
         """
         params = np.array(params, dtype=np.float, ndmin=1)
@@ -407,6 +419,10 @@ class PolynomialModel(ModelBase):
         self.set_data(data, invsigma)
 
 
+    def make_frozen_func(self, params):
+        return lambda x: npoly.polyval(x, params)
+
+
     def solve(self):
         self.pnames = ['a%d' % i for i in range(self.maxexponent + 1)]
         # Based on my reading of the polyfit() docs, I think w=invsigma**2 is right...
@@ -414,7 +430,7 @@ class PolynomialModel(ModelBase):
                                     w=self.invsigma**2)
         self.puncerts = None # does anything provide this? could farm out to lmmin ...
         self.covar = None
-        self.mfunc = lambda x: npoly.polyval(x, self.params)
+        self.mfunc = self.make_frozen_func(self.params)
         self.mdata = self.mfunc(self.x)
         self.resids = self.data - self.mdata
 
@@ -454,6 +470,11 @@ class ScaleModel(ModelBase):
     def __init__(self, x, data, invsigma=None):
         self.x = np.array(x, dtype=np.float, ndmin=1, copy=False, subok=True)
         self.set_data(data, invsigma)
+
+
+    def make_frozen_func(self, params):
+        return lambda x: params[0] * x
+
 
     def solve(self):
         w2 = self.invsigma**2
@@ -622,6 +643,10 @@ class ComposedModel(ModelBase):
 
         self.component.extract(soln.params, soln.perror, soln.covar)
         return self
+
+
+    def make_frozen_func(self):
+        return self.component.mfunc
 
 
     def mfunc(self, *args):
