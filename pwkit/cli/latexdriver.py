@@ -144,8 +144,12 @@ def merge_bibtex_with_aux (auxpath, mainpath, extradir, parse=get_bibtex_dict, a
     with auxpath.open ('rt') as aux:
         citednames = sorted (cited_names_from_aux_file (aux))
 
-    with mainpath.try_open (mode='rt', null_if_noexist=True) as main:
-        maindict = parse (main)
+    main = mainpath.try_open(mode='rt')
+    if main is None:
+        maindict = {}
+    else:
+        maindict = parse(main)
+        main.close()
 
     def gen_extra_dicts ():
         # If extradir does not exist, Path.glob() will return an empty list,
