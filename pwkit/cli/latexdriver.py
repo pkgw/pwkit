@@ -316,14 +316,11 @@ def bib_export (style, auxpath, bibpath, no_tool_ok=False, quiet=False, ignore_m
                  ' '.join (args), bibpath, -e.returncode)
 
 
-def just_smart_bibtools(bib_style, aux):
+def just_smart_bibtools (bib_style, aux, bib):
     """Tectonic has taken over most of the features that this tool used to provide,
     but here's a hack to keep my smart .bib file generation working.
 
     """
-    assert aux.endswith('.aux')
-    bib = aux[:-4] + '.bib'
-
     extradir = Path ('.bibtex')
     extradir.ensure_dir (parents=True)
 
@@ -350,10 +347,18 @@ def commandline (argv=None):
     # Hooray hack
 
     if argv[1] == '--just-smart-bibtools':
-        assert len(argv) == 4
-        bib_style = argv[2]
-        auxpath = argv[3]
-        just_smart_bibtools(bib_style, auxpath)
+        if len(argv) == 4:
+            bib_style = argv[2]
+            auxpath = argv[3]
+            assert auxpath.endswith('.aux')
+            bibpath = aux[:-4] + '.bib'
+        elif len(argv) == 5:
+            bib_style = argv[2]
+            auxpath = argv[3]
+            bibpath = argv[4]
+        else:
+            die('--just-smart-bibtools expects exactly 2 or 3 additional arguments')
+        just_smart_bibtools(bib_style, auxpath, bibpath)
         return
 
     # I should probably start using a real arg parser.
