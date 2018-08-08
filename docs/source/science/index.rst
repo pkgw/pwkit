@@ -16,6 +16,7 @@ This documentation has a lot of stubs.
    pwkit-cgs.rst
    dulk-models.rst
    pwkit-ellipses.rst
+   fk10-code.rst
    pwkit-immodel.rst
    pwkit-kbn_conf.rst
    pwkit-lmmin.rst
