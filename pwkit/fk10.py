@@ -8,6 +8,10 @@ Kuznetsov (2010) [`DOI:10.1088/0004-637X/721/2/1127
 precompiled binary module. It’s meant to be called from IDL, but we won’t let
 that stop us!
 
+The main interface to the code is the :class:`Calculator` class. But before
+you can use it, you must install the code, as described below.
+
+
 Installing the code
 -------------------
 
@@ -39,6 +43,7 @@ filenames specially.
 from __future__ import absolute_import, division, print_function
 
 __all__ = '''
+Calculator
 '''
 
 import ctypes
@@ -227,3 +232,63 @@ def make_figure9_plot(fk10func, set_unused=True):
     p.setBounds(0.5, 47, 0.1, 60)
     p.setLabels('Emission frequency, GHz', 'Total intensity, sfu')
     return p
+
+
+# The high-level interface that someone might actually want to use.
+
+class Calculator(object):
+    """An interface to the FK10 synchrotron routines.
+
+    This class maintains state about the input parameters that can be passed
+    to the routines, and can invoke them for you.
+
+    """
+    def __init__(self, shlib_path):
+        self.func = FK10Invoker(shlib_path)
+        self.in_vals = make_in_vals_array()
+
+
+    def set_freqs(self, n, f_lo_ghz, f_hi_ghz):
+        """Set the frequency grid on which to perform the calculations.
+
+        **Call signature**
+
+        *n*
+          The number of frequency points to sample.
+        *f_lo_ghz*
+          The lowest frequency to sample, in GHz.
+        *f_hi_ghz*
+          The highest frequency to sample, in GHz.
+        Returns
+          *self* for convenience in chaining.
+
+        """
+        if not (f_lo_ghz >= 0):
+            raise ValueError('must have f_lo_ghz >= 0; got %r' % (f_lo_ghz,))
+        if not (f_hi_ghz >= f_lo_ghz):
+            raise ValueError('must have f_hi_ghz >= f_lo_ghz; got %r, %r' % (f_hi_ghz, f_lo_ghz))
+        if not n >= 1:
+            raise ValueError('must have n >= 1; got %r' % (n,))
+
+        self.in_vals[IN_VAL_NFREQ] = n
+        self.in_vals[IN_VAL_FREQ0] = f_lo_ghz * 1e9 # GHz => Hz
+        self.in_vals[IN_VAL_LOGDFREQ] = np.log10(f_hi_ghz / f_lo_ghz)
+        return self
+
+
+    def set_trapezoidal_integration(self, n):
+        """Set the code to use trapezoidal integration.
+
+        **Call signature**
+
+        *n*
+          Use this many nodes
+        Returns
+          *self* for convenience in chaining.
+
+        """
+        if not (n >= 2):
+            raise ValueError('must have n >= 2; got %r' % (n,))
+
+        self.in_vals[IN_VAL_INTEG_MATH] = n + 1
+        return self

@@ -9,3 +9,12 @@ Run the Fleischman & Kuznetsov (2010) synchrotron code (:mod:`pwkit.fk10`)
    :synopsis: run the Fleischman & Kuznetsov (2010) synchrotron code
 
 .. currentmodule:: pwkit.fk10
+
+.. autoclass:: Calculator
+
+   .. autosummary::
+      set_freqs
+      set_trapezoidal_integration
+
+   .. automethod:: set_freqs
+   .. automethod:: set_trapezoidal_integration
