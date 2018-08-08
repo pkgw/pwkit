@@ -283,11 +283,27 @@ class Calculator(object):
     This class maintains state about the input parameters that can be passed
     to the routines, and can invoke them for you.
 
+    **Constructor arguments**
+
+    *shlib_path*
+      The path to the compiled FK10 code, as described in the module-level
+      documentation.
+
+    Newly-constructed objects are initialized with::
+
+      self.set_hybrid_parameters(12, 12)
+      self.set_ignore_q_terms(False)
+      self.set_trapezoidal_integration(15)
+
     """
     def __init__(self, shlib_path):
         self.func = FK10Invoker(shlib_path)
         self.in_vals = make_in_vals_array()
 
+        # Some desirable defaults:
+        self.set_hybrid_parameters(12, 12)
+        self.set_ignore_q_terms(False)
+        self.set_trapezoidal_integration(15)
 
     def compute_lowlevel(self, **kwargs):
         """Return the raw array computed by the FK10 code
