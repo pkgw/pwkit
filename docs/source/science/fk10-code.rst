@@ -13,8 +13,12 @@ Run the Fleischman & Kuznetsov (2010) synchrotron code (:mod:`pwkit.fk10`)
 .. autoclass:: Calculator
 
    .. autosummary::
+      set_bfield
+      set_edist_powerlaw
       set_freqs
+      set_thermal_background
       set_trapezoidal_integration
+
 
    .. automethod:: set_freqs
    .. automethod:: set_trapezoidal_integration

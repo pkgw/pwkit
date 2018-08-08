@@ -167,9 +167,9 @@ def make_in_vals_array():
 
 # Some diagnostics of the low-level code.
 
-def make_figure9_plot(fk10func, set_unused=True):
-    """Reproduce Figure 9 of the Fleischman & Kuznetsov (2010) paper, using our
-    low-level interfaces. Uses OmegaPlot, of course.
+def do_figure9_calc(fk10func, set_unused=True):
+    """Reproduce the calculation used to produce Figure 9 of the Fleischman &
+    Kuznetsov (2010) paper, using our low-level interfaces.
 
     Input parameters, etc., come from the file ``Flare071231a.pro`` that is
     distributed with the paper’s Supplementary Data archive.
@@ -178,11 +178,9 @@ def make_figure9_plot(fk10func, set_unused=True):
 
       from pwkit import fk10
       func = fk10.FK10Invoker('path/to/libGS_Std_HomSrc_CEH.so.64')
-      fk10.make_figure9_plot(func).show()
+      arr = fk10.do_figure9_calc(func)
 
     """
-    import omega as om
-
     in_vals = make_in_vals_array()
     in_vals[IN_VAL_AREA] = 1.33e18
     in_vals[IN_VAL_DEPTH] = 6e8
@@ -192,7 +190,7 @@ def make_figure9_plot(fk10func, set_unused=True):
     in_vals[IN_VAL_EMAX] = 4.0
     in_vals[IN_VAL_DELTA1] = 3.7
     in_vals[IN_VAL_N0] = 3e9
-    in_vals[IN_VAL_NB] = 5e9 * (1e9 / in_vals[IN_VAL_N0])
+    in_vals[IN_VAL_NB] = 5e9 / 3
     in_vals[IN_VAL_B] = 48
     in_vals[IN_VAL_THETA] = 50
     in_vals[IN_VAL_FREQ0] = 5e8
@@ -217,7 +215,27 @@ def make_figure9_plot(fk10func, set_unused=True):
         in_vals[IN_VAL_BEAMDIR] = 90
         in_vals[IN_VAL_A4] = 1
 
-    out_vals = fk10func(in_vals)
+    return fk10func(in_vals)
+
+
+def make_figure9_plot(fk10func, **kwargs):
+    """Reproduce Figure 9 of the Fleischman & Kuznetsov (2010) paper, using our
+    low-level interfaces. Uses OmegaPlot, of course.
+
+    Input parameters, etc., come from the file ``Flare071231a.pro`` that is
+    distributed with the paper’s Supplementary Data archive.
+
+    Invoke with something like::
+
+      from pwkit import fk10
+      func = fk10.FK10Invoker('path/to/libGS_Std_HomSrc_CEH.so.64')
+      fk10.make_figure9_plot(func).show()
+
+    """
+    import omega as om
+
+    out_vals = do_figure9_calc(fk10func, **kwargs)
+
     freqs = out_vals[:,OUT_VAL_FREQ]
     tot_ints = out_vals[:,OUT_VAL_OINT] + out_vals[:,OUT_VAL_XINT]
     pos = (tot_ints > 0)
@@ -248,6 +266,55 @@ class Calculator(object):
         self.in_vals = make_in_vals_array()
 
 
+    def set_bfield(self, B_G):
+        """Set the strength of the local magnetic field
+
+        **Call signature**
+
+        *B_G*
+          The magnetic field strength, in Gauss
+        Returns
+          *self* for convenience in chaining.
+        """
+        if not (B_G > 0):
+            raise ValueError('must have B_G > 0; got %r' % (B_G,))
+
+        self.in_vals[IN_VAL_B] = B_G
+        return self
+
+
+    def set_edist_powerlaw(self, emin_mev, emax_mev, delta, ne_cc):
+        """Set the energy distribution function to a power law.
+
+        **Call signature**
+
+        *emin_mev*
+          The minimum energy of the distribution, in MeV
+        *emax_mev*
+          The maximum energy of the distribution, in MeV
+        *delta*
+          The power-law index of the distribution
+        *ne_cc*
+          The number density of energetic electrons, in cm^-3.
+        Returns
+          *self* for convenience in chaining.
+        """
+        if not (emin_mev >= 0):
+            raise ValueError('must have emin_mev >= 0; got %r' % (emin_mev,))
+        if not (emax_mev >= emin_mev):
+            raise ValueError('must have emax_mev >= emin_mev; got %r, %r' % (emax_mev, emin_mev))
+        if not (delta >= 0):
+            raise ValueError('must have delta >= 0; got %r, %r' % (delta,))
+        if not (ne_cc >= 0):
+            raise ValueError('must have ne_cc >= 0; got %r, %r' % (ne_cc,))
+
+        self.in_vals[IN_VAL_EMIN] = emin_mev
+        self.in_vals[IN_VAL_EMAX] = emax_mev
+        self.in_vals[IN_VAL_DELTA1] = delta
+        self.in_vals[IN_VAL_NB] = ne_cc
+        return self
+
+
     def set_freqs(self, n, f_lo_ghz, f_hi_ghz):
         """Set the frequency grid on which to perform the calculations.
 
@@ -273,6 +340,38 @@ class Calculator(object):
         self.in_vals[IN_VAL_NFREQ] = n
         self.in_vals[IN_VAL_FREQ0] = f_lo_ghz * 1e9 # GHz => Hz
         self.in_vals[IN_VAL_LOGDFREQ] = np.log10(f_hi_ghz / f_lo_ghz)
+        return self
+
+
+    def set_thermal_background(self, T_K, nth_cc):
+        """Set the properties of the background thermal plasma.
+
+        **Call signature**
+
+        *T_K*
+          The temperature of the background plasma, in Kelvin.
+        *nth_cc*
+          The number density of thermal electrons, in cm^-3.
+        Returns
+          *self* for convenience in chaining.
+
+        Note that the parameters set here are the same as the ones that
+        describe the thermal electron distribution, if you choose one of the
+        electron energy distributions that explicitly models a thermal
+        component ("thm", "tnt", "tnp", "tng", "kappa" in the code's
+        terminology). For the power-law-y electron distributions, these
+        parameters are used to calculate dispersion parameters (e.g.
+        refractive indices) and a free-free contribution, but their
+        synchrotron contribution is ignored.
+
+        """
+        if not (T_K >= 0):
+            raise ValueError('must have T_K >= 0; got %r' % (T_K,))
+        if not (nth_cc >= 0):
+            raise ValueError('must have nth_cc >= 0; got %r, %r' % (nth_cc,))
+
+        self.in_vals[IN_VAL_T0] = T_K
+        self.in_vals[IN_VAL_N0] = nth_cc
         return self
 
 
