@@ -16,9 +16,12 @@ Run the Fleischman & Kuznetsov (2010) synchrotron code (:mod:`pwkit.fk10`)
       set_bfield
       set_edist_powerlaw
       set_freqs
+      set_hybrid_parameters
+      set_ignore_q_terms
+      set_obs_angle
+      set_padist_gaussian_loss_cone
       set_thermal_background
       set_trapezoidal_integration
-
 
    .. automethod:: set_freqs
    .. automethod:: set_trapezoidal_integration

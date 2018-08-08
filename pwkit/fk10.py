@@ -3,7 +3,7 @@
 # Licensed under the MIT License.
 
 """This module helps you run the synchrotron code described in Fleischman &
-Kuznetsov (2010) [`DOI:10.1088/0004-637X/721/2/1127
+Kuznetsov (2010; hereafter FK10) [`DOI:10.1088/0004-637X/721/2/1127
 <https://doi.org/10.1088/0004-637X/721/2/1127>`_]. The code is provided as a
 precompiled binary module. It’s meant to be called from IDL, but we won’t let
 that stop us!
@@ -167,7 +167,7 @@ def make_in_vals_array():
 
 # Some diagnostics of the low-level code.
 
-def do_figure9_calc(fk10func, set_unused=True):
+def do_figure9_calc_lowlevel(shlib_path, set_unused=True):
     """Reproduce the calculation used to produce Figure 9 of the Fleischman &
     Kuznetsov (2010) paper, using our low-level interfaces.
 
@@ -177,10 +177,11 @@ def do_figure9_calc(fk10func, set_unused=True):
     Invoke with something like::
 
       from pwkit import fk10
-      func = fk10.FK10Invoker('path/to/libGS_Std_HomSrc_CEH.so.64')
-      arr = fk10.do_figure9_calc(func)
+      arr = fk10.do_figure9_calc('path/to/libGS_Std_HomSrc_CEH.so.64')
 
     """
+    fk10func = FK10Invoker(shlib_path)
+
     in_vals = make_in_vals_array()
     in_vals[IN_VAL_AREA] = 1.33e18
     in_vals[IN_VAL_DEPTH] = 6e8
@@ -218,7 +219,27 @@ def do_figure9_calc(fk10func, set_unused=True):
     return fk10func(in_vals)
 
 
-def make_figure9_plot(fk10func, **kwargs):
+def do_figure9_calc_highlevel(shlib_path):
+    """Reproduce the calculation used to produce Figure 9 of the Fleischman &
+    Kuznetsov (2010) paper, using our high-level interfaces.
+
+    """
+    calc = (Calculator(shlib_path)
+            .set_thermal_background(2.1e7, 3e9)
+            .set_bfield(48)
+            .set_edist_powerlaw(0.016, 4.0, 3.7, 5e9/3)
+            .set_freqs(100, 0.5, 50)
+            .set_hybrid_parameters(12, 12)
+            .set_ignore_q_terms(False)
+            .set_obs_angle(50 * np.pi / 180)
+            .set_padist_gaussian_loss_cone(0.5 * np.pi, 0.4)
+            .set_trapezoidal_integration(15))
+    calc.in_vals[0] = 1.33e18 # XXX
+    calc.in_vals[1] = 6e8
+    return calc.compute_lowlevel()
+
+
+def make_figure9_plot(shlib_path, use_lowlevel=True, **kwargs):
     """Reproduce Figure 9 of the Fleischman & Kuznetsov (2010) paper, using our
     low-level interfaces. Uses OmegaPlot, of course.
 
@@ -228,13 +249,15 @@ def make_figure9_plot(fk10func, **kwargs):
     Invoke with something like::
 
       from pwkit import fk10
-      func = fk10.FK10Invoker('path/to/libGS_Std_HomSrc_CEH.so.64')
-      fk10.make_figure9_plot(func).show()
+      fk10.make_figure9_plot('path/to/libGS_Std_HomSrc_CEH.so.64').show()
 
     """
     import omega as om
 
-    out_vals = do_figure9_calc(fk10func, **kwargs)
+    if use_lowlevel:
+        out_vals = do_figure9_calc_lowlevel(shlib_path, **kwargs)
+    else:
+        out_vals = do_figure9_calc_highlevel(shlib_path, **kwargs)
 
     freqs = out_vals[:,OUT_VAL_FREQ]
     tot_ints = out_vals[:,OUT_VAL_OINT] + out_vals[:,OUT_VAL_XINT]
@@ -266,8 +289,25 @@ class Calculator(object):
         self.in_vals = make_in_vals_array()
 
 
+    def compute_lowlevel(self, **kwargs):
+        """Return the raw array computed by the FK10 code
+
+        **Calling sequence**
+
+        ``**kwargs``
+          Passed on to :meth:`FK10Invoker.__call__`; you can specify
+          a keyword *out_vals* to reuse an existing output array.
+        Returns
+          An array of shape ``(N, 5)``, where *N* has been specified
+          by your frequency configuration. Layout as described in the
+          main module documentation.
+
+        """
+        return self.func(self.in_vals, **kwargs)
+
+
     def set_bfield(self, B_G):
-        """Set the strength of the local magnetic field
+        """Set the strength of the local magnetic field.
 
         **Call signature**
 
@@ -308,6 +348,7 @@ class Calculator(object):
         if not (ne_cc >= 0):
             raise ValueError('must have ne_cc >= 0; got %r, %r' % (ne_cc,))
 
+        self.in_vals[IN_VAL_EDIST] = EDIST_PLW
         self.in_vals[IN_VAL_EMIN] = emin_mev
         self.in_vals[IN_VAL_EMAX] = emax_mev
         self.in_vals[IN_VAL_DELTA1] = delta
@@ -339,7 +380,117 @@ class Calculator(object):
 
         self.in_vals[IN_VAL_NFREQ] = n
         self.in_vals[IN_VAL_FREQ0] = f_lo_ghz * 1e9 # GHz => Hz
-        self.in_vals[IN_VAL_LOGDFREQ] = np.log10(f_hi_ghz / f_lo_ghz)
+        self.in_vals[IN_VAL_LOGDFREQ] = np.log10(f_hi_ghz / f_lo_ghz) / n
+        return self
+
+
+    def set_hybrid_parameters(self, s_C, s_WH, do_renorm=True):
+        """Set the hybrid/renormalization control parameters.
+
+        **Call signature**
+
+        *s_C*
+          The harmonic number above which the continuous approximation
+          is used (with special behavior; see below).
+        *s_WH*
+          The harmonic number above which the Wild-Hill BEssel function
+          approximations are used.
+        *do_renorm* (default True)
+          Whether to do any renormalization at all.
+        Returns
+          *self* for convenience in chaining.
+
+        FK10 uses frequency parameters f^C_cr and f^WH_cr to control some of
+        its optimizations. This function sets these parameters as multiples of
+        the electron cyclotron frequency (f_Be in FK10 notation): e.g.,
+        ``f^C_cr = s_C * f_Be``.
+
+        At frequencies above f^C_cr, the "continuum" approximation is
+        introduced, replacing the "exact" sum with an integral. At frequencies
+        above f^WH_cr, the Wild-Hild approximations to the Bessel functions
+        are used. In both cases, the activation of the optimizations can
+        result in normalization shifts in the calculations. "Renormalization"
+        computes these shifts (by doing both kinds of calculations at the
+        transition frequencies) and attempts to correct them. (Some of the
+        FK10 documentation seems to refer to renormalization as
+        "R-optimization".)
+
+        If f^C_cr is below the lowest frequency integrated, all calculations
+        will be done in continuum mode. In this case, the sign of *s_C* sets
+        whether Wild-Hill renormalization is applied. If *s_C* is negative and
+        f^WH_cr is above the lowest frequency integration, renormalization is
+        done. Otherwise, it is not.
+
+        The documentation regarding f^WH_cr is confusing. It states that
+        f^WH_cr only matters if (1) s_WH < s_C or (2) s_C < 0 and f^WH_cr >
+        f_0. It is not obvious to me why s_WH > s_C should only matter if s_C
+        < 0, but that's what's implied.
+
+        In most examples in FK10, both of these parameters are set to 12.
+
+        """
+        self.in_vals[IN_VAL_FCCR] = s_C
+        self.in_vals[IN_VAL_FWHCR] = s_WH
+        self.in_vals[IN_VAL_RENORMFLAG] = 1 if do_renorm else 0
+        return self
+
+
+    def set_obs_angle(self, theta_rad):
+        """Set the observer angle relative to the field.
+
+        **Call signature**
+
+        *theta_rad*
+          The angle between the ray path and the local magnetic field,
+          in radians.
+        Returns
+          *self* for convenience in chaining.
+        """
+        self.in_vals[IN_VAL_THETA] = theta_rad * 180 / np.pi # rad => deg
+        return self
+
+
+    def set_padist_gaussian_loss_cone(self, boundary_rad, expwidth):
+        """Set the pitch-angle distribution to a Gaussian loss cone.
+
+        **Call signature**
+
+        *boundary_rad*
+          The angle inside which there are no losses, in radians.
+        *expwidth*
+          The characteristic width of the Gaussian loss profile
+          *in direction-cosine units*.
+        Returns
+          *self* for convenience in chaining.
+
+        See ``OnlineI.pdf`` in the Supplementary Data for a precise
+        definition. (And note the distinction between α_c and μ_c since not
+        everything is direction cosines.)
+
+        """
+        self.in_vals[IN_VAL_PADIST] = PADIST_GLC
+        self.in_vals[IN_VAL_LCBDY] = boundary_rad * 180 / np.pi # rad => deg
+        self.in_vals[IN_VAL_DELTAMU] = expwidth
+        return self
+
+
+    def set_ignore_q_terms(self, ignore_q_terms):
+        """Set whether "Q" terms are ignored.
+
+        **Call signature**
+
+        *ignore_q_terms*
+          If true, ignore "Q" terms in the integrations.
+        Returns
+          *self* for convenience in chaining.
+
+        See Section 4.3 of FK10 and ``OnlineII.pdf`` in the Supplementary Data
+        for a precise explanation. The default is to *not* ignore the terms.
+
+        """
+        # Note that we are ignoring the magic 1 value that only applies to the
+        # "HomSrc_C" version of the library.
+        self.in_vals[IN_VAL_QFLAG] = 0 if ignore_q_terms else 2
         return self
 
 
@@ -389,5 +540,5 @@ class Calculator(object):
         if not (n >= 2):
             raise ValueError('must have n >= 2; got %r' % (n,))
 
-        self.in_vals[IN_VAL_INTEG_MATH] = n + 1
+        self.in_vals[IN_VAL_INTEG_METH] = n + 1
         return self
