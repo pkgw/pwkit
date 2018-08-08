@@ -158,3 +158,72 @@ class FK10Invoker(object):
 
 def make_in_vals_array():
     return np.zeros(29, dtype=np.float32)
+
+
+# Some diagnostics of the low-level code.
+
+def make_figure9_plot(fk10func, set_unused=True):
+    """Reproduce Figure 9 of the Fleischman & Kuznetsov (2010) paper, using our
+    low-level interfaces. Uses OmegaPlot, of course.
+
+    Input parameters, etc., come from the file ``Flare071231a.pro`` that is
+    distributed with the paper’s Supplementary Data archive.
+
+    Invoke with something like::
+
+      from pwkit import fk10
+      func = fk10.FK10Invoker('path/to/libGS_Std_HomSrc_CEH.so.64')
+      fk10.make_figure9_plot(func).show()
+
+    """
+    import omega as om
+
+    in_vals = make_in_vals_array()
+    in_vals[IN_VAL_AREA] = 1.33e18
+    in_vals[IN_VAL_DEPTH] = 6e8
+    in_vals[IN_VAL_T0] = 2.1e7
+    in_vals[IN_VAL_INTEG_METH] = 16
+    in_vals[IN_VAL_EMIN] = 0.016
+    in_vals[IN_VAL_EMAX] = 4.0
+    in_vals[IN_VAL_DELTA1] = 3.7
+    in_vals[IN_VAL_N0] = 3e9
+    in_vals[IN_VAL_NB] = 5e9 * (1e9 / in_vals[IN_VAL_N0])
+    in_vals[IN_VAL_B] = 48
+    in_vals[IN_VAL_THETA] = 50
+    in_vals[IN_VAL_FREQ0] = 5e8
+    in_vals[IN_VAL_LOGDFREQ] = 0.02
+    in_vals[IN_VAL_EDIST] = EDIST_PLW
+    in_vals[IN_VAL_NFREQ] = 100
+    in_vals[IN_VAL_PADIST] = PADIST_GLC
+    in_vals[IN_VAL_LCBDY] = 90
+    in_vals[IN_VAL_DELTAMU] = 0.4
+    in_vals[IN_VAL_FCCR] = 12
+    in_vals[IN_VAL_FWHCR] = in_vals[IN_VAL_FCCR]
+    in_vals[IN_VAL_RENORMFLAG] = 1
+    in_vals[IN_VAL_QFLAG] = 2
+
+    if set_unused:
+        # Sanity-checking: these parameters shouldn't affect the calculated
+        # result.
+        in_vals[IN_VAL_EPSILON] = 0.05
+        in_vals[IN_VAL_KAPPA] = 4.0
+        in_vals[IN_VAL_EBREAK] = 1.0
+        in_vals[IN_VAL_DELTA2] = 6.0
+        in_vals[IN_VAL_BEAMDIR] = 90
+        in_vals[IN_VAL_A4] = 1
+
+    out_vals = fk10func(in_vals)
+    freqs = out_vals[:,OUT_VAL_FREQ]
+    tot_ints = out_vals[:,OUT_VAL_OINT] + out_vals[:,OUT_VAL_XINT]
+    pos = (tot_ints > 0)
+
+    p = om.quickXY(freqs[pos], tot_ints[pos], 'Calculation', xlog=1, ylog=1)
+
+    nu_obs = np.array([1.0, 2.0, 3.75, 9.4, 17.0, 34.0])
+    int_obs = np.array([12.0, 43.0, 29.0, 6.3, 1.7, 0.5])
+    p.addXY(nu_obs, int_obs, 'Observations', lines=False)
+
+    p.defaultKeyOverlay.hAlign = 0.93
+    p.setBounds(0.5, 47, 0.1, 60)
+    p.setLabels('Emission frequency, GHz', 'Total intensity, sfu')
+    return p
