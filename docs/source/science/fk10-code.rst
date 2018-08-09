@@ -12,6 +12,8 @@ Run the Fleischman & Kuznetsov (2010) synchrotron code (:mod:`pwkit.fk10`)
 
 .. autoclass:: Calculator
 
+   .. rubric:: Setting parameters
+
    .. autosummary::
       set_bfield
       set_edist_powerlaw
@@ -26,6 +28,11 @@ Run the Fleischman & Kuznetsov (2010) synchrotron code (:mod:`pwkit.fk10`)
       set_thermal_background
       set_trapezoidal_integration
 
+   .. rubric:: Running calculations
+
+   .. autosummary::
+      find_rt_coefficients
+
    .. automethod:: set_bfield
    .. automethod:: set_edist_powerlaw
    .. automethod:: set_edist_powerlaw_gamma
@@ -38,3 +45,5 @@ Run the Fleischman & Kuznetsov (2010) synchrotron code (:mod:`pwkit.fk10`)
    .. automethod:: set_padist_isotropic
    .. automethod:: set_thermal_background
    .. automethod:: set_trapezoidal_integration
+
+   .. automethod:: find_rt_coefficients

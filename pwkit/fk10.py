@@ -159,7 +159,7 @@ class FK10Invoker(object):
         res = self.get_mw(2, pointer_pair(in_ptr, out_ptr))
 
         if res != 0:
-            raise RuntimeError('bad inputs to GET_MW function; return code was {}'.format(res))
+            raise Exception('bad inputs to GET_MW function; return code was {}'.format(res))
 
         return out_values
 
@@ -651,3 +651,121 @@ class Calculator(object):
 
         self.in_vals[IN_VAL_INTEG_METH] = n + 1
         return self
+
+
+    def find_rt_coefficients(self, depth0=None):
+        """Figure out emission and absorption coefficients for the current parameters.
+
+        **Argument**
+
+        *depth0* (default None)
+          A first guess to use for a good integration depth, in cm. If None,
+          the most recent value is used.
+
+        **Return value**
+
+        A tuple ``(j_O, alpha_O, j_X, alpha_X)``, where:
+
+        *j_O*
+          The O-mode emission coefficient, in erg/s/cm^3/Hz/sr.
+        *alpha_O*
+          The O-mode absorption coefficient, in cm^-1.
+        *j_X*
+          The X-mode emission coefficient, in erg/s/cm^3/Hz/sr.
+        *alpha_X*
+          The X-mode absorption coefficient, in cm^-1.
+
+        The main outputs of the FK10 code are intensities and "damping
+        factors" describing a radiative transfer integration of the emission
+        from a homogeneous source. But there are times when we'd rather just
+        know what the actual emission and absorption coefficients are. These
+        can be backed out from the FK10 outputs, but only if the "damping
+        factor" takes on an intermediate value not extremely close to either 0
+        or 1. Unfortunately, there's no way for us to know a priori what
+        choice of the "depth" parameter will yield a nice value for the
+        damping factor. This routine automatically figures one out, by
+        repeatedly running the calculation.
+
+        To keep things simple, this routine requires that you only be solving
+        for coefficients for one frequency at a time (e.g.,
+        :meth:`set_one_freq`).
+
+        """
+        if self.in_vals[IN_VAL_NFREQ] != 1:
+            raise Exception('must have nfreq=1 to run Calculator.find_rt_coefficients()')
+
+        if depth0 is not None:
+            depth = depth0
+            self.in_vals[IN_VAL_DEPTH] = depth0
+        else:
+            depth = self.in_vals[IN_VAL_DEPTH]
+
+        scale_factor = 100
+        buf = np.empty((1, 5), dtype=np.float32)
+
+        def classify(damping_factor):
+            if damping_factor >= 0.99:
+                return 1
+            if damping_factor <= 0.01:
+                return -1
+            return 0
+
+        DONE, SHRINK, GROW, ABORT = 0, 1, 2, 3
+
+        actions = {
+            (-1, -1): SHRINK,
+            (-1,  0): SHRINK,
+            (-1,  1): ABORT,
+            ( 0, -1): SHRINK,
+            ( 0,  0): DONE,
+            ( 0,  1): GROW,
+            ( 1, -1): ABORT,
+            ( 1,  0): GROW,
+            ( 1,  1): GROW,
+        }
+
+        last_change = DONE # our first change will be treated as a change in direction
+
+        for attempt_number in range(20):
+            self.compute_lowlevel(out_values=buf)
+            co = classify(buf[0,OUT_VAL_ODAMP])
+            cx = classify(buf[0,OUT_VAL_XDAMP])
+            action = actions[co, cx]
+            ###print('Z', attempt_number, self.in_vals[IN_VAL_DEPTH], last_change, buf, co, cx, action)
+
+            if action == DONE:
+                break
+            elif action == ABORT:
+                raise Exception('depths of X and O modes are seriously incompatible')
+            elif action == GROW:
+                if last_change != GROW:
+                    scale_factor *= 0.3
+                depth *= scale_factor
+                last_change = GROW
+            elif action == SHRINK:
+                if last_change != SHRINK:
+                    scale_factor *= 0.3
+                depth /= scale_factor
+                last_change = SHRINK
+
+            self.in_vals[IN_VAL_DEPTH] = depth
+        else:
+            # If we get here, we never explicitly quit the loop
+            raise Exception('depth-finding algorithm did not converge!')
+
+        # OK, we found some good depths! Now calculate the RT coefficients. I believe that
+        # I'm doing this right ...
+
+        sfu_to_specintens = 1e4 * cgs.cgsperjy * cgs.cmperau**2 / self.in_vals[IN_VAL_AREA]
+
+        damp_X = buf[0,OUT_VAL_XDAMP]
+        alpha_X = -np.log(damp_X) / depth
+        si_X = buf[0,OUT_VAL_XINT] * sfu_to_specintens
+        j_X = si_X * alpha_X / (1 - damp_X)
+
+        damp_O = buf[0,OUT_VAL_ODAMP]
+        alpha_O = -np.log(damp_O) / depth
+        si_O = buf[0,OUT_VAL_OINT] * sfu_to_specintens
+        j_O = si_O * alpha_O / (1 - damp_O)
+
+        return (j_O, alpha_O, j_X, alpha_X)
