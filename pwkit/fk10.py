@@ -49,6 +49,8 @@ Calculator
 import ctypes
 import numpy as np
 
+from . import cgs
+
 
 # Here we have the very low-level interface to the compiled code. These aren't
 # documented in the main documentation since, hopefully, regular users will
@@ -110,6 +112,7 @@ OUT_VAL_ODAMP = 2
 OUT_VAL_XINT = 3
 OUT_VAL_XDAMP = 4
 
+E0_MEV = cgs.me * cgs.c**2 * cgs.evpererg * 1e-6 # helpful: electron rest-mass-energy in MeV (~= 0.511)
 
 class FK10Invoker(object):
     "The lowest-level interface to the FK10 code."
@@ -372,6 +375,39 @@ class Calculator(object):
         return self
 
 
+    def set_edist_powerlaw_gamma(self, gmin, gmax, delta, ne_cc):
+        """Set the energy distribution function to a power law in the Lorentz factor
+
+        **Call signature**
+
+        *gmin*
+          The minimum Lorentz factor of the distribution
+        *gmax*
+          The maximum Lorentz factor of the distribution
+        *delta*
+          The power-law index of the distribution
+        *ne_cc*
+          The number density of energetic electrons, in cm^-3.
+        Returns
+          *self* for convenience in chaining.
+        """
+        if not (gmin >= 1):
+            raise ValueError('must have gmin >= 1; got %r' % (gmin,))
+        if not (gmax >= gmin):
+            raise ValueError('must have gmax >= gmin; got %r, %r' % (gmax, gmin))
+        if not (delta >= 0):
+            raise ValueError('must have delta >= 0; got %r, %r' % (delta,))
+        if not (ne_cc >= 0):
+            raise ValueError('must have ne_cc >= 0; got %r, %r' % (ne_cc,))
+
+        self.in_vals[IN_VAL_EDIST] = EDIST_PLG
+        self.in_vals[IN_VAL_EMIN] = (gmin - 1) * E0_MEV
+        self.in_vals[IN_VAL_EMAX] = (gmax - 1) * E0_MEV
+        self.in_vals[IN_VAL_DELTA1] = delta
+        self.in_vals[IN_VAL_NB] = ne_cc
+        return self
+
+
     def set_freqs(self, n, f_lo_ghz, f_hi_ghz):
         """Set the frequency grid on which to perform the calculations.
 
@@ -466,6 +502,26 @@ class Calculator(object):
         return self
 
 
+    def set_one_freq(self, f_ghz):
+        """Set the code to calculate results at just one frequency.
+
+        **Call signature**
+
+        *f_ghz*
+          The frequency to sample, in GHz.
+        Returns
+          *self* for convenience in chaining.
+
+        """
+        if not (f_ghz >= 0):
+            raise ValueError('must have f_lo_ghz >= 0; got %r' % (f_lo_ghz,))
+
+        self.in_vals[IN_VAL_NFREQ] = 1
+        self.in_vals[IN_VAL_FREQ0] = f_ghz * 1e9 # GHz -> Hz
+        self.in_vals[IN_VAL_LOGDFREQ] = 1.0
+        return self
+
+
     def set_padist_gaussian_loss_cone(self, boundary_rad, expwidth):
         """Set the pitch-angle distribution to a Gaussian loss cone.
 
@@ -487,6 +543,17 @@ class Calculator(object):
         self.in_vals[IN_VAL_PADIST] = PADIST_GLC
         self.in_vals[IN_VAL_LCBDY] = boundary_rad * 180 / np.pi # rad => deg
         self.in_vals[IN_VAL_DELTAMU] = expwidth
+        return self
+
+
+    def set_padist_isotropic(self):
+        """Set the pitch-angle distribution to be isotropic.
+
+        **Returns**
+          *self* for convenience in chaining.
+
+        """
+        self.in_vals[IN_VAL_PADIST] = PADIST_ISO
         return self
 
 
