@@ -779,3 +779,33 @@ class Calculator(object):
         j_O = si_O * alpha_O / (1 - damp_O)
 
         return (j_O, alpha_O, j_X, alpha_X)
+
+
+    def find_rt_coefficients_tot_intens(self, depth0=None):
+        """Figure out total-intensity emission and absorption coefficients for the
+        current parameters.
+
+        **Argument**
+
+        *depth0* (default None)
+          A first guess to use for a good integration depth, in cm. If None,
+          the most recent value is used.
+
+        **Return value**
+
+        A tuple ``(j_I, alpha_I)``, where:
+
+        *j_I*
+          The total intensity emission coefficient, in erg/s/cm^3/Hz/sr.
+        *alpha_I*
+          The total intensity absorption coefficient, in cm^-1.
+
+        See :meth:`find_rt_coefficients` for an explanation how this routine
+        works. This version merely postprocesses the results from that method
+        to convert the coefficients to refer to total intensity.
+
+        """
+        j_O, alpha_O, j_X, alpha_X = self.find_rt_coefficients(depth0=depth0)
+        j_I = j_O + j_X
+        alpha_I = 0.5 * (alpha_O + alpha_X) # uhh... right?
+        return (j_I, alpha_I)

@@ -32,6 +32,7 @@ Run the Fleischman & Kuznetsov (2010) synchrotron code (:mod:`pwkit.fk10`)
 
    .. autosummary::
       find_rt_coefficients
+      find_rt_coefficients_tot_intens
 
    .. automethod:: set_bfield
    .. automethod:: set_edist_powerlaw
@@ -47,3 +48,4 @@ Run the Fleischman & Kuznetsov (2010) synchrotron code (:mod:`pwkit.fk10`)
    .. automethod:: set_trapezoidal_integration
 
    .. automethod:: find_rt_coefficients
+   .. automethod:: find_rt_coefficients_tot_intens
