@@ -16,6 +16,7 @@ Run the Fleischman & Kuznetsov (2010) synchrotron code (:mod:`pwkit.fk10`)
 
    .. autosummary::
       set_bfield
+      set_bfield_for_s0
       set_edist_powerlaw
       set_edist_powerlaw_gamma
       set_freqs
@@ -35,6 +36,7 @@ Run the Fleischman & Kuznetsov (2010) synchrotron code (:mod:`pwkit.fk10`)
       find_rt_coefficients_tot_intens
 
    .. automethod:: set_bfield
+   .. automethod:: set_bfield_for_s0
    .. automethod:: set_edist_powerlaw
    .. automethod:: set_edist_powerlaw_gamma
    .. automethod:: set_freqs

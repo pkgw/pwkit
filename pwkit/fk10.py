@@ -378,6 +378,30 @@ class Calculator(object):
         return self
 
 
+    def set_bfield_for_s0(self, s0):
+        """Set B to probe a certain harmonic number.
+
+        **Call signature**
+
+        *s0*
+          The harmonic number to probe at the lowest frequency
+        Returns
+          *self* for convenience in chaining.
+
+        This just proceeds from the relation ``nu = s nu_c = s e B / 2 pi m_e
+        c``. Since *s* and *nu* scale with each other, if multiple frequencies
+        are being probed, the harmonic numbers being probed will scale in the
+        same way.
+
+        """
+        if not (s0 > 0):
+            raise ValueError('must have s0 > 0; got %r' % (s0,))
+
+        B0 = 2 * np.pi * cgs.me * cgs.c * self.in_vals[IN_VAL_FREQ0] / (cgs.e * s0)
+        self.in_vals[IN_VAL_B] = B0
+        return self
+
+
     def set_edist_powerlaw(self, emin_mev, emax_mev, delta, ne_cc):
         """Set the energy distribution function to a power law.
 
