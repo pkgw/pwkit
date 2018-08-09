@@ -307,6 +307,16 @@ class Calculator(object):
         self.set_ignore_q_terms(False)
         self.set_trapezoidal_integration(15)
 
+        # The "intensity" results out of the FK10 code just scale linearly
+        # with this parameter, so we can basically set it arbitrarily.
+        self.in_vals[IN_VAL_AREA] = 1.0
+
+        # The choice of this parameter actually affects the outputs from the
+        # code, because it annoyingly tries to do the RT integral for us.
+        # Fortunately find_rt_coefficients() can get something useful unless
+        # the input depth, or problem parameters, are really bonkers.
+        self.in_vals[IN_VAL_DEPTH] = 1e9
+
 
     @classmethod
     def new_for_fk10_fig9(cls, shlib_path):
