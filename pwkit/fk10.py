@@ -87,7 +87,7 @@ IN_VAL_A4 = 23
 IN_VAL_FCCR = 25
 IN_VAL_FWHCR = 26
 IN_VAL_RENORMFLAG = 27
-# "C" library only:
+# all libraries again:
 IN_VAL_QFLAG = 28
 
 EDIST_THM = 2
@@ -189,10 +189,14 @@ def do_figure9_calc_lowlevel(shlib_path, set_unused=True):
     in_vals[IN_VAL_AREA] = 1.33e18
     in_vals[IN_VAL_DEPTH] = 6e8
     in_vals[IN_VAL_T0] = 2.1e7
+    # EPSILON (these markers are to aid counting indices)
+    # KAPPA
     in_vals[IN_VAL_INTEG_METH] = 16
     in_vals[IN_VAL_EMIN] = 0.016
     in_vals[IN_VAL_EMAX] = 4.0
+    # EBREAK
     in_vals[IN_VAL_DELTA1] = 3.7
+    # DELTA2
     in_vals[IN_VAL_N0] = 3e9
     in_vals[IN_VAL_NB] = 5e9 / 3
     in_vals[IN_VAL_B] = 48
@@ -203,7 +207,10 @@ def do_figure9_calc_lowlevel(shlib_path, set_unused=True):
     in_vals[IN_VAL_NFREQ] = 100
     in_vals[IN_VAL_PADIST] = PADIST_GLC
     in_vals[IN_VAL_LCBDY] = 90
+    # BEAMDIR
     in_vals[IN_VAL_DELTAMU] = 0.4
+    # A4
+    # (slot 24 unused)
     in_vals[IN_VAL_FCCR] = 12
     in_vals[IN_VAL_FWHCR] = in_vals[IN_VAL_FCCR]
     in_vals[IN_VAL_RENORMFLAG] = 1
