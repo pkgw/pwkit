@@ -233,20 +233,12 @@ def do_figure9_calc_highlevel(shlib_path):
     """Reproduce the calculation used to produce Figure 9 of the Fleischman &
     Kuznetsov (2010) paper, using our high-level interfaces.
 
+    The meat is moved to a class method on Calculator since it's handy to have
+    a quick way to create an instance that has reasonable settings for all of
+    its parameters.
+
     """
-    calc = (Calculator(shlib_path)
-            .set_thermal_background(2.1e7, 3e9)
-            .set_bfield(48)
-            .set_edist_powerlaw(0.016, 4.0, 3.7, 5e9/3)
-            .set_freqs(100, 0.5, 50)
-            .set_hybrid_parameters(12, 12)
-            .set_ignore_q_terms(False)
-            .set_obs_angle(50 * np.pi / 180)
-            .set_padist_gaussian_loss_cone(0.5 * np.pi, 0.4)
-            .set_trapezoidal_integration(15))
-    calc.in_vals[0] = 1.33e18 # XXX
-    calc.in_vals[1] = 6e8
-    return calc.compute_lowlevel()
+    return Calculator.new_for_fk10_fig9(shlib_path).compute_lowlevel()
 
 
 def make_figure9_plot(shlib_path, use_lowlevel=True, **kwargs):
@@ -314,6 +306,33 @@ class Calculator(object):
         self.set_hybrid_parameters(12, 12)
         self.set_ignore_q_terms(False)
         self.set_trapezoidal_integration(15)
+
+
+    @classmethod
+    def new_for_fk10_fig9(cls, shlib_path):
+        """Create a calculator initialized to reproduce Figure 9 from FK10.
+
+        This is mostly to provide a handy way to create a new
+        :class:`Calculator` instance that is initialized with reasonable
+        values for all of its parameters.
+
+        """
+        inst = (cls(shlib_path)
+            .set_thermal_background(2.1e7, 3e9)
+            .set_bfield(48)
+            .set_edist_powerlaw(0.016, 4.0, 3.7, 5e9/3)
+            .set_freqs(100, 0.5, 50)
+            .set_hybrid_parameters(12, 12)
+            .set_ignore_q_terms(False)
+            .set_obs_angle(50 * np.pi / 180)
+            .set_padist_gaussian_loss_cone(0.5 * np.pi, 0.4)
+            .set_trapezoidal_integration(15))
+
+        # haven't yet figure out how to deal with this part:
+        inst.in_vals[0] = 1.33e18
+        inst.in_vals[1] = 6e8
+        return inst
+
 
     def compute_lowlevel(self, **kwargs):
         """Return the raw array computed by the FK10 code
