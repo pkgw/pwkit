@@ -351,7 +351,7 @@ def commandline(argv=None):
             bib_style = argv[2]
             auxpath = argv[3]
             assert auxpath.endswith('.aux')
-            bibpath = aux[:-4] + '.bib'
+            bibpath = auxpath[:-4] + '.bib'
         elif len(argv) == 5:
             bib_style = argv[2]
             auxpath = argv[3]
