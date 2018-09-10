@@ -2,9 +2,14 @@
 # Copyright 2012-2015 Peter Williams <peter@newton.cx> and collaborators.
 # Licensed under the MIT License.
 
-"""pwkit.environments.casa.dftphotom - point-source photometry from visibilities
+"""This module implements an algorithm to compute light curves for point
+sources in interferometric visibility data. CASA doesn’t have a task to do this.
 
-CASA doesn't yet have a task to do this.
+The algorithm is accessible from the command line as ``casatask dftphotom``,
+but it can also be invoked from within Python. For help on usage from the
+command line, run ``casatask dftphotom --help``. The command’s help text will
+also describe some of the parameters below in more detail than is currently
+found here.
 
 """
 from __future__ import absolute_import, division, print_function
@@ -116,9 +121,19 @@ class PandasOutputFormat(object):
 
 class Config(ParseKeywords):
     vis = Custom(str, required=True)
-    datacol = 'data'
-    believeweights = False
+    """The path to the visibility MeasurementSet to process. No default; you
+    must specify a value before calling :func:`dftphotom`."""
 
+    datacol = 'data'
+    """A string specifying which visibility data column to process: ``data``,
+    ``corrected_data``, or ``model_data``. Default ``'data'``.
+
+    """
+    believeweights = False
+    """Whether to trust that the data-weight information in the MS accurately
+    describe the noise in their corresponding visibilities. Default False.
+
+    """
     @Custom(str, uiname='out')
     def outstream(val):
         if val is None:
@@ -129,7 +144,11 @@ class Config(ParseKeywords):
             die('cannot open path "%s" for writing', val)
 
     datascale = 1e6
+    """The amount by which to scale the computed values before emitting them as
+    text. The default is 1e6, which means that the output will be in
+    microJanskys if the underlying data are calibrated to Jansky units.
 
+    """
     @Custom(str, default='humane')
     def format(val):
         if val is None or val == 'humane':
@@ -169,6 +188,13 @@ class Config(ParseKeywords):
 
 
 def dftphotom(cfg):
+    """Run the discrete-Fourier-transform photometry algorithm.
+
+    See the module-level documentation and the output of ``casatask dftphotom
+    --help`` for help. All of the algorithm configuration is specified in the
+    *cfg* argument, which is an instance of :class:`Config`.
+
+    """
     tb = util.tools.table()
     ms = util.tools.ms()
     me = util.tools.measures()
@@ -356,6 +382,14 @@ def dftphotom(cfg):
 
 
 def dftphotom_cli(argv):
+    """Command-line access to the :func:`dftphotom` algorithm.
+
+    This function implements the behavior of the command-line ``casatask
+    dftphotom`` tool, wrapped up into a single callable function. The argument
+    *argv* is a list of command-line arguments, in Unix style where the zeroth
+    item is the name of the command.
+
+    """
     check_usage(dftphotom_doc, argv, usageifnoargs=True)
     cfg = Config().parse(argv[1:])
     util.logger(cfg.loglevel)
