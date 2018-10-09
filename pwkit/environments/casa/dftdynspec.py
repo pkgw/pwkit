@@ -10,9 +10,9 @@
 Sets. CASA doesn't have a task that does this.
 
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
+from __future__ import absolute_import, division, print_function
 
-__all__ = str('Config Loader dftdynspec dftdynspec_cli').split()
+__all__ = 'Config Loader dftdynspec dftdynspec_cli'.split()
 
 import io, os.path, sys
 import numpy as np
