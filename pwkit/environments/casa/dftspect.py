@@ -1,5 +1,5 @@
 # -*- mode: python; coding: utf-8 -*-
-# Copyright 2012, 2016 Peter Williams <peter@newton.cx> and collaborators.
+# Copyright 2012, 2016, 2018 Peter Williams <peter@newton.cx> and collaborators.
 # Licensed under the MIT License.
 
 # NB. This is super-redundant with msphotom but it seems impractical
@@ -12,7 +12,7 @@ CASA doesn't yet have a task to do this.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = str ('Config dftspect dftspect_cli').split ()
+__all__ = str('Config dftspect dftspect_cli').split()
 
 import six, sys, os.path, numpy as np
 from six.moves import range
@@ -71,7 +71,7 @@ believeweights=[t|f]
 format=[humane(default)|pandas]
   The format of the output. The default is "humane" which is described below.
   The "pandas" format is slightly less human-friendly but can be read directly
-  into a Pandas DataFrame with pandas.read_table ().
+  into a Pandas DataFrame with pandas.read_table().
 
 IMPORTANT: the fundamental assumption of this task is that the only signal in
 the visibilities is from a point source at the phasing center. We also assume
@@ -89,61 +89,61 @@ are microjansky by default, but see the datascale keyword, and there's no way
 to know if the data have actually been flux-calibrated or not.
 """
 
-class HumaneOutputFormat (object):
-    def header (self, cfg):
+class HumaneOutputFormat(object):
+    def header(self, cfg):
         pass
 
-    def row (self, cfg, freq, spwnum, r_sc, ru_sc, i_sc, iu_sc, mag, umag, n):
-        print ('%10.2f %2d %10.2f %10.2f %10.2f %10.2f %10.2f %10.2f %d' %
-               (freq, spwnum, r_sc, ru_sc, i_sc, iu_sc, mag, umag, n),
-               file=cfg.outstream)
+    def row(self, cfg, freq, spwnum, r_sc, ru_sc, i_sc, iu_sc, mag, umag, n):
+        print('%10.2f %2d %10.2f %10.2f %10.2f %10.2f %10.2f %10.2f %d' %
+              (freq, spwnum, r_sc, ru_sc, i_sc, iu_sc, mag, umag, n),
+              file=cfg.outstream)
 
 
-class PandasOutputFormat (object):
-    def header (self, cfg):
-        print ('freq spwnum re ure im uim abs uabs nsamp'.replace (' ', '\t'),
-               file=cfg.outstream)
+class PandasOutputFormat(object):
+    def header(self, cfg):
+        print('freq spwnum re ure im uim abs uabs nsamp'.replace(' ', '\t'),
+              file=cfg.outstream)
 
-    def row (self, cfg, *args):
-        print ('\t'.join (str (x) for x in args), file=cfg.outstream)
+    def row(self, cfg, *args):
+        print('\t'.join(str(x) for x in args), file=cfg.outstream)
 
 
-class Config (ParseKeywords):
-    vis = Custom (str, required=True)
+class Config(ParseKeywords):
+    vis = Custom(str, required=True)
     datacol = 'data'
     believeweights = False
 
-    @Custom (str, uiname='out')
-    def outstream (val):
+    @Custom(str, uiname='out')
+    def outstream(val):
         if val is None:
             return sys.stdout
         try:
-            return open (val, 'w')
+            return open(val, 'w')
         except Exception as e:
-            die ('cannot open path "%s" for writing', val)
+            die('cannot open path "%s" for writing', val)
 
     datascale = 1e6
 
-    @Custom (str, default='humane')
-    def format (val):
+    @Custom(str, default='humane')
+    def format(val):
         if val is None or val == 'humane':
-            return HumaneOutputFormat ()
+            return HumaneOutputFormat()
 
         if val == 'pandas':
-            return PandasOutputFormat ()
+            return PandasOutputFormat()
 
-        die ('unrecognized output format %r', val)
+        die('unrecognized output format %r', val)
 
-    @Custom ([str, str], default=None)
-    def rephase (val):
+    @Custom([str, str], default=None)
+    def rephase(val):
         if val is None:
             return None
 
         try:
-            ra = parsehours (val[0])
-            dec = parsedeglat (val[1])
+            ra = parsehours(val[0])
+            dec = parsedeglat(val[1])
         except Exception as e:
-            die ('cannot parse "rephase" values as RA/dec: %s', e)
+            die('cannot parse "rephase" values as RA/dec: %s', e)
         return ra, dec
 
     # MeasurementSet filters
@@ -162,9 +162,9 @@ class Config (ParseKeywords):
     loglevel = 'warn'
 
 
-def dftspect (cfg):
-    tb = util.tools.table ()
-    ms = util.tools.ms ()
+def dftspect(cfg):
+    tb = util.tools.table()
+    ms = util.tools.ms()
 
     # Read stuff in. Even if the weight values don't have their
     # absolute scale set correctly, we can still use them to set the
@@ -182,41 +182,41 @@ def dftspect (cfg):
     # selectinit() is broken, but the invocation here is good because it
     # affects the results from ms.range() and friends.
 
-    ms.open (b(cfg.vis))
-    ms_sels = dict ((n, cfg.get (n)) for n in util.msselect_keys
-                    if cfg.get (n) is not None)
-    ms.msselect (b(ms_sels))
+    ms.open(b(cfg.vis))
+    ms_sels = dict((n, cfg.get(n)) for n in util.msselect_keys
+                   if cfg.get(n) is not None)
+    ms.msselect(b(ms_sels))
 
-    rangeinfo = ms.range (b'data_desc_id field_id'.split ())
+    rangeinfo = ms.range(b'data_desc_id field_id'.split())
     ddids = rangeinfo['data_desc_id']
     fields = rangeinfo['field_id']
-    colnames = [cfg.datacol] + 'flag weight axis_info'.split ()
+    colnames = [cfg.datacol] + 'flag weight axis_info'.split()
     rephase = (cfg.rephase is not None)
 
     if fields.size != 1:
         # I feel comfortable making this a fatal error, even if we're
         # not rephasing.
-        die ('selected data should contain precisely one field; got %d', fields.size)
+        die('selected data should contain precisely one field; got %d', fields.size)
 
-    tb.open (b(os.path.join (cfg.vis, 'DATA_DESCRIPTION')))
-    ddspws = tb.getcol (b'SPECTRAL_WINDOW_ID')
-    tb.close ()
+    tb.open(b(os.path.join(cfg.vis, 'DATA_DESCRIPTION')))
+    ddspws = tb.getcol(b'SPECTRAL_WINDOW_ID')
+    tb.close()
 
-    tb.open (b(os.path.join (cfg.vis, 'SPECTRAL_WINDOW')))
-    spwmfreqs = np.zeros (tb.nrows ())
-    for i in range (spwmfreqs.size):
-        spwmfreqs[i] = tb.getcell (b'CHAN_FREQ', i).mean () * 1e-9 # -> GHz
-    tb.close ()
+    tb.open(b(os.path.join(cfg.vis, 'SPECTRAL_WINDOW')))
+    spwmfreqs = np.zeros(tb.nrows())
+    for i in range(spwmfreqs.size):
+        spwmfreqs[i] = tb.getcell(b'CHAN_FREQ', i).mean() * 1e-9 # -> GHz
+    tb.close()
 
     if rephase:
         fieldid = fields[0]
-        tb.open (b(os.path.join (cfg.vis, 'FIELD')))
-        phdirinfo = tb.getcell (b'PHASE_DIR', fieldid)
-        tb.close ()
+        tb.open(b(os.path.join(cfg.vis, 'FIELD')))
+        phdirinfo = tb.getcell(b'PHASE_DIR', fieldid)
+        tb.close()
 
         if phdirinfo.shape[1] != 1:
-            die ('trying to rephase but target field (#%d) has a '
-                 'time-variable phase center, which I can\'t handle', fieldid)
+            die('trying to rephase but target field (#%d) has a '
+                'time-variable phase center, which I can\'t handle', fieldid)
         ra0, dec0 = phdirinfo[:,0] # in radians.
 
         # based on intflib/pwflux.py, which was copied from
@@ -224,12 +224,12 @@ def dftspect (cfg):
 
         dra = cfg.rephase[0] - ra0
         dec = cfg.rephase[1]
-        l = np.sin (dra) * np.cos (dec)
-        m = np.sin (dec) * np.cos (dec0) - np.cos (dra) * np.cos (dec) * np.sin (dec0)
-        n = np.sin (dec) * np.sin (dec0) + np.cos (dra) * np.cos (dec) * np.cos (dec0)
+        l = np.sin(dra) * np.cos(dec)
+        m = np.sin(dec) * np.cos(dec0) - np.cos(dra) * np.cos(dec) * np.sin(dec0)
+        n = np.sin(dec) * np.sin(dec0) + np.cos(dra) * np.cos(dec) * np.cos(dec0)
         n -= 1 # makes the work below easier
-        lmn = np.asarray ([l, m, n])
-        colnames.append ('uvw')
+        lmn = np.asarray([l, m, n])
+        colnames.append('uvw')
 
     spwbins = {}
     colnames = b(colnames)
@@ -241,19 +241,19 @@ def dftspect (cfg):
         ms_sels['taql'] = 'DATA_DESC_ID == %d' % ddid
         ms.msselect(b(ms_sels))
 
-        ms.selectinit (ddid)
+        ms.selectinit(ddid)
         if cfg.polarization is not None:
-            ms.selectpolarization (b(cfg.polarization.split (',')))
-        ms.iterinit ()
-        ms.iterorigin ()
+            ms.selectpolarization(b(cfg.polarization.split(',')))
+        ms.iterinit()
+        ms.iterorigin()
 
         spw = ddspws[ddid]
-        sdata = spwbins.get (spw)
+        sdata = spwbins.get(spw)
         if sdata is None: # might have multiple ddids going to one spw
             sdata = spwbins[spw] = [0., 0., 0., 0., 0]
 
         while True:
-            cols = ms.getdata (items=colnames)
+            cols = ms.getdata(items=colnames)
 
             if rephase:
                 # With appropriate spw/DDID selection, `freqs` has shape
@@ -263,12 +263,12 @@ def dftspect (cfg):
                 assert freqs.shape[1] == 1, 'internal inconsistency, chan_freq??'
                 freqs = freqs[:,0] * util.INVERSE_C_MS
 
-            for i in range (cols['flag'].shape[-1]): # all records
+            for i in range(cols['flag'].shape[-1]): # all records
                 if rephase:
                     uvw = cols['uvw'][:,i]
-                    ph = np.exp ((0-2j) * np.pi * np.dot (lmn, uvw) * freqs)
+                    ph = np.exp((0-2j) * np.pi * np.dot(lmn, uvw) * freqs)
 
-                for j in range (cols['flag'].shape[0]): # all polns
+                for j in range(cols['flag'].shape[0]): # all polns
                     data = cols[cfg.datacol][j,:,i]
                     flags = cols['flag'][j,:,i]
 
@@ -278,14 +278,14 @@ def dftspect (cfg):
                     # are the same, and you can never fetch more pol types
                     # than the dataset has, so this bit works despite the bug.
 
-                    w = np.where (~flags)[0]
+                    w = np.where(~flags)[0]
                     if not w.size:
                         continue # all flagged
 
                     if rephase:
                         data *= ph
 
-                    d = data[w].mean ()
+                    d = data[w].mean()
                     # account for flagged parts. 90% sure this is the
                     # right thing to do:
                     wt = cols['weight'][j,i] * w.size / data.size
@@ -300,15 +300,15 @@ def dftspect (cfg):
                     sdata[3] += wt**2
                     sdata[4] += 1
 
-            if not ms.iternext ():
+            if not ms.iternext():
                 break
 
         ms.reset() # reset selection filter so we can get next DDID
 
-    ms.close ()
+    ms.close()
 
-    spws = sorted (six.iterkeys (spwbins), key=lambda s: spwmfreqs[s])
-    cfg.format.header (cfg)
+    spws = sorted(six.iterkeys(spwbins), key=lambda s: spwmfreqs[s])
+    cfg.format.header(cfg)
 
     for spw in spws:
         wd, wd2, wt, wt2, n = spwbins[spw]
@@ -326,16 +326,16 @@ def dftspect (cfg):
         else:
             rv_sc = r2_sc - r_sc**2 # variance among real/imag msmts
             iv_sc = i2_sc - i_sc**2
-            ru_sc = np.sqrt (rv_sc * wt2) / wt # uncert in mean real/img values
-            iu_sc = np.sqrt (iv_sc * wt2) / wt
+            ru_sc = np.sqrt(rv_sc * wt2) / wt # uncert in mean real/img values
+            iu_sc = np.sqrt(iv_sc * wt2) / wt
 
-        mag = np.sqrt (r_sc**2 + i_sc**2)
-        umag = np.sqrt (r_sc**2 * ru_sc**2 + i_sc**2 * iu_sc**2) / mag
-        cfg.format.row (cfg, spwmfreqs[spw], spw, r_sc, ru_sc, i_sc, iu_sc, mag, umag, n)
+        mag = np.sqrt(r_sc**2 + i_sc**2)
+        umag = np.sqrt(r_sc**2 * ru_sc**2 + i_sc**2 * iu_sc**2) / mag
+        cfg.format.row(cfg, spwmfreqs[spw], spw, r_sc, ru_sc, i_sc, iu_sc, mag, umag, n)
 
 
-def dftspect_cli (argv):
-    checkusage (dftspect_doc, argv, usageifnoargs=True)
-    cfg = Config ().parse (argv[1:])
-    util.logger (cfg.loglevel)
-    dftspect (cfg)
+def dftspect_cli(argv):
+    checkusage(dftspect_doc, argv, usageifnoargs=True)
+    cfg = Config().parse(argv[1:])
+    util.logger(cfg.loglevel)
+    dftspect(cfg)
