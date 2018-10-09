@@ -319,6 +319,8 @@ class ApplycalConfig(ParseKeywords):
     interp = [str]
     @Custom([str], sep=';')
     def spwmap(v):
+        if v is None:
+            return None
         return [list(map(int, e.split(','))) for e in v]
     opacity = [float]
     gaincurve = False
