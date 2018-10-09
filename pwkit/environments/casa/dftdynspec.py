@@ -1,5 +1,5 @@
 # -*- mode: python; coding: utf-8 -*-
-# Copyright 2013, 2016-2017 Peter Williams <peter@newton.cx> and collaborators
+# Copyright 2013, 2016-2018 Peter Williams <peter@newton.cx> and collaborators
 # Licensed under the MIT License.
 
 # NB. This is super-redundant with both dftphotom and dftspect; things are
@@ -12,7 +12,7 @@ Sets. CASA doesn't have a task that does this.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = str ('Config Loader dftdynspec dftdynspec_cli').split ()
+__all__ = str('Config Loader dftdynspec dftdynspec_cli').split()
 
 import io, os.path, sys
 import numpy as np
@@ -81,30 +81,30 @@ used to load the data into a Python program.
 
 """
 
-class Config (ParseKeywords):
-    vis = Custom (str, required=True)
+class Config(ParseKeywords):
+    vis = Custom(str, required=True)
     datacol = 'data'
     believeweights = False
 
-    @Custom (str, uiname='out')
-    def outstream (val):
+    @Custom(str, uiname='out')
+    def outstream(val):
         if val is None:
             return get_stdout_bytes()
         try:
-            return open (val, 'wb')
+            return open(val, 'wb')
         except Exception as e:
-            die ('cannot open path "%s" for writing', val)
+            die('cannot open path "%s" for writing', val)
 
-    @Custom ([str, str], default=None)
-    def rephase (val):
+    @Custom([str, str], default=None)
+    def rephase(val):
         if val is None:
             return None
 
         try:
-            ra = parsehours (val[0])
-            dec = parsedeglat (val[1])
+            ra = parsehours(val[0])
+            dec = parsedeglat(val[1])
         except Exception as e:
-            die ('cannot parse "rephase" values as RA/dec: %s', e)
+            die('cannot parse "rephase" values as RA/dec: %s', e)
         return ra, dec
 
     # MeasurementSet filters
@@ -123,10 +123,10 @@ class Config (ParseKeywords):
     loglevel = 'warn'
 
 
-def dftdynspec (cfg):
-    tb = util.tools.table ()
-    ms = util.tools.ms ()
-    me = util.tools.measures ()
+def dftdynspec(cfg):
+    tb = util.tools.table()
+    ms = util.tools.ms()
+    me = util.tools.measures()
 
     # Read stuff in. Even if the weight values don't have their
     # absolute scale set correctly, we can still use them to set the
@@ -148,57 +148,57 @@ def dftdynspec (cfg):
         warn('it looks like you are attempting to select channels within one or more spws')
         warn('this is NOT IMPLEMENTED; I will process the whole spw instead')
 
-    ms.open (b(cfg.vis))
-    totrows = ms.nrow ()
-    ms_sels = dict ((n, cfg.get (n)) for n in util.msselect_keys
-                    if cfg.get (n) is not None)
-    ms.msselect (b(ms_sels))
+    ms.open(b(cfg.vis))
+    totrows = ms.nrow()
+    ms_sels = dict((n, cfg.get(n)) for n in util.msselect_keys
+                   if cfg.get(n) is not None)
+    ms.msselect(b(ms_sels))
 
-    rangeinfo = ms.range (b'data_desc_id field_id'.split ())
+    rangeinfo = ms.range(b'data_desc_id field_id'.split())
     ddids = rangeinfo['data_desc_id']
     fields = rangeinfo['field_id']
-    colnames = [cfg.datacol] + 'flag weight time axis_info'.split ()
+    colnames = [cfg.datacol] + 'flag weight time axis_info'.split()
     rephase = (cfg.rephase is not None)
 
     if fields.size != 1:
         # I feel comfortable making this a fatal error, even if we're
         # not rephasing.
-        die ('selected data should contain precisely one field; got %d', fields.size)
+        die('selected data should contain precisely one field; got %d', fields.size)
 
-    tb.open (b(os.path.join (cfg.vis, 'DATA_DESCRIPTION')))
-    ddspws = tb.getcol (b'SPECTRAL_WINDOW_ID')
-    tb.close ()
+    tb.open(b(os.path.join(cfg.vis, 'DATA_DESCRIPTION')))
+    ddspws = tb.getcol(b'SPECTRAL_WINDOW_ID')
+    tb.close()
 
     # Get frequencies and precompute merged, sorted frequency array
     # FIXME: below we get 'freqs' on the fly; should honor that.
     # But then mapping and data storage get super inefficient.
 
-    tb.open (b(os.path.join (cfg.vis, 'SPECTRAL_WINDOW')))
-    nspw = tb.nrows ()
+    tb.open(b(os.path.join(cfg.vis, 'SPECTRAL_WINDOW')))
+    nspw = tb.nrows()
     spwfreqs = []
-    for i in range (nspw):
-        spwfreqs.append (tb.getcell (b'CHAN_FREQ', i) * 1e-9) # -> GHz
-    tb.close ()
+    for i in range(nspw):
+        spwfreqs.append(tb.getcell(b'CHAN_FREQ', i) * 1e-9) # -> GHz
+    tb.close()
 
-    allfreqs = set ()
+    allfreqs = set()
     for freqs in spwfreqs:
-        allfreqs.update (freqs)
-    allfreqs = np.asarray (sorted (allfreqs))
+        allfreqs.update(freqs)
+    allfreqs = np.asarray(sorted(allfreqs))
     nfreq = allfreqs.size
 
     freqmaps = []
-    for i in range (nspw):
-        freqmaps.append (np.searchsorted (allfreqs, spwfreqs[i]))
+    for i in range(nspw):
+        freqmaps.append(np.searchsorted(allfreqs, spwfreqs[i]))
 
     if rephase:
         fieldid = fields[0]
-        tb.open (b(os.path.join (cfg.vis, 'FIELD')))
-        phdirinfo = tb.getcell (b'PHASE_DIR', fieldid)
-        tb.close ()
+        tb.open(b(os.path.join(cfg.vis, 'FIELD')))
+        phdirinfo = tb.getcell(b'PHASE_DIR', fieldid)
+        tb.close()
 
         if phdirinfo.shape[1] != 1:
-            die ('trying to rephase but target field (#%d) has a '
-                 'time-variable phase center, which I can\'t handle', fieldid)
+            die('trying to rephase but target field (#%d) has a '
+                'time-variable phase center, which I can\'t handle', fieldid)
         ra0, dec0 = phdirinfo[:,0] # in radians.
 
         # based on intflib/pwflux.py, which was copied from
@@ -206,33 +206,33 @@ def dftdynspec (cfg):
 
         dra = cfg.rephase[0] - ra0
         dec = cfg.rephase[1]
-        l = np.sin (dra) * np.cos (dec)
-        m = np.sin (dec) * np.cos (dec0) - np.cos (dra) * np.cos (dec) * np.sin (dec0)
-        n = np.sin (dec) * np.sin (dec0) + np.cos (dra) * np.cos (dec) * np.cos (dec0)
+        l = np.sin(dra) * np.cos(dec)
+        m = np.sin(dec) * np.cos(dec0) - np.cos(dra) * np.cos(dec) * np.sin(dec0)
+        n = np.sin(dec) * np.sin(dec0) + np.cos(dra) * np.cos(dec) * np.cos(dec0)
         n -= 1 # makes the work below easier
-        lmn = np.asarray ([l, m, n])
-        colnames.append ('uvw')
+        lmn = np.asarray([l, m, n])
+        colnames.append('uvw')
 
     tbins = {}
     colnames = b(colnames)
 
-    for ddindex, ddid in enumerate (ddids):
+    for ddindex, ddid in enumerate(ddids):
         # Starting in CASA 4.6, selectinit(ddid) stopped actually filtering
         # your data to match the specified DDID! What garbage. Work around
         # with our own filtering.
         ms_sels['taql'] = 'DATA_DESC_ID == %d' % ddid
         ms.msselect(b(ms_sels))
 
-        ms.selectinit (ddid)
+        ms.selectinit(ddid)
         if cfg.polarization is not None:
-            ms.selectpolarization (b(cfg.polarization.split (',')))
-        ms.iterinit (maxrows=4096)
-        ms.iterorigin ()
+            ms.selectpolarization(b(cfg.polarization.split(',')))
+        ms.iterinit(maxrows=4096)
+        ms.iterorigin()
 
         spwid = ddspws[ddid]
 
         while True:
-            cols = ms.getdata (items=colnames)
+            cols = ms.getdata(items=colnames)
 
             if rephase:
                 # With appropriate spw/DDID selection, `freqs` has shape
@@ -242,7 +242,7 @@ def dftdynspec (cfg):
                 assert freqs.shape[1] == 1, 'internal inconsistency, chan_freq??'
                 freqs = freqs[:,0] * util.INVERSE_C_MS
 
-            for i in range (cols['time'].size): # all records
+            for i in range(cols['time'].size): # all records
                 time = cols['time'][i]
                 # get out of UTC as fast as we can! For some reason
                 # giving 'unit=s' below doesn't do what one might hope it would.
@@ -250,18 +250,18 @@ def dftdynspec (cfg):
                 # the safest conversion in terms of being helpful while remaining
                 # close to the fundamental data, but TT is possible and should
                 # be perfectly precise for standard applications.
-                mq = me.epoch (b'utc', b({'value': time / 86400., 'unit': 'd'}))
-                mjdtt = me.measure (b(mq), b'tt')['m0']['value']
+                mq = me.epoch(b'utc', b({'value': time / 86400., 'unit': 'd'}))
+                mjdtt = me.measure(b(mq), b'tt')['m0']['value']
 
-                tdata = tbins.get (mjdtt)
+                tdata = tbins.get(mjdtt)
                 if tdata is None:
-                    tdata = tbins[mjdtt] = np.zeros ((nfreq, 7))
+                    tdata = tbins[mjdtt] = np.zeros((nfreq, 7))
 
                 if rephase:
                     uvw = cols['uvw'][:,i]
-                    ph = np.exp ((0-2j) * np.pi * np.dot (lmn, uvw) * freqs)
+                    ph = np.exp((0-2j) * np.pi * np.dot(lmn, uvw) * freqs)
 
-                for j in range (cols['flag'].shape[0]): # all polns
+                for j in range(cols['flag'].shape[0]): # all polns
                     # We just average together all polarizations right now!
                     # (Not actively, but passively by just iterating over them.)
                     data = cols[cfg.datacol][j,:,i]
@@ -273,7 +273,7 @@ def dftdynspec (cfg):
                     # are the same, and you can never fetch more pol types
                     # than the dataset has, so this bit works despite the bug.
 
-                    w = np.where (~flags)[0]
+                    w = np.where(~flags)[0]
                     if not w.size:
                         continue # all flagged
 
@@ -292,23 +292,23 @@ def dftdynspec (cfg):
                     tdata[m,5] += wt**2
                     tdata[m,6] += 1
 
-            if not ms.iternext ():
+            if not ms.iternext():
                 break
 
         ms.reset() # reset selection filter so we can get next DDID
 
-    ms.close ()
+    ms.close()
 
     # Could gain some efficiency by using a better data structure than a dict().
 
-    smjd = np.asarray (sorted (six.iterkeys (tbins)))
-    data = np.zeros ((5, smjd.size, nfreq))
+    smjd = np.asarray(sorted(six.iterkeys(tbins)))
+    data = np.zeros((5, smjd.size, nfreq))
 
-    for tid in range (smjd.size):
+    for tid in range(smjd.size):
         mjd = smjd[tid]
 
         wr, wi, wr2, wi2, wt, wt2, n = tbins[mjd].T
-        w = np.where (n > 0)[0]
+        w = np.where(n > 0)[0]
         if w.size < 3: # not enough data for meaningful statistics
             continue
 
@@ -323,8 +323,8 @@ def dftdynspec (cfg):
             i2 = wi2[w] / wt[w]
             rv = r2 - r**2 # variance among real/imag msmts
             iv = i2 - i**2
-            ru = np.sqrt (rv * wt2[w]) / wt[w] # uncert in mean real/img values
-            iu = np.sqrt (iv * wt2[w]) / wt[w]
+            ru = np.sqrt(rv * wt2[w]) / wt[w] # uncert in mean real/img values
+            iu = np.sqrt(iv * wt2[w]) / wt[w]
 
         data[0,tid,w] = r
         data[1,tid,w] = ru
@@ -332,16 +332,16 @@ def dftdynspec (cfg):
         data[3,tid,w] = iu
         data[4,tid,w] = n[w]
 
-    np.save (cfg.outstream, smjd)
-    np.save (cfg.outstream, allfreqs)
-    np.save (cfg.outstream, data)
+    np.save(cfg.outstream, smjd)
+    np.save(cfg.outstream, allfreqs)
+    np.save(cfg.outstream, data)
 
 
-def dftdynspec_cli (argv):
-    check_usage (dftdynspec_doc, argv, usageifnoargs=True)
-    cfg = Config ().parse (argv[1:])
-    util.logger (cfg.loglevel)
-    dftdynspec (cfg)
+def dftdynspec_cli(argv):
+    check_usage(dftdynspec_doc, argv, usageifnoargs=True)
+    cfg = Config().parse(argv[1:])
+    util.logger(cfg.loglevel)
+    dftdynspec(cfg)
 
 
 class Loader(object):
