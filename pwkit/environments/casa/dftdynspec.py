@@ -23,6 +23,7 @@ from ... import binary_type, text_type
 # Note: zany spacing so that Sphinx can parse the file correctly.
 from . ..astutil import *
 from . ..cli import check_usage, die
+from . ..io import get_stdout_bytes
 from . ..kwargv import ParseKeywords, Custom
 from . import util
 from .util import sanitize_unicode as b
@@ -88,9 +89,9 @@ class Config (ParseKeywords):
     @Custom (str, uiname='out')
     def outstream (val):
         if val is None:
-            return sys.stdout
+            return get_stdout_bytes()
         try:
-            return open (val, 'w')
+            return open (val, 'wb')
         except Exception as e:
             die ('cannot open path "%s" for writing', val)
 
