@@ -3458,6 +3458,8 @@ class PlotcalConfig(ParseKeywords):
     spw = ''
     timerange = ''
 
+    loglevel = 'warn'
+
 
 def plotcal(cfg):
     # casa-tools plotting relies on invoking matplotlib in an internal Python
