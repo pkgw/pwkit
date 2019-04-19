@@ -749,7 +749,13 @@ def delcal(mspath):
     if len(toremove):
         tb.removecols(toremove)
     tb.close()
-    return toremove
+
+    # We want to return a `str` type, which is what we already
+    # have in Python 2 but not in 3.
+    if six.PY2:
+        return toremove
+    else:
+        return [c.decode('utf8') for c in toremove]
 
 
 def delcal_cli(argv):
