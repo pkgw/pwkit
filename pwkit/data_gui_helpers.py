@@ -1,5 +1,5 @@
 # -*- mode: python; coding: utf-8 -*-
-# Copyright 2012-2014 Peter Williams <peter@newton.cx> and collaborators
+# Copyright 2012-2014, 2019 Peter Williams <peter@newton.cx> and collaborators
 # Licensed under the MIT License.
 
 """pwkit.data_gui_helpers - helpers for GUIs looking at data arrays
@@ -152,8 +152,21 @@ class Stretcher(LazyComputer):
     def passthrough(src, dest):
         dest[...] = src
 
+    def offset_cbrt(src, dest):
+        """This stretch is useful when you have values that are symmetrical around
+        zero, and you want to enhance contrasts at small values while
+        preserving sign.
+
+        """
+        np.subtract(src, 0.5, out=dest) # [0, 1] -> [-0.5, 0.5]
+        np.multiply(dest, 2, out=dest) # [-0.5, 0.5] => [-1, 1]
+        np.cbrt(dest, out=dest) # domain remains same
+        np.multiply(dest, 0.5, out=dest) # [-1, 1] => [-0.5, 0.5]
+        np.add(dest, 0.5, out=dest) # [-0.5, 0.5] => [0, 1]
+
     modes = {
         'linear': passthrough,
+        'offset_cbrt': offset_cbrt,
         'sqrt': np.sqrt,
         'square': np.square,
     }
