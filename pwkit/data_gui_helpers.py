@@ -16,9 +16,15 @@ data_to_argb32       - Turn arbitrary data values into ARGB32 colors.
 data_to_imagesurface - Turn arbitrary data values into a Cairo ImageSurface.
 
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
+from __future__ import absolute_import, division, print_function
 
-__all__ = str('data_to_argb32 Clipper ColorMapper LazyComputer Stretcher').split()
+__all__ = '''
+data_to_argb32
+data_to_imagesurface
+Clipper
+ColorMapper
+LazyComputer
+Stretcher'''.split()
 
 import numpy as np
 from six.moves import range
