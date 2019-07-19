@@ -425,9 +425,8 @@ class PolynomialModel(ModelBase):
 
     def solve(self):
         self.pnames = ['a%d' % i for i in range(self.maxexponent + 1)]
-        # Based on my reading of the polyfit() docs, I think w=invsigma**2 is right...
         self.params = npoly.polyfit(self.x, self.data, self.maxexponent,
-                                    w=self.invsigma**2)
+                                    w=self.invsigma)
         self.puncerts = None # does anything provide this? could farm out to lmmin ...
         self.covar = None
         self.mfunc = self.make_frozen_func(self.params)
