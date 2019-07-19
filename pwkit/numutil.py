@@ -470,6 +470,53 @@ def dfsmooth(window, df, ucol, k=None):
     return res[::k]
 
 
+def smooth_data_frame_with_gaps(
+        window, df, uncert_col,
+        time_col, max_gap,
+        min_points_per_chunk = 3,
+        k = None,
+):
+    """Smooth a :class:`pandas.DataFrame` according to a window, weighting based
+    on uncertainties, and breaking the smoothing process at gaps in a time
+    axis.
+
+    Arguments are:
+
+    window
+      The smoothing window.
+    df
+      The :class:`pandas.DataFrame`.
+    uncert_col
+      The name of the column in *df* that contains the uncertainties to weight
+      by.
+    time_col
+      The name of the column in *df* that contains the time-like quantities used
+      to determine where the gaps are.
+    max_gap
+      If a difference larger than this value is encountered in ``df[time_col]``,
+      the smoothing will be discontinuous around this gap. Therefore the units
+      of this column are whatever the units of ``df[time_col]`` are.
+    k = None
+      If specified, only every *k*-th point of the results will be kept. If k
+      is None (the default), it is set to ``window.size``, i.e. correlated
+      points will be discarded. This decimation does not cross over gaps.
+    min_points_per_chunk = 3
+      When gaps are identified, if any chunk of data has fewer than this many
+      elements, it is dropped altogether. This counting happens before
+      decimation by *k*.
+
+    Returns: a smoothed data frame with a default integer index.
+
+    """
+    import pandas as pd
+
+    chunk_slicers = slice_around_gaps(df[time_col], max_gap)
+    subds = [df.iloc[idx] for idx in chunk_slicers]
+    subds = [sd for sd in subds if sd.shape[0] >= min_points_per_chunk]
+    chunks = [dfsmooth(window, subd, uncert_col, k=k) for subd in subds]
+    return pd.concat(chunks, ignore_index=True)
+
+
 # Parallelized versions of various routines that don't operate vectorially
 # even though sometimes it'd be nice to pretend that they do.
 
