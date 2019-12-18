@@ -524,10 +524,16 @@ def bpplot(cfg):
             min_ph = min(min_ph, this_min_ph)
 
     span = max_am - min_am
+    if span == 0:
+        span = 0.1 * max_am
+    if span == 0:
+        span = 1
     max_am += 0.05 * span
     min_am -= 0.05 * span
 
     span = max_ph - min_ph
+    if span == 0:
+        span = 60
     max_ph += 0.05 * span
     min_ph -= 0.05 * span
     if max_ph > 160:
