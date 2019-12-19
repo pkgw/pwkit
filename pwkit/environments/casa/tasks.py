@@ -424,60 +424,116 @@ def bpplot(cfg):
 
     tb = util.tools.table()
 
+    # Initial recon
+
     tb.open(cfg.caltable, nomodify=True)
     spws = tb.getcol(b'SPECTRAL_WINDOW_ID')
     ants = tb.getcol(b'ANTENNA1')
-    vals = tb.getcol(b'CPARAM')
-    flags = tb.getcol(b'FLAG')
     tb.close()
 
     tb.open(os.path.join(cfg.caltable, 'ANTENNA'), nomodify=True)
     names = tb.getcol(b'NAME')
     tb.close()
 
-    npol, nchan, nsoln = vals.shape
+    nsoln = ants.size
 
-    # see what we've got
+    # Load up and organize main data. We can't load CPARAM and FLAG all at
+    # once since different spws might have different nchans and/or npols.
 
     antpols = {}
     seenspws = set()
+    vals = [None] * nsoln
+    flags = [None] * nsoln
+    npol = {}
+    nchan = {}
 
-    for ipol in range(npol):
-        for isoln in range(nsoln):
-            if not flags[ipol,:,isoln].all():
-                k = (ants[isoln], ipol)
-                byspw = antpols.get(k)
-                if byspw is None:
-                    antpols[k] = byspw = []
+    tb.open(cfg.caltable, nomodify=True)
 
-                byspw.append((spws[isoln], isoln))
-                seenspws.add(spws[isoln])
+    for isoln in range(nsoln):
+        vals[isoln] = this_vals = tb.getcell(b'CPARAM', isoln)
+        flags[isoln] = this_flags = tb.getcell(b'FLAG', isoln)
+        this_spw = spws[isoln]
+        this_npol, this_nchan = this_vals.shape
+
+        prev_npol = npol.get(this_spw)
+        if prev_npol is None:
+            npol[this_spw] = this_npol
+        elif this_npol != prev_npol:
+            raise Exception('assumptions violated: npol varies by solution for spw %s' % this_spw)
+
+        prev_nchan = nchan.get(this_spw)
+        if prev_nchan is None:
+            nchan[this_spw] = this_nchan
+        elif this_nchan != prev_nchan:
+            raise Exception('assumptions violated: nchan varies by solution for spw %s' % this_spw)
+
+        for ipol in range(this_npol):
+            if not this_flags[ipol].all():  # make sure to ignore completely-flagged records
+                 k = (ants[isoln], ipol)
+                 byspw = antpols.get(k)
+                 if byspw is None:
+                     antpols[k] = byspw = []
+
+                 byspw.append((spws[isoln], isoln))
+                 seenspws.add(spws[isoln])
+
+    tb.close()
 
     seenspws = sorted(seenspws)
-    spw_to_offset = dict((spwid, spwofs * nchan)
-                          for spwofs, spwid in enumerate(seenspws))
+    spw_to_offset = {}
+    tot_seen_nchan = 0
+
+    for ispw in seenspws:
+        spw_to_offset[ispw] = tot_seen_nchan
+        tot_seen_nchan += nchan[ispw]
 
     # normalize phases to avoid distracting wraps
 
     for iant, ipol in sorted(six.iterkeys(antpols)):
         for ispw, isoln in antpols[iant,ipol]:
-            f = flags[ipol,:,isoln]
-            meanph = np.angle(vals[ipol,~f,isoln].mean())
-            vals[ipol,:,isoln] *= np.exp(-1j * meanph)
+            f = flags[isoln][ipol]
+            meanph = np.angle(vals[isoln][ipol,~f].mean())
+            vals[isoln][ipol] *= np.exp(-1j * meanph)
 
     # find plot limits
 
-    okvals = vals[np.where(~flags)]
+    max_am = None
 
-    max_am = np.abs(okvals).max()
-    min_am = np.abs(okvals).min()
+    for isoln in range(nsoln):
+        this_vals = vals[isoln]
+        this_flags = flags[isoln]
+
+        okvals = this_vals[np.where(~this_flags)]
+        if not okvals.size:
+            continue
+
+        this_max_am = np.abs(okvals).max()
+        this_min_am = np.abs(okvals).min()
+        this_max_ph = np.angle(okvals, deg=True).max()
+        this_min_ph = np.angle(okvals, deg=True).min()
+
+        if max_am is None:
+            max_am = this_max_am
+            min_am = this_min_am
+            max_ph = this_max_ph
+            min_ph = this_min_ph
+        else:
+            max_am = max(max_am, this_max_am)
+            min_am = min(min_am, this_min_am)
+            max_ph = max(max_ph, this_max_ph)
+            min_ph = min(min_ph, this_min_ph)
+
     span = max_am - min_am
+    if span == 0:
+        span = 0.1 * max_am
+    if span == 0:
+        span = 1
     max_am += 0.05 * span
     min_am -= 0.05 * span
 
-    max_ph = np.angle(okvals, deg=True).max()
-    min_ph = np.angle(okvals, deg=True).min()
     span = max_ph - min_ph
+    if span == 0:
+        span = 60
     max_ph += 0.05 * span
     min_ph -= 0.05 * span
     if max_ph > 160:
@@ -494,9 +550,9 @@ def bpplot(cfg):
         p_ph = om.RectPlot()
 
         for ispw, isoln in antpols[iant,ipol]:
-            f = flags[ipol,:,isoln]
-            a = np.abs(vals[ipol,:,isoln])
-            p = np.angle(vals[ipol,:,isoln], deg=True)
+            f = flags[isoln][ipol]
+            a = np.abs(vals[isoln][ipol])
+            p = np.angle(vals[isoln][ipol], deg=True)
             w = np.where(~f)[0]
 
             for s in numutil.slice_around_gaps(w, 1):
@@ -515,11 +571,11 @@ def bpplot(cfg):
                             lines=lines, dsn=ispw)
 
         p_am.setBounds(xmin=0,
-                        xmax=len(seenspws) * nchan,
+                        xmax=tot_seen_nchan,
                         ymin=min_am,
                         ymax=max_am)
         p_ph.setBounds(xmin=0,
-                        xmax=len(seenspws) * nchan,
+                        xmax=tot_seen_nchan,
                         ymin=min_ph,
                         ymax=max_ph)
         p_am.addKeyItem('%s %s' % (names[iant], polnames[ipol]))
