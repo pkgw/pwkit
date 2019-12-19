@@ -1,3 +1,7 @@
+# Next version (unreleased)
+
+- TBD
+
 # Version 1.0.0 (2019 Dec 19)
 
 Call this version 1.0.0!

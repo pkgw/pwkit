@@ -11,8 +11,8 @@ extensions = [
 ]
 
 project = u'pwkit'
-version = '1.0' # also edit /setup.py, /pwkit/__init__.py!
-release = '1.0.0'
+version = 'master' # also edit /setup.py, /pwkit/__init__.py!
+release = '1.1.0.dev0'
 
 copyright = u'2015-2019, Peter K. G. Williams and collaborators'
 author = u'Peter K. G. Williams and collaborators'
