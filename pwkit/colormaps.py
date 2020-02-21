@@ -74,9 +74,9 @@ http://adsabs.harvard.edu/abs/2011BASI...39..289G
 I made up the pkgw map myself (who'd have guessed?).
 
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
+from __future__ import absolute_import, division, print_function
 
-__all__ = str('base_factory_names factory_map').split()
+__all__ = 'base_factory_names factory_map'.split()
 
 
 import numpy as np, six
