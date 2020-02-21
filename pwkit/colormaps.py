@@ -552,7 +552,12 @@ _fill_transforms ()
 # Infrastructure for quickly rendering color maps.
 
 def showdemo (factoryname, **kwargs):
-    import gtk, cairo
+    import gi
+    gi.require_version('Gdk', '3.0')
+    gi.require_version('Gtk', '3.0')
+    from gi.repository import GLib, GObject, Gdk, Gtk
+    import cairo
+
     W, H = 512, 100
 
     colormap = factory_map[factoryname] (**kwargs)
@@ -571,8 +576,7 @@ def showdemo (factoryname, **kwargs):
     surf = cairo.ImageSurface.create_for_data (argb, cairo.FORMAT_ARGB32,
                                                W, H, W * 4)
 
-    def expose (widget, event):
-        ctxt = widget.window.cairo_create ()
+    def draw (widget, ctxt):
         ctxt.set_source_surface (surf, 0, 0)
         pat = ctxt.get_source ()
         pat.set_extend (cairo.EXTEND_NONE)
@@ -580,16 +584,16 @@ def showdemo (factoryname, **kwargs):
         ctxt.paint ()
         return True
 
-    da = gtk.DrawingArea ()
-    da.connect ('expose-event', expose)
+    da = Gtk.DrawingArea ()
+    da.connect ('draw', draw)
 
-    win = gtk.Window (gtk.WINDOW_TOPLEVEL)
+    win = Gtk.Window (type=Gtk.WindowType.TOPLEVEL)
     win.set_title ('Colormap Demo - ' + factoryname)
     win.set_default_size (W, H)
-    win.connect ('destroy', gtk.main_quit)
+    win.connect ('destroy', Gtk.main_quit)
     win.add (da)
     win.show_all ()
-    gtk.main ()
+    Gtk.main ()
 
 
 def printmaps ():
