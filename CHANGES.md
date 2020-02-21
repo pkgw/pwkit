@@ -1,6 +1,7 @@
 # Next version (unreleased)
 
-- TBD
+- The `pwkit.colormaps` demo program is updated to use Gtk+ 3 via
+  gobject-introspection, rather than Gtk+ 2.
 
 # Version 1.0.0 (2019 Dec 19)
 
