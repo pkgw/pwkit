@@ -787,7 +787,7 @@ else:
             vector = position - observer.position.au
             distance = length_of(vector)
             light_time = distance / C_AUDAY
-            return vector, (observer.velocity.au_per_d.T - velocity).T, light_time
+            return vector, (observer.velocity.au_per_d.T - velocity).T, t, light_time
 
     del Star, T0
 
@@ -1292,10 +1292,12 @@ class AstrometryInfo (object):
         if self.u_vradial == 0:
             self.u_vradial = None
 
-        # Get the right epoch of position for 2MASS positions
+        # Get the right epoch of position when possible
 
         if posref == '2003yCat.2246....0C':
             self.pos_epoch = get_2mass_epoch (self.ra, self.dec, debug)
+        elif posref == '2018yCat.1345....0G':
+            self.pos_epoch = 57205.875  # J2015.5 for Gaia DR2
 
         return self # eases chaining
 
