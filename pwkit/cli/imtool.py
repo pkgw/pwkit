@@ -99,8 +99,8 @@ If an input image has multiple planes, they will be showed separately.
             if im.shape != shape:
                 die ('shape of “%s” (%s) does not agree with that '
                      'of “%s” (%s)',
-                     paths[i+1], '×'.join (map (str, im.shape)),
-                     paths[0], '×'.join (map (str, shape)))
+                     args[i+1], '×'.join (map (str, im.shape)),
+                     args[0], '×'.join (map (str, shape)))
 
         # Merge masks. This is more complicated than you might think since you
         # can't "or" nomask with itself.
