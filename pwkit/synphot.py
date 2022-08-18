@@ -1,5 +1,5 @@
 # -*- mode: python; coding: utf-8 -*-
-# Copyright 2014-2018 Peter Williams <peter@newton.cx> and collaborators.
+# Copyright 2014-2022 Peter Williams <peter@newton.cx> and collaborators.
 # Licensed under the MIT License.
 
 """Synthetic photometry and database of instrumental bandpasses.
@@ -232,8 +232,8 @@ def interpolated_halfmax_points(x, y):
     x1 = fmin(lambda x: (terp(x) - halfmax) ** 2, x[guess1], disp=False)
     x2 = fmin(lambda x: (terp(x) - halfmax) ** 2, x[guess2], disp=False)
 
-    x1 = np.asscalar(x1)
-    x2 = np.asscalar(x2)
+    x1 = np.asarray(x1).item()
+    x2 = np.asarray(x2).item()
 
     if x1 == x2:
         raise PKError("halfmax finding failed")

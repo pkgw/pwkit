@@ -1,5 +1,5 @@
 # -*- mode: python; coding: utf-8 -*-
-# Copyright 2014-2019 Peter Williams <peter@newton.cx> and collaborators.
+# Copyright 2014-2022 Peter Williams <peter@newton.cx> and collaborators.
 # Licensed under the MIT License.
 
 """The :mod:`numpy` and :mod:`scipy` packages provide a whole host of
@@ -29,7 +29,7 @@ def _broadcastize_spec_to_scalar_filter(s):
     if s == 0:
         # This return value has the same shape as the input(s). If we
         # promoted to a 1-element vector, we need to demote.
-        return np.asscalar
+        return lambda x: np.asarray(x).item()
     if s == 1:
         # This return value is a larger vector of the input(s). If we promoted
         # from a scalar, we drop the final axis. We asarray() the result for
@@ -621,7 +621,7 @@ def parallel_newton(
         result = np.asarray(ppmap(helper, None, gen_var_args()))
 
     if bc_raw[0].ndim == 0:
-        return np.asscalar(result)
+        return np.asarray(result).item()
     return result
 
 
@@ -780,7 +780,7 @@ def unit_tophat_ee(x):
     x1 = np.atleast_1d(x)
     r = ((0 < x1) & (x1 < 1)).astype(x.dtype)
     if x.ndim == 0:
-        return np.asscalar(r)
+        return np.asarray(r).item()
     return r
 
 
@@ -793,7 +793,7 @@ def unit_tophat_ei(x):
     x1 = np.atleast_1d(x)
     r = ((0 < x1) & (x1 <= 1)).astype(x.dtype)
     if x.ndim == 0:
-        return np.asscalar(r)
+        return np.asarray(r).item()
     return r
 
 
@@ -806,7 +806,7 @@ def unit_tophat_ie(x):
     x1 = np.atleast_1d(x)
     r = ((0 <= x1) & (x1 < 1)).astype(x.dtype)
     if x.ndim == 0:
-        return np.asscalar(r)
+        return np.asarray(r).item()
     return r
 
 
@@ -819,7 +819,7 @@ def unit_tophat_ii(x):
     x1 = np.atleast_1d(x)
     r = ((0 <= x1) & (x1 <= 1)).astype(x.dtype)
     if x.ndim == 0:
-        return np.asscalar(r)
+        return np.asarray(r).item()
     return r
 
 
@@ -838,7 +838,7 @@ def make_tophat_ee(lower, upper):
         x1 = np.atleast_1d(x)
         r = ((lower < x1) & (x1 < upper)).astype(x.dtype)
         if x.ndim == 0:
-            return np.asscalar(r)
+            return np.asarray(r).item()
         return r
 
     range_tophat_ee.__doc__ = (
@@ -864,7 +864,7 @@ def make_tophat_ei(lower, upper):
         x1 = np.atleast_1d(x)
         r = ((lower < x1) & (x1 <= upper)).astype(x.dtype)
         if x.ndim == 0:
-            return np.asscalar(r)
+            return np.asarray(r).item()
         return r
 
     range_tophat_ei.__doc__ = (
@@ -890,7 +890,7 @@ def make_tophat_ie(lower, upper):
         x1 = np.atleast_1d(x)
         r = ((lower <= x1) & (x1 < upper)).astype(x.dtype)
         if x.ndim == 0:
-            return np.asscalar(r)
+            return np.asarray(r).item()
         return r
 
     range_tophat_ie.__doc__ = (
@@ -916,7 +916,7 @@ def make_tophat_ii(lower, upper):
         x1 = np.atleast_1d(x)
         r = ((lower <= x1) & (x1 <= upper)).astype(x.dtype)
         if x.ndim == 0:
-            return np.asscalar(r)
+            return np.asarray(r).item()
         return r
 
     range_tophat_ii.__doc__ = (
@@ -945,7 +945,7 @@ def make_step_lcont(transition):
         x1 = np.atleast_1d(x)
         r = (x1 > transition).astype(x.dtype)
         if x.ndim == 0:
-            return np.asscalar(r)
+            return np.asarray(r).item()
         return r
 
     step_lcont.__doc__ = (
@@ -969,7 +969,7 @@ def make_step_rcont(transition):
         x1 = np.atleast_1d(x)
         r = (x1 >= transition).astype(x.dtype)
         if x.ndim == 0:
-            return np.asscalar(r)
+            return np.asarray(r).item()
         return r
 
     step_rcont.__doc__ = (
