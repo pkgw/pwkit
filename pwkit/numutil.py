@@ -9,11 +9,11 @@ module provides several useful additions.
 """
 from __future__ import absolute_import, division, print_function
 
-__all__ = '''broadcastize dfsmooth fits_recarray_to_data_frame make_step_lcont
+__all__ = """broadcastize dfsmooth fits_recarray_to_data_frame make_step_lcont
            make_step_rcont make_tophat_ee make_tophat_ei make_tophat_ie
            make_tophat_ii parallel_newton parallel_quad rms unit_tophat_ee
            unit_tophat_ei unit_tophat_ie unit_tophat_ii usmooth weighted_mean
-           weighted_mean_df weighted_variance'''.split()
+           weighted_mean_df weighted_variance""".split()
 
 import functools
 from six.moves import range
@@ -34,9 +34,9 @@ def _broadcastize_spec_to_scalar_filter(s):
         # This return value is a larger vector of the input(s). If we promoted
         # from a scalar, we drop the final axis. We asarray() the result for
         # convenience/robustness.
-        return lambda x: np.asarray(x)[...,0]
+        return lambda x: np.asarray(x)[..., 0]
 
-    raise ValueError('unrecognized @broadcastize ret_spec value %r' % s)
+    raise ValueError("unrecognized @broadcastize ret_spec value %r" % s)
 
 
 class _Broadcaster(method_decorator):
@@ -44,17 +44,18 @@ class _Broadcaster(method_decorator):
 
     def fixup(self, newobj):
         # This function is used by the method_decorator superclass.
-        newobj._n_arr = object.__getattribute__(self, '_n_arr')
-        newobj._force_float = object.__getattribute__(self, '_force_float')
-        newobj._scalar_ret_filter = object.__getattribute__(self, '_scalar_ret_filter')
+        newobj._n_arr = object.__getattribute__(self, "_n_arr")
+        newobj._force_float = object.__getattribute__(self, "_force_float")
+        newobj._scalar_ret_filter = object.__getattribute__(self, "_scalar_ret_filter")
 
     def __call__(self, *args, **kwargs):
-        n_arr = object.__getattribute__(self, '_n_arr')
-        force_float = object.__getattribute__(self, '_force_float')
+        n_arr = object.__getattribute__(self, "_n_arr")
+        force_float = object.__getattribute__(self, "_force_float")
 
         if len(args) < n_arr:
-            raise TypeError('expected at least %d arguments, got %d'
-                             % (n_arr, len(args)))
+            raise TypeError(
+                "expected at least %d arguments, got %d" % (n_arr, len(args))
+            )
 
         bc_raw = np.broadcast_arrays(*args[:n_arr])
         if force_float:
@@ -66,7 +67,7 @@ class _Broadcaster(method_decorator):
         if bc_raw[0].ndim == 0:
             # Inputs were all scalars. We need to filter the output(s) to
             # remove extra axes.
-            scalar_ret_filter = object.__getattribute__(self, '_scalar_ret_filter')
+            scalar_ret_filter = object.__getattribute__(self, "_scalar_ret_filter")
             result = scalar_ret_filter(result)
 
         return result
@@ -77,11 +78,13 @@ class _BroadcasterDecorator(object):
     the pwkit documentation for usage information.
 
     """
+
     def __init__(self, n_arr, ret_spec=0, force_float=True):
         self._n_arr = int(n_arr)
         if self._n_arr < 1:
-            raise ValueError('broadcastiz\'ed function must take at least 1 '
-                             'array argument')
+            raise ValueError(
+                "broadcastiz'ed function must take at least 1 " "array argument"
+            )
 
         self._force_float = bool(force_float)
 
@@ -91,7 +94,6 @@ class _BroadcasterDecorator(object):
         else:
             self._scalar_ret_filter = _broadcastize_spec_to_scalar_filter(ret_spec)
 
-
     def __call__(self, subfunc):
         b = _Broadcaster(subfunc)
         b._n_arr = self._n_arr
@@ -99,10 +101,12 @@ class _BroadcasterDecorator(object):
         b._scalar_ret_filter = self._scalar_ret_filter
         return b
 
+
 broadcastize = _BroadcasterDecorator
 
 
 # Very misc.
+
 
 def fits_recarray_to_data_frame(recarray, drop_nonscalar_ok=True):
     """Convert a FITS data table, stored as a Numpy record array, into a Pandas
@@ -133,7 +137,7 @@ def fits_recarray_to_data_frame(recarray, drop_nonscalar_ok=True):
 
             if d.ndim != 1:
                 if not drop_nonscalar_ok:
-                    raise ValueError('input must have only scalar columns')
+                    raise ValueError("input must have only scalar columns")
                 continue
 
             if d.dtype.isnative:
@@ -146,9 +150,9 @@ def fits_recarray_to_data_frame(recarray, drop_nonscalar_ok=True):
 
 def data_frame_to_astropy_table(dataframe):
     """This is a backport of the Astropy method
-   :meth:`astropy.table.table.Table.from_pandas`. It converts a Pandas
-   :class:`pandas.DataFrame` object to an Astropy
-   :class:`astropy.table.Table`.
+    :meth:`astropy.table.table.Table.from_pandas`. It converts a Pandas
+    :class:`pandas.DataFrame` object to an Astropy
+    :class:`astropy.table.Table`.
 
     """
     from astropy.utils import OrderedDict
@@ -162,7 +166,7 @@ def data_frame_to_astropy_table(dataframe):
         mask = np.array(column.isnull())
         data = np.array(column)
 
-        if data.dtype.kind == 'O':
+        if data.dtype.kind == "O":
             # If all elements of an object array are string-like or np.nan
             # then coerce back to a native numpy str/unicode array.
             string_types = six.string_types
@@ -172,7 +176,7 @@ def data_frame_to_astropy_table(dataframe):
             if all(isinstance(x, string_types) or x is nan for x in data):
                 # Force any missing (null) values to b''.  Numpy will
                 # upcast to str/unicode as needed.
-                data[mask] = b''
+                data[mask] = b""
 
                 # When the numpy object array is represented as a list then
                 # numpy initializes to the correct string or unicode type.
@@ -186,7 +190,7 @@ def data_frame_to_astropy_table(dataframe):
     return Table(out)
 
 
-def page_data_frame(df, pager_argv=['less'], **kwargs):
+def page_data_frame(df, pager_argv=["less"], **kwargs):
     """Render a DataFrame as text and send it to a terminal pager program (e.g.
     `less`), so that one can browse a full table conveniently.
 
@@ -203,12 +207,12 @@ def page_data_frame(df, pager_argv=['less'], **kwargs):
     """
     import codecs, subprocess, sys
 
-    pager = subprocess.Popen(pager_argv, shell=False,
-                             stdin=subprocess.PIPE,
-                             close_fds=True)
+    pager = subprocess.Popen(
+        pager_argv, shell=False, stdin=subprocess.PIPE, close_fds=True
+    )
 
     try:
-        enc = codecs.getwriter(sys.stdout.encoding or 'utf8')(pager.stdin)
+        enc = codecs.getwriter(sys.stdout.encoding or "utf8")(pager.stdin)
         df.to_string(enc, **kwargs)
     finally:
         enc.close()
@@ -217,6 +221,7 @@ def page_data_frame(df, pager_argv=['less'], **kwargs):
 
 
 # Chunked averaging of data tables
+
 
 def slice_around_gaps(values, maxgap):
     """Given an ordered array of values, generate a set of slices that traverse
@@ -227,13 +232,13 @@ def slice_around_gaps(values, maxgap):
     """
     if not (maxgap > 0):
         # above test catches NaNs, other weird cases
-        raise ValueError('maxgap must be positive; got %r' % maxgap)
+        raise ValueError("maxgap must be positive; got %r" % maxgap)
 
     values = np.asarray(values)
     delta = values[1:] - values[:-1]
 
     if np.any(delta < 0):
-        raise ValueError('values must be in nondecreasing order')
+        raise ValueError("values must be in nondecreasing order")
 
     whgap = np.where(delta > maxgap)[0] + 1
     prev_idx = None
@@ -257,7 +262,7 @@ def slice_evenly_with_gaps(values, target_len, maxgap):
 
     """
     if not (target_len > 0):
-        raise ValueError('target_len must be positive; got %r' % target_len)
+        raise ValueError("target_len must be positive; got %r" % target_len)
 
     values = np.asarray(values)
     l = values.size
@@ -269,7 +274,7 @@ def slice_evenly_with_gaps(values, target_len, maxgap):
         nsegments = max(nsegments, 1)
         nsegments = min(nsegments, num_elements)
         segment_len = num_elements / nsegments
-        offset = 0.
+        offset = 0.0
         prev = start
 
         for _ in range(nsegments):
@@ -280,14 +285,17 @@ def slice_evenly_with_gaps(values, target_len, maxgap):
             prev = next
 
 
-def reduce_data_frame(df, chunk_slicers,
-                      avg_cols=(),
-                      uavg_cols=(),
-                      minmax_cols=(),
-                      nchunk_colname='nchunk',
-                      uncert_prefix='u',
-                      min_points_per_chunk=3):
-    """"Reduce" a DataFrame by collapsing rows in grouped chunks. Returns another
+def reduce_data_frame(
+    df,
+    chunk_slicers,
+    avg_cols=(),
+    uavg_cols=(),
+    minmax_cols=(),
+    nchunk_colname="nchunk",
+    uncert_prefix="u",
+    min_points_per_chunk=3,
+):
+    """ "Reduce" a DataFrame by collapsing rows in grouped chunks. Returns another
     DataFrame with similar columns but fewer rows.
 
     Arguments:
@@ -330,38 +338,39 @@ def reduce_data_frame(df, chunk_slicers,
 
     for i, subd in enumerate(subds):
         label = chunked.index[i]
-        chunked.loc[label,nchunk_colname] = subd.shape[0]
+        chunked.loc[label, nchunk_colname] = subd.shape[0]
 
         for col in avg_cols:
-            chunked.loc[label,col] = subd[col].mean()
+            chunked.loc[label, col] = subd[col].mean()
 
         for col in uavg_cols:
             ucol = uncert_col_name(col)
             v, u = weighted_mean(subd[col], subd[ucol])
-            chunked.loc[label,col] = v
-            chunked.loc[label,ucol] = u
+            chunked.loc[label, col] = v
+            chunked.loc[label, ucol] = u
 
         for col in minmax_cols:
-            chunked.loc[label, 'min_'+col] = subd[col].min()
-            chunked.loc[label, 'max_'+col] = subd[col].max()
+            chunked.loc[label, "min_" + col] = subd[col].min()
+            chunked.loc[label, "max_" + col] = subd[col].max()
 
     return chunked
 
 
 def reduce_data_frame_evenly_with_gaps(df, valcol, target_len, maxgap, **kwargs):
-    """"Reduce" a DataFrame by collapsing rows in grouped chunks, grouping based on
+    """ "Reduce" a DataFrame by collapsing rows in grouped chunks, grouping based on
     gaps in one of the columns.
 
     This function combines :func:`reduce_data_frame` with
     :func:`slice_evenly_with_gaps`.
 
     """
-    return reduce_data_frame(df,
-                              slice_evenly_with_gaps(df[valcol], target_len, maxgap),
-                              **kwargs)
+    return reduce_data_frame(
+        df, slice_evenly_with_gaps(df[valcol], target_len, maxgap), **kwargs
+    )
 
 
 # Smooth a timeseries with uncertainties
+
 
 def usmooth(window, uncerts, *data, **kwargs):
     """Smooth data series according to a window, weighting based on uncertainties.
@@ -393,23 +402,24 @@ def usmooth(window, uncerts, *data, **kwargs):
     # Hacky keyword argument handling because you can't write "def foo(*args,
     # k=0)".
 
-    k = kwargs.pop('k', None)
+    k = kwargs.pop("k", None)
 
     if len(kwargs):
-        raise TypeError("smooth() got an unexpected keyword argument '%s'"
-                        % kwargs.keys()[0])
+        raise TypeError(
+            "smooth() got an unexpected keyword argument '%s'" % kwargs.keys()[0]
+        )
 
     # Done with kwargs futzing.
 
     if k is None:
         k = window.size
 
-    conv = lambda q, r: np.convolve(q, r, mode='valid')
+    conv = lambda q, r: np.convolve(q, r, mode="valid")
 
     if uncerts is None:
         w = np.ones_like(x)
     else:
-        w = uncerts ** -2
+        w = uncerts**-2
 
     cw = conv(w, window)
     cu = np.sqrt(conv(w, window**2)) / cw
@@ -452,9 +462,9 @@ def dfsmooth(window, df, ucol, k=None):
     if k is None:
         k = window.size
 
-    conv = lambda q, r: np.convolve(q, r, mode='valid')
+    conv = lambda q, r: np.convolve(q, r, mode="valid")
     w = df[ucol] ** -2
-    invcw = 1. / conv(w, window)
+    invcw = 1.0 / conv(w, window)
 
     # XXX: we're not smoothing the index.
 
@@ -471,10 +481,13 @@ def dfsmooth(window, df, ucol, k=None):
 
 
 def smooth_data_frame_with_gaps(
-        window, df, uncert_col,
-        time_col, max_gap,
-        min_points_per_chunk = 3,
-        k = None,
+    window,
+    df,
+    uncert_col,
+    time_col,
+    max_gap,
+    min_points_per_chunk=3,
+    k=None,
 ):
     """Smooth a :class:`pandas.DataFrame` according to a window, weighting based
     on uncertainties, and breaking the smoothing process at gaps in a time
@@ -520,8 +533,18 @@ def smooth_data_frame_with_gaps(
 # Parallelized versions of various routines that don't operate vectorially
 # even though sometimes it'd be nice to pretend that they do.
 
-def parallel_newton(func, x0, fprime=None, par_args=(), simple_args=(), tol=1.48e-8,
-                    maxiter=50, parallel=True, **kwargs):
+
+def parallel_newton(
+    func,
+    x0,
+    fprime=None,
+    par_args=(),
+    simple_args=(),
+    tol=1.48e-8,
+    maxiter=50,
+    parallel=True,
+    **kwargs
+):
     """A parallelized version of :func:`scipy.optimize.newton`.
 
     Arguments:
@@ -571,13 +594,14 @@ def parallel_newton(func, x0, fprime=None, par_args=(), simple_args=(), tol=1.48
     from scipy.optimize import newton
 
     from .parallel import make_parallel_helper
+
     phelp = make_parallel_helper(parallel)
 
     if not isinstance(par_args, tuple):
-        raise ValueError('par_args must be a tuple')
+        raise ValueError("par_args must be a tuple")
 
     if not isinstance(simple_args, tuple):
-        raise ValueError('simple_args must be a tuple')
+        raise ValueError("simple_args must be a tuple")
 
     bc_raw = np.broadcast_arrays(x0, tol, maxiter, *par_args)
     bc_1d = tuple(np.atleast_1d(a) for a in bc_raw)
@@ -589,8 +613,9 @@ def parallel_newton(func, x0, fprime=None, par_args=(), simple_args=(), tol=1.48
     def helper(i, _, var_args):
         x0, tol, maxiter = var_args[:3]
         args = var_args[3:] + simple_args
-        return newton(func, x0, fprime=fprime, args=args, tol=tol,
-                       maxiter=maxiter, **kwargs)
+        return newton(
+            func, x0, fprime=fprime, args=args, tol=tol, maxiter=maxiter, **kwargs
+        )
 
     with phelp.get_ppmap() as ppmap:
         result = np.asarray(ppmap(helper, None, gen_var_args()))
@@ -662,13 +687,14 @@ def parallel_quad(func, a, b, par_args=(), simple_args=(), parallel=True, **kwar
     from scipy.integrate import quad
 
     from .parallel import make_parallel_helper
+
     phelp = make_parallel_helper(parallel)
 
     if not isinstance(par_args, tuple):
-        raise ValueError('par_args must be a tuple')
+        raise ValueError("par_args must be a tuple")
 
     if not isinstance(simple_args, tuple):
-        raise ValueError('simple_args must be a tuple')
+        raise ValueError("simple_args must be a tuple")
 
     bc_raw = np.broadcast_arrays(a, b, *par_args)
     bc_1d = tuple(np.atleast_1d(a) for a in bc_raw)
@@ -695,6 +721,7 @@ def parallel_quad(func, a, b, par_args=(), simple_args=(), parallel=True, **kwar
 
 # Some miscellaneous numerical tools
 
+
 def rms(x):
     """Return the square root of the mean of the squares of ``x``."""
     return np.sqrt(np.square(x).mean())
@@ -703,16 +730,16 @@ def rms(x):
 def weighted_mean(values, uncerts, **kwargs):
     values = np.asarray(values)
     uncerts = np.asarray(uncerts)
-    weights = uncerts ** -2
+    weights = uncerts**-2
     wt_mean, wt_sum = np.average(values, weights=weights, returned=True, **kwargs)
-    return wt_mean, wt_sum ** -0.5
+    return wt_mean, wt_sum**-0.5
 
 
 def weighted_mean_df(df, **kwargs):
     """The same as :func:`weighted_mean`, except the argument is expected to be a
-   two-column :class:`pandas.DataFrame` whose first column gives the data
-   values and second column gives their uncertainties. Returns
-   ``(weighted_mean, uncertainty_in_mean)``.
+    two-column :class:`pandas.DataFrame` whose first column gives the data
+    values and second column gives their uncertainties. Returns
+    ``(weighted_mean, uncertainty_in_mean)``.
 
     """
     return weighted_mean(df[df.columns[0]], df[df.columns[1]], **kwargs)
@@ -728,8 +755,9 @@ def weighted_variance(x, weights):
     """
     n = len(x)
     if n < 3:
-        raise ValueError('cannot calculate meaningful variance of fewer '
-                         'than three samples')
+        raise ValueError(
+            "cannot calculate meaningful variance of fewer " "than three samples"
+        )
     wt_mean = np.average(x, weights=weights)
     return np.average(np.square(x - wt_mean), weights=weights) * n / (n - 1)
 
@@ -741,6 +769,7 @@ def weighted_variance(x, weights):
 #
 # We're careful with inclusivity/exclusivity of the bounds since that can be
 # important.
+
 
 def unit_tophat_ee(x):
     """Tophat function on the unit interval, left-exclusive and right-exclusive.
@@ -812,9 +841,11 @@ def make_tophat_ee(lower, upper):
             return np.asscalar(r)
         return r
 
-    range_tophat_ee.__doc__ = ('Ranged tophat function, left-exclusive and '
-                               'right-exclusive. Returns 1 if %g < x < %g, '
-                               '0 otherwise.') % (lower, upper)
+    range_tophat_ee.__doc__ = (
+        "Ranged tophat function, left-exclusive and "
+        "right-exclusive. Returns 1 if %g < x < %g, "
+        "0 otherwise."
+    ) % (lower, upper)
     return range_tophat_ee
 
 
@@ -836,9 +867,11 @@ def make_tophat_ei(lower, upper):
             return np.asscalar(r)
         return r
 
-    range_tophat_ei.__doc__ = ('Ranged tophat function, left-exclusive and '
-                               'right-inclusive. Returns 1 if %g < x <= %g, '
-                               '0 otherwise.') % (lower, upper)
+    range_tophat_ei.__doc__ = (
+        "Ranged tophat function, left-exclusive and "
+        "right-inclusive. Returns 1 if %g < x <= %g, "
+        "0 otherwise."
+    ) % (lower, upper)
     return range_tophat_ei
 
 
@@ -860,9 +893,11 @@ def make_tophat_ie(lower, upper):
             return np.asscalar(r)
         return r
 
-    range_tophat_ie.__doc__ = ('Ranged tophat function, left-inclusive and '
-                               'right-exclusive. Returns 1 if %g <= x < %g, '
-                               '0 otherwise.') % (lower, upper)
+    range_tophat_ie.__doc__ = (
+        "Ranged tophat function, left-inclusive and "
+        "right-exclusive. Returns 1 if %g <= x < %g, "
+        "0 otherwise."
+    ) % (lower, upper)
     return range_tophat_ie
 
 
@@ -884,13 +919,16 @@ def make_tophat_ii(lower, upper):
             return np.asscalar(r)
         return r
 
-    range_tophat_ii.__doc__ = ('Ranged tophat function, left-inclusive and '
-                               'right-inclusive. Returns 1 if %g <= x <= %g, '
-                               '0 otherwise.') % (lower, upper)
+    range_tophat_ii.__doc__ = (
+        "Ranged tophat function, left-inclusive and "
+        "right-inclusive. Returns 1 if %g <= x <= %g, "
+        "0 otherwise."
+    ) % (lower, upper)
     return range_tophat_ii
 
 
 # Step functions
+
 
 def make_step_lcont(transition):
     """Return a ufunc-like step function that is left-continuous. Returns 1 if
@@ -898,7 +936,9 @@ def make_step_lcont(transition):
 
     """
     if not np.isfinite(transition):
-        raise ValueError('"transition" argument must be finite number; got %r' % transition)
+        raise ValueError(
+            '"transition" argument must be finite number; got %r' % transition
+        )
 
     def step_lcont(x):
         x = np.asarray(x)
@@ -908,8 +948,9 @@ def make_step_lcont(transition):
             return np.asscalar(r)
         return r
 
-    step_lcont.__doc__ = ('Left-continuous step function. Returns 1 if x > %g, '
-                          '0 otherwise.') % (transition,)
+    step_lcont.__doc__ = (
+        "Left-continuous step function. Returns 1 if x > %g, " "0 otherwise."
+    ) % (transition,)
     return step_lcont
 
 
@@ -919,7 +960,9 @@ def make_step_rcont(transition):
 
     """
     if not np.isfinite(transition):
-        raise ValueError('"transition" argument must be finite number; got %r' % transition)
+        raise ValueError(
+            '"transition" argument must be finite number; got %r' % transition
+        )
 
     def step_rcont(x):
         x = np.asarray(x)
@@ -929,6 +972,7 @@ def make_step_rcont(transition):
             return np.asscalar(r)
         return r
 
-    step_rcont.__doc__ = ('Right-continuous step function. Returns 1 if x >= '
-                          '%g, 0 otherwise.') % (transition,)
+    step_rcont.__doc__ = (
+        "Right-continuous step function. Returns 1 if x >= " "%g, 0 otherwise."
+    ) % (transition,)
     return step_rcont
