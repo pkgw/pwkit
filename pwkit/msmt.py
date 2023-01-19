@@ -109,7 +109,7 @@ def pk_scoreatpercentile(a, per):
 
     fidx = vper / 100. * (asort.size - 1)
     # clipping iidx here gets the right behavior for per = 100:
-    iidx = np.minimum(fidx.astype(np.int), asort.size - 2)
+    iidx = np.minimum(fidx.astype(int), asort.size - 2)
     res = (iidx + 1 - fidx) * asort[iidx] + (fidx - iidx) * asort[iidx + 1]
 
     if np.isscalar(per):

@@ -129,12 +129,12 @@ class ModelBase(object):
         Returns *self*.
 
         """
-        self.data = np.array(data, dtype=np.float, ndmin=1)
+        self.data = np.array(data, dtype=float, ndmin=1)
 
         if invsigma is None:
             self.invsigma = np.ones(self.data.shape)
         else:
-            i = np.array(invsigma, dtype=np.float)
+            i = np.array(invsigma, dtype=float)
             self.invsigma = np.broadcast_arrays(self.data, i)[1] # allow scalar invsigma
 
         if self.invsigma.shape != self.data.shape:
@@ -351,7 +351,7 @@ class Model(ModelBase):
         :func:`functools.partial` to the :attr:`func` property of this object.
 
         """
-        params = np.array(params, dtype=np.float, ndmin=1)
+        params = np.array(params, dtype=float, ndmin=1)
         from functools import partial
         return partial(self.func, params)
 
@@ -365,7 +365,7 @@ class Model(ModelBase):
         Returns *self*.
 
         """
-        guess = np.array(guess, dtype=np.float, ndmin=1)
+        guess = np.array(guess, dtype=float, ndmin=1)
         f = self.func
         args = self._args
 
@@ -415,7 +415,7 @@ class PolynomialModel(ModelBase):
     """
     def __init__(self, maxexponent, x, data, invsigma=None):
         self.maxexponent = maxexponent
-        self.x = np.array(x, dtype=np.float, ndmin=1, copy=False, subok=True)
+        self.x = np.array(x, dtype=float, ndmin=1, copy=False, subok=True)
         self.set_data(data, invsigma)
 
 
@@ -467,7 +467,7 @@ class ScaleModel(ModelBase):
     """Solve `data = m * x` for `m`."""
 
     def __init__(self, x, data, invsigma=None):
-        self.x = np.array(x, dtype=np.float, ndmin=1, copy=False, subok=True)
+        self.x = np.array(x, dtype=float, ndmin=1, copy=False, subok=True)
         self.set_data(data, invsigma)
 
 
@@ -611,7 +611,7 @@ class ComposedModel(ModelBase):
         if guess is None:
             guess = self.force_guess
         else:
-            guess = np.array(guess, dtype=np.float, ndmin=1, copy=True)
+            guess = np.array(guess, dtype=float, ndmin=1, copy=True)
 
             for i in range(self.force_guess.size):
                 if np.isfinite(self.force_guess[i]):
@@ -724,7 +724,7 @@ class AddPolynomialComponent(ModelComponent):
     def __init__(self, maxexponent, x, name=None):
         super(AddPolynomialComponent, self).__init__(name)
         self.npar = maxexponent + 1
-        self.x = np.array(x, dtype=np.float, ndmin=1, copy=False, subok=True)
+        self.x = np.array(x, dtype=float, ndmin=1, copy=False, subok=True)
 
     def _param_names(self):
         for i in range(self.npar):

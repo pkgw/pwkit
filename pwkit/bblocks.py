@@ -86,8 +86,8 @@ def bin_bblock (widths, counts, p0=0.05):
     count_remainders = ccounts[-1] - ccounts
 
     prev_blockstarts = None
-    best = np.zeros (ncells, dtype=np.float)
-    last = np.zeros (ncells, dtype=np.int)
+    best = np.zeros (ncells, dtype=float)
+    last = np.zeros (ncells, dtype=int)
 
     for _ in range (10):
         # Pluggable num-change-points prior-weight expression:
@@ -146,7 +146,7 @@ def bin_bblock (widths, counts, p0=0.05):
     info.origp0 = origp0
     info.finalp0 = p0
     info.blockstarts = blockstarts
-    info.counts = np.empty (nblocks, dtype=np.int)
+    info.counts = np.empty (nblocks, dtype=int)
     info.widths = np.empty (nblocks)
 
     for iblk in range (nblocks):
@@ -370,7 +370,7 @@ def tt_bblock (tstarts, tstops, times, p0=0.05, intersect_with_bins=False):
 
         # Finally, rewrite all of the data as planned.
 
-        old_bblock_ids = np.array(old_bblock_ids, dtype=np.int)
+        old_bblock_ids = np.array(old_bblock_ids, dtype=int)
         info.counts = info.counts[old_bblock_ids]
         info.rates = info.rates[old_bblock_ids]
         info.widths = info.widths[old_bblock_ids]

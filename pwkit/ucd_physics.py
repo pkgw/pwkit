@@ -146,7 +146,7 @@ def lbol_from_spt_dist_mag (sptnum, dist_pc, jmag, kmag, format='cgs'):
     bcj = bcj_from_spt (sptnum)
     bck = bck_from_spt (sptnum)
 
-    n = np.zeros (sptnum.shape, dtype=np.int)
+    n = np.zeros (sptnum.shape, dtype=int)
     app_mbol = np.zeros (sptnum.shape)
 
     w = np.isfinite (bcj) & np.isfinite (jmag)

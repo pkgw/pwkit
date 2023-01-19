@@ -517,7 +517,7 @@ WCS support isn't fantastic and sometimes causes crashes."""
             except Exception as e:
                 print ('imtool show: can\'t convert “%s” to simple 2D sky image; taking '
                        ' first plane' % path, file=sys.stderr)
-                data = img.read (flip=True)[tuple(np.zeros (img.shape.size - 2, dtype=np.int))]
+                data = img.read (flip=True)[tuple(np.zeros (img.shape.size - 2, dtype=int))]
                 toworld = None
             else:
                 data = img.read (flip=True)

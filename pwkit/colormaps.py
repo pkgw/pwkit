@@ -341,7 +341,7 @@ def moreland_interpolate_sampled(srgb1, srgb2, refwhite=CIELAB_D65,
     """Adapted from Moreland's InterpolateColor. This uses the full
     transformations to compute a color mapping at a set of sampled points."""
 
-    msh1, msh2 = srgb_to_msh(np.asarray([srgb1, srgb2], dtype=np.float), refwhite)
+    msh1, msh2 = srgb_to_msh(np.asarray([srgb1, srgb2], dtype=float), refwhite)
 
     raddiff = msh1[H] - msh2[H]
     while raddiff > np.pi:
