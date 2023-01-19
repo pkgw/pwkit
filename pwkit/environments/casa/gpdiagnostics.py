@@ -125,10 +125,10 @@ class GainCal (object):
         self.nants = self.ants.size
         self.ant_to_antidx = dict ((num, idx) for idx, num in enumerate (self.ants))
 
-        self.ncontrib = np.empty ((self.nsamps,), dtype=np.int)
-        self.vis = np.empty ((self.nsamps,), dtype=np.complex)
-        self.blidxs = np.empty ((self.nsamps, 2), dtype=np.int)
-        self.nperant = np.zeros ((self.nants,), dtype=np.int)
+        self.ncontrib = np.empty ((self.nsamps,), dtype=int)
+        self.vis = np.empty ((self.nsamps,), dtype=complex)
+        self.blidxs = np.empty ((self.nsamps, 2), dtype=int)
+        self.nperant = np.zeros ((self.nants,), dtype=int)
 
         for i, (bl, (data, flags)) in enumerate (six.viewitems (bybl)):
             ok = ~flags
@@ -181,8 +181,8 @@ class GainCal (object):
         # differences between it and the "model" and alter the phase by that.
         # Loosely modeled on MIRIAD gpcal PhaseSol().
 
-        curphasors = np.ones (self.nants, dtype=np.complex)
-        newphasors = np.empty (self.nants, dtype=np.complex)
+        curphasors = np.ones (self.nants, dtype=complex)
+        newphasors = np.empty (self.nants, dtype=complex)
         tol = 1e-5
         damping = 0.9
 
@@ -219,8 +219,8 @@ class GainCal (object):
 
     def stats (self, antnames):
         """XXX may be out of date."""
-        nbyant = np.zeros (self.nants, dtype=np.int)
-        sum = np.zeros (self.nants, dtype=np.complex)
+        nbyant = np.zeros (self.nants, dtype=int)
+        sum = np.zeros (self.nants, dtype=complex)
         sumsq = np.zeros (self.nants)
         q = np.abs (self.normvis - 1)
 
@@ -244,8 +244,8 @@ class GainCal (object):
 
 
     def get_normalized (self, antidx):
-        buff = np.empty (self.nperant[antidx], dtype=np.complex)
-        otherant = np.empty (self.nperant[antidx], dtype=np.int)
+        buff = np.empty (self.nperant[antidx], dtype=complex)
+        otherant = np.empty (self.nperant[antidx], dtype=int)
         ofs = 0
 
         for i in range (self.nsamps):
@@ -594,7 +594,7 @@ class DiagnosticsTool (object):
                 ms.fixedsize = 4
                 ms.fixedlinestyle = {'color': 'muted'}
 
-                cnum = np.zeros (samps.size, dtype=np.int)
+                cnum = np.zeros (samps.size, dtype=int)
                 cnum.fill (spwseq[spw])
 
                 shape = np.zeros_like (cnum)
@@ -610,7 +610,7 @@ class DiagnosticsTool (object):
                 ms.fixedsize = 4
                 ms.fixedlinestyle = {'color': 'muted'}
 
-                cnum = np.zeros (samps.size, dtype=np.int)
+                cnum = np.zeros (samps.size, dtype=int)
                 cnum.fill (spwseq[spw])
 
                 shape = np.zeros_like (cnum)

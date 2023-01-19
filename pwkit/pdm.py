@@ -39,7 +39,7 @@ def one_theta (t, x, wt, period, nbin, nshift, v_all):
 
     for i in range (nshift):
         phase = (phase0 + float (i) / (nshift * nbin)) % 1.
-        binloc = np.floor (phase * nbin).astype (np.int)
+        binloc = np.floor (phase * nbin).astype (int)
 
         for j in range (nbin):
             wh = np.where (binloc == j)[0]

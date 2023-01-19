@@ -329,7 +329,7 @@ def reduce_data_frame(
     subds = [df.iloc[idx] for idx in chunk_slicers]
     subds = [sd for sd in subds if sd.shape[0] >= min_points_per_chunk]
 
-    chunked = df.__class__({nchunk_colname: np.zeros(len(subds), dtype=np.int)})
+    chunked = df.__class__({nchunk_colname: np.zeros(len(subds), dtype=int)})
 
     # Some future-proofing: allow possibility of different ways of mapping
     # from a column giving a value to a column giving its uncertainty.

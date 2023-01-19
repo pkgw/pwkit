@@ -420,7 +420,7 @@ class MIRIADImage (AstroImage):
                    file=sys.stderr)
 
         naxis = h.getScalarItem ('naxis', 0)
-        self.shape = np.empty (naxis, dtype=np.int)
+        self.shape = np.empty (naxis, dtype=int)
         self.axdescs = []
 
         for i in range (naxis):
@@ -620,7 +620,7 @@ class PyrapImage (AstroImage):
 
         allinfo = self._handle.info ()
         self.units = maybelower (allinfo.get ('unit'))
-        self.shape = np.asarray (self._handle.shape (), dtype=np.int)
+        self.shape = np.asarray (self._handle.shape (), dtype=int)
         self.axdescs = []
 
         if 'coordinates' in allinfo:
@@ -881,7 +881,7 @@ class CasaCImage (AstroImage):
 
         # Older casac doesn't accept ndarrays ... but casa 4.7 only works with
         # ndarrays! Sigh.
-        blc = np.zeros(self.shape.size, dtype=np.int)
+        blc = np.zeros(self.shape.size, dtype=int)
         trc = np.array(self.shape[::-1] - 1)
 
         data = self._handle.getchunk (blc, trc, dropdeg=squeeze, getmask=False)
@@ -1022,7 +1022,7 @@ class FITSImage (AstroImage):
         self.units = maybelower (header.get ('bunit'))
 
         naxis = header.get ('naxis', 0)
-        self.shape = np.empty (naxis, dtype=np.int)
+        self.shape = np.empty (naxis, dtype=int)
         self.axdescs = []
 
         for i in range (naxis):

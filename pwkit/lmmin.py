@@ -477,7 +477,7 @@ appeared in Linpack."""
     return pmut, rdiag, acnorm
 
 
-def _manual_qr_factor_packed(a, dtype=np.float):
+def _manual_qr_factor_packed(a, dtype=float):
     # This testing function gives sensible defaults to _qr_factor_packed
     # and makes a copy of its input to make comparisons easier.
 
@@ -487,13 +487,13 @@ def _manual_qr_factor_packed(a, dtype=np.float):
     return a, pmut, rdiag, acnorm
 
 
-def _qr_factor_full(a, dtype=np.float):
+def _qr_factor_full(a, dtype=float):
     """Compute the QR factorization of a matrix, with pivoting.
 
 Parameters:
 a     - An n-by-m arraylike, m >= n.
 dtype - (optional) The data type to use for computations.
-        Default is np.float.
+        Default is float.
 
 Returns:
 q    - An m-by-m orthogonal matrix (q q^T = ident)
@@ -747,9 +747,9 @@ P^T (A^T A + D D) P = S^T S. (transpose?)
     return x
 
 
-def _manual_qrd_solve(r, pmut, ddiag, bqt, dtype=np.float, build_s=False):
+def _manual_qrd_solve(r, pmut, ddiag, bqt, dtype=float, build_s=False):
     r = np.asarray(r, dtype)
-    pmut = np.asarray(pmut, np.int)
+    pmut = np.asarray(pmut, int)
     ddiag = np.asarray(ddiag, dtype)
     bqt = np.asarray(bqt, dtype)
 
@@ -771,7 +771,7 @@ def _manual_qrd_solve(r, pmut, ddiag, bqt, dtype=np.float, build_s=False):
     return x, swork
 
 
-def _qrd_solve_full(a, b, ddiag, dtype=np.float):
+def _qrd_solve_full(a, b, ddiag, dtype=float):
     """Solve the equation A^T x = B, D x = 0.
 
 Parameters:
@@ -1007,7 +1007,7 @@ are needed, but no more than 10 are performed.
     return par, x
 
 
-def _lm_solve_full(a, b, ddiag, delta, par0, dtype=np.float):
+def _lm_solve_full(a, b, ddiag, delta, par0, dtype=float):
     """Compute the Levenberg-Marquardt parameter and solution vector.
 
 Parameters:
@@ -1320,7 +1320,7 @@ class Problem(object):
         if self._npar is not None and self._npar == npar:
             return self
 
-        newinfof = p = np.ndarray((PI_NUM_F, npar), dtype=np.float)
+        newinfof = p = np.ndarray((PI_NUM_F, npar), dtype=float)
         p[PI_F_VALUE] = np.nan
         p[PI_F_LLIMIT] = -np.inf
         p[PI_F_ULIMIT] = np.inf
@@ -1330,7 +1330,7 @@ class Problem(object):
         newinfoo = p = np.ndarray((PI_NUM_O, npar), dtype=np.object)
         p[PI_O_TIEFUNC] = None
 
-        newinfob = p = np.ndarray(npar, dtype=np.int)
+        newinfob = p = np.ndarray(npar, dtype=int)
         p[:] = 0
 
         if self._npar is not None:
@@ -1560,7 +1560,7 @@ class Problem(object):
         self.debug_jac = bool(self.debug_jac)
 
         if self.diag is not None:
-            self.diag = np.atleast_1d(np.asarray(self.diag, dtype=np.float))
+            self.diag = np.atleast_1d(np.asarray(self.diag, dtype=float))
 
             if self.diag.shape != (self._npar, ):
                 raise ValueError('diag')
@@ -1603,7 +1603,7 @@ class Problem(object):
 
 
     def get_ndof(self):
-        self._fixup_check(np.float) # dtype is irrelevant here
+        self._fixup_check(float) # dtype is irrelevant here
         return self._nout - self._ifree.size
 
 
@@ -1651,7 +1651,7 @@ class Problem(object):
             np.tanh(vec / self.damp, vec)
 
 
-    def solve(self, initial_params=None, dtype=np.float):
+    def solve(self, initial_params=None, dtype=float):
         from numpy import any, clip, dot, isfinite, sqrt, where
 
         self._fixup_check(dtype)
@@ -2098,7 +2098,7 @@ class Problem(object):
                 print('Jac :', fjacfull[i])
 
 
-    def _manual_jacobian(self, params, dtype=np.float):
+    def _manual_jacobian(self, params, dtype=float):
         self._fixup_check(dtype)
 
         ifree = self._ifree
@@ -2129,7 +2129,7 @@ class Problem(object):
                 params[i] = funcs[i](params)
 
 
-    def solve_scipy(self, initial_params=None, dtype=np.float, strict=True):
+    def solve_scipy(self, initial_params=None, dtype=float, strict=True):
         from numpy import any, clip, dot, isfinite, sqrt, where
         self._fixup_check(dtype)
 
@@ -2333,7 +2333,7 @@ def _jac_stepsizes():
 # lmder1 / lmdif1 test cases
 
 def _lmder1_test(nout, func, jac, guess):
-    finfo = np.finfo(np.float)
+    finfo = np.finfo(float)
     tol = np.sqrt(finfo.eps)
     guess = np.asfarray(guess)
 
@@ -2358,7 +2358,7 @@ def _lmder1_test(nout, func, jac, guess):
 
 def _lmder1_driver(nout, func, jac, guess, target_fnorm1,
                    target_fnorm2, target_params, decimal=10):
-    finfo = np.finfo(np.float)
+    finfo = np.finfo(float)
     tol = np.sqrt(finfo.eps)
     guess = np.asfarray(guess)
 

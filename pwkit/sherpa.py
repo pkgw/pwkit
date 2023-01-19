@@ -253,10 +253,10 @@ def derive_identity_rmf(name, rmf):
 
     all_e_indices = np.arange(n_energy)
     all_e_los = e_lo_slope * all_e_indices + e_lo_offset
-    start_chans = np.floor((all_e_los - c_lo_offset) / c_lo_slope).astype(np.int)
+    start_chans = np.floor((all_e_los - c_lo_offset) / c_lo_slope).astype(int)
 
     all_e_his = e_hi_slope * all_e_indices + e_hi_offset
-    stop_chans = np.ceil((all_e_his - c_hi_offset) / c_hi_slope).astype(np.int)
+    stop_chans = np.ceil((all_e_his - c_hi_offset) / c_hi_slope).astype(int)
 
     first_e_index_on_channel_grid = 0
     while stop_chans[first_e_index_on_channel_grid] < 0:
@@ -268,7 +268,7 @@ def derive_identity_rmf(name, rmf):
 
     n_nonzero_rows = last_e_index_on_channel_grid + 1 - first_e_index_on_channel_grid
     e_slice = slice(first_e_index_on_channel_grid, last_e_index_on_channel_grid + 1)
-    n_grp = np.zeros(n_energy, dtype=np.int)
+    n_grp = np.zeros(n_energy, dtype=int)
     n_grp[e_slice] = 1
 
     start_chans = np.maximum(start_chans[e_slice], 0)
@@ -292,7 +292,7 @@ def derive_identity_rmf(name, rmf):
     # Due to the funky encoding of the matrix, we need to build a helper table
     # to meet the vertical-sum constraint.
 
-    counts = np.zeros(n_chan, dtype=np.int)
+    counts = np.zeros(n_chan, dtype=int)
 
     for i in range(n_nonzero_rows):
         counts[start_chans[i]:stop_chans[i]+1] += 1
