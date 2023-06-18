@@ -1,5 +1,5 @@
-include *.rst
 include *.md
+include *.yml
 include LICENSE
 include MANIFEST.in
 

@@ -1,3 +1,12 @@
+# pwkit 1.1.1 (2023-06-18)
+
+No code changes.
+
+- The last release did not publish to PyPI due to a problem with
+  the CI automation; attempt to fix that.
+- Also attempt to fix the ReadTheDocs build.
+
+
 # pwkit 1.1.0 (2023-06-18)
 
 A test release, after many years of inactivity, because the previous release
