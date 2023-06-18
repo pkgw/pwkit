@@ -73,25 +73,26 @@ uval_unary_math            - Dict of unary math functions operating on Uvals.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = str('''LimitError Lval Textual Uval absolute arccos arcsin arctan cos errinfo
+__all__ = str(
+    """LimitError Lval Textual Uval absolute arccos arcsin arctan cos errinfo
     expm1 exp fmtinfo isfinite is_measurement liminfo limtype log10 log1p log2
     log negative reciprocal repval sin sqrt square tan unwrap add divide floor_divide
     multiply power subtract true_divide typealign find_gamma_params
     pk_scoreatpercentile sample_double_norm sample_gamma lval_unary_math
     parsers scalar_unary_math textual_unary_math UQUANT_UNCERT
-    uval_default_repval_method uval_dtype uval_nsamples uval_unary_math''').split()
+    uval_default_repval_method uval_dtype uval_nsamples uval_unary_math"""
+).split()
 
-import operator, six
-from six.moves import range
+import operator
 
 import numpy as np
 
-from . import PKError, text_type, unicode_to_str
+from . import PKError, unicode_to_str
 
 
 uval_nsamples = 1024
 uval_dtype = np.double
-uval_default_repval_method = 'pct'
+uval_default_repval_method = "pct"
 
 
 # This is a copy of scipy.stats' scoreatpercentile() function with simplified
@@ -100,14 +101,15 @@ uval_default_repval_method = 'pct'
 # I'm also tempted to make percentiles be in [0, 1], not [0, 100], but
 # gratuitous incompatibilities seem unwise.
 
+
 def pk_scoreatpercentile(a, per):
     asort = np.sort(a)
     vper = np.atleast_1d(per)
 
     if np.any((vper < 0) | (vper > 100)):
-        raise ValueError('`per` must be in the range [0, 100]')
+        raise ValueError("`per` must be in the range [0, 100]")
 
-    fidx = vper / 100. * (asort.size - 1)
+    fidx = vper / 100.0 * (asort.size - 1)
     # clipping iidx here gets the right behavior for per = 100:
     iidx = np.minimum(fidx.astype(int), asort.size - 2)
     res = (iidx + 1 - fidx) * asort[iidx] + (fidx - iidx) * asort[iidx + 1]
@@ -121,6 +123,7 @@ def pk_scoreatpercentile(a, per):
 # distributions with unequal left and right variances. Skew-normal distributions
 # are mathematically purer but turn out to be just obnoxiously hard to work with.
 # Double-normals are ad-hoc but also much more tractable.
+
 
 def sample_double_norm(mean, std_upper, std_lower, size):
     """Note that this function requires Scipy."""
@@ -139,10 +142,10 @@ def sample_double_norm(mean, std_upper, std_lower, size):
     # 1].
 
     samples = np.empty(size)
-    percentiles = np.random.uniform(0., 1., size)
+    percentiles = np.random.uniform(0.0, 1.0, size)
     cutoff = std_lower / (std_lower + std_upper)
 
-    w = (percentiles < cutoff)
+    w = percentiles < cutoff
     percentiles[w] *= 0.5 / cutoff
     samples[w] = mean + np.sqrt(2) * std_lower * erfinv(2 * percentiles[w] - 1)
 
@@ -159,6 +162,7 @@ def sample_double_norm(mean, std_upper, std_lower, size):
 # numbers and lead to all sorts of bad behavior in some kinds of computation
 # (e.g., taking logarithms, which we do a lot).
 
+
 def sample_gamma(alpha, beta, size):
     """This is mostly about recording the conversion between Numpy/Scipy
     conventions and Wikipedia conventions. Some equations:
@@ -170,10 +174,10 @@ def sample_gamma(alpha, beta, size):
     """
 
     if alpha <= 0:
-        raise ValueError('alpha must be positive; got %e' % alpha)
+        raise ValueError("alpha must be positive; got %e" % alpha)
     if beta <= 0:
-        raise ValueError('beta must be positive; got %e' % beta)
-    return np.random.gamma(alpha, scale=1./beta, size=size)
+        raise ValueError("beta must be positive; got %e" % beta)
+    return np.random.gamma(alpha, scale=1.0 / beta, size=size)
 
 
 def find_gamma_params(mode, std):
@@ -187,7 +191,7 @@ def find_gamma_params(mode, std):
 
     """
     if mode < 0:
-        raise ValueError('input mode must be positive for gamma; got %e' % mode)
+        raise ValueError("input mode must be positive for gamma; got %e" % mode)
 
     var = std**2
     beta = (mode + np.sqrt(mode**2 + 4 * var)) / (2 * var)
@@ -195,8 +199,10 @@ def find_gamma_params(mode, std):
     alpha = (j + 1 + np.sqrt(2 * j + 1)) / j
 
     if alpha <= 1:
-        raise ValueError('couldn\'t compute self-consistent gamma parameters: '
-                         'mode=%e std=%e alpha=%e beta=%e' % (mode, std, alpha, beta))
+        raise ValueError(
+            "couldn't compute self-consistent gamma parameters: "
+            "mode=%e std=%e alpha=%e beta=%e" % (mode, std, alpha, beta)
+        )
 
     return alpha, beta
 
@@ -215,24 +221,25 @@ def find_gamma_params(mode, std):
 # For scalars, we just delegate to Numpy.
 
 scalar_unary_math = {
-    'absolute': np.absolute,
-    'arccos': np.arccos,
-    'arcsin': np.arcsin,
-    'arctan': np.arctan,
-    'cos': np.cos,
-    'expm1': np.expm1,
-    'exp': np.exp,
-    'isfinite': np.isfinite,
-    'log10': np.log10,
-    'log1p': np.log1p,
-    'log2': np.log2,
-    'log': np.log,
-    'negative': np.negative,
-    'reciprocal': lambda x: 1. / x, # numpy reciprocal barfs on ints. I don't want that.
-    'sin': np.sin,
-    'sqrt': np.sqrt,
-    'square': np.square,
-    'tan': np.tan,
+    "absolute": np.absolute,
+    "arccos": np.arccos,
+    "arcsin": np.arcsin,
+    "arctan": np.arctan,
+    "cos": np.cos,
+    "expm1": np.expm1,
+    "exp": np.exp,
+    "isfinite": np.isfinite,
+    "log10": np.log10,
+    "log1p": np.log1p,
+    "log2": np.log2,
+    "log": np.log,
+    "negative": np.negative,
+    "reciprocal": lambda x: 1.0
+    / x,  # numpy reciprocal barfs on ints. I don't want that.
+    "sin": np.sin,
+    "sqrt": np.sqrt,
+    "square": np.square,
+    "tan": np.tan,
 }
 
 
@@ -241,10 +248,11 @@ scalar_unary_math = {
 # These have a more extensive math/operator library than Lval and Textual
 # since it's so easy to implement things.
 
+
 def _to_uval_info(value):
     if isinstance(value, Uval):
         return value.d
-    return float(value) # broadcasting FTW
+    return float(value)  # broadcasting FTW
 
 
 def _make_uval_operator(opfunc):
@@ -254,6 +262,7 @@ def _make_uval_operator(opfunc):
         except Exception:
             return NotImplemented
         return Uval(opfunc(uval.d, otherd))
+
     return uvalopfunc
 
 
@@ -264,6 +273,7 @@ def _make_uval_rev_operator(opfunc):
         except Exception:
             return NotImplemented
         return Uval(opfunc(otherd, uval.d))
+
     return uvalopfunc
 
 
@@ -275,6 +285,7 @@ def _make_uval_inpl_operator(opfunc):
             return NotImplemented
         uval.d = opfunc(uval.d, otherd)
         return uval
+
     return uvalopfunc
 
 
@@ -302,7 +313,8 @@ class Uval(object):
     ``unicode() str() repr() [latexification]  + -(sub) * // / % ** += -= *= //= %= /= **= -(neg) ~ abs()``
 
     """
-    __slots__ = ('d', )
+
+    __slots__ = ("d",)
 
     # Initialization.
 
@@ -315,7 +327,7 @@ class Uval(object):
             return Uval(o.d.copy())
         if np.isscalar(o):
             return Uval.from_fixed(o)
-        raise ValueError('cannot convert %r to a Uval' % o)
+        raise ValueError("cannot convert %r to a Uval" % o)
 
     @staticmethod
     def from_fixed(v):
@@ -324,29 +336,29 @@ class Uval(object):
     @staticmethod
     def from_norm(mean, std):
         if std < 0:
-            raise ValueError('std must be positive')
+            raise ValueError("std must be positive")
         return Uval(np.random.normal(mean, std, uval_nsamples))
 
     @staticmethod
     def from_unif(lower_incl, upper_excl):
         if upper_excl <= lower_incl:
-            raise ValueError('upper_excl must be greater than lower_incl')
+            raise ValueError("upper_excl must be greater than lower_incl")
         return Uval(np.random.uniform(lower_incl, upper_excl, uval_nsamples))
 
     @staticmethod
     def from_double_norm(mean, std_upper, std_lower):
         if std_upper <= 0:
-            raise ValueError('double-norm upper stddev must be positive')
+            raise ValueError("double-norm upper stddev must be positive")
         if std_lower <= 0:
-            raise ValueError('double-norm lower stddev must be positive')
+            raise ValueError("double-norm lower stddev must be positive")
         return Uval(sample_double_norm(mean, std_upper, std_lower, uval_nsamples))
 
     @staticmethod
     def from_gamma(alpha, beta):
         if alpha <= 0:
-            raise ValueError('gamma parameter `alpha` must be positive')
+            raise ValueError("gamma parameter `alpha` must be positive")
         if beta <= 0:
-            raise ValueError('gamma parameter `beta` must be positive')
+            raise ValueError("gamma parameter `beta` must be positive")
         return Uval(sample_gamma(alpha, beta, uval_nsamples))
 
     @staticmethod
@@ -359,9 +371,8 @@ class Uval(object):
         The gamma distribution is obtained by assuming an improper, uniform
         prior for the rate between 0 and infinity."""
         if nevents < 0:
-            raise ValueError('Poisson parameter `nevents` must be nonnegative')
+            raise ValueError("Poisson parameter `nevents` must be nonnegative")
         return Uval(np.random.gamma(nevents + 1, size=uval_nsamples))
-
 
     # Interrogation. Would be nice to have a way to estimate the
     # distribution's mode -- when a scientist writes V = X +- Y, I think they
@@ -388,13 +399,12 @@ class Uval(object):
         samples and returns [μ, μ+σ, μ-σ].
 
         """
-        if method == 'pct':
-            return pk_scoreatpercentile(self.d, [50., 84.134, 15.866])
-        if method == 'gauss':
+        if method == "pct":
+            return pk_scoreatpercentile(self.d, [50.0, 84.134, 15.866])
+        if method == "gauss":
             m, s = self.d.mean(), self.d.std()
             return np.asarray([m, m + s, m - s])
         raise ValueError('unknown representative-value method "%s"' % method)
-
 
     # Textualization.
 
@@ -410,10 +420,10 @@ class Uval(object):
         md, hi, lo = self.repvals(method)
 
         if hi == lo:
-            return '%g' % lo, None, None, None
+            return "%g" % lo, None, None, None
 
         if not np.isfinite([lo, md, hi]).all():
-            raise ValueError('got nonfinite values when formatting Uval')
+            raise ValueError("got nonfinite values when formatting Uval")
 
         # Deltas. Round to limited # of places because we don't actually know
         # the fourth moment of the thing we're trying to describe.
@@ -424,16 +434,18 @@ class Uval(object):
         dl = md - lo
 
         if dh <= 0:
-            raise ValueError('strange problem formatting Uval; '
-                             'hi=%g md=%g dh=%g' % (hi, md, dh))
+            raise ValueError(
+                "strange problem formatting Uval; " "hi=%g md=%g dh=%g" % (hi, md, dh)
+            )
         if dl <= 0:
-            raise ValueError('strange problem formatting Uval; '
-                             'lo=%g md=%g dl=%g' % (lo, md, dl))
+            raise ValueError(
+                "strange problem formatting Uval; " "lo=%g md=%g dl=%g" % (lo, md, dl)
+            )
 
         p = int(ceil(log10(dh)))
-        rdh = round(dh * 10**(-p), uplaces) * 10**p
+        rdh = round(dh * 10 ** (-p), uplaces) * 10**p
         p = int(ceil(log10(dl)))
-        rdl = round(dl * 10**(-p), uplaces) * 10**p
+        rdl = round(dl * 10 ** (-p), uplaces) * 10**p
 
         # The least significant place to worry about is the L.S.P. of one of
         # the deltas, which we can find relative to its M.S.P. Any precision
@@ -447,8 +459,8 @@ class Uval(object):
 
         rmd = round(md, -lsp)
 
-        if rmd == -0.: # 0 = -0, too, but no problem there.
-            rmd = 0.
+        if rmd == -0.0:  # 0 = -0, too, but no problem there.
+            rmd = 0.0
 
         # The most significant place to worry about is the M.S.P. of any of
         # the datum or the deltas. rdl and rdl must be positive, but not
@@ -460,9 +472,9 @@ class Uval(object):
         # disabled, don't use scientific notation.
 
         if (msp > -3 and msp < 3) or not use_exponent:
-            srmd = '%.*f' % (-lsp, rmd)
-            srdh = '%.*f' % (-lsp, rdh)
-            srdl = '%.*f' % (-lsp, rdl)
+            srmd = "%.*f" % (-lsp, rmd)
+            srdh = "%.*f" % (-lsp, rdh)
+            srdl = "%.*f" % (-lsp, rdl)
             return srmd, srdh, srdl, None
 
         # Use scientific notation. Adjust values, then format.
@@ -472,73 +484,72 @@ class Uval(object):
         ardl = rdl * 10**-msp
         prec = msp - lsp
 
-        sarmd = '%.*f' % (prec, armd)
-        sardh = '%.*f' % (prec, ardh)
-        sardl = '%.*f' % (prec, ardl)
+        sarmd = "%.*f" % (prec, armd)
+        sardh = "%.*f" % (prec, ardh)
+        sardl = "%.*f" % (prec, ardl)
         return sarmd, sardh, sardl, str(msp)
 
-
     def format(self, method, parenexp=True, uplaces=2, use_exponent=True):
-        main, dh, dl, exp = self.text_pieces(method, uplaces=uplaces, use_exponent=use_exponent)
+        main, dh, dl, exp = self.text_pieces(
+            method, uplaces=uplaces, use_exponent=use_exponent
+        )
 
         if exp is not None and not parenexp:
-            main += 'e' + exp
+            main += "e" + exp
             if dh is not None:
-                dh += 'e' + exp
+                dh += "e" + exp
             if dl is not None:
-                dl += 'e' + exp
+                dl += "e" + exp
 
         if dh is None:
-            pmterm = ''
+            pmterm = ""
         elif dh == dl:
-            pmterm = 'pm' + dh
+            pmterm = "pm" + dh
         else:
-            pmterm = ''.join(['p', dh, 'm', dl])
+            pmterm = "".join(["p", dh, "m", dl])
 
         if exp is not None and parenexp:
-            return '(%s%s)e%s' % (main, pmterm, exp)
+            return "(%s%s)e%s" % (main, pmterm, exp)
 
         return main + pmterm
-
 
     def __unicode__(self):
         try:
             return self.format(uval_default_repval_method)
         except ValueError:
-            return '{bad samples}'
+            return "{bad samples}"
 
     __str__ = unicode_to_str
-
 
     def __repr__(self):
         formatted = self.format(uval_default_repval_method)
         v = pk_scoreatpercentile(self.d, [0, 2.5, 50, 97.5, 100])
-        return '<Uval %s [min=%g l95=%g med=%g u95=%g max=%g]>' % \
-            ((formatted, ) + tuple(v))
-
+        return "<Uval %s [min=%g l95=%g med=%g u95=%g max=%g]>" % (
+            (formatted,) + tuple(v)
+        )
 
     def __pk_fmtinfo__(self):
-        return 'u', self.format('pct', parenexp=False), True
-
+        return "u", self.format("pct", parenexp=False), True
 
     def __pk_latex__(self, method=None, uplaces=1, use_exponent=True, **kwargs):
         if method is None:
             method = uval_default_repval_method
-        main, dh, dl, exp = self.text_pieces(method, uplaces=uplaces, use_exponent=use_exponent)
+        main, dh, dl, exp = self.text_pieces(
+            method, uplaces=uplaces, use_exponent=use_exponent
+        )
 
         if dh is None:
-            return r'$%s$' % main
+            return r"$%s$" % main
 
         if dh == dl:
-            pmterm = r'\pm %s' % dh
+            pmterm = r"\pm %s" % dh
         else:
-            pmterm = r'^{%s}_{%s}' % (dh, dl)
+            pmterm = r"^{%s}_{%s}" % (dh, dl)
 
         if exp is None:
-            return '$%s %s$' % (main, pmterm)
+            return "$%s %s$" % (main, pmterm)
 
-        return r'$(%s %s) \times 10^{%s}$' % (main, pmterm, exp)
-
+        return r"$(%s %s) \times 10^{%s}$" % (main, pmterm, exp)
 
     def __pk_latex_l3col__(self, method=None, **kwargs):
         if method is None:
@@ -546,33 +557,33 @@ class Uval(object):
         v = self.repvals(method)[0]
 
         from .latex import latexify_n2col
-        return b'$\\sim$ & ' + latexify_n2col(v, **kwargs)
 
+        return b"$\\sim$ & " + latexify_n2col(v, **kwargs)
 
     def __pk_latex_u3col__(self, method=None, uplaces=1, use_exponent=True, **kwargs):
         if method is None:
             method = uval_default_repval_method
-        main, dh, dl, exp = self.text_pieces(method, uplaces=uplaces, use_exponent=use_exponent)
+        main, dh, dl, exp = self.text_pieces(
+            method, uplaces=uplaces, use_exponent=use_exponent
+        )
 
         if dh is None:
-            return r'\multicolumn{3}{c}{$%s$}' % main
+            return r"\multicolumn{3}{c}{$%s$}" % main
 
         if dh == dl:
-            pmterm = r'$\pm\,%s$' % dh
+            pmterm = r"$\pm\,%s$" % dh
         else:
-            pmterm = r'$\pm\,^{%s}_{%s}$' % (dh, dl)
+            pmterm = r"$\pm\,^{%s}_{%s}$" % (dh, dl)
 
-        if '.' not in main:
-            mainterm = r'$%s$ & ' % main
+        if "." not in main:
+            mainterm = r"$%s$ & " % main
         else:
-            mainterm = r'$%s$ & $.%s$' % tuple(main.split('.'))
+            mainterm = r"$%s$ & $.%s$" % tuple(main.split("."))
 
         if exp is None:
-            return mainterm + ' & ' + pmterm
+            return mainterm + " & " + pmterm
 
-        return ''.join(['$($', mainterm, ' & ', pmterm,
-                        r'$) \times 10^{%s}$' % exp])
-
+        return "".join(["$($", mainterm, " & ", pmterm, r"$) \times 10^{%s}$" % exp])
 
     # math -- http://docs.python.org/2/reference/datamodel.html#emulating-numeric-types
 
@@ -625,19 +636,19 @@ class Uval(object):
         return self
 
     def __nonzero__(self):
-        raise TypeError('uncertain value cannot be reduced to a boolean scalar')
+        raise TypeError("uncertain value cannot be reduced to a boolean scalar")
 
     def __complex__(self):
-        raise TypeError('uncertain value cannot be reduced to a complex scalar')
+        raise TypeError("uncertain value cannot be reduced to a complex scalar")
 
     def __int__(self):
-        raise TypeError('uncertain value cannot be reduced to an integer scalar')
+        raise TypeError("uncertain value cannot be reduced to an integer scalar")
 
     def __long__(self):
-        raise TypeError('uncertain value cannot be reduced to a long-integer scalar')
+        raise TypeError("uncertain value cannot be reduced to a long-integer scalar")
 
     def __float__(self):
-        raise TypeError('uncertain value cannot be reduced to a float scalar')
+        raise TypeError("uncertain value cannot be reduced to a float scalar")
 
     # skipped: oct, hex, index, coerce
 
@@ -660,10 +671,11 @@ class Uval(object):
         raise TypeError('uncertain value does not have a well-defined ">=" comparison')
 
     def __cmp__(self, other):
-        raise TypeError('uncertain value does not have a well-defined __cmp__ comparison')
+        raise TypeError(
+            "uncertain value does not have a well-defined __cmp__ comparison"
+        )
 
     __hash__ = None
-
 
     def debug_distribution(self):
         import omega as om
@@ -672,20 +684,23 @@ class Uval(object):
         median = v[0]
         v = v[1:]
 
-        print('median=%g mean=%g'
-              % (median, self.d.mean()))
-        print('   abs: min=%g l3σ=%g l95%%=%g .. u95%%=%g u3σ=%g max=%g'
-              % tuple(v))
-        print('   rel: min=%g l3σ=%g l95%%=%g .. u95%%=%g u3σ=%g max=%g'
-              % tuple(v - median))
-        print('   scl: min=%.2f l3σ=%.2f l95%%=%.2f .. u95%%=%.2f u3σ=%.2f max=%.2f'
-              % tuple((v - median) / np.abs(median)))
+        print("median=%g mean=%g" % (median, self.d.mean()))
+        print("   abs: min=%g l3σ=%g l95%%=%g .. u95%%=%g u3σ=%g max=%g" % tuple(v))
+        print(
+            "   rel: min=%g l3σ=%g l95%%=%g .. u95%%=%g u3σ=%g max=%g"
+            % tuple(v - median)
+        )
+        print(
+            "   scl: min=%.2f l3σ=%.2f l95%%=%.2f .. u95%%=%.2f u3σ=%.2f max=%.2f"
+            % tuple((v - median) / np.abs(median))
+        )
         return om.quickHist(self.d, bins=25)
 
 
 def _make_uval_unary_math(scalarfunc):
     def uval_unary_math(v):
         return Uval(scalarfunc(_to_uval_info(v)))
+
     return uval_unary_math
 
 
@@ -694,24 +709,24 @@ def _uval_unary_isfinite(v):
 
 
 uval_unary_math = {
-    'absolute': _make_uval_unary_math(np.absolute),
-    'arccos': _make_uval_unary_math(np.arccos),
-    'arcsin': _make_uval_unary_math(np.arcsin),
-    'arctan': _make_uval_unary_math(np.arctan),
-    'cos': _make_uval_unary_math(np.cos),
-    'expm1': _make_uval_unary_math(np.expm1),
-    'exp': _make_uval_unary_math(np.exp),
-    'isfinite': _uval_unary_isfinite,
-    'log10': _make_uval_unary_math(np.log10),
-    'log1p': _make_uval_unary_math(np.log1p),
-    'log2': _make_uval_unary_math(np.log2),
-    'log': _make_uval_unary_math(np.log),
-    'negative': _make_uval_unary_math(np.negative),
-    'reciprocal': _make_uval_unary_math(lambda x: 1. / x),
-    'sin': _make_uval_unary_math(np.sin),
-    'sqrt': _make_uval_unary_math(np.sqrt),
-    'square': _make_uval_unary_math(np.square),
-    'tan': _make_uval_unary_math(np.tan),
+    "absolute": _make_uval_unary_math(np.absolute),
+    "arccos": _make_uval_unary_math(np.arccos),
+    "arcsin": _make_uval_unary_math(np.arcsin),
+    "arctan": _make_uval_unary_math(np.arctan),
+    "cos": _make_uval_unary_math(np.cos),
+    "expm1": _make_uval_unary_math(np.expm1),
+    "exp": _make_uval_unary_math(np.exp),
+    "isfinite": _uval_unary_isfinite,
+    "log10": _make_uval_unary_math(np.log10),
+    "log1p": _make_uval_unary_math(np.log1p),
+    "log2": _make_uval_unary_math(np.log2),
+    "log": _make_uval_unary_math(np.log),
+    "negative": _make_uval_unary_math(np.negative),
+    "reciprocal": _make_uval_unary_math(lambda x: 1.0 / x),
+    "sin": _make_uval_unary_math(np.sin),
+    "sqrt": _make_uval_unary_math(np.sqrt),
+    "square": _make_uval_unary_math(np.square),
+    "tan": _make_uval_unary_math(np.tan),
 }
 
 
@@ -733,68 +748,68 @@ uval_unary_math = {
 # sane operation in the majority of cases.
 
 _lval_pos_sigils = {
-    'exact': '',
-    'uncertain': '~',
-    'toinf': '>',
-    'tozero': '<',
-    'pastzero': '<<',
-    'undef': '!',
+    "exact": "",
+    "uncertain": "~",
+    "toinf": ">",
+    "tozero": "<",
+    "pastzero": "<<",
+    "undef": "!",
 }
 
 _lval_kmap_reciprocal = {
-    'toinf': 'tozero',
-    'tozero': 'toinf',
-    'pastzero': 'undef',
+    "toinf": "tozero",
+    "tozero": "toinf",
+    "pastzero": "undef",
 }
 
 _lval_kmap_add_unconditional = {
-    ('exact', 'exact'): 'exact',
-    ('exact', 'tozero'): 'undef',
-    ('exact', 'uncertain'): 'uncertain',
-    ('tozero', 'uncertain'): 'undef',
-    ('uncertain', 'uncertain'): 'uncertain',
+    ("exact", "exact"): "exact",
+    ("exact", "tozero"): "undef",
+    ("exact", "uncertain"): "uncertain",
+    ("tozero", "uncertain"): "undef",
+    ("uncertain", "uncertain"): "uncertain",
 }
 
 _lval_kmap_mul = {
-    ('exact', 'exact'): 'exact',
-    ('exact', 'pastzero'): 'pastzero',
-    ('exact', 'toinf'): 'toinf',
-    ('exact', 'tozero'): 'tozero',
-    ('exact', 'uncertain'): 'uncertain',
-    ('pastzero', 'pastzero'): 'undef',
-    ('pastzero', 'toinf'): 'undef',
-    ('pastzero', 'tozero'): 'pastzero',
-    ('pastzero', 'uncertain'): 'pastzero',
-    ('toinf', 'toinf'): 'toinf',
+    ("exact", "exact"): "exact",
+    ("exact", "pastzero"): "pastzero",
+    ("exact", "toinf"): "toinf",
+    ("exact", "tozero"): "tozero",
+    ("exact", "uncertain"): "uncertain",
+    ("pastzero", "pastzero"): "undef",
+    ("pastzero", "toinf"): "undef",
+    ("pastzero", "tozero"): "pastzero",
+    ("pastzero", "uncertain"): "pastzero",
+    ("toinf", "toinf"): "toinf",
     # ('toinf', 'tozero'): special case -> >0
-    ('toinf', 'uncertain'): 'toinf',
-    ('tozero', 'tozero'): 'tozero',
-    ('tozero', 'uncertain'): 'tozero',
-    ('uncertain', 'uncertain'): 'uncertain',
+    ("toinf", "uncertain"): "toinf",
+    ("tozero", "tozero"): "tozero",
+    ("tozero", "uncertain"): "tozero",
+    ("uncertain", "uncertain"): "uncertain",
 }
 
 _lval_kmap_pow_zero_to_one = {
-    'pastzero': 'toinf',
-    'toinf': 'tozero',
-    'tozero': 'undef', # this yields a value in [v**l, 1], which is inexpressible.
+    "pastzero": "toinf",
+    "toinf": "tozero",
+    "tozero": "undef",  # this yields a value in [v**l, 1], which is inexpressible.
 }
 
 _lval_kmap_pow_above_one = {
-    'pastzero': 'tozero',
-    'toinf': 'toinf',
-    'tozero': 'undef', # this yields a value in [1, v**l], which is inexpressible.
+    "pastzero": "tozero",
+    "toinf": "toinf",
+    "tozero": "undef",  # this yields a value in [1, v**l], which is inexpressible.
 }
 
-_lval_kmap_exp = _lval_kmap_pow_above_one # same behavior
+_lval_kmap_exp = _lval_kmap_pow_above_one  # same behavior
 
 _lval_kmap_log = {
-    'tozero': 'pastzero',
+    "tozero": "pastzero",
 }
 
 
 class LimitError(PKError):
     def __init__(self):
-        super(LimitError, self).__init__('forbidden operation on a limit value')
+        super(LimitError, self).__init__("forbidden operation on a limit value")
 
 
 def _ordpair(v1, v2):
@@ -811,11 +826,11 @@ def _lval_add_towards_polarity(x, polarity):
     """
     if x < 0:
         if polarity < 0:
-            return Lval('toinf', x)
-        return Lval('pastzero', x)
+            return Lval("toinf", x)
+        return Lval("pastzero", x)
     elif polarity > 0:
-        return Lval('toinf', x)
-    return Lval('pastzero', x)
+        return Lval("toinf", x)
+    return Lval("pastzero", x)
 
 
 class Lval(object):
@@ -829,13 +844,14 @@ class Lval(object):
     ``unicode() str() repr() -(neg) abs() + - * / ** += -= *= /= **=``.
 
     """
-    __slots__ = ('kind', 'value')
+
+    __slots__ = ("kind", "value")
 
     def __init__(self, kind, value):
         if kind not in _lval_pos_sigils:
-            raise ValueError('unrecognized Lval kind %r' % kind)
+            raise ValueError("unrecognized Lval kind %r" % kind)
         if not np.isscalar(value):
-            raise ValueError('Lvals must be scalars; got %r' % value)
+            raise ValueError("Lvals must be scalars; got %r" % value)
         self.kind = kind
         self.value = value
 
@@ -843,102 +859,101 @@ class Lval(object):
     def from_other(o):
         if isinstance(o, Lval):
             from copy import copy
+
             return Lval(o.kind, copy(o.value))
         if isinstance(o, Uval):
-            return Lval('uncertain', o.repvals(uval_default_repval_method)[0])
+            return Lval("uncertain", o.repvals(uval_default_repval_method)[0])
         if np.isscalar(o):
-            return Lval('exact', float(o))
-        raise ValueError('cannot convert %r to an Lval' % o)
+            return Lval("exact", float(o))
+        raise ValueError("cannot convert %r to an Lval" % o)
 
     # Textualization.
 
     def __unicode__(self):
         s = _lval_pos_sigils[self.kind]
         if self.value < 0:
-            if s == '>':
-                s = '<'
+            if s == ">":
+                s = "<"
             else:
-                s = s.replace('<', '>')
-        return '%s%g' % (s, self.value)
+                s = s.replace("<", ">")
+        return "%s%g" % (s, self.value)
 
     __str__ = unicode_to_str
 
     def __repr__(self):
-        return 'Lval(%r, %r)' % (self.kind, self.value)
+        return "Lval(%r, %r)" % (self.kind, self.value)
 
     def __pk_fmtinfo__(self):
         # Only certain kinds of Lval can successfully be roundtripped through
         # text. Positive 'tozero' values need the 'P' flag; negative tozeros
         # are inexpressible.
-        if self.kind == 'undef' or (self.kind == 'tozero' and self.value < 0):
-            raise ValueError('no fmtinfo textualization of %r is possible' % self)
+        if self.kind == "undef" or (self.kind == "tozero" and self.value < 0):
+            raise ValueError("no fmtinfo textualization of %r is possible" % self)
 
-        if self.kind == 'tozero':
-            return 'Pu', '<%g' % self.value, True
+        if self.kind == "tozero":
+            return "Pu", "<%g" % self.value, True
 
-        s = _lval_pos_sigils[self.kind][0] # note: truncating << pastzero mode.
+        s = _lval_pos_sigils[self.kind][0]  # note: truncating << pastzero mode.
         if self.value < 0:
-            if s == '>': # toinf, but we're negative.
-                s = '<'
-            else: # tozero disallowed, so we must be pastzero
-                s = '>'
+            if s == ">":  # toinf, but we're negative.
+                s = "<"
+            else:  # tozero disallowed, so we must be pastzero
+                s = ">"
 
-        return 'u', '%s%g' % (s, self.value), True
-
+        return "u", "%s%g" % (s, self.value), True
 
     def __pk_latex__(self, undefok=False, **kwargs):
         from .latex import latexify
+
         base = latexify(self.value, **kwargs)
 
-        if self.kind == 'undef':
+        if self.kind == "undef":
             if undefok:
-                return b''
-            raise ValueError('tried to LaTeXify undefined Lval')
+                return b""
+            raise ValueError("tried to LaTeXify undefined Lval")
 
-        if self.kind == 'exact':
-            return b'' + base
+        if self.kind == "exact":
+            return b"" + base
 
-        if self.kind == 'uncertain':
-            return b'$\\sim$' + base
+        if self.kind == "uncertain":
+            return b"$\\sim$" + base
 
-        s = _lval_pos_sigils[self.kind][0] # note: truncating << pastzero mode.
+        s = _lval_pos_sigils[self.kind][0]  # note: truncating << pastzero mode.
         if self.value < 0:
-            if s == '>':
-                s = '<'
+            if s == ">":
+                s = "<"
             else:
-                s = '>'
+                s = ">"
 
-        return b'$%s$%s' % (s, base)
-
+        return b"$%s$%s" % (s, base)
 
     def __pk_latex_l3col__(self, undefok=False, **kwargs):
         from .latex import latexify_n2col
+
         base = latexify_n2col(self.value, **kwargs)
 
-        if self.kind == 'undef':
+        if self.kind == "undef":
             if undefok:
-                return b' & & '
-            raise ValueError('tried to LaTeXify undefined Lval')
+                return b" & & "
+            raise ValueError("tried to LaTeXify undefined Lval")
 
-        if self.kind == 'exact':
-            return b'& ' + base
+        if self.kind == "exact":
+            return b"& " + base
 
-        if self.kind == 'uncertain':
-            return b'$\\sim$ & ' + base
+        if self.kind == "uncertain":
+            return b"$\\sim$ & " + base
 
-        s = _lval_pos_sigils[self.kind][0] # note: truncating << pastzero mode.
+        s = _lval_pos_sigils[self.kind][0]  # note: truncating << pastzero mode.
         if self.value < 0:
-            if s == '>':
-                s = '<'
+            if s == ">":
+                s = "<"
             else:
-                s = '>'
+                s = ">"
 
-        return b'$%s$ & %s' % (s, base)
-
+        return b"$%s$ & %s" % (s, base)
 
     def __pk_latex_u3col__(self, **kwargs):
-        return br'\multicolumn{3}{c}{%s}' % self.__pk_latex__(**kwargs)
-
+        return rb"\multicolumn{3}{c}{%s}" % self.__pk_latex__(**kwargs)
 
     # Math. We start with addition. It gets complicated!
 
@@ -955,24 +970,23 @@ class Lval(object):
         # +1  --  limit from a positive value to zero
         # +2  --  limit towards +infinity
 
-        assert self.kind != 'undef'
+        assert self.kind != "undef"
 
-        if self.kind in ('uncertain', 'exact'):
+        if self.kind in ("uncertain", "exact"):
             return 0
 
         if self.value < 0:
-            if self.kind == 'toinf':
+            if self.kind == "toinf":
                 return -2
-            if self.kind == 'tozero':
+            if self.kind == "tozero":
                 return -1
             return +2
 
-        if self.kind == 'toinf':
+        if self.kind == "toinf":
             return +2
-        if self.kind == 'tozero':
+        if self.kind == "tozero":
             return +1
         return -2
-
 
     def __add__(self, other):
         v1 = self
@@ -980,8 +994,8 @@ class Lval(object):
         tot = v1.value + v2.value
 
         # Rule 1: undef trumps all.
-        if v1.kind == 'undef' or v2.kind == 'undef':
-            return Lval('undef', tot)
+        if v1.kind == "undef" or v2.kind == "undef":
+            return Lval("undef", tot)
 
         # Rule(s) 2: some combinations with exact/uncert values require no
         # checking of the kind or polarity.
@@ -993,9 +1007,9 @@ class Lval(object):
         # without needing to worry about changing the kind.
         s1, s2 = np.sign(v1.value), np.sign(v2.value)
         if s1 == 0:
-            s1 = 1.
+            s1 = 1.0
         if s2 == 0:
-            s2 = 1.
+            s2 = 1.0
 
         if s1 == s2 and v1.kind == v2.kind:
             return Lval(v1.kind, tot)
@@ -1009,7 +1023,7 @@ class Lval(object):
 
         if max(abs(p1), abs(p2)) == 1:
             assert p1 == -p2
-            return Lval('undef', tot)
+            return Lval("undef", tot)
 
         # The only remaining possibility is a combination of a limit to
         # infinity and something else. Make sure that p1 holds an infinity
@@ -1022,7 +1036,7 @@ class Lval(object):
 
         # Rule 5: to-infs of opposite signs go to undef.
         if p2 == -p1:
-            return Lval('undef', tot)
+            return Lval("undef", tot)
 
         # Rule 6: to-infs of same sign are add-and-normalize.
         if p1 == p2:
@@ -1039,7 +1053,7 @@ class Lval(object):
         if p2 == 0:
             return _lval_add_towards_polarity(tot, p1)
 
-        assert False, 'not reached'
+        assert False, "not reached"
 
     __radd__ = __add__
 
@@ -1082,13 +1096,13 @@ class Lval(object):
 
         prod = v1.value * v2.value
 
-        if v1.kind == 'undef' or v2.kind == 'undef':
-            return Lval('undef', prod)
+        if v1.kind == "undef" or v2.kind == "undef":
+            return Lval("undef", prod)
 
         ordkind = _ordpair(v1.kind, v2.kind)
 
-        if ordkind ==('toinf', 'tozero'):
-            rv = Lval('toinf', 0.)
+        if ordkind == ("toinf", "tozero"):
+            rv = Lval("toinf", 0.0)
         else:
             rv = Lval(_lval_kmap_mul[ordkind], prod)
 
@@ -1131,21 +1145,21 @@ class Lval(object):
 
     def __pow__(self, other, modulo=None):
         if modulo is not None:
-            raise ValueError('powmod behavior forbidden with Lvals')
+            raise ValueError("powmod behavior forbidden with Lvals")
 
         try:
             v = float(other)
         except TypeError:
-            raise ValueError('Lvals can only be exponentiated by exact values')
+            raise ValueError("Lvals can only be exponentiated by exact values")
 
-        if self.kind == 'undef':
+        if self.kind == "undef":
             # It's not worth trying to get a reasonable value in this case.
-            return Lval('undef', np.nan)
+            return Lval("undef", np.nan)
 
         if v == 0:
-            return Lval('exact', 1.)
+            return Lval("exact", 1.0)
 
-        reciprocate = (v < 0)
+        reciprocate = v < 0
         if reciprocate:
             v = -v
 
@@ -1155,8 +1169,8 @@ class Lval(object):
             # For us, fractional powers are only defined on positive numbers,
             # which gives us a fairly small number of valid cases to worry
             # about.
-            if self.value <= 0 or self.kind == 'pastzero':
-                return Lval('undef', np.nan)
+            if self.value <= 0 or self.kind == "pastzero":
+                return Lval("undef", np.nan)
             rv = Lval(self.kind, self.value**v)
         else:
             # We can deal with integer exponentiation as a series of
@@ -1170,17 +1184,16 @@ class Lval(object):
             rv = _lval_unary_reciprocal(rv)
         return rv
 
-
     def __rpow__(self, other, modulo=None):
         if modulo is not None:
-            raise ValueError('powmod behavior forbidden with Lvals')
+            raise ValueError("powmod behavior forbidden with Lvals")
 
-        if self.kind == 'undef':
-            return Lval('undef', np.nan)
+        if self.kind == "undef":
+            return Lval("undef", np.nan)
 
-        if self.kind == 'exact':
+        if self.kind == "exact":
             # In this very special case, we can delegate.
-            return other ** self.value
+            return other**self.value
 
         # In all other cases, we're exponentiating by a fractional value,
         # so we're only valid for nonnegative numbers.
@@ -1188,21 +1201,21 @@ class Lval(object):
         try:
             v = float(other)
         except TypeError:
-            raise ValueError('Lvals can only exponentiate exact values')
+            raise ValueError("Lvals can only exponentiate exact values")
 
         if v < 0:
-            raise ValueError('Lvals can only exponentiate nonnegative values')
+            raise ValueError("Lvals can only exponentiate nonnegative values")
 
-        reciprocate = (self.value < 0)
-        exponent = self # NOTE: no use of 'self' from here on out!
+        reciprocate = self.value < 0
+        exponent = self  # NOTE: no use of 'self' from here on out!
         if reciprocate:
             exponent = -exponent
 
         if v == 0:
-            if exponent.kind == 'pastzero':
-                return Lval('undef', np.nan)
+            if exponent.kind == "pastzero":
+                return Lval("undef", np.nan)
             # We ignore the fact that 0**0 = 1.
-            rv = Lval('exact', 0.)
+            rv = Lval("exact", 0.0)
         elif v < 1:
             k = _lval_kmap_pow_zero_to_one.get(exponent.kind, exponent.kind)
             rv = Lval(k, v**exponent.value)
@@ -1214,12 +1227,10 @@ class Lval(object):
             rv = _lval_unary_reciprocal(rv)
         return rv
 
-
     def __ipow__(self, other, modulo=None):
         tmp = pow(self, other, modulo)
         self.kind, self.value = tmp.kind, tmp.value
         return self
-
 
     __hash__ = None
 
@@ -1227,24 +1238,25 @@ class Lval(object):
 def _make_lval_unary_math_nolimits(scalarfunc):
     def lval_unary_math_nolimits(v):
         v = Lval.from_other(v)
-        if v.kind == 'upper' or v.kind == 'lower':
+        if v.kind == "upper" or v.kind == "lower":
             raise LimitError()
         return Lval(v.kind, scalarfunc(value))
+
     return lval_unary_math_nolimits
 
 
 def _lval_unary_absolute(v):
     v = Lval.from_other(v)
 
-    if v.kind == 'pastzero':
-        return Lval('toinf', 0.) # can't argue with this!
+    if v.kind == "pastzero":
+        return Lval("toinf", 0.0)  # can't argue with this!
     return Lval(v.kind, abs(v.value))
 
 
 def _lval_unary_exp(v):
     v = Lval.from_other(v)
 
-    reciprocate = (v.value < 0)
+    reciprocate = v.value < 0
     if reciprocate:
         v = -v
 
@@ -1257,7 +1269,7 @@ def _lval_unary_exp(v):
 def _lval_unary_isfinite(v):
     v = Lval.from_other(v)
 
-    if v.kind == 'undef':
+    if v.kind == "undef":
         return False
     return np.isfinite(v.value)
 
@@ -1265,10 +1277,10 @@ def _lval_unary_isfinite(v):
 def _make_lval_unary_log(scalarfunc):
     def lval_unary_log(v):
         v = Lval.from_other(v)
-        if v.value <= 0 or v.kind in ('undef', 'pastzero'):
-            return Lval('undef', np.nan)
-        return Lval(_lval_kmap_log.get(v.kind, v.kind),
-                    scalarfunc(v.value))
+        if v.value <= 0 or v.kind in ("undef", "pastzero"):
+            return Lval("undef", np.nan)
+        return Lval(_lval_kmap_log.get(v.kind, v.kind), scalarfunc(v.value))
+
     return lval_unary_log
 
 
@@ -1281,13 +1293,13 @@ def _lval_unary_negative(v):
 def _lval_unary_reciprocal(v):
     v = Lval.from_other(v)
     if v.value == 0:
-        return Lval('undef', np.nan)
-    return Lval(_lval_kmap_reciprocal.get(v.kind, v.kind), 1. / v.value)
+        return Lval("undef", np.nan)
+    return Lval(_lval_kmap_reciprocal.get(v.kind, v.kind), 1.0 / v.value)
 
 
 def _lval_unary_sqrt(v):
     v = Lval.from_other(v)
-    return v ** 0.5
+    return v**0.5
 
 
 def _lval_unary_square(v):
@@ -1298,24 +1310,24 @@ def _lval_unary_square(v):
 lval_unary_math = {
     # The 'nolimits' entries could be improved with special-cased
     # implementations, but I'm not going to write them until the need arises.
-    'absolute': _lval_unary_absolute,
-    'arccos': _make_lval_unary_math_nolimits(np.arccos),
-    'arcsin': _make_lval_unary_math_nolimits(np.arcsin),
-    'arctan': _make_lval_unary_math_nolimits(np.arctan),
-    'cos': _make_lval_unary_math_nolimits(np.cos),
-    'expm1': _make_lval_unary_math_nolimits(np.expm1),
-    'exp': _lval_unary_exp,
-    'isfinite': _lval_unary_isfinite,
-    'log10': _make_lval_unary_log(np.log10),
-    'log1p': _make_lval_unary_math_nolimits(np.log1p),
-    'log2': _make_lval_unary_log(np.log2),
-    'log': _make_lval_unary_log(np.log),
-    'negative': _lval_unary_negative,
-    'reciprocal': _lval_unary_reciprocal,
-    'sin': _make_lval_unary_math_nolimits(np.sin),
-    'sqrt': _lval_unary_sqrt,
-    'square': _lval_unary_square,
-    'tan': _make_lval_unary_math_nolimits(np.tan),
+    "absolute": _lval_unary_absolute,
+    "arccos": _make_lval_unary_math_nolimits(np.arccos),
+    "arcsin": _make_lval_unary_math_nolimits(np.arcsin),
+    "arctan": _make_lval_unary_math_nolimits(np.arctan),
+    "cos": _make_lval_unary_math_nolimits(np.cos),
+    "expm1": _make_lval_unary_math_nolimits(np.expm1),
+    "exp": _lval_unary_exp,
+    "isfinite": _lval_unary_isfinite,
+    "log10": _make_lval_unary_log(np.log10),
+    "log1p": _make_lval_unary_math_nolimits(np.log1p),
+    "log2": _make_lval_unary_log(np.log2),
+    "log": _make_lval_unary_log(np.log),
+    "negative": _lval_unary_negative,
+    "reciprocal": _lval_unary_reciprocal,
+    "sin": _make_lval_unary_math_nolimits(np.sin),
+    "sqrt": _lval_unary_sqrt,
+    "square": _lval_unary_square,
+    "tan": _make_lval_unary_math_nolimits(np.tan),
 }
 
 
@@ -1337,16 +1349,16 @@ Code to do the appropriate parsing is in the Python uncertainties package, in
 its __init__.py:parse_error_in_parentheses().
 
 """
-_tkinds = frozenset(('none', 'log10', 'positive'))
-_dkinds = frozenset(('exact', 'symm', 'asymm', 'uncertain', 'upper', 'lower', 'unif'))
-_noextra_dkinds = frozenset(('exact', 'uncertain', 'upper', 'lower'))
-_yesextra_dkinds = frozenset(('symm', 'asymm'))
+_tkinds = frozenset(("none", "log10", "positive"))
+_dkinds = frozenset(("exact", "symm", "asymm", "uncertain", "upper", "lower", "unif"))
+_noextra_dkinds = frozenset(("exact", "uncertain", "upper", "lower"))
+_yesextra_dkinds = frozenset(("symm", "asymm"))
 
 
 def _split_decimal_col(floattext):
-    if '.' not in floattext:
-        return '$%s$ & ' % floattext
-    return '$%s$ & $.%s$ ' % tuple(floattext.split('.'))
+    if "." not in floattext:
+        return "$%s$ & " % floattext
+    return "$%s$ & $.%s$ " % tuple(floattext.split("."))
 
 
 class Textual(object):
@@ -1370,7 +1382,8 @@ class Textual(object):
     + - * / **
 
     """
-    __slots__ = ('tkind', 'dkind', 'data')
+
+    __slots__ = ("tkind", "dkind", "data")
 
     def __init__(self, tkind, dkind, data):
         if tkind not in _tkinds:
@@ -1383,33 +1396,31 @@ class Textual(object):
         self.dkind = dkind
         self.data = data
 
+    @staticmethod
+    def from_exact(text, tkind="none"):
+        float(text)  # check float-parseability.
+        return Textual(tkind, "exact", text)
 
     @staticmethod
-    def from_exact(text, tkind='none'):
-        float(text) # check float-parseability.
-        return Textual(tkind, 'exact', text)
-
-
-    @staticmethod
-    def parse(text, tkind='none'):
+    def parse(text, tkind="none"):
         # freestanding float() calls below are used to check
         # float-parseability of strings.
         # XXX: we do not check sanity when tkind is 'positive'!
 
-        if text[0] == '~':
-            dkind = 'uncertain'
+        if text[0] == "~":
+            dkind = "uncertain"
             data = text[1:]
             float(data)
-        elif text[0] == '<':
-            dkind = 'upper'
+        elif text[0] == "<":
+            dkind = "upper"
             data = text[1:]
             float(data)
-        elif text[0] == '>':
-            dkind = 'lower'
+        elif text[0] == ">":
+            dkind = "lower"
             data = text[1:]
             float(data)
-        elif 'to' in text:
-            lower, upper = text.split('to')
+        elif "to" in text:
+            lower, upper = text.split("to")
             f_lower = float(lower)
             f_upper = float(upper)
 
@@ -1417,101 +1428,98 @@ class Textual(object):
                 upper, lower = lower, upper
                 f_upper, f_lower = f_lower, f_upper
 
-            if f_lower < 0 and tkind == 'positive':
-                raise ValueError('uniform interval is forced positive, but '
-                                 'got "%s"' % text)
+            if f_lower < 0 and tkind == "positive":
+                raise ValueError(
+                    "uniform interval is forced positive, but " 'got "%s"' % text
+                )
 
-            dkind = 'unif'
+            dkind = "unif"
             data = (lower, upper)
-        elif 'pm' in text:
-            val, uncert = text.split('pm')
+        elif "pm" in text:
+            val, uncert = text.split("pm")
             float(val)
             f_uncert = float(uncert)
-            if f_uncert <= 0.:
+            if f_uncert <= 0.0:
                 raise ValueError('uncertainty values must be positive; got "%s"' % text)
 
-            dkind = 'symm'
+            dkind = "symm"
             data = (val, uncert)
-        elif 'p' in text:
-            val, rhs = text.split('p', 1)
-            high, low = rhs.split('m', 1)
-            float(val) # checks parseability
+        elif "p" in text:
+            val, rhs = text.split("p", 1)
+            high, low = rhs.split("m", 1)
+            float(val)  # checks parseability
             f_high = float(high)
             f_low = float(low)
 
             if f_high <= 0:
-                raise ValueError('asymmetrical upper uncertainty must be positive')
+                raise ValueError("asymmetrical upper uncertainty must be positive")
             if f_low <= 0:
-                raise ValueError('asymmetrical lower uncertainty must be positive')
+                raise ValueError("asymmetrical lower uncertainty must be positive")
 
-            dkind = 'asymm'
+            dkind = "asymm"
             data = (val, high, low)
         else:
-            try: # plain float treated as unquantified
-                dkind = 'uncertain'
+            try:  # plain float treated as unquantified
+                dkind = "uncertain"
                 data = text
                 float(data)
             except ValueError:
-                raise ValueError('don\'t know how to parse measurement text: %s' % text)
+                raise ValueError("don't know how to parse measurement text: %s" % text)
 
         return Textual(tkind, dkind, data)
-
 
     # Textualization -- keep this up here since this is so closely tied to
     # construction via parse(). Note that unparse() loses the `tkind` info.
 
     def unparse(self):
-        if self.dkind == 'exact':
+        if self.dkind == "exact":
             return self.data
-        elif self.dkind == 'uncertain':
-            return '~' + self.data
-        elif self.dkind == 'symm':
-            return self.data[0] + 'pm' + self.data[1]
-        elif self.dkind == 'asymm':
-            return self.data[0] + 'p' + self.data[1] + 'm' + self.data[2]
-        elif self.dkind == 'upper':
-            return '<' + self.data
-        elif self.dkind == 'lower':
-            return '>' + self.data
-        elif self.dkind == 'unif':
-            return self.data[0] + 'to' + self.data[1]
-
+        elif self.dkind == "uncertain":
+            return "~" + self.data
+        elif self.dkind == "symm":
+            return self.data[0] + "pm" + self.data[1]
+        elif self.dkind == "asymm":
+            return self.data[0] + "p" + self.data[1] + "m" + self.data[2]
+        elif self.dkind == "upper":
+            return "<" + self.data
+        elif self.dkind == "lower":
+            return ">" + self.data
+        elif self.dkind == "unif":
+            return self.data[0] + "to" + self.data[1]
 
     def __repr__(self):
-        if self.tkind == 'none':
-            ttext = ''
+        if self.tkind == "none":
+            ttext = ""
         else:
-            ttext = ', %r' % (self.tkind, )
+            ttext = ", %r" % (self.tkind,)
 
-        if self.dkind == 'exact':
-            return 'Textual.from_exact (%r%s)' % (self.data, ttext)
-        return 'Textual.parse(%r%s)' % (self.unparse(), ttext)
-
+        if self.dkind == "exact":
+            return "Textual.from_exact (%r%s)" % (self.data, ttext)
+        return "Textual.parse(%r%s)" % (self.unparse(), ttext)
 
     def __unicode__(self):
-        if self.tkind == 'none':
+        if self.tkind == "none":
             return self.unparse()
-        return self.unparse() + ':' + self.tkind
+        return self.unparse() + ":" + self.tkind
 
     __str__ = unicode_to_str
 
     def __pk_fmtinfo__(self):
         t = self.unparse()
 
-        if self.tkind == 'log10':
-            ttag = 'L'
-        elif self.tkind == 'positive':
-            ttag = 'P'
+        if self.tkind == "log10":
+            ttag = "L"
+        elif self.tkind == "positive":
+            ttag = "P"
         else:
-            ttag = ''
+            ttag = ""
 
-        if self.dkind == 'exact':
-            dtag = 'f'
+        if self.dkind == "exact":
+            dtag = "f"
         else:
-            dtag = 'u'
+            dtag = "u"
 
         return ttag + dtag, t, False
-
 
     # "Unwrapping" -- conversion into either a scalar, Uval, or Lval. The
     # ability to apply various data transforms complicates this process.
@@ -1521,34 +1529,34 @@ class Textual(object):
 
         # Deal with the easy cases ...
 
-        if dkind == 'exact':
+        if dkind == "exact":
             return float(self.data)
 
-        if dkind == 'upper':
+        if dkind == "upper":
             # Important case here: since we're positivized, the appropriate
             # Lval kind is 'tozero' rather than 'pastzero'. This allows
             # the caller to safely take the log or the reciprocal.
-            return Lval('tozero', float(self.data))
+            return Lval("tozero", float(self.data))
 
-        if dkind == 'lower':
-            return Lval('toinf', float(self.data))
+        if dkind == "lower":
+            return Lval("toinf", float(self.data))
 
-        if dkind == 'unif':
+        if dkind == "unif":
             # Limits should have been checked upon construction.
             lower, upper = map(float, self.data)
             return Uval.from_unif(lower, upper)
 
         # We have to get careful with the Uvals.
 
-        if dkind == 'symm':
+        if dkind == "symm":
             val = float(self.data[0])
             uncert = float(self.data[1])
             v = Uval.from_norm(val, uncert)
-        elif dkind == 'uncertain':
+        elif dkind == "uncertain":
             val = float(self.data)
             uncert = UQUANT_UNCERT * abs(val)
             v = Uval.from_norm(val, uncert)
-        elif dkind == 'asymm':
+        elif dkind == "asymm":
             val, dhigh, dlow = map(float, self.data)
             v = Uval.from_double_norm(val, dhigh, dlow)
 
@@ -1567,7 +1575,7 @@ class Textual(object):
         # drawing from a (double) normal distribution. Draw from a gamma
         # distribution instead.
 
-        if dkind == 'asymm':
+        if dkind == "asymm":
             # The gamma distribution only has two parameters, so what else can
             # we do?
             uncert = 0.5 * (dhigh + dlow)
@@ -1575,87 +1583,84 @@ class Textual(object):
         alpha, beta = find_gamma_params(val, uncert)
         return Uval.from_gamma(alpha, beta)
 
-
     def _unwrap_log(self):
         dkind = self.dkind
 
-        if dkind == 'exact':
-            return 10**float(self.data)
+        if dkind == "exact":
+            return 10 ** float(self.data)
 
-        if dkind == 'upper':
+        if dkind == "upper":
             # As with positive Textuals, it's important that we can return
             # a tozero limit here.
-            return Lval('tozero', 10 ** float(self.data))
+            return Lval("tozero", 10 ** float(self.data))
 
-        if dkind == 'lower':
-            return Lval('toinf', 10 ** float(self.data))
+        if dkind == "lower":
+            return Lval("toinf", 10 ** float(self.data))
 
-        if dkind == 'uncertain':
+        if dkind == "uncertain":
             # Assume UQUANT_UNCERT in (10**x), not in x itself
-            val = 10**float(self.data)
+            val = 10 ** float(self.data)
             return Uval.from_norm(val, UQUANT_UNCERT * abs(val))
 
-        if dkind == 'unif':
+        if dkind == "unif":
             # We'll yield a uniform distribution in log10(x), not x. I think
             # this is more desirable if someone writes "foo:Lu = 3.5to4.5".
             lower, upper = map(float, self.data)
-            return 10**Uval.from_unif(lower, upper)
+            return 10 ** Uval.from_unif(lower, upper)
 
-        if dkind == 'symm':
+        if dkind == "symm":
             val = float(self.data[0])
             uncert = float(self.data[1])
-            return 10**Uval.from_norm(val, uncert)
+            return 10 ** Uval.from_norm(val, uncert)
 
-        assert dkind == 'asymm'
+        assert dkind == "asymm"
         val, dhigh, dlow = map(float, self.data)
-        return 10**Uval.from_double_norm(val, dhigh, dlow)
-
+        return 10 ** Uval.from_double_norm(val, dhigh, dlow)
 
     def unwrap(self):
-        if self.tkind == 'log10':
+        if self.tkind == "log10":
             return self._unwrap_log()
-        if self.tkind == 'positive':
+        if self.tkind == "positive":
             return self._unwrap_pos()
 
         # No transformations applied:
         dkind = self.dkind
 
-        if dkind == 'exact':
+        if dkind == "exact":
             return float(self.data)
 
-        if dkind == 'upper':
+        if dkind == "upper":
             # Limits of magnitude-type quantities should always be of tkind
             # 'log10' or 'positive', so that we can return a 'tozero' Lval
             # rather than 'pastzero'. This is important for taking reciprocals
             # and/or logarithms.
             v = float(self.data)
             if v < 0:
-                return Lval('toinf', v)
-            return Lval('pastzero', v)
+                return Lval("toinf", v)
+            return Lval("pastzero", v)
 
-        if dkind == 'lower':
+        if dkind == "lower":
             v = float(self.data)
             if v < 0:
-                return Lval('pastzero', v)
-            return Lval('toinf', v)
+                return Lval("pastzero", v)
+            return Lval("toinf", v)
 
-        if dkind == 'unif':
+        if dkind == "unif":
             lower, upper = map(float, self.data)
             return Uval.from_unif(lower, upper)
 
-        if dkind == 'uncertain':
+        if dkind == "uncertain":
             val = float(self.data)
             return Uval.from_norm(val, UQUANT_UNCERT * abs(val))
 
-        if dkind == 'symm':
+        if dkind == "symm":
             val = float(self.data[0])
             uncert = float(self.data[1])
             return Uval.from_norm(val, uncert)
 
-        assert dkind == 'asymm'
+        assert dkind == "asymm"
         val, dhigh, dlow = map(float, self.data)
         return Uval.from_double_norm(val, dhigh, dlow)
-
 
     # Other numerical helpers.
 
@@ -1663,10 +1668,10 @@ class Textual(object):
         """Get a best-effort representative value as a float. This can be
         DANGEROUS because it discards limit information, which is rarely wise."""
 
-        if not limitsok and self.dkind in ('lower', 'upper'):
+        if not limitsok and self.dkind in ("lower", "upper"):
             raise LimitError()
 
-        if self.dkind == 'unif':
+        if self.dkind == "unif":
             lower, upper = map(float, self.data)
             v = 0.5 * (lower + upper)
         elif self.dkind in _noextra_dkinds:
@@ -1674,71 +1679,69 @@ class Textual(object):
         elif self.dkind in _yesextra_dkinds:
             v = float(self.data[0])
         else:
-            raise RuntimeError('can\'t happen')
+            raise RuntimeError("can't happen")
 
-        if self.tkind == 'log10':
+        if self.tkind == "log10":
             return 10**v
         return v
-
 
     def limtype(self):
         """Return -1 if this value is an upper limit, 1 if it is a lower
         limit, 0 otherwise."""
 
-        if self.dkind == 'upper':
+        if self.dkind == "upper":
             return -1
-        if self.dkind == 'lower':
+        if self.dkind == "lower":
             return 1
         return 0
-
 
     # Latexification.
 
     def __pk_latex__(self):
-        if self.dkind == 'exact':
-            return r'$%s$' % self.data
-        if self.dkind == 'uncertain':
-            return r'$\sim$$%s$' % self.data
-        if self.dkind == 'symm':
-            return r'$%s \pm %s$' % self.data
-        if self.dkind == 'asymm':
-            return r'$%s^{+%s}_{-%s}$' % self.data
-        if self.dkind == 'upper':
-            return r'$<$$%s$' % self.data
-        if self.dkind == 'lower':
-            return r'$>$$%s$' % self.data
-        if self.dkind == 'unif':
-            return r'$%s$--$%s$' % self.data
-
+        if self.dkind == "exact":
+            return r"$%s$" % self.data
+        if self.dkind == "uncertain":
+            return r"$\sim$$%s$" % self.data
+        if self.dkind == "symm":
+            return r"$%s \pm %s$" % self.data
+        if self.dkind == "asymm":
+            return r"$%s^{+%s}_{-%s}$" % self.data
+        if self.dkind == "upper":
+            return r"$<$$%s$" % self.data
+        if self.dkind == "lower":
+            return r"$>$$%s$" % self.data
+        if self.dkind == "unif":
+            return r"$%s$--$%s$" % self.data
 
     def __pk_latex_u3col__(self):
-        if self.dkind == 'exact':
-            return r'\multicolumn{3}{c}{$%s$}' % self.data
-        if self.dkind == 'uncertain':
-            return r'\multicolumn{3}{c}{$\sim$$%s$}' % self.data
-        if self.dkind == 'symm':
-            return r'%s & $\pm\,%s$' % \
-                (_split_decimal_col(self.data[0]), self.data[1])
-        if self.dkind == 'asymm':
-            return r'%s & $\pm\,^{%s}_{%s}$' % \
-                (_split_decimal_col(self.data[0]), self.data[1], self.data[2])
-        if self.dkind == 'upper':
-            return r'\multicolumn{3}{c}{$<$$%s$}' % self.data
-        if self.dkind == 'lower':
-            return r'\multicolumn{3}{c}{$>$$%s$}' % self.data
-        if self.dkind == 'unif':
-            return r'\multicolumn{3}{c}{$%s$--$%s$}' % self.data
-
+        if self.dkind == "exact":
+            return r"\multicolumn{3}{c}{$%s$}" % self.data
+        if self.dkind == "uncertain":
+            return r"\multicolumn{3}{c}{$\sim$$%s$}" % self.data
+        if self.dkind == "symm":
+            return r"%s & $\pm\,%s$" % (_split_decimal_col(self.data[0]), self.data[1])
+        if self.dkind == "asymm":
+            return r"%s & $\pm\,^{%s}_{%s}$" % (
+                _split_decimal_col(self.data[0]),
+                self.data[1],
+                self.data[2],
+            )
+        if self.dkind == "upper":
+            return r"\multicolumn{3}{c}{$<$$%s$}" % self.data
+        if self.dkind == "lower":
+            return r"\multicolumn{3}{c}{$>$$%s$}" % self.data
+        if self.dkind == "unif":
+            return r"\multicolumn{3}{c}{$%s$--$%s$}" % self.data
 
     # Unary math -- we do the same thing as _make_textual_unary_math_generic()
     # below. Unlike Uval and Lval, algebra on Textuals is emphatically not
     # closed -- the result is always a non-Textual.
 
     def __neg__(self):
-        return _dispatch_unary_math('negative', False, self.unwrap())
+        return _dispatch_unary_math("negative", False, self.unwrap())
 
     def __abs__(self):
-        return _dispatch_unary_math('absolute', False, self.unwrap())
+        return _dispatch_unary_math("absolute", False, self.unwrap())
 
     # Binary math -- we delegate to the functions that are defined below.
 
@@ -1759,7 +1762,7 @@ class Textual(object):
 
     def __pow__(self, other, module=None):
         if modulo is not None:
-            raise ValueError('powmod behavior forbidden with Textuals')
+            raise ValueError("powmod behavior forbidden with Textuals")
         return power(self, other)
 
     def __radd__(self, other):
@@ -1779,7 +1782,7 @@ class Textual(object):
 
     def __rpow__(self, other, module=None):
         if modulo is not None:
-            raise ValueError('powmod behavior forbidden with Textuals')
+            raise ValueError("powmod behavior forbidden with Textuals")
         return power(other, self)
 
 
@@ -1793,11 +1796,11 @@ def _dispatch_unary_math(name, check_textual, value):
     elif check_textual and isinstance(value, Textual):
         table = textual_unary_math
     else:
-        raise ValueError('cannot treat %r as a scalar for %s' % (value, name))
+        raise ValueError("cannot treat %r as a scalar for %s" % (value, name))
 
     func = table.get(name)
     if func is None:
-        raise ValueError('no implementation of %s for %r' % (name, value))
+        raise ValueError("no implementation of %s for %r" % (name, value))
     return func(value)
 
 
@@ -1806,39 +1809,41 @@ def _make_textual_unary_math_generic(name):
     # Textual.
     def textual_unary_math_generic(val):
         return _dispatch_unary_math(name, False, val.unwrap())
+
     return textual_unary_math_generic
 
 
 def _textual_unary_log10(val):
-    if val.tkind == 'log10':
-        return Textual('none', val.dkind, val.data)
-    return _dispatch_unary_math('log10', False, val.unwrap())
+    if val.tkind == "log10":
+        return Textual("none", val.dkind, val.data)
+    return _dispatch_unary_math("log10", False, val.unwrap())
 
 
 textual_unary_math = {
-    'absolute': _make_textual_unary_math_generic('absolute'),
-    'arccos': _make_textual_unary_math_generic('arccos'),
-    'arcsin': _make_textual_unary_math_generic('arcsin'),
-    'arctan': _make_textual_unary_math_generic('arctan'),
-    'cos': _make_textual_unary_math_generic('cos'),
-    'expm1': _make_textual_unary_math_generic('expm1'),
-    'exp': _make_textual_unary_math_generic('exp'),
-    'isfinite': lambda v: True, # legal Textuals can never yield inf or nan
-    'log10': _textual_unary_log10,
-    'log1p': _make_textual_unary_math_generic('log1p'),
-    'log2': _make_textual_unary_math_generic('log2'),
-    'log': _make_textual_unary_math_generic('log'),
-    'negative': _make_textual_unary_math_generic('negative'),
-    'reciprocal': _make_textual_unary_math_generic('reciprocal'),
-    'sin': _make_textual_unary_math_generic('sin'),
-    'sqrt': _make_textual_unary_math_generic('sqrt'),
-    'square':  _make_textual_unary_math_generic('square'),
-    'tan': _make_textual_unary_math_generic('tan'),
+    "absolute": _make_textual_unary_math_generic("absolute"),
+    "arccos": _make_textual_unary_math_generic("arccos"),
+    "arcsin": _make_textual_unary_math_generic("arcsin"),
+    "arctan": _make_textual_unary_math_generic("arctan"),
+    "cos": _make_textual_unary_math_generic("cos"),
+    "expm1": _make_textual_unary_math_generic("expm1"),
+    "exp": _make_textual_unary_math_generic("exp"),
+    "isfinite": lambda v: True,  # legal Textuals can never yield inf or nan
+    "log10": _textual_unary_log10,
+    "log1p": _make_textual_unary_math_generic("log1p"),
+    "log2": _make_textual_unary_math_generic("log2"),
+    "log": _make_textual_unary_math_generic("log"),
+    "negative": _make_textual_unary_math_generic("negative"),
+    "reciprocal": _make_textual_unary_math_generic("reciprocal"),
+    "sin": _make_textual_unary_math_generic("sin"),
+    "sqrt": _make_textual_unary_math_generic("sqrt"),
+    "square": _make_textual_unary_math_generic("square"),
+    "tan": _make_textual_unary_math_generic("tan"),
 }
 
 
 # Now, a library of metadata-esque functions that will handle anything you
 # throw at them: scalars, Uvals, Lvals, and Textuals.
+
 
 def is_measurement(obj):
     return np.isscalar(obj) or isinstance(obj, (Uval, Lval, Textual))
@@ -1854,7 +1859,7 @@ def unwrap(msmt):
         return msmt
     if isinstance(msmt, Textual):
         return msmt.unwrap()
-    raise ValueError('don\'t know how to treat %r as a measurement' % msmt)
+    raise ValueError("don't know how to treat %r as a measurement" % msmt)
 
 
 def typealign(origmsmt1, origmsmt2):
@@ -1877,8 +1882,9 @@ def typealign(origmsmt1, origmsmt2):
     try:
         return float(msmt1), float(msmt2)
     except Exception:
-        raise ValueError('cannot treat %r and %r as numeric types'
-                         % (origmsmt1, origmsmt2))
+        raise ValueError(
+            "cannot treat %r and %r as numeric types" % (origmsmt1, origmsmt2)
+        )
 
 
 def repval(msmt, limitsok=False):
@@ -1891,13 +1897,13 @@ def repval(msmt, limitsok=False):
     if isinstance(msmt, Uval):
         return msmt.repvals(uval_default_repval_method)[0]
     if isinstance(msmt, Lval):
-        if not limitsok and msmt.kind in('tozero', 'toinf', 'pastzero'):
+        if not limitsok and msmt.kind in ("tozero", "toinf", "pastzero"):
             raise LimitError()
         return msmt.value
     if isinstance(msmt, Textual):
         return msmt.repval(limitsok=limitsok)
 
-    raise ValueError('don\'t know how to treat %r as a measurement' % msmt)
+    raise ValueError("don't know how to treat %r as a measurement" % msmt)
 
 
 def limtype(msmt):
@@ -1909,8 +1915,8 @@ def limtype(msmt):
     if isinstance(msmt, Uval):
         return 0
     if isinstance(msmt, Lval):
-        if msmt.kind == 'undef':
-            raise ValueError('no simple limit type for Lval %r' % msmt)
+        if msmt.kind == "undef":
+            raise ValueError("no simple limit type for Lval %r" % msmt)
 
         # Quasi-hack here: limits of ('tozero', [positive number]) are
         # reported as upper limits. In a plot full of fluxes this would be
@@ -1924,7 +1930,7 @@ def limtype(msmt):
         return 0
     if isinstance(msmt, Textual):
         return msmt.limtype()
-    raise ValueError('don\'t know how to treat %r as a measurement' % msmt)
+    raise ValueError("don't know how to treat %r as a measurement" % msmt)
 
 
 def liminfo(msmt):
@@ -1952,7 +1958,7 @@ def errinfo(msmt):
     if isinstance(msmt, Lval):
         return limtype(msmt), msmt.value, msmt.value, msmt.value
 
-    raise ValueError('don\'t know how to treat %r as a measurement' % msmt)
+    raise ValueError("don't know how to treat %r as a measurement" % msmt)
 
 
 # Unary numerical functions.
@@ -1971,23 +1977,26 @@ def errinfo(msmt):
 #
 # abs coerce complex hex index int invert float long neg nonzero oct pos
 
+
 def _make_wrapped_unary_math(name):
     def unary_mathfunc(val):
         rv = _dispatch_unary_math(name, True, val)
-        if not _dispatch_unary_math('isfinite', True, rv):
-            raise ValueError('out-of-bounds input %r to %s' % (val, name))
+        if not _dispatch_unary_math("isfinite", True, rv):
+            raise ValueError("out-of-bounds input %r to %s" % (val, name))
         return rv
+
     return unary_mathfunc
 
 
 def _init_unary_math():
     g = globals()
 
-    for name in six.iterkeys(scalar_unary_math):
-        if name == 'isfinite':
-            g[name] = lambda v: _dispatch_unary_math('isfinite', True, v)
+    for name in scalar_unary_math.keys():
+        if name == "isfinite":
+            g[name] = lambda v: _dispatch_unary_math("isfinite", True, v)
         else:
             g[name] = _make_wrapped_unary_math(name)
+
 
 _init_unary_math()
 
@@ -2008,10 +2017,12 @@ _init_unary_math()
 #
 # and cmp eq ge gt le lshift lt ne or rshift xor
 
+
 def _make_wrapped_binary_math(opfunc):
     def binary_mathfunc(val1, val2):
         a1, a2 = typealign(val1, val2)
         return opfunc(a1, a2)
+
     return binary_mathfunc
 
 
@@ -2021,18 +2032,20 @@ multiply = _make_wrapped_binary_math(operator.mul)
 power = _make_wrapped_binary_math(operator.pow)
 subtract = _make_wrapped_binary_math(operator.sub)
 true_divide = _make_wrapped_binary_math(operator.truediv)
-divide = true_divide # are we supposed to respect Py2 plain-div semantics?
+divide = true_divide  # are we supposed to respect Py2 plain-div semantics?
 
 
 # Parsing and formatting of measurements and other quantities.
 
+
 def _parse_bool(text):
     if not len(text):
         return False
-    if text == 'y':
+    if text == "y":
         return True
-    raise ValueError('illegal bool textualization: expect empty or "y"; '
-                     'got "%s"' % text)
+    raise ValueError(
+        'illegal bool textualization: expect empty or "y"; ' 'got "%s"' % text
+    )
 
 
 def _maybe(subparse):
@@ -2040,10 +2053,12 @@ def _maybe(subparse):
         if not len(text):
             return None
         return subparse(text)
+
     return parser
 
 
-_ttkinds = {'': 'none', 'L': 'log10', 'P': 'positive'}
+_ttkinds = {"": "none", "L": "log10", "P": "positive"}
+
 
 def _maybe_parse_exact(text, tkind):
     if not len(text):
@@ -2059,17 +2074,18 @@ def _maybe_parse_uncert(text, tkind):
 
 parsers = {
     # maps 'type tag string' to 'parsing function'.
-    'x': None,
-    'b': _parse_bool,
-    'i': _maybe(int),
-    's': _maybe(text_type),
-    'f': lambda t: _maybe_parse_exact(t, ''),
-    'Lf': lambda t: _maybe_parse_exact(t, 'L'),
-    'Pf': lambda t: _maybe_parse_exact(t, 'P'),
-    'u': lambda t: _maybe_parse_uncert(t, ''),
-    'Lu': lambda t: _maybe_parse_uncert(t, 'L'),
-    'Pu': lambda t: _maybe_parse_uncert(t, 'P'),
+    "x": None,
+    "b": _parse_bool,
+    "i": _maybe(int),
+    "s": _maybe(str),
+    "f": lambda t: _maybe_parse_exact(t, ""),
+    "Lf": lambda t: _maybe_parse_exact(t, "L"),
+    "Pf": lambda t: _maybe_parse_exact(t, "P"),
+    "u": lambda t: _maybe_parse_uncert(t, ""),
+    "Lu": lambda t: _maybe_parse_uncert(t, "L"),
+    "Pu": lambda t: _maybe_parse_uncert(t, "P"),
 }
+
 
 def fmtinfo(value):
     """Returns (typetag, text, is_imprecise). Unlike other functions that operate
@@ -2077,24 +2093,24 @@ def fmtinfo(value):
 
     """
     if value is None:
-        raise ValueError('cannot format None!')
+        raise ValueError("cannot format None!")
 
-    if isinstance(value, text_type):
-        return '', value, False
+    if isinstance(value, str):
+        return "", value, False
 
     if isinstance(value, bool):
         # Note: isinstance(True, int) = True, so this must come before the next case.
         if value:
-            return 'b', 'y', False
-        return 'b', '', False
+            return "b", "y", False
+        return "b", "", False
 
-    if isinstance(value, six.integer_types):
-        return 'i', text_type(value), False
+    if isinstance(value, int):
+        return "i", str(value), False
 
     if isinstance(value, float):
-        return 'f', text_type(value), True
+        return "f", str(value), True
 
-    if hasattr(value, '__pk_fmtinfo__'):
+    if hasattr(value, "__pk_fmtinfo__"):
         return value.__pk_fmtinfo__()
 
-    raise ValueError('don\'t know how to format %r as a measurement' % value)
+    raise ValueError("don't know how to format %r as a measurement" % value)

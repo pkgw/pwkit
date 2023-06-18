@@ -33,16 +33,12 @@ Some ``pwkit`` functionality requires additional Python modules such as
 functionality requires:
 
 * `numpy`_ >= 1.6
-* `six`_ >= 1.9
-* on Python 2.x only, `pathlib`_ >= 1.0
 
 If you install ``pwkit`` through standard means, these modules should be
 automatically installed too if they weren’t already available.
 
 .. _scipy: http://www.scipy.org/
 .. _numpy: http://www.numpy.org/
-.. _six: https://pypi.org/project/six/
-.. _pathlib: https://pypi.python.org/pypi/pathlib/
 
 
 Citation

@@ -46,13 +46,11 @@ in the :mod:`multiprocessing` library.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = str('make_parallel_helper').split()
+__all__ = str("make_parallel_helper").split()
 
 import functools, signal
 from multiprocessing.pool import Pool
 from multiprocessing import Process, Queue, TimeoutError
-import six
-from six.moves import range
 
 
 def _initializer_wrapper(actual_initializer, *rest):
@@ -96,13 +94,14 @@ class InterruptiblePool(Pool):
     as the map() method is the only one that needs to be interrupt-friendly.
 
     """
+
     wait_timeout = 3600
 
     def __init__(self, processes=None, initializer=None, initargs=(), **kwargs):
         new_initializer = functools.partial(_initializer_wrapper, initializer)
-        super(InterruptiblePool, self).__init__(processes, new_initializer,
-                                                initargs, **kwargs)
-
+        super(InterruptiblePool, self).__init__(
+            processes, new_initializer, initargs, **kwargs
+        )
 
     def map(self, func, iterable, chunksize=None):
         """Equivalent of `map` built-in, without swallowing KeyboardInterrupt.
@@ -158,6 +157,7 @@ class ParallelHelper(object):
     usage information.
 
     """
+
     def get_map(self):
         """Get a *context manager* that yields a function with the same call signature
         as the standard library function :func:`map`. Its results are the
@@ -172,7 +172,7 @@ class ParallelHelper(object):
         method :meth:`get_ppmap` relaxes this restriction somewhat.
 
         """
-        raise NotImplementedError('get_map() not available')
+        raise NotImplementedError("get_map() not available")
 
     def get_ppmap(self):
         """Get a *context manager* that yields a "partially-pickling map function". It
@@ -212,7 +212,7 @@ class ParallelHelper(object):
         limitations in the :mod:`multiprocessing` library.
 
         """
-        raise NotImplementedError('get_ppmap() not available')
+        raise NotImplementedError("get_ppmap() not available")
 
 
 class VacuousContextManager(object):
@@ -220,10 +220,13 @@ class VacuousContextManager(object):
     clever with exceptions.
 
     """
+
     def __init__(self, value):
         self.value = value
+
     def __enter__(self):
         return self.value
+
     def __exit__(self, etype, evalue, etb):
         return False
 
@@ -295,6 +298,7 @@ class MultiprocessingPoolHelper(ParallelHelper):
     handles :exc:`KeyboardInterrupt` exceptions more helpfully.
 
     """
+
     class InterruptiblePoolContextManager(object):
         def __init__(self, methodname, methodkwargs={}, **kwargs):
             self.methodname = methodname
@@ -303,6 +307,7 @@ class MultiprocessingPoolHelper(ParallelHelper):
 
         def __enter__(self):
             from functools import partial
+
             self.pool = InterruptiblePool(**self.kwargs)
             func = getattr(self.pool, self.methodname)
             return partial(func, **self.methodkwargs)
@@ -312,16 +317,14 @@ class MultiprocessingPoolHelper(ParallelHelper):
             self.pool.join()
             return False
 
-
     def __init__(self, chunksize=None, **pool_kwargs):
         self.chunksize = chunksize
         self.pool_kwargs = pool_kwargs
 
     def get_map(self):
-        return self.InterruptiblePoolContextManager('map',
-                                                    {'chunksize': self.chunksize},
-                                                    **self.pool_kwargs)
-
+        return self.InterruptiblePoolContextManager(
+            "map", {"chunksize": self.chunksize}, **self.pool_kwargs
+        )
 
     def _ppmap(self, func, fixed_arg, var_arg_iter):
         """The multiprocessing implementation of the partially-Pickling "ppmap"
@@ -336,20 +339,25 @@ class MultiprocessingPoolHelper(ParallelHelper):
 
         XXX This deadlocks if a child process crashes!!! XXX
         """
-        n_procs = self.pool_kwargs.get('processes')
+        n_procs = self.pool_kwargs.get("processes")
         if n_procs is None:
             # Logic copied from multiprocessing.pool.Pool.__init__()
             try:
                 from multiprocessing import cpu_count
+
                 n_procs = cpu_count()
             except NotImplementedError:
                 n_procs = 1
 
         in_queue = Queue(1)
         out_queue = Queue()
-        procs = [Process(target=multiprocessing_ppmap_worker,
-                         args=(in_queue, out_queue, func, fixed_arg))
-                 for _ in range(n_procs)]
+        procs = [
+            Process(
+                target=multiprocessing_ppmap_worker,
+                args=(in_queue, out_queue, func, fixed_arg),
+            )
+            for _ in range(n_procs)
+        ]
 
         for p in procs:
             p.daemon = True
@@ -433,7 +441,7 @@ def make_parallel_helper(parallel_arg, **kwargs):
     for :func:`serial_ppmap` for usage information.
 
     """
-    if parallel_arg is True: # note: (True == 1) is True
+    if parallel_arg is True:  # note: (True == 1) is True
         return MultiprocessingPoolHelper(**kwargs)
 
     if parallel_arg is False or parallel_arg == 1:
@@ -441,14 +449,16 @@ def make_parallel_helper(parallel_arg, **kwargs):
 
     if parallel_arg > 0 and parallel_arg < 1:
         from multiprocessing import cpu_count
+
         n = int(round(parallel_arg * cpu_count()))
         return MultiprocessingPoolHelper(processes=n, **kwargs)
 
     if isinstance(parallel_arg, ParallelHelper):
         return parallel_arg
 
-    if isinstance(parallel_arg, six.integer_types):
+    if isinstance(parallel_arg, int):
         return MultiprocessingPoolHelper(processes=parallel_arg, **kwargs)
 
-    raise ValueError('don\'t understand make_parallel_helper() argument %r'
-                     % parallel_arg)
+    raise ValueError(
+        "don't understand make_parallel_helper() argument %r" % parallel_arg
+    )

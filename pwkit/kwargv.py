@@ -98,11 +98,9 @@ alias for :class:`KeywordInfo`.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = str('Custom KwargvError ParseError KeywordInfo ParseKeywords basic').split()
+__all__ = str("Custom KwargvError ParseError KeywordInfo ParseKeywords basic").split()
 
-import six
-from six.moves import range
-from . import Holder, PKError, text_type
+from . import Holder, PKError
 
 
 class KwargvError(PKError):
@@ -128,17 +126,18 @@ def basic(args=None):
     """
     if args is None:
         import sys
+
         args = sys.argv[1:]
 
     parsed = Holder()
 
     for arg in args:
-        if arg[0] == '+':
-            for kw in arg[1:].split(','):
+        if arg[0] == "+":
+            for kw in arg[1:].split(","):
                 parsed.set_one(kw, True)
             # avoid analogous -a,b,c syntax because it gets confused with -a --help, etc.
         else:
-            t = arg.split('=', 1)
+            t = arg.split("=", 1)
             if len(t) < 2:
                 raise KwargvError('don\'t know what to do with argument "%s"', arg)
             if not len(t[1]):
@@ -150,10 +149,10 @@ def basic(args=None):
 
 # The fancy, full-featured system.
 
-class KeywordInfo(object):
-    """Properties that a keyword argument may have.
 
-    """
+class KeywordInfo(object):
+    """Properties that a keyword argument may have."""
+
     parser = None
     """A callable used to convert the argument text to a Python value.
     This attribute is assigned automatically upon setup."""
@@ -165,7 +164,7 @@ class KeywordInfo(object):
     """Whether an error should be raised if the keyword is not seen while
     parsing."""
 
-    sep = ','
+    sep = ","
     """The textual separator between items for list-valued keywords."""
 
     maxvals = None
@@ -173,7 +172,7 @@ class KeywordInfo(object):
     fixed lists have predetermined sizes.
 
     """
-    minvals = 0 # note: maxvals and minvals are used in different ways
+    minvals = 0  # note: maxvals and minvals are used in different ways
     """The minimum number of values allowed in a flexible list, *if the keyword is
     specified at all*. If you want ``minvals = 1``, use ``required = True``.
 
@@ -229,15 +228,15 @@ class KeywordOptions(Holder):
         return self
 
 
-Custom = KeywordOptions # sugar for users
+Custom = KeywordOptions  # sugar for users
 
 
 def _parse_bool(s):
     s = s.lower()
 
-    if s in 'y yes t true on 1'.split():
+    if s in "y yes t true on 1".split():
         return True
-    if s in 'n no f false off 0'.split():
+    if s in "n no f false off 0".split():
         return False
     raise ParseError('don\'t know how to interpret "%s" as a boolean' % s)
 
@@ -245,9 +244,9 @@ def _parse_bool(s):
 def _val_to_parser(v):
     if isinstance(v, bool):
         return _parse_bool
-    if isinstance(v, (int, float, text_type)):
+    if isinstance(v, (int, float, str)):
         return v.__class__
-    raise ValueError('can\'t figure out how to parse %r' % v)
+    raise ValueError("can't figure out how to parse %r" % v)
 
 
 def _val_or_func_to_parser(v):
@@ -261,11 +260,11 @@ def _val_or_func_to_parser(v):
 def _val_or_func_to_default(v):
     if callable(v):
         return None
-    if isinstance(v, (int, float, bool, text_type)):
+    if isinstance(v, (int, float, bool, str)):
         return v
     raise ValueError
 
-    ('can\'t figure out a default for %r' % v)
+    ("can't figure out a default for %r" % v)
 
 
 def _handle_flex_list(ki, ks):
@@ -291,20 +290,26 @@ def _handle_fixed_list(ki, ks):
 
         if ngot < ki.minvals:
             if ki.minvals == ntot:
-                raise ParseError('expected exactly %d values, but only got %d',
-                                 ntot, ngot)
-            raise ParseError('expected between %d and %d values, but only got %d',
-                             ki.minvals, ntot, ngot)
+                raise ParseError(
+                    "expected exactly %d values, but only got %d", ntot, ngot
+                )
+            raise ParseError(
+                "expected between %d and %d values, but only got %d",
+                ki.minvals,
+                ntot,
+                ngot,
+            )
         if ngot > ntot:
-            raise ParseError('expected between %d and %d values, but got %d',
-                             ki.minvals, ntot, ngot)
+            raise ParseError(
+                "expected between %d and %d values, but got %d", ki.minvals, ntot, ngot
+            )
 
-        result = list(defaults) # make a copy
+        result = list(defaults)  # make a copy
         for i in range(ngot):
             result[i] = parsers[i](items[i])
         return result
 
-    return fixlistparse, list(defaults) # make a copy
+    return fixlistparse, list(defaults)  # make a copy
 
 
 class ParseKeywords(Holder):
@@ -313,6 +318,7 @@ class ParseKeywords(Holder):
     scheme described above, then call the :meth:`ParseKeywords.parse` method.
 
     """
+
     def __init__(self):
         kwspecs = self.__class__.__dict__
         kwinfos = {}
@@ -322,8 +328,8 @@ class ParseKeywords(Holder):
         # understand. 'kw' is the keyword name exposed to the user; 'attrname'
         # is the name of the attribute to set on the resulting object.
 
-        for kw, ks in six.iteritems(kwspecs):
-            if kw[0] == '_':
+        for kw, ks in kwspecs.items():
+            if kw[0] == "_":
                 continue
 
             ki = KeywordInfo()
@@ -355,7 +361,7 @@ class ParseKeywords(Holder):
             ki.parser = parser
             ki.default = default
 
-            if ko is not None: # override with user-specified options
+            if ko is not None:  # override with user-specified options
                 ki.__dict__.update(ko.__dict__)
 
             if ki.required:
@@ -372,11 +378,10 @@ class ParseKeywords(Holder):
 
         # Apply defaults, save parse info, done
 
-        for kw, ki in six.iteritems(kwinfos):
+        for kw, ki in kwinfos.items():
             self.set_one(ki._attrname, ki.default)
 
         self._kwinfos = kwinfos
-
 
     def parse(self, args=None):
         """Parse textual keywords as described by this class’s attributes, and update
@@ -390,12 +395,13 @@ class ParseKeywords(Holder):
         """
         if args is None:
             import sys
+
             args = sys.argv[1:]
 
         seen = set()
 
         for arg in args:
-            t = arg.split('=', 1)
+            t = arg.split("=", 1)
             if len(t) < 2:
                 raise KwargvError('don\'t know what to do with argument "%s"', arg)
 
@@ -410,20 +416,34 @@ class ParseKeywords(Holder):
 
             try:
                 pval = ki.parser(val)
-            except ParseError as e :
-                raise KwargvError('cannot parse value "%s" for keyword '
-                                  'argument "%s": %s', val, kw, e)
+            except ParseError as e:
+                raise KwargvError(
+                    'cannot parse value "%s" for keyword ' 'argument "%s": %s',
+                    val,
+                    kw,
+                    e,
+                )
             except Exception as e:
                 if ki.printexc:
-                    raise KwargvError('cannot parse value "%s" for keyword '
-                                      'argument "%s": %s', val, kw, e)
-                raise KwargvError('cannot parse value "%s" for keyword '
-                                  'argument "%s"', val, kw)
+                    raise KwargvError(
+                        'cannot parse value "%s" for keyword ' 'argument "%s": %s',
+                        val,
+                        kw,
+                        e,
+                    )
+                raise KwargvError(
+                    'cannot parse value "%s" for keyword ' 'argument "%s"', val, kw
+                )
 
             if ki.maxvals is not None and len(pval) > ki.maxvals:
-                raise KwargvError('keyword argument "%s" may have at most %d'
-                                  ' values, but got %s ("%s")', kw,
-                                  ki.maxvals, len(pval), val)
+                raise KwargvError(
+                    'keyword argument "%s" may have at most %d'
+                    ' values, but got %s ("%s")',
+                    kw,
+                    ki.maxvals,
+                    len(pval),
+                    val,
+                )
 
             if ki.scale is not None:
                 pval = pval * ki.scale
@@ -445,10 +465,12 @@ class ParseKeywords(Holder):
             seen.add(kw)
             self.set_one(ki._attrname, pval)
 
-        for kw, ki in six.iteritems(self._kwinfos):
+        for kw, ki in self._kwinfos.items():
             if kw not in seen:
                 if ki.required:
-                    raise KwargvError('required keyword argument "%s" was not provided', kw)
+                    raise KwargvError(
+                        'required keyword argument "%s" was not provided', kw
+                    )
 
                 # If there's a fixup, process it even if the keyword wasn't
                 # provided. This lets code use "interesting" defaults with
@@ -458,8 +480,7 @@ class ParseKeywords(Holder):
                 if ki.fixupfunc is not None:
                     self.set_one(ki._attrname, ki.fixupfunc(None))
 
-        return self # convenience
-
+        return self  # convenience
 
     def parse_or_die(self, args=None):
         """Like :meth:`ParseKeywords.parse`, but calls :func:`pkwit.cli.die` if a
@@ -475,5 +496,5 @@ class ParseKeywords(Holder):
             die(e)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print(basic())

@@ -1,3 +1,10 @@
+# pwkit 1.2.0 (2023-06-18)
+
+- Remove the dependency on `six`
+- Remove the long-unused `pwkit.ndshow_gtk2` module
+- A further attempt to fix the ReadTheDocs build.
+
+
 # pwkit 1.1.1 (2023-06-18)
 
 No code changes.
@@ -16,7 +23,7 @@ been removed.
 - Switch to Cranko CI and release automation
 - Smattering of modernizations
 - Replace deprecated `np.{int,float,complex,bool}` with corresponding built-in types
-- Remove uses of np.asscalar(), which has been removed in latest Numpys
+- Remove uses of `np.asscalar()`, which has been removed in latest Numpys
 - `pwkit/inifile.py`: untested hacks to get it working on Python 3
 - `pwkit/astutil.py`: fix up `sastrom`
 - `pwkit/colormaps.py`: update to use Gtk 3
