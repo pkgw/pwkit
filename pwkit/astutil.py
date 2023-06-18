@@ -1418,7 +1418,7 @@ class AstrometryInfo(object):
         AllWISE catalog are so known.
 
         If you use this function, you should `acknowledge AllWISE
-        <http://irsadist.ipac.caltech.edu/wise-allwise/>`_ and `Vizier
+        <https://wise2.ipac.caltech.edu/docs/release/allwise/>`_ and `Vizier
         <http://cds.u-strasbg.fr/vizier-org/licences_vizier.html>`_.
 
         Returns *self*.
