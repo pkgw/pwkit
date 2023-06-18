@@ -87,7 +87,7 @@ import operator
 
 import numpy as np
 
-from . import PKError, text_type, unicode_to_str
+from . import PKError, unicode_to_str
 
 
 uval_nsamples = 1024
@@ -2077,7 +2077,7 @@ parsers = {
     "x": None,
     "b": _parse_bool,
     "i": _maybe(int),
-    "s": _maybe(text_type),
+    "s": _maybe(str),
     "f": lambda t: _maybe_parse_exact(t, ""),
     "Lf": lambda t: _maybe_parse_exact(t, "L"),
     "Pf": lambda t: _maybe_parse_exact(t, "P"),
@@ -2095,7 +2095,7 @@ def fmtinfo(value):
     if value is None:
         raise ValueError("cannot format None!")
 
-    if isinstance(value, text_type):
+    if isinstance(value, str):
         return "", value, False
 
     if isinstance(value, bool):
@@ -2105,10 +2105,10 @@ def fmtinfo(value):
         return "b", "", False
 
     if isinstance(value, int):
-        return "i", text_type(value), False
+        return "i", str(value), False
 
     if isinstance(value, float):
-        return "f", text_type(value), True
+        return "f", str(value), True
 
     if hasattr(value, "__pk_fmtinfo__"):
         return value.__pk_fmtinfo__()

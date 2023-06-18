@@ -38,9 +38,9 @@ class PKError(Exception):
 
     def __init__(self, fmt, *args):
         if not len(args):
-            self.args = (text_type(fmt),)
+            self.args = (str(fmt),)
         else:
-            self.args = (text_type(fmt) % args,)
+            self.args = (str(fmt) % args,)
 
     def __unicode__(self):
         return self.args[0]
@@ -94,7 +94,7 @@ def reraise_context(fmt, *args):
     if len(args):
         cstr = fmt % args
     else:
-        cstr = text_type(fmt)
+        cstr = str(fmt)
 
     ex = sys.exc_info()[1]
 

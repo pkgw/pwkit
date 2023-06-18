@@ -13,8 +13,6 @@ __all__ = str(
 datadir logger forkandlog sanitize_unicode tools"""
 ).split()
 
-from ... import text_type
-
 # Some constants that can be useful.
 
 INVERSE_C_MS = 3.3356409519815204e-09  # inverse speed of light in m/s
@@ -148,7 +146,7 @@ def sanitize_unicode(item):
       tb.open(b(path)) # => works
 
     """
-    if isinstance(item, text_type):
+    if isinstance(item, str):
         return item.encode("utf8")
     if isinstance(item, dict):
         return dict((sanitize_unicode(k), sanitize_unicode(v)) for k, v in item.items())

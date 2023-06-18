@@ -17,7 +17,7 @@ __all__ = str(
 
 import numpy as np
 
-from . import text_type, unicode_to_str, PKError
+from . import unicode_to_str, PKError
 from .numutil import broadcastize
 
 
@@ -89,7 +89,7 @@ def _fmtsexagesimal(base, norm, basemax, seps, precision=3):
     else:
         width = precision + 3
 
-    basewidth = len(text_type(basemax))
+    basewidth = len(str(basemax))
 
     bs = int(np.floor(base))
     min = int(np.floor((base - bs) * 60))
@@ -307,7 +307,7 @@ def fmtradec(rarad, decrad, precision=2, raseps="::", decseps="::", intersep=" "
     """
     return (
         fmthours(rarad, precision=precision + 1, seps=raseps)
-        + text_type(intersep)
+        + str(intersep)
         + fmtdeglat(decrad, precision=precision, seps=decseps)
     )
 

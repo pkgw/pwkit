@@ -17,7 +17,7 @@ __all__ = str(
 
 import io, os, pathlib
 
-from . import PKError, text_type
+from . import PKError
 
 
 # Python 2/3 bytes/unicode compat helpers
@@ -248,7 +248,7 @@ class Path(_ParentPath):
         from os import path
         from glob import glob
 
-        text = text_type(self)
+        text = str(self)
         if user:
             text = path.expanduser(text)
         if vars:
@@ -332,7 +332,7 @@ class Path(_ParentPath):
         from os.path import relpath
 
         other = self.__class__(other)
-        return self.__class__(relpath(text_type(self), text_type(other)))
+        return self.__class__(relpath(str(self), str(other)))
 
     # Filesystem interrogation
 
@@ -652,7 +652,7 @@ class Path(_ParentPath):
         else:
             raise ValueError('unexpected "errors" keyword %r' % (errors,))
 
-        shutil.rmtree(text_type(self), ignore_errors=ignore_errors, onerror=onerror)
+        shutil.rmtree(str(self), ignore_errors=ignore_errors, onerror=onerror)
         return self
 
     def try_unlink(self):
@@ -698,7 +698,7 @@ class Path(_ParentPath):
         """
         from pandas import HDFStore
 
-        return HDFStore(text_type(self), mode=mode, **kwargs)
+        return HDFStore(str(self), mode=mode, **kwargs)
 
     def read_astropy_ascii(self, **kwargs):
         """Open as an ASCII table, returning a :class:`astropy.table.Table` object.
@@ -721,7 +721,7 @@ class Path(_ParentPath):
         """
         from astropy.io import ascii
 
-        return ascii.read(text_type(self), **kwargs)
+        return ascii.read(str(self), **kwargs)
 
     def read_fits(self, **kwargs):
         """Open as a FITS file, returning a :class:`astropy.io.fits.HDUList` object.
@@ -743,7 +743,7 @@ class Path(_ParentPath):
         """
         from astropy.io import fits
 
-        return fits.open(text_type(self), **kwargs)
+        return fits.open(str(self), **kwargs)
 
     def read_fits_bintable(self, hdu=1, drop_nonscalar_ok=True, **kwargs):
         """Open as a FITS file, read in a binary table, and return it as a
@@ -762,7 +762,7 @@ class Path(_ParentPath):
         from astropy.io import fits
         from .numutil import fits_recarray_to_data_frame as frtdf
 
-        with fits.open(text_type(self), mode="readonly", **kwargs) as hdulist:
+        with fits.open(str(self), mode="readonly", **kwargs) as hdulist:
             return frtdf(hdulist[hdu].data, drop_nonscalar_ok=drop_nonscalar_ok)
 
     def read_hdf(self, key, **kwargs):
@@ -773,7 +773,7 @@ class Path(_ParentPath):
         # This one needs special handling because of the "key" and path input.
         import pandas
 
-        return pandas.read_hdf(text_type(self), key, **kwargs)
+        return pandas.read_hdf(str(self), key, **kwargs)
 
     def read_inifile(self, noexistok=False, typed=False):
         """Open assuming an “ini-file” format and return a generator yielding data
@@ -884,7 +884,7 @@ class Path(_ParentPath):
         if dfcols is not None:
             kwargs["unpack"] = True
 
-        retval = np.loadtxt(text_type(self), **kwargs)
+        retval = np.loadtxt(str(self), **kwargs)
 
         if dfcols is not None:
             import pandas as pd
@@ -967,7 +967,7 @@ class Path(_ParentPath):
         """
         from .tabfile import read
 
-        return read(text_type(self), **kwargs)
+        return read(str(self), **kwargs)
 
     def read_text(self, encoding=None, errors=None, newline=None):
         """Read this path as one large chunk of text.

@@ -20,8 +20,6 @@ try:
 except ImportError:
     import numpy.polynomial as npoly
 
-from . import binary_type, text_type
-
 
 class Parameter(object):
     """Information about a parameter in a least-squares model.
@@ -178,16 +176,16 @@ class ModelBase(object):
         raise NotImplementedError()
 
     def __getitem__(self, key):
-        if isinstance(key, binary_type):
+        if isinstance(key, bytes):
             # If you're not using the unicode_literals __future__, things get
             # annoying really quickly without this.
-            key = text_type(key)
+            key = str(key)
 
         if isinstance(key, int):
             idx = key
             if idx < 0 or idx >= len(self.pnames):
                 raise ValueError("illegal parameter number %d" % key)
-        elif isinstance(key, text_type):
+        elif isinstance(key, str):
             try:
                 idx = self.pnames.index(key)
             except ValueError:

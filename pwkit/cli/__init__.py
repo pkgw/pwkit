@@ -35,7 +35,6 @@ __all__ = str(
 ).split()
 
 import os, signal, sys
-from .. import text_type
 
 
 def unicode_stdio():
@@ -197,13 +196,13 @@ def die(fmt, *args):
 
     """
     if not len(args):
-        raise SystemExit("error: " + text_type(fmt))
+        raise SystemExit("error: " + str(fmt))
     raise SystemExit("error: " + (fmt % args))
 
 
 def warn(fmt, *args):
     if not len(args):
-        s = text_type(fmt)
+        s = str(fmt)
     else:
         s = fmt % args
 

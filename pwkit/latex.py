@@ -65,7 +65,7 @@ latexify_u3col
 latexify""".split()
 
 import string
-from . import Holder, PKError, binary_type, reraise_context, text_type
+from . import Holder, PKError, reraise_context
 
 
 def _reftext(key):
@@ -118,7 +118,7 @@ class Referencer(object):
             idx = len(self.bibkeys)
             self.bibkeys.append(bibkey)
 
-        return text_type(idx + 1)
+        return str(idx + 1)
 
     def dump(self):
         s = ", ".join(
@@ -147,7 +147,7 @@ def latexify(obj, **kwargs):
     if hasattr(obj, "__pk_latex__"):
         return obj.__pk_latex__(**kwargs)
 
-    if isinstance(obj, text_type):
+    if isinstance(obj, str):
         from .unicode_to_latex import unicode_to_latex
 
         return unicode_to_latex(obj)
@@ -165,7 +165,7 @@ def latexify(obj, **kwargs):
     if isinstance(obj, int):
         return "$%d$" % obj
 
-    if isinstance(obj, binary_type):
+    if isinstance(obj, bytes):
         if all(c in _printable_ascii for c in obj):
             return obj.decode("ascii")
         raise ValueError("no safe LaTeXification of binary string %r" % obj)
@@ -475,7 +475,7 @@ class TableBuilder(object):
         write("}\n%custom preamble\n")
         write(self.preamble)
         write("\n%hardcoded preamble\n\\tablecolumns{")
-        write(text_type(ncols))
+        write(str(ncols))
         write("}\n\\tablewidth{")
         write(self.widthspec)
         write("}\n\\tablecaption{")
@@ -494,9 +494,9 @@ class TableBuilder(object):
                 if hidx == i - 1:
                     latexcolbase = colinfo[cidx].latexcol
                     write(" \\cline{")
-                    write(text_type(latexcolbase + lds))
+                    write(str(latexcolbase + lds))
                     write("-")
-                    write(text_type(latexcolbase + lde - 1))
+                    write(str(latexcolbase + lde - 1))
                     write("} ")
 
             sep = ""
@@ -519,7 +519,7 @@ class TableBuilder(object):
                                 nlatex += colinfo[cidx + j].nlcol
 
                             write("\\multicolumn{")
-                            write(text_type(nlatex))
+                            write(str(nlatex))
                             write("}{")
                             write(h.align)
                             write("}{")
@@ -548,7 +548,7 @@ class TableBuilder(object):
             for ci in colinfo:
                 write(sep)
                 write("\\multicolumn{")
-                write(text_type(ci.nlcol))
+                write(str(ci.nlcol))
                 write("}{c}{")
                 if ci.numbering is False:
                     pass

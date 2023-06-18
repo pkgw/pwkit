@@ -17,8 +17,6 @@ __all__ = "Config Loader dftdynspec dftdynspec_cli".split()
 import io, os.path
 import numpy as np
 
-from ... import binary_type, text_type
-
 # Note: zany spacing so that Sphinx can parse the file correctly.
 from ...astutil import *
 from ...cli import check_usage, die
