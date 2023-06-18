@@ -125,7 +125,7 @@ Convenience functions for :class:`pandas.DataFrame` objects
 .. autofunction:: slice_around_gaps
 .. autofunction:: slice_evenly_with_gaps
 .. autofunction:: dfsmooth
-.. autofunction:: smoot_data_frame_with_gaps
+.. autofunction:: smooth_data_frame_with_gaps
 .. autofunction:: fits_recarray_to_data_frame
 .. autofunction:: data_frame_to_astropy_table
 .. autofunction:: usmooth

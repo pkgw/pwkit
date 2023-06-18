@@ -14,13 +14,13 @@ project = "pwkit"
 release = "0.dev0"  # cranko project-version
 version = ".".join(release.split(".")[:2])
 
-copyright = "2015-2019, Peter K. G. Williams and collaborators"
+copyright = "2015-2023, Peter K. G. Williams and collaborators"
 author = "Peter K. G. Williams and collaborators"
 
 templates_path = ["_templates"]
 source_suffix = ".rst"
 master_doc = "index"
-language = None
+language = "en"
 exclude_patterns = []
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
@@ -37,7 +37,15 @@ todo_include_todos = False
 # Intersphinx
 
 intersphinx_mapping = {
-    "https://docs.python.org/": None,
+    "python": (
+        "https://docs.python.org/3/",
+        (None, "http://data.astropy.org/intersphinx/python3.inv"),
+    ),
+    "numpy": (
+        "https://docs.scipy.org/doc/numpy/",
+        (None, "http://data.astropy.org/intersphinx/numpy.inv"),
+    ),
+    "astropy": ("http://docs.astropy.org/en/stable/", None),
 }
 
 
