@@ -1,0 +1,6 @@
+[[project]]
+qnames = [
+    'pwkit',
+    'pypa',
+]
+version = '1.1.0'

@@ -1,0 +1,9 @@
+[repo]
+upstream_urls = [
+    'git@github.com:pkgw/pwkit.git',
+    'https://github.com/pkgw/pwkit.git',
+]
+
+[npm]
+
+[projects]

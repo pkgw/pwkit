@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Copyright 2014-2018 Peter Williams <peter@newton.cx> and collaborators.
+# Copyright 2014-2023 Peter Williams <peter@newton.cx> and collaborators.
 # Licensed under the MIT License.
 
 # I don't use the ez_setup module because it causes us to automatically build
@@ -7,15 +7,9 @@
 
 from setuptools import setup
 
-dynamic_requires = []
-import sys
-
-if sys.version_info[0] < 3:
-    dynamic_requires.append("pathlib >= 1.0")
-
 setup(
-    name="pwkit",
-    version="1.1.0.dev0",  # also edit pwkit/__init__.py, docs/source/conf.py!
+    name="pwkit",  # cranko project-name
+    version="0.dev0",  # cranko project-version
     # This package actually *is* zip-safe, but I've run into issues with
     # installing it as a Zip: in particular, the install sometimes fails with
     # "bad local file header", and reloading a module after a reinstall in
@@ -42,8 +36,7 @@ setup(
     install_requires=[
         "numpy >= 1.6",
         "six >= 1.9",
-    ]
-    + dynamic_requires,
+    ],
     entry_points={
         "console_scripts": [
             "astrotool = pwkit.cli.astrotool:commandline",
