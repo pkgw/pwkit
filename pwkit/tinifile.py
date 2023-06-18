@@ -18,82 +18,84 @@ write_stream
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = str ('read_stream read write_stream write').split ()
+__all__ = str("read_stream read write_stream write").split()
 
 import six
 
 from . import Holder, inifile, msmt
 
 
-def _parse_one (old):
+def _parse_one(old):
     new = {}
 
-    for name, value in six.iteritems (old.__dict__):
-        if name == 'section':
+    for name, value in six.iteritems(old.__dict__):
+        if name == "section":
             new[name] = value
             continue
 
-        a = name.rsplit (':', 1)
-        if len (a) == 1:
-            a.append ('s')
+        a = name.rsplit(":", 1)
+        if len(a) == 1:
+            a.append("s")
         shname, typetag = a
-        new[shname] = msmt.parsers[typetag] (value)
+        new[shname] = msmt.parsers[typetag](value)
 
-    return Holder (**new)
-
-
-def read_stream (stream, **kwargs):
-    for unparsed in inifile.read_stream (stream, **kwargs):
-        yield _parse_one (unparsed)
+    return Holder(**new)
 
 
-def read (stream_or_path, **kwargs):
-    for unparsed in inifile.read (stream_or_path, **kwargs):
-        yield _parse_one (unparsed)
+def read_stream(stream, **kwargs):
+    for unparsed in inifile.read_stream(stream, **kwargs):
+        yield _parse_one(unparsed)
 
 
-def _format_many (holders, defaultsection, extrapos, digest):
+def read(stream_or_path, **kwargs):
+    for unparsed in inifile.read(stream_or_path, **kwargs):
+        yield _parse_one(unparsed)
+
+
+def _format_many(holders, defaultsection, extrapos, digest):
     # We need to handle defaultsection here, and not just leave it to inifile,
     # so that we can get consistent digest computation.
 
     for old in holders:
-        s = old.get ('section', defaultsection)
+        s = old.get("section", defaultsection)
         if s is None:
-            raise ValueError ('cannot determine section name for item <%s>' % old)
-        new = {'section': s}
+            raise ValueError("cannot determine section name for item <%s>" % old)
+        new = {"section": s}
 
         if digest is not None:
-            digest.update ('s')
-            digest.update (s)
+            digest.update("s")
+            digest.update(s)
 
-        for name in sorted (x for x in six.iterkeys (old.__dict__) if x != 'section'):
-            value = old.get (name)
+        for name in sorted(x for x in six.iterkeys(old.__dict__) if x != "section"):
+            value = old.get(name)
             if value is None:
                 continue
 
-            typetag, ftext, is_imprecise = msmt.fmtinfo (value)
+            typetag, ftext, is_imprecise = msmt.fmtinfo(value)
             lname = name
-            if len (typetag):
-                if is_imprecise and name in extrapos and typetag in ('u', 'f'):
-                    typetag = 'P' + typetag
-                lname += ':' + typetag
-            itext = ' # imprecise' if is_imprecise else ''
+            if len(typetag):
+                if is_imprecise and name in extrapos and typetag in ("u", "f"):
+                    typetag = "P" + typetag
+                lname += ":" + typetag
+            itext = " # imprecise" if is_imprecise else ""
             new[lname] = ftext + itext
 
             if digest is not None:
-                digest.update ('k')
-                digest.update (name)
-                digest.update (typetag)
-                digest.update ('v')
+                digest.update("k")
+                digest.update(name)
+                digest.update(typetag)
+                digest.update("v")
                 if is_imprecise:
-                    digest.update ('<impreciseval>')
+                    digest.update("<impreciseval>")
                 else:
-                    digest.update (ftext)
+                    digest.update(ftext)
 
-        yield Holder (**new)
+        yield Holder(**new)
 
 
-def write_stream (stream, holders, defaultsection=None, extrapos=(), sha1sum=False, **kwargs):
+def write_stream(
+    stream, holders, defaultsection=None, extrapos=(), sha1sum=False, **kwargs
+):
     """`extrapos` is basically a hack for multi-step processing. We have some flux
     measurements that are computed from luminosities and distances. The flux
     value is therefore an unwrapped Uval, which doesn't retain memory of any
@@ -106,31 +108,38 @@ def write_stream (stream, holders, defaultsection=None, extrapos=(), sha1sum=Fal
     """
     if sha1sum:
         import hashlib
-        sha1 = hashlib.sha1 ()
+
+        sha1 = hashlib.sha1()
     else:
         sha1 = None
 
-    inifile.write_stream (stream,
-                          _format_many (holders, defaultsection, extrapos, sha1),
-                          defaultsection=defaultsection,
-                          **kwargs)
+    inifile.write_stream(
+        stream,
+        _format_many(holders, defaultsection, extrapos, sha1),
+        defaultsection=defaultsection,
+        **kwargs
+    )
 
     if sha1sum:
-        return sha1.digest ()
+        return sha1.digest()
 
 
-def write (stream_or_path, holders, defaultsection=None, extrapos=(),
-           sha1sum=False, **kwargs):
+def write(
+    stream_or_path, holders, defaultsection=None, extrapos=(), sha1sum=False, **kwargs
+):
     if sha1sum:
         import hashlib
-        sha1 = hashlib.sha1 ()
+
+        sha1 = hashlib.sha1()
     else:
         sha1 = None
 
-    inifile.write (stream_or_path,
-                   _format_many (holders, defaultsection, extrapos, sha1),
-                   defaultsection=defaultsection,
-                   **kwargs)
+    inifile.write(
+        stream_or_path,
+        _format_many(holders, defaultsection, extrapos, sha1),
+        defaultsection=defaultsection,
+        **kwargs
+    )
 
     if sha1sum:
-        return sha1.digest ()
+        return sha1.digest()
