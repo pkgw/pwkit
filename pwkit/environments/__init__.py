@@ -32,7 +32,7 @@ Unicode environment variables as UTF-8 on non-Windows, so we don't need to be
 crazy about bytes-ifying values.
 
 """
-__all__ = 'Environment prepend_environ_path prepend_path user_data_path'.split()
+__all__ = "Environment prepend_environ_path prepend_path user_data_path".split()
 
 import os, subprocess, sys
 
@@ -49,23 +49,40 @@ class Environment(object):
         """
         raise NotImplementedError()
 
-
     def _preexec(self, env, **kwargs):
         pass
 
-
-    def launch(self, argv, stdin=None, stdout=None, stderr=None,
-               close_fds=False, env=None, shell=False, cwd=None,
-               preexec_fn=None, executable=None, **kwargs):
+    def launch(
+        self,
+        argv,
+        stdin=None,
+        stdout=None,
+        stderr=None,
+        close_fds=False,
+        env=None,
+        shell=False,
+        cwd=None,
+        preexec_fn=None,
+        executable=None,
+        **kwargs
+    ):
         if env is None:
             env = os.environ
 
         env = self.modify_environment(env.copy())
         self._preexec(env, **kwargs)
-        return subprocess.Popen(argv, stdin=stdin, stdout=stdout,
-                                stderr=stderr, close_fds=close_fds,
-                                env=env, shell=shell, cwd=cwd,
-                                preexec_fn=preexec_fn, executable=executable)
+        return subprocess.Popen(
+            argv,
+            stdin=stdin,
+            stdout=stdout,
+            stderr=stderr,
+            close_fds=close_fds,
+            env=env,
+            shell=shell,
+            cwd=cwd,
+            preexec_fn=preexec_fn,
+            executable=executable,
+        )
 
     def execvpe(self, argv, env=None, **kwargs):
         if env is None:
@@ -77,15 +94,17 @@ class Environment(object):
         # the program. But we're about to replace ourselves with the new
         # program, so no worries about mutating os.environ. If the exec fails
         # the mutation will remain, though.
-        os.environ['PATH'] = env['PATH']
+        os.environ["PATH"] = env["PATH"]
         os.execvpe(argv[0], argv, env)
 
     def slurp(self, **kwargs):
         from ..slurp import Slurper
+
         return Slurper(subproc_factory=self.launch, **kwargs)
 
     def get_wrapout_wrapper(self, **kwargs):
         from ..cli.wrapout import Wrapper
+
         w = Wrapper(**kwargs)
         w.slurp_factory = self.slurp
         return w
@@ -104,10 +123,10 @@ def prepend_path(orig, text, pathsep=os.pathsep):
 
     """
     if orig is None:
-        orig = ''
+        orig = ""
     if not len(orig):
         return text
-    return ''.join([text, pathsep, orig])
+    return "".join([text, pathsep, orig])
 
 
 def prepend_environ_path(env, name, text, pathsep=os.pathsep):
@@ -131,50 +150,55 @@ def prepend_environ_path(env, name, text, pathsep=os.pathsep):
 
 
 def _make_user_data_pather():
-    datadir = os.environ.get('XDG_DATA_HOME', os.path.expanduser('~/.local/share'))
+    datadir = os.environ.get("XDG_DATA_HOME", os.path.expanduser("~/.local/share"))
 
     def pathfunc(*args):
         return os.path.join(datadir, *args)
 
     return pathfunc
 
+
 user_data_path = _make_user_data_pather()
 
 
 # Command-line access
 
+
 class DefaultExecCommand(multitool.Command):
-    name = 'exec'
-    argspec = '<command> [args...]'
-    summary = 'Run a program in the environment.'
+    name = "exec"
+    argspec = "<command> [args...]"
+    summary = "Run a program in the environment."
 
     def invoke(self, args, envclass=None, **kwargs):
         if len(args) < 1:
-            raise multitool.UsageError('exec requires at least 1 argument')
+            raise multitool.UsageError("exec requires at least 1 argument")
 
         envclass().execvpe(args)
 
 
 class DefaultShellCommand(multitool.Command):
     # XXX we hardcode bash!
-    name = 'shell'
-    argspec = ''
-    summary = 'Start an interactive shell in the environment.'
+    name = "shell"
+    argspec = ""
+    summary = "Start an interactive shell in the environment."
     help_if_no_args = False
 
     def invoke(self, args, envname=None, envclass=None, **kwargs):
         if len(args):
-            raise multitool.UsageError('shell expects no arguments')
+            raise multitool.UsageError("shell expects no arguments")
 
         from tempfile import NamedTemporaryFile
-        with NamedTemporaryFile(mode='wt', delete=False) as f:
-            print('''[ -e ~/.bashrc ] && source ~/.bashrc
-PS1="%s $PS1"
-rm %s''' % (envname, f.name), file=f)
 
-        envclass().execvpe(['bash',
-                            '--rcfile', f.name,
-                            '-i'])
+        with NamedTemporaryFile(mode="wt", delete=False) as f:
+            print(
+                """[ -e ~/.bashrc ] && source ~/.bashrc
+PS1="%s $PS1"
+rm %s"""
+                % (envname, f.name),
+                file=f,
+            )
+
+        envclass().execvpe(["bash", "--rcfile", f.name, "-i"])
 
 
 class DefaultTool(multitool.Multitool):
@@ -184,16 +208,18 @@ class DefaultTool(multitool.Multitool):
         self.envclass = envclass
         self.module = module
 
-        self.cli_name = 'pkenvtool ' + envname
-        self.summary = 'Run tools in the %s environment.' % envname
-
+        self.cli_name = "pkenvtool " + envname
+        self.summary = "Run tools in the %s environment." % envname
 
     def invoke_command(self, cmd, args, **kwargs):
-        return super(DefaultTool, self).invoke_command(cmd, args,
-                                                       envname=self.envname,
-                                                       envclass=self.envclass,
-                                                       module=self.module,
-                                                       **kwargs)
+        return super(DefaultTool, self).invoke_command(
+            cmd,
+            args,
+            envname=self.envname,
+            envclass=self.envclass,
+            module=self.module,
+            **kwargs
+        )
 
 
 def _default_env_commandline(envname, module, argv):
@@ -205,7 +231,7 @@ def _default_env_commandline(envname, module, argv):
             envclass = v
             break
     else:
-        cli.die('internal error: cannot identify environment class for %s', envname)
+        cli.die("internal error: cannot identify environment class for %s", envname)
 
     tool = DefaultTool(envname, envclass, module)
     tool.populate(itervalues(globals()))
@@ -217,26 +243,28 @@ def commandline(argv=sys.argv):
     cli.backtrace_on_usr1()
     cli.unicode_stdio()
 
-    if len(argv) < 2 or argv[1] in ('-h', '--help'):
-        print('''usage: pkenvtool <environment> [args...]
+    if len(argv) < 2 or argv[1] in ("-h", "--help"):
+        print(
+            """usage: pkenvtool <environment> [args...]
 
-Where acceptable "args" depend on the environment in question.''')
+Where acceptable "args" depend on the environment in question."""
+        )
         return
 
     envname = argv[1]
-    if not len(envname) or envname[0] == '.':
-        cli.die('illegal environment name %r', envname)
+    if not len(envname) or envname[0] == ".":
+        cli.die("illegal environment name %r", envname)
 
     from importlib import import_module
 
     try:
-        envmod = import_module('.' + envname, package=__package__)
+        envmod = import_module("." + envname, package=__package__)
     except Exception:
-        cli.die('unable to load module for environment %r', envname)
+        cli.die("unable to load module for environment %r", envname)
 
-    modargv = ['pkenvtool ' + argv[1]] + argv[2:]
+    modargv = ["pkenvtool " + argv[1]] + argv[2:]
 
-    if hasattr(envmod, 'commandline'):
+    if hasattr(envmod, "commandline"):
         envmod.commandline(modargv)
     else:
         _default_env_commandline(envname, envmod, modargv)
