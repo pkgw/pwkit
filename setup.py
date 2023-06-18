@@ -65,6 +65,15 @@ setup(
         "numpy >= 1.6",
         "six >= 1.9",
     ],
+    extras_require={
+        "docs": [
+            "mock",
+            "numpydoc",
+            "sphinx",
+            "sphinx_rtd_theme",
+            "sphinx-automodapi",
+        ],
+    },
     entry_points={
         "console_scripts": [
             "astrotool = pwkit.cli.astrotool:commandline",
