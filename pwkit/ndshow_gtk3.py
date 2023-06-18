@@ -734,7 +734,7 @@ class Cycler(Viewer):
         index = index % n
 
         if self.needtune is None or self.needtune.size != n:
-            self.needtune = np.ones(n, dtype=np.bool_)
+            self.needtune = np.ones(n, dtype=bool)
 
         if index == self.i:
             return
@@ -868,7 +868,7 @@ def cycle(
     assert stride % 4 == 0  # stride is in bytes
     imgdata = np.empty((n, h, stride // 4), dtype=np.uint32)
     fixed = np.empty((n, h, w), dtype=np.int32)
-    antimask = np.empty((n, h, w), dtype=np.bool_)
+    antimask = np.empty((n, h, w), dtype=bool)
     surfaces = [None] * n
 
     imgdata.fill(0xFF000000)

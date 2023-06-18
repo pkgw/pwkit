@@ -1130,7 +1130,7 @@ def extractbpflags(calpath, deststream):
 
         # This is the logical 'or' of the two polarizations: i.e., anything that
         # is flagged in either poln is flagged in this.
-        sqflag = ~((~flag).prod(axis=0, dtype=np.bool))
+        sqflag = ~((~flag).prod(axis=0, dtype=bool))
 
         runstart = None
 

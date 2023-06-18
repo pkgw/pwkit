@@ -338,7 +338,7 @@ def tt_bblock(tstarts, tstops, times, p0=0.05, intersect_with_bins=False):
         # we know that all bins are either entirely in a good GTI or entirely
         # outside, so the logic is simplified but not necessarily obvious.
 
-        good_timeslot = np.zeros(all_times.size, dtype=np.bool)
+        good_timeslot = np.zeros(all_times.size, dtype=bool)
 
         for t0, t1 in zip(tstarts, tstops):
             ok = (all_times >= t0) & (all_times < t1)

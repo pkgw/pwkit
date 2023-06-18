@@ -270,7 +270,7 @@ _vis_pconcat_cols = frozenset(
 _vis_data_cols = frozenset("DATA MODEL_DATA CORRECTED_DATA".split())
 _vis_empty_cols = frozenset("FLAG_CATEGORY".split())
 _vis_pconcat_dtypes = {
-    "FLAG": np.bool,
+    "FLAG": bool,
     "DATA": np.complex128,
     "MODEL_DATA": np.complex128,
     "CORRECTED_DATA": np.complex128,
