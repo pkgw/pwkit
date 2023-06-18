@@ -30,9 +30,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 __all__ = str("CiaoEnvironment CiaoTool").split()
 
-import io, six
-
-from ... import PKError, cli
+from ... import PKError
 from ...cli import multitool
 from ...io import Path
 from .. import Environment, prepend_environ_path, user_data_path
@@ -162,8 +160,6 @@ class CiaoTool(multitool.Multitool):
 
 
 def commandline(argv):
-    from six import itervalues
-
     tool = CiaoTool()
-    tool.populate(itervalues(globals()))
+    tool.populate(globals().values())
     tool.commandline(argv)

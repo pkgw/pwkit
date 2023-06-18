@@ -20,14 +20,12 @@ gpdiagnostics_cli
 """
 ).split()
 
-import six
-from six.moves import range
 import numpy as np
 from scipy.stats import scoreatpercentile
 import omega as om, omega.render
 from pwkit.kwargv import ParseKeywords, Custom
 from pwkit.io import Path
-from pwkit import cli, numutil
+from pwkit import cli
 from pwkit.environments.casa import util
 
 
@@ -121,7 +119,7 @@ class GainCal(object):
         self.nsamps = len(bybl)
 
         seenants = set()
-        for a1, a2 in six.viewkeys(bybl):
+        for a1, a2 in bybl.keys():
             seenants.add(a1)
             seenants.add(a2)
         self.ants = np.array(sorted(seenants))
@@ -133,7 +131,7 @@ class GainCal(object):
         self.blidxs = np.empty((self.nsamps, 2), dtype=int)
         self.nperant = np.zeros((self.nants,), dtype=int)
 
-        for i, (bl, (data, flags)) in enumerate(six.viewitems(bybl)):
+        for i, (bl, (data, flags)) in enumerate(bybl.items()):
             ok = ~flags
             self.ncontrib[i] = ok.sum()
             self.vis[i] = data[ok].mean()
@@ -365,7 +363,7 @@ class DiagnosticsTool(object):
 
         spw, time = key
 
-        for polname, bybl in six.viewitems(self.buffer):
+        for polname, bybl in self.buffer.items():
             self.finish_polarization(spw, time, polname, bybl)
 
     def finish_polarization(self, spw, time, polname, bybl):
@@ -497,7 +495,7 @@ class DiagnosticsTool(object):
 
         # Collect the data as loaded
 
-        skeys = sorted(six.viewkeys(self.results))
+        skeys = sorted(self.results.keys())
         normalized = {}
         spws = set()
         polns = set()
@@ -526,10 +524,10 @@ class DiagnosticsTool(object):
 
         rmin = rmax = imin = imax = amin = amax = None
 
-        for antname, bysp in six.viewitems(normalized):
-            for spwpol in list(six.viewkeys(bysp)):
+        for antname, bysp in normalized.items():
+            for spwpol in list(bysp.keys()):
                 bytime = bysp[spwpol]
-                times = sorted(six.viewkeys(bytime))
+                times = sorted(bytime.keys())
                 samps = np.concatenate(tuple(bytime[t][0] for t in times))
                 otherants = np.concatenate(tuple(bytime[t][1] for t in times))
                 logamps = np.log10(np.abs(samps))
@@ -577,8 +575,8 @@ class DiagnosticsTool(object):
         # Info for overplotted cumulative histogram of log-ampls
 
         def getlogamps():
-            for bysp in six.viewvalues(normalized):
-                for samps, otherant, logamp in six.viewvalues(bysp):
+            for bysp in normalized.values():
+                for samps, otherant, logamp in bysp.values():
                     yield logamp
 
         all_log_amps = np.concatenate(tuple(getlogamps()))
@@ -630,7 +628,7 @@ class DiagnosticsTool(object):
                     lineStyle={"color": (0, 0, 0), "dashing": (1, 3)},
                 )
 
-            for (spw, poln), (samps, otherant, logamp) in six.viewitems(bysp):
+            for (spw, poln), (samps, otherant, logamp) in bysp.items():
                 # Real/imag plot
                 ms = om.stamps.MultiStamp("cnum", "shape", "tlines")
                 ms.fixedsize = 4

@@ -220,7 +220,6 @@ __all__ = """enorm_fast enorm_mpfit_careful enorm_minpack Problem Solution
 ResidualProblem check_derivative""".split()
 
 
-from six.moves import range
 import numpy as np
 
 # Quickie testing infrastructure

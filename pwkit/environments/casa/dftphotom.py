@@ -16,10 +16,7 @@ from __future__ import absolute_import, division, print_function
 
 __all__ = "Config dftphotom dftphotom_cli".split()
 
-import six, sys, os.path, numpy as np
-from six.moves import range
-
-from ... import binary_type, text_type
+import sys, os.path, numpy as np
 
 # Note: zany spacing so that Sphinx can parse the file correctly.
 from ...astutil import *
@@ -366,7 +363,7 @@ def dftphotom(cfg):
     ms.close()
 
     # Could gain some efficiency by using a better data structure than a dict().
-    smjd = sorted(six.iterkeys(tbins))
+    smjd = sorted(tbins.keys())
     cfg.format.header(cfg)
 
     for mjd in smjd:

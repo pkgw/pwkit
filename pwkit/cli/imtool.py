@@ -10,9 +10,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 __all__ = str("commandline").split()
 
 import numpy as np, sys
-from six.moves import range
 
-from .. import PKError
 from . import multitool
 from . import *
 from .. import astimage

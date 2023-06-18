@@ -13,8 +13,7 @@ from __future__ import absolute_import, division, print_function
 
 __all__ = "commandline".split()
 
-import signal, six, subprocess, sys
-from six.moves import range
+import signal, subprocess, sys
 
 from .. import PKError
 from ..io import Path
@@ -75,7 +74,7 @@ def merge_bibtex_collections(citednames, maindict, extradicts, allow_missing=Fal
     records = OrderedDict()
     from itertools import chain
 
-    wantednames = sorted(chain(citednames, six.viewkeys(maindict)))
+    wantednames = sorted(chain(citednames, maindict.keys()))
 
     for name in wantednames:
         rec = allrecords.get(name)
@@ -169,7 +168,7 @@ def merge_bibtex_with_aux(
     )
 
     with mainpath.make_tempfile(want="handle", resolution="overwrite") as newbib:
-        write_bibtex_dict(newbib, six.viewvalues(merged))
+        write_bibtex_dict(newbib, merged.values())
 
 
 # This batch of code implements the filename-recorder-to-Makefile magic.
@@ -181,7 +180,7 @@ def convert_fls_to_makefile(
     texpwd = None
 
     with flspath.open("rt") as fls, mfpath.open("wt") as mf:
-        mf.write(six.text_type(finalpath))
+        mf.write(str(finalpath))
         mf.write(":")
 
         for line in fls:
@@ -191,14 +190,14 @@ def convert_fls_to_makefile(
             if kind == "PWD":
                 texpwd = path  # this is always the first line
                 if prefix is not None:
-                    r_prefix = six.text_type((texpwd / prefix).resolve())
-                r_work = six.text_type((texpwd / work).resolve())
+                    r_prefix = str((texpwd / prefix).resolve())
+                r_work = str((texpwd / work).resolve())
 
             if kind != "INPUT":
                 continue
 
             # properly handles absolute and relative `path`:
-            r_full = six.text_type((texpwd / path).resolve())
+            r_full = str((texpwd / path).resolve())
 
             if r_full.startswith(r_work):
                 continue  # ignore .bbl, etc

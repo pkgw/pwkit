@@ -10,7 +10,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 __all__ = str("BaseSASData Events GTIData Lightcurve RegionData").split()
 
 import numpy as np, pandas as pd
-from six.moves import range
 from astropy.time import Time
 from ... import astutil, cli
 from ...io import Path

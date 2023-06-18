@@ -94,12 +94,12 @@ from __future__ import absolute_import, division, print_function
 
 __all__ = "".split()
 
-import io, os.path, six
+import os.path
 
 from ... import PKError, cli
 from ...cli import multitool
 from ...io import Path
-from .. import Environment, prepend_environ_path, user_data_path
+from .. import Environment, prepend_environ_path
 
 
 class SasEnvironment(Environment):
@@ -314,7 +314,7 @@ be the ODF directory, containing a file named MANIFEST.<numbers> and many others
 
         # Sorted list of exposure numbers.
 
-        expnos = dict((i, set()) for i in six.iterkeys(self.instrmap))
+        expnos = dict((i, set()) for i in self.instrmap.keys())
 
         for p in srcpaths:
             instr = p.name[self.INSTRUMENT]
@@ -329,7 +329,7 @@ be the ODF directory, containing a file named MANIFEST.<numbers> and many others
 
         expseqs = {}
 
-        for k, v in six.iteritems(expnos):
+        for k, v in expnos.items():
             expseqs[self.instrmap[k]] = dict((n, i) for i, n in enumerate(sorted(v)))
 
         # Do it.
@@ -505,7 +505,7 @@ be the ODF directory, containing a file named MANIFEST.<numbers> and many others
 
         # Sorted list of exposure numbers.
 
-        expnos = dict((i, set()) for i in six.iterkeys(self.instrmap))
+        expnos = dict((i, set()) for i in self.instrmap.keys())
 
         for p in srcpaths:
             instr = p.name[self.INSTRUMENT]
@@ -518,7 +518,7 @@ be the ODF directory, containing a file named MANIFEST.<numbers> and many others
 
         expseqs = {}
 
-        for k, v in six.iteritems(expnos):
+        for k, v in expnos.items():
             expseqs[self.instrmap[k]] = dict((n, i) for i, n in enumerate(sorted(v)))
 
         # Do it.
@@ -710,8 +710,6 @@ class SasTool(multitool.Multitool):
 
 
 def commandline(argv):
-    from six import itervalues
-
     tool = SasTool()
-    tool.populate(itervalues(globals()))
+    tool.populate(globals().values())
     tool.commandline(argv)

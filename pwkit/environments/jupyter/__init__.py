@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 __all__ = str("JupyterTool commandline").split()
 
-from ... import PKError, cli
+from ... import cli
 from ...io import Path
 from ...cli import multitool
 
@@ -178,8 +178,6 @@ class JupyterTool(multitool.Multitool):
 
 
 def commandline(argv):
-    from six import itervalues
-
     tool = JupyterTool()
-    tool.populate(itervalues(globals()))
+    tool.populate(globals().values())
     tool.commandline(argv)

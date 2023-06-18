@@ -223,8 +223,6 @@ class DefaultTool(multitool.Multitool):
 
 
 def _default_env_commandline(envname, module, argv):
-    from six import itervalues
-
     for name in dir(module):
         v = getattr(module, name)
         if v is not Environment and issubclass(v, Environment):
@@ -234,7 +232,7 @@ def _default_env_commandline(envname, module, argv):
         cli.die("internal error: cannot identify environment class for %s", envname)
 
     tool = DefaultTool(envname, envclass, module)
-    tool.populate(itervalues(globals()))
+    tool.populate(globals().values())
     tool.commandline(argv)
 
 

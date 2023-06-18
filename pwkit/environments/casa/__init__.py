@@ -162,8 +162,6 @@ class CasaTool(multitool.Multitool):
 
 
 def commandline(argv):
-    from six import itervalues
-
     tool = CasaTool()
-    tool.populate(itervalues(globals()))
+    tool.populate(globals().values())
     tool.commandline(argv)

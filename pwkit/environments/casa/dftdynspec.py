@@ -14,10 +14,8 @@ from __future__ import absolute_import, division, print_function
 
 __all__ = "Config Loader dftdynspec dftdynspec_cli".split()
 
-import io, os.path, sys
+import io, os.path
 import numpy as np
-import six
-from six.moves import range
 
 from ... import binary_type, text_type
 
@@ -308,7 +306,7 @@ def dftdynspec(cfg):
 
     # Could gain some efficiency by using a better data structure than a dict().
 
-    smjd = np.asarray(sorted(six.iterkeys(tbins)))
+    smjd = np.asarray(sorted(tbins.keys()))
     data = np.zeros((5, smjd.size, nfreq))
 
     for tid in range(smjd.size):

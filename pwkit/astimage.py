@@ -36,8 +36,6 @@ FITSImage
 SimpleImage
 open""".split()
 
-import six
-from six.moves import range
 import numpy as np
 from numpy import pi
 
@@ -657,7 +655,7 @@ class PyrapImage(AstroImage):
         radian = quantity(1.0, "rad")
 
         for item in c.get_axes():
-            if isinstance(item, six.string_types):
+            if isinstance(item, str):
                 self.axdescs.append(item.replace(" ", "_"))
             else:
                 for subitem in item:
@@ -672,7 +670,7 @@ class PyrapImage(AstroImage):
         i = 0
 
         for item in c.get_unit():
-            if isinstance(item, six.string_types):
+            if isinstance(item, str):
                 wcscale[i] = getconversion(item)
                 i += 1
             elif len(item) == 0:

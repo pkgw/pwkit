@@ -13,7 +13,6 @@ __all__ = str(
 datadir logger forkandlog sanitize_unicode tools"""
 ).split()
 
-import six
 from ... import text_type
 
 # Some constants that can be useful.
@@ -152,9 +151,7 @@ def sanitize_unicode(item):
     if isinstance(item, text_type):
         return item.encode("utf8")
     if isinstance(item, dict):
-        return dict(
-            (sanitize_unicode(k), sanitize_unicode(v)) for k, v in six.iteritems(item)
-        )
+        return dict((sanitize_unicode(k), sanitize_unicode(v)) for k, v in item.items())
     if isinstance(item, (list, tuple)):
         return item.__class__(sanitize_unicode(x) for x in item)
 

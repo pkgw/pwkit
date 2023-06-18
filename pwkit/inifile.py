@@ -31,8 +31,7 @@ __all__ = str(
                   mutate read_stream read write_stream write"""
 ).split()
 
-import io, os, re, six
-from six.moves import range
+import io, os, re
 from . import Holder, PKError
 
 sectionre = re.compile(r"^\[(.*)]\s*$")
@@ -114,7 +113,7 @@ def read_stream(stream):
 
 
 def read(stream_or_path):
-    if isinstance(stream_or_path, six.string_types):
+    if isinstance(stream_or_path, str):
         return read_stream(io.open(stream_or_path, "rt"))
     return read_stream(stream_or_path)
 
@@ -151,7 +150,7 @@ def write_stream(stream, holders, defaultsection=None):
             raise ValueError("cannot determine section name for item <%s>" % h)
         print("[%s]" % s, file=stream)
 
-        for k in sorted(x for x in six.iterkeys(h.__dict__) if x != "section"):
+        for k in sorted(x for x in h.__dict__.keys() if x != "section"):
             v = h.get(k)
             if v is None:
                 continue
@@ -179,7 +178,7 @@ def write(stream_or_path, holders, **kwargs):
       `section` field.
 
     """
-    if isinstance(stream_or_path, six.string_types):
+    if isinstance(stream_or_path, str):
         return write_stream(io.open(stream_or_path, "wt"), holders, **kwargs)
     else:
         return write_stream(stream_or_path, holders, **kwargs)
@@ -313,10 +312,10 @@ def mutate_stream(instream, outstream):
 
 
 def mutate(instream_or_path, outstream_or_path, outmode="wb"):
-    if isinstance(instream_or_path, six.string_types):
+    if isinstance(instream_or_path, str):
         instream_or_path = io.open(instream_or_path, "rb")
 
-    if isinstance(outstream_or_path, six.string_types):
+    if isinstance(outstream_or_path, str):
         outstream_or_path = io.open(outstream_or_path, outmode)
 
     return mutate_stream(instream_or_path, outstream_or_path)

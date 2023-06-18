@@ -20,8 +20,6 @@ try:
 except ImportError:
     import numpy.polynomial as npoly
 
-from six import get_function_code
-from six.moves import range, reduce
 from . import binary_type, text_type
 
 
@@ -336,7 +334,7 @@ class Model(ModelBase):
         Returns *self*.
 
         """
-        code = get_function_code(func)
+        code = func.__code__
         npar = code.co_argcount - len(args)
         pnames = code.co_varnames[:npar]
 

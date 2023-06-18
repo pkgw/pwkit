@@ -9,8 +9,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 __all__ = str("Config polmodel polmodel_cli").split()
 
-import six, numpy as np, tempfile
-from six.moves import range
+import numpy as np, tempfile
 
 from ...astutil import A2R, D2R, sphdist
 from ...cli import check_usage, die

@@ -27,7 +27,6 @@ LazyComputer
 Stretcher""".split()
 
 import numpy as np
-from six.moves import range
 
 from . import colormaps
 

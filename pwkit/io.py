@@ -16,17 +16,13 @@ __all__ = str(
 ).split()
 
 import io, os, pathlib
-import six
 
 from . import PKError, text_type
 
-if six.PY2:
-    path_type = six.binary_type
-else:
-    path_type = six.text_type
-
 
 # Python 2/3 bytes/unicode compat helpers
+
+path_type = str
 
 
 def _get_bytes_stream(base):
@@ -893,7 +889,7 @@ class Path(_ParentPath):
         if dfcols is not None:
             import pandas as pd
 
-            if isinstance(dfcols, six.string_types):
+            if isinstance(dfcols, str):
                 dfcols = dfcols.split()
             retval = pd.DataFrame(dict(zip(dfcols, retval)))
 

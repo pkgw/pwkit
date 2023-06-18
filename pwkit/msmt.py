@@ -83,8 +83,7 @@ __all__ = str(
     uval_default_repval_method uval_dtype uval_nsamples uval_unary_math"""
 ).split()
 
-import operator, six
-from six.moves import range
+import operator
 
 import numpy as np
 
@@ -1992,7 +1991,7 @@ def _make_wrapped_unary_math(name):
 def _init_unary_math():
     g = globals()
 
-    for name in six.iterkeys(scalar_unary_math):
+    for name in scalar_unary_math.keys():
         if name == "isfinite":
             g[name] = lambda v: _dispatch_unary_math("isfinite", True, v)
         else:
@@ -2105,7 +2104,7 @@ def fmtinfo(value):
             return "b", "y", False
         return "b", "", False
 
-    if isinstance(value, six.integer_types):
+    if isinstance(value, int):
         return "i", text_type(value), False
 
     if isinstance(value, float):

@@ -24,7 +24,6 @@ __all__ = str("PDMResult pdm").split()
 
 import numpy as np
 from collections import namedtuple
-from six.moves import range
 
 from .numutil import weighted_variance
 from .parallel import make_parallel_helper

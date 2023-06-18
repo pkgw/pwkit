@@ -20,10 +20,8 @@ ChandraDataSet
 """
 ).split()
 
-import numpy as np, pandas as pd
-from six.moves import range
+import numpy as np
 from astropy.time import Time
-from ... import astutil
 from ...cli import warn
 from ...io import Path
 from ...numutil import fits_recarray_to_data_frame

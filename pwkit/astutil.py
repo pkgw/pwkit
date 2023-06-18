@@ -15,8 +15,6 @@ __all__ = str(
                   gaussian_deconvolve load_skyfield_data AstrometryInfo app2abs abs2app"""
 ).split()
 
-import six
-from six.moves import range
 import numpy as np
 
 from . import text_type, unicode_to_str, PKError
@@ -1048,7 +1046,7 @@ class AstrometryInfo(object):
         if simbadident is not None:
             self.fill_from_simbad(simbadident)
 
-        for k, v in six.iteritems(kwargs):
+        for k, v in kwargs.items():
             setattr(self, k, v)
 
     def _partial_info(self, val0, *rest):
@@ -1347,7 +1345,7 @@ class AstrometryInfo(object):
         info = get_simbad_astrometry_info(ident, debug=debug)
         posref = "unknown"
 
-        for k, v in six.iteritems(info):
+        for k, v in info.items():
             if "~" in v:
                 continue  # no info
 

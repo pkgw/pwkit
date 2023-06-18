@@ -18,8 +18,7 @@ __all__ = str(
 ).split()
 
 
-import sys, numpy as np
-from six.moves import range
+import numpy as np
 
 from . import ellipses, lmmin
 from .astutil import *

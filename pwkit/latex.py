@@ -65,9 +65,7 @@ latexify_u3col
 latexify""".split()
 
 import string
-import six
-from six.moves import range
-from . import Holder, PKError, binary_type, msmt, reraise_context, text_type
+from . import Holder, PKError, binary_type, reraise_context, text_type
 
 
 def _reftext(key):
@@ -365,16 +363,16 @@ class TableBuilder(object):
         if formatter is None:
             formatter = BasicFormatter()
 
-        if isinstance(headings, six.string_types):
+        if isinstance(headings, str):
             headings = (headings,)
 
         try:
-            code = six.get_function_code(datafunc)
+            code = datafunc.__code__
             nargs = code.co_argcount
         except AttributeError:
             if hasattr(datafunc, "__call__"):
                 # This is pretty hacky ...
-                nargs = six.get_function_code(datafunc.__call__).co_argcount - 1
+                nargs = datafunc.__call__.__code__.co_argcount - 1
             else:
                 raise ValueError("cannot find code object for datafunc")
 
@@ -443,8 +441,6 @@ class TableBuilder(object):
         return "\\tablenotemark{%c}" % chr(ord("a") + noteinfo[0])
 
     def emit(self, stream, items):
-        from six import itervalues
-
         write = stream.write
         colinfo = self._colinfo
 
@@ -607,7 +603,7 @@ class TableBuilder(object):
             write("}\n")
 
         for noteinfo in sorted(
-            (ni for ni in itervalues(self._notes) if ni[0] is not None),
+            (ni for ni in self._notes.values() if ni[0] is not None),
             key=lambda ni: ni[0],
         ):
             write("\\tablenotetext{")

@@ -50,8 +50,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 __all__ = str("Cycler Viewer Viewport cycle view").split()
 
-import sys, time
-from six.moves import range
+import sys
 import numpy as np
 import cairo
 

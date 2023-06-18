@@ -19,7 +19,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 __all__ = str("CasapyScript commandline").split()
 
-import os.path, shutil, signal, six, sys, tempfile
+import os.path, shutil, signal, sys, tempfile
 from ... import PKError, cli, reraise_context
 from . import CasaEnvironment
 
@@ -150,7 +150,7 @@ class CasapyScript(object):
 
         self.exitcode = self.proc.wait()
 
-        for signum, prev_handler in six.iteritems(prev_handlers):
+        for signum, prev_handler in prev_handlers.items():
             signal.signal(signum, prev_handler)
 
         # default: delte workdir on success or intentional script abort

@@ -14,12 +14,10 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 __all__ = str("Config dftspect dftspect_cli").split()
 
-import six, sys, os.path, numpy as np
-from six.moves import range
+import sys, os.path, numpy as np
 
-from ... import binary_type, text_type
 from ...astutil import *
-from ...cli import check_usage, die
+from ...cli import die
 from ...kwargv import ParseKeywords, Custom
 from . import util
 from .util import sanitize_unicode as b
@@ -315,7 +313,7 @@ def dftspect(cfg):
 
     ms.close()
 
-    spws = sorted(six.iterkeys(spwbins), key=lambda s: spwmfreqs[s])
+    spws = sorted(spwbins.keys(), key=lambda s: spwmfreqs[s])
     cfg.format.header(cfg)
 
     for spw in spws:

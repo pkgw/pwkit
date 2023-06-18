@@ -8,10 +8,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 __all__ = str("commandline").split()
 
-import math, numpy as np, os, sys
-from six.moves import range
+import math, numpy as np
 
-from .. import PKError
 from ..astutil import *
 from ..cgs import *
 from . import multitool

@@ -28,7 +28,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 __all__ = str("nlogn bin_bblock tt_bblock bs_tt_bblock").split()
 
 
-from six.moves import range
 import numpy as np
 
 from . import Holder

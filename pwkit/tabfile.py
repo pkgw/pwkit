@@ -20,7 +20,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 __all__ = str("read vizread write").split()
 
-import six
 from . import Holder, PKError, io, msmt, reraise_context
 
 
@@ -157,7 +156,7 @@ def write(stream, items, fieldnames, tabwidth=8):
     Returns nothing.
 
     """
-    if isinstance(fieldnames, six.string_types):
+    if isinstance(fieldnames, str):
         fieldnames = fieldnames.split()
 
     maxlens = [0] * len(fieldnames)
@@ -274,7 +273,7 @@ def vizread(descpath, descsection, tabpath, tabwidth=8, **kwargs):
         if i.section != descsection:
             continue
 
-        for field, desc in six.iteritems(i.__dict__):
+        for field, desc in i.__dict__.items():
             if field == "section":
                 continue
 

@@ -13,8 +13,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 __all__ = str("Config ClosureCalculator closures_cli").split()
 
 import collections
-import six, numpy as np
-from six.moves import range, zip
+import numpy as np
 
 from ...cli import check_usage, die
 from ...kwargv import ParseKeywords, Custom

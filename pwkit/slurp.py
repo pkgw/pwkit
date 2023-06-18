@@ -8,13 +8,13 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 __all__ = str("Event Redirection Slurper").split()
 
-import fcntl, os, signal, six, subprocess, sys
+import fcntl, os, signal, subprocess
 from select import select, error as selecterror
 
 from . import Holder
 
 try:
-    from subprocss import DEVNULL as _DEVNULL
+    from subprocess import DEVNULL as _DEVNULL
 except ImportError:
     _DEVNULL = subprocess.STDOUT - 1
 
@@ -230,7 +230,7 @@ class Slurper(object):
     def __exit__(self, etype, evalue, etb):
         self.proc.wait()
 
-        for signum, prev_handler in six.iteritems(self._prev_handlers):
+        for signum, prev_handler in self._prev_handlers.items():
             signal.signal(signum, prev_handler)
 
         return False

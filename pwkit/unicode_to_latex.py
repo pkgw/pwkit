@@ -2395,15 +2395,9 @@ unicode_to_latex_table_base = {
 #    u"\u2AC6\u0338": r"\nsupseteqq",
 #    u"\u2AFD\u20E5": r"{\rlap{\textbackslash}{{/}\!\!{/}}}",
 
-from six import PY2, iteritems, text_type
-
 unicode_to_latex_table = dict(
-    (ord(k), v.decode("ascii")) for k, v in iteritems(unicode_to_latex_table_base)
+    (ord(k), v.decode("ascii")) for k, v in unicode_to_latex_table_base.items()
 )
 unicode_to_latex_string = lambda u: u.translate(unicode_to_latex_table)
 unicode_to_latex_bytes = lambda u: u.translate(unicode_to_latex_table).encode("ascii")
-
-if PY2:
-    unicode_to_latex = unicode_to_latex_bytes
-else:
-    unicode_to_latex = unicode_to_latex_string
+unicode_to_latex = unicode_to_latex_string
