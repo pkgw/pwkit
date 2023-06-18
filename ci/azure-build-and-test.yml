@@ -59,7 +59,7 @@ jobs:
       source activate-conda.sh
       conda activate build
       set -x
-      \conda install -y astropy graphviz numpydoc sphinx sphinx-automodapi sphinx_rtd_theme
+      \conda install -y astropy graphviz mock numpydoc sphinx sphinx-automodapi sphinx_rtd_theme
       cd docs
       make html
       make linkcheck
