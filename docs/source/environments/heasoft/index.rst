@@ -37,7 +37,7 @@ actual version as needed, of course.
 
 Installation of HEASoft from source is strongly recommended. Download the
 source code from a URL like `this one
-<http://heasarc.gsfc.nasa.gov/FTP/software/lheasoft/release/heasoft-6.21src.tar.gz>`_.
+<https://heasarc.gsfc.nasa.gov/FTP/software/lheasoft/lheasoft6.31/heasoft-6.31.1src.tar.gz>`_.
 The HEASoft website lets you customize the tarball, but it’s probably easiest
 just to do the full install every time. The tarball unpacks into a directory
 named like ``heasoft-6.21/...`` so you can safely ``curl|tar`` in your
