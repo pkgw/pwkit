@@ -7,9 +7,9 @@
 """
 from __future__ import absolute_import, division, print_function
 
-__all__ = 'Holder PKError binary_type reraise_context text_type unicode_to_str'.split()
+__all__ = "Holder PKError binary_type reraise_context text_type unicode_to_str".split()
 
-__version__ = '1.1.0.dev0' # also edit ../setup.py, ../docs/source/conf.py!
+__version__ = "1.1.0.dev0"  # also edit ../setup.py, ../docs/source/conf.py!
 
 # Simultaneous Python 2/3 compatibility through the 'six' module. I started
 # out hoping that I could do this all "in-house" without adding the dep, but
@@ -19,7 +19,7 @@ import six
 from six import binary_type, text_type
 
 if six.PY2:
-    unicode_to_str = lambda s: s.__unicode__().encode('utf8')
+    unicode_to_str = lambda s: s.__unicode__().encode("utf8")
 else:
     unicode_to_str = lambda s: s.__unicode__()
 
@@ -41,11 +41,12 @@ class PKError(Exception):
     stringification without applying ``printf``-style formatting.
 
     """
+
     def __init__(self, fmt, *args):
         if not len(args):
-            self.args = (text_type(fmt), )
+            self.args = (text_type(fmt),)
         else:
-            self.args = (text_type(fmt) % args, )
+            self.args = (text_type(fmt) % args,)
 
     def __unicode__(self):
         return self.args[0]
@@ -53,7 +54,7 @@ class PKError(Exception):
     __str__ = unicode_to_str
 
     def __repr__(self):
-        return 'PKError(' + repr(self.args[0]) + ')'
+        return "PKError(" + repr(self.args[0]) + ")"
 
 
 def reraise_context(fmt, *args):
@@ -104,12 +105,12 @@ def reraise_context(fmt, *args):
     ex = sys.exc_info()[1]
 
     if isinstance(ex, EnvironmentError):
-        ex.strerror = '%s: %s' % (cstr, ex.strerror)
+        ex.strerror = "%s: %s" % (cstr, ex.strerror)
         ex.args = (ex.errno, ex.strerror)
     else:
         if len(ex.args):
-            cstr = '%s: %s' % (cstr, ex.args[0])
-        ex.args = (cstr, ) + ex.args[1:]
+            cstr = "%s: %s" % (cstr, ex.args[0])
+        ex.args = (cstr,) + ex.args[1:]
 
     raise
 
@@ -123,6 +124,7 @@ class Holder(object):
     decorator functionality, described below.
 
     """
+
     def __init__(self, __decorating=None, **kwargs):
         import types
 
@@ -131,30 +133,36 @@ class Holder(object):
         elif isinstance(__decorating, six.class_types):
             # We're decorating a class definition. Transform the definition
             # into a Holder instance thusly:
-            values = dict(kv for kv in six.iteritems(__decorating.__dict__)
-                          if not kv[0].startswith('__'))
+            values = dict(
+                kv
+                for kv in six.iteritems(__decorating.__dict__)
+                if not kv[0].startswith("__")
+            )
         else:
             # You could imagine allowing @Holder on a function and doing
             # something with its return value, but I can't think of a use that
             # would be more sensible than just creating and returning a Holder
             # directly.
-            raise ValueError('unexpected use of Holder as a decorator (on %r)'
-                             % __decorating)
+            raise ValueError(
+                "unexpected use of Holder as a decorator (on %r)" % __decorating
+            )
 
         self.set(**values)
 
     def __unicode__(self):
         d = self.__dict__
         s = sorted(six.iterkeys(d))
-        return u'{' + u', '.join(u'%s=%s' % (k, d[k]) for k in s) + u'}'
+        return "{" + ", ".join("%s=%s" % (k, d[k]) for k in s) + "}"
 
     __str__ = unicode_to_str
 
     def __repr__(self):
         d = self.__dict__
         s = sorted(six.iterkeys(d))
-        return '%s(%s)' % (self.__class__.__name__,
-                            ', '.join('%s=%r' % (k, d[k]) for k in s))
+        return "%s(%s)" % (
+            self.__class__.__name__,
+            ", ".join("%s=%r" % (k, d[k]) for k in s),
+        )
 
     def __iter__(self):
         return six.iteritems(self.__dict__)
@@ -203,20 +211,16 @@ class Holder(object):
         return name in self.__dict__
 
     def copy(self):
-        """Return a shallow copy of this object.
-
-        """
+        """Return a shallow copy of this object."""
         new = self.__class__()
         new.__dict__ = dict(self.__dict__)
         return new
 
     def to_dict(self):
-        """Return a copy of this object converted to a :class:`dict`.
-
-        """
+        """Return a copy of this object converted to a :class:`dict`."""
         return self.__dict__.copy()
 
-    def to_pretty(self, format='str'):
+    def to_pretty(self, format="str"):
         """Return a string with a prettified version of this object’s contents.
 
         The format is a multiline string where each line is of the form ``key
@@ -229,10 +233,10 @@ class Holder(object):
         Python :class:`dict` literal.
 
         """
-        if format == 'str':
-            template = '%-*s = %s'
-        elif format == 'repr':
-            template = '%-*s = %r'
+        if format == "str":
+            template = "%-*s = %s"
+        elif format == "repr":
+            template = "%-*s = %r"
         else:
             raise ValueError('unrecognized value for "format": %r' % format)
 
@@ -242,5 +246,4 @@ class Holder(object):
         for k in six.iterkeys(d):
             maxlen = max(maxlen, len(k))
 
-        return '\n'.join(template % (maxlen, k, d[k])
-                         for k in sorted(six.iterkeys(d)))
+        return "\n".join(template % (maxlen, k, d[k]) for k in sorted(six.iterkeys(d)))
