@@ -1,0 +1,66 @@
+# Main build jobs for CI/CD on Azure Pipelines.
+
+parameters:
+- name: builds
+  type: object
+  default:
+
+  - name: linux_310
+    vmImage: ubuntu-20.04
+    vars:
+      PYTHON_SERIES: "3.10"
+
+  - name: macos_310
+    vmImage: macos-11
+    vars:
+      PYTHON_SERIES: "3.10"
+
+jobs:
+- ${{ each build in parameters.builds }}:
+  - job: ${{ format('build_{0}', build.name) }}
+    pool:
+      vmImage: ${{ build.vmImage }}
+    variables:
+      ${{ insert }}: ${{ build.vars }}
+    steps:
+
+    - template: azure-job-setup.yml
+      parameters:
+        setupBuild: true
+
+    - bash: |
+        set -euo pipefail
+        source activate-conda.sh
+        set -x
+        \conda create -y -n build setuptools pip python="$PYTHON_SERIES"
+        conda activate build
+        pip install $BASH_WORKSPACE/sdist/*.tar.gz
+      displayName: Install from sdist
+
+- job: docs
+  pool:
+    vmImage: ubuntu-latest
+  steps:
+  - template: azure-job-setup.yml
+    parameters:
+      setupBuild: true
+
+  - bash: |
+      set -euo pipefail
+      source activate-conda.sh
+      set -x
+      \conda create -y -n build setuptools pip python=3.8
+      conda activate build
+      pip install $BASH_WORKSPACE/sdist/*.tar.gz
+    displayName: Install from sdist
+
+  - bash: |
+      set -euo pipefail
+      source activate-conda.sh
+      conda activate build
+      set -x
+      \conda install -y astropy graphviz numpydoc sphinx sphinx-automodapi sphinx_rtd_theme
+      cd docs
+      make html
+      make linkcheck
+    displayName: Build docs

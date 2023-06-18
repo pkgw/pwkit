@@ -1,0 +1,86 @@
+# First stage of CI: create the `sdist` and Cranko release commit.
+
+jobs:
+
+- job: sdist
+  pool:
+    vmImage: ubuntu-latest
+
+  # Need Zenodo credentials to generate DOIs during formal releases. Try not to
+  # provide credentials otherwise, in case of malicious PRs. But note that such
+  # a PR could just remove this filter anyway -- that's why modern CI systems
+  # don't provide secrets during PR builds in the first place.
+  ${{ if and(eq(variables['Build.SourceBranchName'], 'rc'), ne(variables['build.reason'], 'PullRequest')) }}:
+    variables:
+    - group: Deployment Credentials
+
+  steps:
+
+  - checkout: self
+
+  - bash: |
+      set -euo pipefail
+      d="$(mktemp -d /tmp/cranko.XXXXXX)"
+      cd "$d"
+      curl --proto '=https' --tlsv1.2 -sSf https://pkgw.github.io/cranko/fetch-latest.sh | sh
+      echo "##vso[task.prependpath]$d"
+    displayName: Install latest Cranko
+
+  - bash: cranko release-workflow apply-versions
+    displayName: Apply Cranko versions
+
+  - bash: cranko zenodo preregister --metadata=ci/zenodo.json5 pwkit CHANGELOG.md
+    displayName: "Preregister Zenodo DOI"
+    ${{ if and(eq(variables['Build.SourceBranchName'], 'rc'), ne(variables['build.reason'], 'PullRequest')) }}:
+      env:
+        ZENODO_TOKEN: $(ZENODO_TOKEN)
+
+  - bash: |
+      set -xeuo pipefail
+      git add .
+      cranko release-workflow commit
+      git show
+    displayName: Make release commit
+
+  # Note: in order for Cranko to work at all, and this step in particular,
+  # "shallow" Git checkouts must be disabled in the project's Azure pipelines
+  # configuration.
+  - bash: |
+      artifact_dir="$(Build.ArtifactStagingDirectory)/git-release"
+      mkdir -p "$artifact_dir"
+      git bundle create "$artifact_dir/release.bundle" origin/master..HEAD
+    displayName: Bundle release commit
+
+  - task: PublishPipelineArtifact@1
+    displayName: Publish release git bundle artifact
+    inputs:
+      targetPath: '$(Build.ArtifactStagingDirectory)/git-release'
+      artifactName: git-release
+
+  # TODO: it seems that at the moment, there is no better way to create an
+  # sdist than to invoke setup.py directly. People seem to be working on
+  # alternatives but nothing is official yet.
+
+  - bash: |
+      set -euo pipefail
+      eval "$($CONDA/bin/conda shell.bash hook)"
+      set -x
+      conda activate
+      conda config --add channels conda-forge
+      conda install -y numpy
+    displayName: Set up dependencies
+
+  - bash: |
+      set -euo pipefail
+      eval "$($CONDA/bin/conda shell.bash hook)"
+      conda activate
+      set -x
+      python setup.py sdist
+      tar tzf dist/*.tar.gz |sort
+    displayName: Create sdist
+
+  - task: PublishPipelineArtifact@1
+    displayName: Publish sdist artifact
+    inputs:
+      targetPath: dist
+      artifactName: sdist
