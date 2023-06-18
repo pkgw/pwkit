@@ -1,0 +1,5 @@
+[tool.cranko]
+annotated_files = [
+  "pwkit/__init__.py",
+  "docs/source/conf.py",
+]

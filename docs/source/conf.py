@@ -11,8 +11,8 @@ extensions = [
 ]
 
 project = "pwkit"
-version = "master"  # also edit /setup.py, /pwkit/__init__.py!
-release = "1.1.0.dev0"
+release = "0.dev0"  # cranko project-version
+version = ".".join(release.split(".")[:2])
 
 copyright = "2015-2019, Peter K. G. Williams and collaborators"
 author = "Peter K. G. Williams and collaborators"
