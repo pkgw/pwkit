@@ -42,9 +42,9 @@ filenames specially.
 """
 from __future__ import absolute_import, division, print_function
 
-__all__ = '''
+__all__ = """
 Calculator
-'''
+"""
 
 import ctypes
 import numpy as np
@@ -112,7 +112,10 @@ OUT_VAL_ODAMP = 2
 OUT_VAL_XINT = 3
 OUT_VAL_XDAMP = 4
 
-E0_MEV = cgs.me * cgs.c**2 * cgs.evpererg * 1e-6 # helpful: electron rest-mass-energy in MeV (~= 0.511)
+E0_MEV = (
+    cgs.me * cgs.c**2 * cgs.evpererg * 1e-6
+)  # helpful: electron rest-mass-energy in MeV (~= 0.511)
+
 
 class FK10Invoker(object):
     "The lowest-level interface to the FK10 code."
@@ -125,16 +128,15 @@ class FK10Invoker(object):
         self.get_mw.restype = ctypes.c_int
         self.get_mw.argtypes = (ctypes.c_int, ctypes.POINTER(pointer_pair))
 
-
     def __call__(self, in_values, out_values=None):
         if not isinstance(in_values, np.ndarray):
-            raise ValueError('in_values must be an ndarray')
+            raise ValueError("in_values must be an ndarray")
         if not in_values.flags.c_contiguous:
-            raise ValueError('in_values must be C-contiguous')
+            raise ValueError("in_values must be C-contiguous")
         if in_values.dtype != np.float32:
-            raise ValueError('in_values must have the C-float dtype')
+            raise ValueError("in_values must have the C-float dtype")
         if in_values.shape != (29,):
-            raise ValueError('in_values must have a shape of (29,)')
+            raise ValueError("in_values must have a shape of (29,)")
 
         n_freqs = int(in_values[IN_VAL_NFREQ])
 
@@ -143,23 +145,27 @@ class FK10Invoker(object):
             out_values.fill(np.nan)
         else:
             if not isinstance(out_values, np.ndarray):
-                raise ValueError('out_values must be an ndarray')
+                raise ValueError("out_values must be an ndarray")
             if not out_values.flags.c_contiguous:
-                raise ValueError('out_values must be C-contiguous')
+                raise ValueError("out_values must be C-contiguous")
             if not out_values.flags.writeable:
-                raise ValueError('out_values must be writeable')
+                raise ValueError("out_values must be writeable")
             if out_values.dtype != np.float32:
-                raise ValueError('out_values must have the C-float dtype')
+                raise ValueError("out_values must have the C-float dtype")
             if out_values.shape != (n_freqs, 5):
-                raise ValueError('out_values must have a shape of ({},5), where the first '
-                                 'dimension comes from in_values'.format(n_freqs))
+                raise ValueError(
+                    "out_values must have a shape of ({},5), where the first "
+                    "dimension comes from in_values".format(n_freqs)
+                )
 
         in_ptr = in_values.ctypes.data_as(ctypes.c_void_p)
         out_ptr = out_values.ctypes.data_as(ctypes.c_void_p)
         res = self.get_mw(2, pointer_pair(in_ptr, out_ptr))
 
         if res != 0:
-            raise Exception('bad inputs to GET_MW function; return code was {}'.format(res))
+            raise Exception(
+                "bad inputs to GET_MW function; return code was {}".format(res)
+            )
 
         return out_values
 
@@ -169,6 +175,7 @@ def make_in_vals_array():
 
 
 # Some diagnostics of the low-level code.
+
 
 def do_figure9_calc_lowlevel(shlib_path, set_unused=True):
     """Reproduce the calculation used to produce Figure 9 of the Fleischman &
@@ -261,23 +268,24 @@ def make_figure9_plot(shlib_path, use_lowlevel=True, **kwargs):
     else:
         out_vals = do_figure9_calc_highlevel(shlib_path, **kwargs)
 
-    freqs = out_vals[:,OUT_VAL_FREQ]
-    tot_ints = out_vals[:,OUT_VAL_OINT] + out_vals[:,OUT_VAL_XINT]
-    pos = (tot_ints > 0)
+    freqs = out_vals[:, OUT_VAL_FREQ]
+    tot_ints = out_vals[:, OUT_VAL_OINT] + out_vals[:, OUT_VAL_XINT]
+    pos = tot_ints > 0
 
-    p = om.quickXY(freqs[pos], tot_ints[pos], 'Calculation', xlog=1, ylog=1)
+    p = om.quickXY(freqs[pos], tot_ints[pos], "Calculation", xlog=1, ylog=1)
 
     nu_obs = np.array([1.0, 2.0, 3.75, 9.4, 17.0, 34.0])
     int_obs = np.array([12.0, 43.0, 29.0, 6.3, 1.7, 0.5])
-    p.addXY(nu_obs, int_obs, 'Observations', lines=False)
+    p.addXY(nu_obs, int_obs, "Observations", lines=False)
 
     p.defaultKeyOverlay.hAlign = 0.93
     p.setBounds(0.5, 47, 0.1, 60)
-    p.setLabels('Emission frequency, GHz', 'Total intensity, sfu')
+    p.setLabels("Emission frequency, GHz", "Total intensity, sfu")
     return p
 
 
 # The high-level interface that someone might actually want to use.
+
 
 class Calculator(object):
     """An interface to the FK10 synchrotron routines.
@@ -298,6 +306,7 @@ class Calculator(object):
       self.set_trapezoidal_integration(15)
 
     """
+
     def __init__(self, shlib_path):
         self.func = FK10Invoker(shlib_path)
         self.in_vals = make_in_vals_array()
@@ -317,7 +326,6 @@ class Calculator(object):
         # the input depth, or problem parameters, are really bonkers.
         self.in_vals[IN_VAL_DEPTH] = 1e9
 
-
     @classmethod
     def new_for_fk10_fig9(cls, shlib_path):
         """Create a calculator initialized to reproduce Figure 9 from FK10.
@@ -327,22 +335,23 @@ class Calculator(object):
         values for all of its parameters.
 
         """
-        inst = (cls(shlib_path)
+        inst = (
+            cls(shlib_path)
             .set_thermal_background(2.1e7, 3e9)
             .set_bfield(48)
-            .set_edist_powerlaw(0.016, 4.0, 3.7, 5e9/3)
+            .set_edist_powerlaw(0.016, 4.0, 3.7, 5e9 / 3)
             .set_freqs(100, 0.5, 50)
             .set_hybrid_parameters(12, 12)
             .set_ignore_q_terms(False)
             .set_obs_angle(50 * np.pi / 180)
             .set_padist_gaussian_loss_cone(0.5 * np.pi, 0.4)
-            .set_trapezoidal_integration(15))
+            .set_trapezoidal_integration(15)
+        )
 
         # haven't yet figure out how to deal with this part:
         inst.in_vals[0] = 1.33e18
         inst.in_vals[1] = 6e8
         return inst
-
 
     def compute_lowlevel(self, **kwargs):
         """Return the raw array computed by the FK10 code
@@ -360,7 +369,6 @@ class Calculator(object):
         """
         return self.func(self.in_vals, **kwargs)
 
-
     def set_bfield(self, B_G):
         """Set the strength of the local magnetic field.
 
@@ -372,11 +380,10 @@ class Calculator(object):
           *self* for convenience in chaining.
         """
         if not (B_G > 0):
-            raise ValueError('must have B_G > 0; got %r' % (B_G,))
+            raise ValueError("must have B_G > 0; got %r" % (B_G,))
 
         self.in_vals[IN_VAL_B] = B_G
         return self
-
 
     def set_bfield_for_s0(self, s0):
         """Set B to probe a certain harmonic number.
@@ -395,12 +402,11 @@ class Calculator(object):
 
         """
         if not (s0 > 0):
-            raise ValueError('must have s0 > 0; got %r' % (s0,))
+            raise ValueError("must have s0 > 0; got %r" % (s0,))
 
         B0 = 2 * np.pi * cgs.me * cgs.c * self.in_vals[IN_VAL_FREQ0] / (cgs.e * s0)
         self.in_vals[IN_VAL_B] = B0
         return self
-
 
     def set_edist_powerlaw(self, emin_mev, emax_mev, delta, ne_cc):
         """Set the energy distribution function to a power law.
@@ -419,13 +425,15 @@ class Calculator(object):
           *self* for convenience in chaining.
         """
         if not (emin_mev >= 0):
-            raise ValueError('must have emin_mev >= 0; got %r' % (emin_mev,))
+            raise ValueError("must have emin_mev >= 0; got %r" % (emin_mev,))
         if not (emax_mev >= emin_mev):
-            raise ValueError('must have emax_mev >= emin_mev; got %r, %r' % (emax_mev, emin_mev))
+            raise ValueError(
+                "must have emax_mev >= emin_mev; got %r, %r" % (emax_mev, emin_mev)
+            )
         if not (delta >= 0):
-            raise ValueError('must have delta >= 0; got %r, %r' % (delta,))
+            raise ValueError("must have delta >= 0; got %r, %r" % (delta,))
         if not (ne_cc >= 0):
-            raise ValueError('must have ne_cc >= 0; got %r, %r' % (ne_cc,))
+            raise ValueError("must have ne_cc >= 0; got %r, %r" % (ne_cc,))
 
         self.in_vals[IN_VAL_EDIST] = EDIST_PLW
         self.in_vals[IN_VAL_EMIN] = emin_mev
@@ -433,7 +441,6 @@ class Calculator(object):
         self.in_vals[IN_VAL_DELTA1] = delta
         self.in_vals[IN_VAL_NB] = ne_cc
         return self
-
 
     def set_edist_powerlaw_gamma(self, gmin, gmax, delta, ne_cc):
         """Set the energy distribution function to a power law in the Lorentz factor
@@ -452,13 +459,13 @@ class Calculator(object):
           *self* for convenience in chaining.
         """
         if not (gmin >= 1):
-            raise ValueError('must have gmin >= 1; got %r' % (gmin,))
+            raise ValueError("must have gmin >= 1; got %r" % (gmin,))
         if not (gmax >= gmin):
-            raise ValueError('must have gmax >= gmin; got %r, %r' % (gmax, gmin))
+            raise ValueError("must have gmax >= gmin; got %r, %r" % (gmax, gmin))
         if not (delta >= 0):
-            raise ValueError('must have delta >= 0; got %r, %r' % (delta,))
+            raise ValueError("must have delta >= 0; got %r, %r" % (delta,))
         if not (ne_cc >= 0):
-            raise ValueError('must have ne_cc >= 0; got %r, %r' % (ne_cc,))
+            raise ValueError("must have ne_cc >= 0; got %r, %r" % (ne_cc,))
 
         self.in_vals[IN_VAL_EDIST] = EDIST_PLG
         self.in_vals[IN_VAL_EMIN] = (gmin - 1) * E0_MEV
@@ -466,7 +473,6 @@ class Calculator(object):
         self.in_vals[IN_VAL_DELTA1] = delta
         self.in_vals[IN_VAL_NB] = ne_cc
         return self
-
 
     def set_freqs(self, n, f_lo_ghz, f_hi_ghz):
         """Set the frequency grid on which to perform the calculations.
@@ -484,17 +490,18 @@ class Calculator(object):
 
         """
         if not (f_lo_ghz >= 0):
-            raise ValueError('must have f_lo_ghz >= 0; got %r' % (f_lo_ghz,))
+            raise ValueError("must have f_lo_ghz >= 0; got %r" % (f_lo_ghz,))
         if not (f_hi_ghz >= f_lo_ghz):
-            raise ValueError('must have f_hi_ghz >= f_lo_ghz; got %r, %r' % (f_hi_ghz, f_lo_ghz))
+            raise ValueError(
+                "must have f_hi_ghz >= f_lo_ghz; got %r, %r" % (f_hi_ghz, f_lo_ghz)
+            )
         if not n >= 1:
-            raise ValueError('must have n >= 1; got %r' % (n,))
+            raise ValueError("must have n >= 1; got %r" % (n,))
 
         self.in_vals[IN_VAL_NFREQ] = n
-        self.in_vals[IN_VAL_FREQ0] = f_lo_ghz * 1e9 # GHz => Hz
+        self.in_vals[IN_VAL_FREQ0] = f_lo_ghz * 1e9  # GHz => Hz
         self.in_vals[IN_VAL_LOGDFREQ] = np.log10(f_hi_ghz / f_lo_ghz) / n
         return self
-
 
     def set_hybrid_parameters(self, s_C, s_WH, do_renorm=True):
         """Set the hybrid/renormalization control parameters.
@@ -546,7 +553,6 @@ class Calculator(object):
         self.in_vals[IN_VAL_RENORMFLAG] = 1 if do_renorm else 0
         return self
 
-
     def set_obs_angle(self, theta_rad):
         """Set the observer angle relative to the field.
 
@@ -558,9 +564,8 @@ class Calculator(object):
         Returns
           *self* for convenience in chaining.
         """
-        self.in_vals[IN_VAL_THETA] = theta_rad * 180 / np.pi # rad => deg
+        self.in_vals[IN_VAL_THETA] = theta_rad * 180 / np.pi  # rad => deg
         return self
-
 
     def set_one_freq(self, f_ghz):
         """Set the code to calculate results at just one frequency.
@@ -574,13 +579,12 @@ class Calculator(object):
 
         """
         if not (f_ghz >= 0):
-            raise ValueError('must have f_lo_ghz >= 0; got %r' % (f_lo_ghz,))
+            raise ValueError("must have f_lo_ghz >= 0; got %r" % (f_lo_ghz,))
 
         self.in_vals[IN_VAL_NFREQ] = 1
-        self.in_vals[IN_VAL_FREQ0] = f_ghz * 1e9 # GHz -> Hz
+        self.in_vals[IN_VAL_FREQ0] = f_ghz * 1e9  # GHz -> Hz
         self.in_vals[IN_VAL_LOGDFREQ] = 1.0
         return self
-
 
     def set_padist_gaussian_loss_cone(self, boundary_rad, expwidth):
         """Set the pitch-angle distribution to a Gaussian loss cone.
@@ -601,10 +605,9 @@ class Calculator(object):
 
         """
         self.in_vals[IN_VAL_PADIST] = PADIST_GLC
-        self.in_vals[IN_VAL_LCBDY] = boundary_rad * 180 / np.pi # rad => deg
+        self.in_vals[IN_VAL_LCBDY] = boundary_rad * 180 / np.pi  # rad => deg
         self.in_vals[IN_VAL_DELTAMU] = expwidth
         return self
-
 
     def set_padist_isotropic(self):
         """Set the pitch-angle distribution to be isotropic.
@@ -615,7 +618,6 @@ class Calculator(object):
         """
         self.in_vals[IN_VAL_PADIST] = PADIST_ISO
         return self
-
 
     def set_ignore_q_terms(self, ignore_q_terms):
         """Set whether "Q" terms are ignored.
@@ -635,7 +637,6 @@ class Calculator(object):
         # "HomSrc_C" version of the library.
         self.in_vals[IN_VAL_QFLAG] = 0 if ignore_q_terms else 2
         return self
-
 
     def set_thermal_background(self, T_K, nth_cc):
         """Set the properties of the background thermal plasma.
@@ -660,14 +661,13 @@ class Calculator(object):
 
         """
         if not (T_K >= 0):
-            raise ValueError('must have T_K >= 0; got %r' % (T_K,))
+            raise ValueError("must have T_K >= 0; got %r" % (T_K,))
         if not (nth_cc >= 0):
-            raise ValueError('must have nth_cc >= 0; got %r, %r' % (nth_cc,))
+            raise ValueError("must have nth_cc >= 0; got %r, %r" % (nth_cc,))
 
         self.in_vals[IN_VAL_T0] = T_K
         self.in_vals[IN_VAL_N0] = nth_cc
         return self
-
 
     def set_trapezoidal_integration(self, n):
         """Set the code to use trapezoidal integration.
@@ -681,11 +681,10 @@ class Calculator(object):
 
         """
         if not (n >= 2):
-            raise ValueError('must have n >= 2; got %r' % (n,))
+            raise ValueError("must have n >= 2; got %r" % (n,))
 
         self.in_vals[IN_VAL_INTEG_METH] = n + 1
         return self
-
 
     def find_rt_coefficients(self, depth0=None):
         """Figure out emission and absorption coefficients for the current parameters.
@@ -726,7 +725,9 @@ class Calculator(object):
 
         """
         if self.in_vals[IN_VAL_NFREQ] != 1:
-            raise Exception('must have nfreq=1 to run Calculator.find_rt_coefficients()')
+            raise Exception(
+                "must have nfreq=1 to run Calculator.find_rt_coefficients()"
+            )
 
         if depth0 is not None:
             depth = depth0
@@ -748,29 +749,29 @@ class Calculator(object):
 
         actions = {
             (-1, -1): SHRINK,
-            (-1,  0): SHRINK,
-            (-1,  1): ABORT,
-            ( 0, -1): SHRINK,
-            ( 0,  0): DONE,
-            ( 0,  1): GROW,
-            ( 1, -1): ABORT,
-            ( 1,  0): GROW,
-            ( 1,  1): GROW,
+            (-1, 0): SHRINK,
+            (-1, 1): ABORT,
+            (0, -1): SHRINK,
+            (0, 0): DONE,
+            (0, 1): GROW,
+            (1, -1): ABORT,
+            (1, 0): GROW,
+            (1, 1): GROW,
         }
 
-        last_change = DONE # our first change will be treated as a change in direction
+        last_change = DONE  # our first change will be treated as a change in direction
 
         for attempt_number in range(20):
             self.compute_lowlevel(out_values=buf)
-            co = classify(buf[0,OUT_VAL_ODAMP])
-            cx = classify(buf[0,OUT_VAL_XDAMP])
+            co = classify(buf[0, OUT_VAL_ODAMP])
+            cx = classify(buf[0, OUT_VAL_XDAMP])
             action = actions[co, cx]
             ###print('Z', attempt_number, self.in_vals[IN_VAL_DEPTH], last_change, buf, co, cx, action)
 
             if action == DONE:
                 break
             elif action == ABORT:
-                raise Exception('depths of X and O modes are seriously incompatible')
+                raise Exception("depths of X and O modes are seriously incompatible")
             elif action == GROW:
                 if last_change != GROW:
                     scale_factor *= 0.3
@@ -785,25 +786,26 @@ class Calculator(object):
             self.in_vals[IN_VAL_DEPTH] = depth
         else:
             # If we get here, we never explicitly quit the loop
-            raise Exception('depth-finding algorithm did not converge!')
+            raise Exception("depth-finding algorithm did not converge!")
 
         # OK, we found some good depths! Now calculate the RT coefficients. I believe that
         # I'm doing this right ...
 
-        sfu_to_specintens = 1e4 * cgs.cgsperjy * cgs.cmperau**2 / self.in_vals[IN_VAL_AREA]
+        sfu_to_specintens = (
+            1e4 * cgs.cgsperjy * cgs.cmperau**2 / self.in_vals[IN_VAL_AREA]
+        )
 
-        damp_X = buf[0,OUT_VAL_XDAMP]
+        damp_X = buf[0, OUT_VAL_XDAMP]
         alpha_X = -np.log(damp_X) / depth
-        si_X = buf[0,OUT_VAL_XINT] * sfu_to_specintens
+        si_X = buf[0, OUT_VAL_XINT] * sfu_to_specintens
         j_X = si_X * alpha_X / (1 - damp_X)
 
-        damp_O = buf[0,OUT_VAL_ODAMP]
+        damp_O = buf[0, OUT_VAL_ODAMP]
         alpha_O = -np.log(damp_O) / depth
-        si_O = buf[0,OUT_VAL_OINT] * sfu_to_specintens
+        si_O = buf[0, OUT_VAL_OINT] * sfu_to_specintens
         j_O = si_O * alpha_O / (1 - damp_O)
 
         return (j_O, alpha_O, j_X, alpha_X)
-
 
     def find_rt_coefficients_tot_intens(self, depth0=None):
         """Figure out total-intensity emission and absorption coefficients for the
@@ -831,5 +833,5 @@ class Calculator(object):
         """
         j_O, alpha_O, j_X, alpha_X = self.find_rt_coefficients(depth0=depth0)
         j_I = j_O + j_X
-        alpha_I = 0.5 * (alpha_O + alpha_X) # uhh... right?
+        alpha_I = 0.5 * (alpha_O + alpha_X)  # uhh... right?
         return (j_I, alpha_I)
