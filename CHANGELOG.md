@@ -1,13 +1,8 @@
-# Next version (unreleased)
+# See elsewhere for changelog
 
-- The `pwkit.colormaps` demo program is updated to use Gtk+ 3 via
-  gobject-introspection, rather than Gtk+ 2.
+This project’s release notes are curated from the Git history of its main
+branch. You can find them by looking at [the version of this file on the
+`release` branch][branch] or the [GitHub release history][gh-releases].
 
-# Version 1.0.0 (2019 Dec 19)
-
-Call this version 1.0.0!
-
-- Fixed `casatask bpplot` to work when not all spectral windows in the
-  bandpass solution contain the same number of channels.
-- Fixed `casatask bpplot` to work when an amplitude or phase solution is
-  exactly constant.
+[branch]: https://github.com/pkgw/pwkit/blob/release/CHANGELOG.md
+[gh-releases]: https://github.com/pkgw/pwkit/releases

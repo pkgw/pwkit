@@ -26,9 +26,9 @@ record] in the [NASA Astrophysics Data System], which has identifier
 get the ADS-recommended BibTeX record for the reference.
 
 [ApJ]: http://iopscience.iop.org/journal/0004-637X
-[its record]: https://ui.adsabs.harvard.edu/#abs/2017ascl.soft04001W/abstract
+[its record]: https://ui.adsabs.harvard.edu/abs/2017ascl.soft04001W/abstract
 [NASA Astrophysics Data System]: https://ui.adsabs.harvard.edu/
-[2017ascl.soft04001W]: https://ui.adsabs.harvard.edu/#abs/2017ascl.soft04001W/abstract
+[2017ascl.soft04001W]: https://ui.adsabs.harvard.edu/abs/2017ascl.soft04001W/abstract
 [ascl:1704.001]: http://ascl.net/1704.001
 [Astrophysics Source Code Library]: http://ascl.net/
 [this link]: http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=2017ascl.soft04001W&data_type=BIBTEX
@@ -38,9 +38,9 @@ include after your Acknowledgments section would be:
 
 [aastex]: http://journals.aas.org/authors/aastex.html
 
-.. code-block:: none
-
-   \software{..., pwkit \citep{2017ascl.soft04001W}, ...}
+```tex
+\software{..., pwkit \citep{2017ascl.soft04001W}, ...}
+```
 
 
 ## Authors
