@@ -41,7 +41,7 @@ automatically installed too if they weren’t already available.
 
 .. _scipy: http://www.scipy.org/
 .. _numpy: http://www.numpy.org/
-.. _six: https://pythonhosted.org/six/
+.. _six: https://pypi.org/project/six/
 .. _pathlib: https://pypi.python.org/pypi/pathlib/
 
 
@@ -59,9 +59,9 @@ record`_ in the `NASA Astrophysics Data System`_, which has identifier
 get the ADS-recommended BibTeX record for the reference.
 
 .. _ApJ: http://iopscience.iop.org/journal/0004-637X
-.. _its record: https://ui.adsabs.harvard.edu/#abs/2017ascl.soft04001W/abstract
+.. _its record: https://ui.adsabs.harvard.edu/abs/2017ascl.soft04001W/abstract
 .. _NASA Astrophysics Data System: https://ui.adsabs.harvard.edu/
-.. _2017ascl.soft04001W: https://ui.adsabs.harvard.edu/#abs/2017ascl.soft04001W/abstract
+.. _2017ascl.soft04001W: https://ui.adsabs.harvard.edu/abs/2017ascl.soft04001W/abstract
 .. _ascl:1704.001: http://ascl.net/1704.001
 .. _Astrophysics Source Code Library: http://ascl.net/
 .. _this link: http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode=2017ascl.soft04001W&data_type=BIBTEX
