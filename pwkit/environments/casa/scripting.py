@@ -17,14 +17,14 @@ argument, so if we're using "env" we can't take a multitool approach.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = str('CasapyScript commandline').split()
+__all__ = str("CasapyScript commandline").split()
 
 import os.path, shutil, signal, six, sys, tempfile
 from ... import PKError, cli, reraise_context
 from . import CasaEnvironment
 
 
-casapy_argv = ['casa', '--log2term', '--nogui', '-c']
+casapy_argv = ["casa", "--log2term", "--nogui", "-c"]
 
 signals_for_child = [
     signal.SIGHUP,
@@ -75,11 +75,11 @@ class CasapyScript(object):
     code sleeps for at least 5 seconds to allow various cleanups to happen.
 
     """
+
     def __init__(self, script, raise_on_error=True, **kwargs):
         self.script = script
         self.kwargs = kwargs
         self.raise_on_error = raise_on_error
-
 
     def __enter__(self):
         # We read in the entire script and save it in the wrapper. That way we
@@ -91,21 +91,21 @@ class CasapyScript(object):
             with open(self.script) as f:
                 text = f.read()
         except Exception:
-            reraise_context('while trying to read %r', self.script)
+            reraise_context("while trying to read %r", self.script)
 
-        self.workdir = tempfile.mkdtemp(prefix='casascript', dir='.')
-        self.wrapped = os.path.join(self.workdir, 'wrapped.py')
+        self.workdir = tempfile.mkdtemp(prefix="casascript", dir=".")
+        self.wrapped = os.path.join(self.workdir, "wrapped.py")
 
-        with open(self.wrapped, 'w') as wrapper:
-            print('_pkcs_script = ' + repr(self.script), file=wrapper)
-            print('_pkcs_text = ' + repr(text), file=wrapper)
-            print('_pkcs_kwargs = ' + repr(self.kwargs), file=wrapper)
-            print('_pkcs_origcwd = ' + repr(os.getcwd()), file=wrapper)
+        with open(self.wrapped, "w") as wrapper:
+            print("_pkcs_script = " + repr(self.script), file=wrapper)
+            print("_pkcs_text = " + repr(text), file=wrapper)
+            print("_pkcs_kwargs = " + repr(self.kwargs), file=wrapper)
+            print("_pkcs_origcwd = " + repr(os.getcwd()), file=wrapper)
 
-            driver = __file__.replace('.pyc', '.py').replace('.py', '_driver.py')
+            driver = __file__.replace(".pyc", ".py").replace(".py", "_driver.py")
             with open(driver) as driver:
                 for line in driver:
-                    print(line, end='', file=wrapper)
+                    print(line, end="", file=wrapper)
 
         def preexec():
             # Start new session and process groups so that the module can kill all
@@ -120,21 +120,23 @@ class CasapyScript(object):
             # of subprocess runs after this function, so we have to set close_fds
             # to False.
 
-            os.dup2(1, 3) # dup2 closes target fd if needed.
+            os.dup2(1, 3)  # dup2 closes target fd if needed.
             os.dup2(2, 4)
 
-            with open('casa_stdout', 'wb') as stdout:
+            with open("casa_stdout", "wb") as stdout:
                 os.dup2(stdout.fileno(), 1)
 
-            with open('casa_stderr', 'wb') as stderr:
+            with open("casa_stderr", "wb") as stderr:
                 os.dup2(stderr.fileno(), 2)
 
         self.env = CasaEnvironment()
-        self.proc = self.env.launch(casapy_argv + ['wrapped.py'],
-                                    cwd=self.workdir,
-                                    stdin=open(os.devnull, 'rb'),
-                                    preexec_fn=preexec,
-                                    close_fds=False)
+        self.proc = self.env.launch(
+            casapy_argv + ["wrapped.py"],
+            cwd=self.workdir,
+            stdin=open(os.devnull, "rb"),
+            preexec_fn=preexec,
+            close_fds=False,
+        )
 
         # Set up signal handlers to propagate to the child process. Copied from
         # wrapout.py.
@@ -152,7 +154,7 @@ class CasapyScript(object):
             signal.signal(signum, prev_handler)
 
         # default: delte workdir on success or intentional script abort
-        self.rmtree = (self.exitcode == 0 or self.exitcode == 127)
+        self.rmtree = self.exitcode == 0 or self.exitcode == 127
 
         if self.raise_on_error and self.exitcode != 0:
             # Note that we have to raise the exception here to prevent the
@@ -161,22 +163,20 @@ class CasapyScript(object):
             self._cleanup()
 
             if self.exitcode < 0:
-                raise PKError('casapy was killed by signal %d', -self.exitcode)
+                raise PKError("casapy was killed by signal %d", -self.exitcode)
             elif self.exitcode == 127:
-                raise PKError('the casapy script signaled an internal error')
+                raise PKError("the casapy script signaled an internal error")
             else:
-                raise PKError('casapy exited with error code %d', self.exitcode)
+                raise PKError("casapy exited with error code %d", self.exitcode)
 
         return self
-
 
     def __exit__(self, etype, evalue, etb):
         if etype is not None:
             self.rmtree = False
 
         self._cleanup()
-        return False # propagate exceptions
-
+        return False  # propagate exceptions
 
     def _cleanup(self):
         # Ugh, I hate having a hardcoded sleep, but it seems to be necessary
@@ -185,6 +185,7 @@ class CasapyScript(object):
         # think the only way we can really contain it is with cgroups, which
         # would be difficult and make us Linux-specific. Grrr.
         import time
+
         time.sleep(4)
 
         # If I'm interpreting things correctly, this bit is needed to kill
@@ -205,8 +206,11 @@ class CasapyScript(object):
         # OK, blow away the directory.
 
         if not self.rmtree:
-            cli.warn('preserving directory tree %r since script %r failed',
-                     self.workdir, self.script)
+            cli.warn(
+                "preserving directory tree %r since script %r failed",
+                self.workdir,
+                self.script,
+            )
         else:
             shutil.rmtree(self.workdir, ignore_errors=True)
 
@@ -217,6 +221,7 @@ Run a specially-designed script inside a CASA environment. This program is not
 meant for regular users. See the documentation of the module
 `pwkit.environments.casa.scripting` for more information."""
 
+
 def commandline(argv=None):
     if argv is None:
         argv = sys.argv
@@ -224,7 +229,7 @@ def commandline(argv=None):
         cli.unicode_stdio()
         cli.backtrace_on_usr1()
 
-    cli.check_usage(cli_usage, argv, usageifnoargs='long')
+    cli.check_usage(cli_usage, argv, usageifnoargs="long")
     script = argv[1]
     args = argv[2:]
 
@@ -232,14 +237,14 @@ def commandline(argv=None):
         with CasapyScript(script, cli_args=args) as cs:
             pass
     except Exception:
-        reraise_context('when running casapy script %r', script)
+        reraise_context("when running casapy script %r", script)
 
     if cs.exitcode < 0:
         signum = -cs.exitcode
-        print('casascript error: casapy died with signal %d' % signum)
+        print("casascript error: casapy died with signal %d" % signum)
         signal.signal(signum, signal.SIG_DFL)
         os.kill(os.getpid(), signum)
     elif cs.exitcode:
         if cs.exitcode != 127:
-            print('casascript error: casapy died with exit code %d' % cs.exitcode)
+            print("casascript error: casapy died with exit code %d" % cs.exitcode)
         sys.exit(cs.exitcode)
