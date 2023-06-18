@@ -36,12 +36,12 @@ The files do not come sorted!
 """
 from __future__ import absolute_import, division, print_function
 
-__all__ = 'load_spectrum'.split()
+__all__ = "load_spectrum".split()
 
 import numpy as np, pandas as pd
 
 
-def load_spectrum(path, smoothing=181, DF=-8.):
+def load_spectrum(path, smoothing=181, DF=-8.0):
     """Load a Phoenix model atmosphere spectrum.
 
     path : string
@@ -71,21 +71,23 @@ def load_spectrum(path, smoothing=181, DF=-8.):
 
     """
     try:
-        ang, lflam = np.loadtxt(path, usecols=(0,1)).T
+        ang, lflam = np.loadtxt(path, usecols=(0, 1)).T
     except ValueError:
         # In some files, the numbers in the first columns fill up the
         # whole 12-character column width, and are given in exponential
         # notation with a 'D' character, so we must be more careful:
-        with open(path, 'rb') as f:
+        with open(path, "rb") as f:
+
             def lines():
                 for line in f:
-                    yield line.replace(b'D', b'e')
+                    yield line.replace(b"D", b"e")
+
             ang, lflam = np.genfromtxt(lines(), delimiter=(13, 12)).T
 
     # Data files do not come sorted!
     z = ang.argsort()
     ang = ang[z]
-    flam = 10**(lflam[z] + DF)
+    flam = 10 ** (lflam[z] + DF)
     del z
 
     if smoothing is not None:
@@ -94,10 +96,10 @@ def load_spectrum(path, smoothing=181, DF=-8.):
         else:
             smoothing = np.asarray(smoothing)
 
-        wnorm = np.convolve(np.ones_like(smoothing), smoothing, mode='valid')
-        smoothing = smoothing / wnorm # do not alter original array.
-        smooth = lambda a: np.convolve(a, smoothing, mode='valid')[::smoothing.size]
+        wnorm = np.convolve(np.ones_like(smoothing), smoothing, mode="valid")
+        smoothing = smoothing / wnorm  # do not alter original array.
+        smooth = lambda a: np.convolve(a, smoothing, mode="valid")[:: smoothing.size]
         ang = smooth(ang)
         flam = smooth(flam)
 
-    return pd.DataFrame({'wlen': ang, 'flam': flam})
+    return pd.DataFrame({"wlen": ang, "flam": flam})
