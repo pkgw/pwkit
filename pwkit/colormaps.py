@@ -61,7 +61,7 @@ transform applied.
 The initial inspiration was an implementation of the ideas in "Diverging Color
 Maps for Scientific Visualization (Expanded)", Kenneth Moreland,
 
-http://www.cs.unm.edu/~kmorel/documents/ColorMaps/index.html
+https://www.kennethmoreland.com/color-maps/
 
 I've realized that I'm not too fond of the white mid-values in these color
 maps in many cases. So I also added an implementation of the "cube helix"
