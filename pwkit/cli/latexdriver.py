@@ -11,7 +11,7 @@ magic.
 """
 from __future__ import absolute_import, division, print_function
 
-__all__ = 'commandline'.split()
+__all__ = "commandline".split()
 
 import signal, six, subprocess, sys
 from six.moves import range
@@ -23,6 +23,7 @@ from . import *
 
 # This batch of code implements the magic BibTeX merging feature.
 
+
 def cited_names_from_aux_file(stream):
     """Parse a LaTeX ".aux" file and generate a list of names cited according to
     LaTeX ``\\citation`` commands. Repeated names are generated only once. The
@@ -32,16 +33,16 @@ def cited_names_from_aux_file(stream):
     cited = set()
 
     for line in stream:
-        if not line.startswith(r'\citation{'):
+        if not line.startswith(r"\citation{"):
             continue
 
         line = line.rstrip()
-        if line[-1] != '}':
-            continue # should issue a warning or something
+        if line[-1] != "}":
+            continue  # should issue a warning or something
 
         entries = line[10:-1]
 
-        for name in entries.split(','):
+        for name in entries.split(","):
             name = name.strip()
 
             if name not in cited:
@@ -70,8 +71,10 @@ def merge_bibtex_collections(citednames, maindict, extradicts, allow_missing=Fal
 
     missing = []
     from collections import OrderedDict
+
     records = OrderedDict()
     from itertools import chain
+
     wantednames = sorted(chain(citednames, six.viewkeys(maindict)))
 
     for name in wantednames:
@@ -84,13 +87,14 @@ def merge_bibtex_collections(citednames, maindict, extradicts, allow_missing=Fal
     if len(missing) and not allow_missing:
         # TODO: custom exception so caller can actually see what's missing;
         # could conceivably stub out missing records or something.
-        raise PKError('missing BibTeX records: %s', ' '.join(missing))
+        raise PKError("missing BibTeX records: %s", " ".join(missing))
 
     return records
 
 
 def get_bibtex_dict(stream):
     from bibtexparser.bparser import BibTexParser
+
     parser = BibTexParser()
     parser.ignore_nonstandard_types = False
     parser.homogenise_fields = False
@@ -111,19 +115,21 @@ def write_bibtex_dict(stream, entries):
     from bibtexparser.bwriter import BibTexWriter
 
     writer = BibTexWriter()
-    writer.indent = '  '
-    writer.entry_separator = ''
+    writer.indent = "  "
+    writer.entry_separator = ""
     first = True
 
     for rec in entries:
         if first:
             first = False
         else:
-            stream.write(b'\n')
-        stream.write(writer._entry_to_bibtex(rec).encode('utf8'))
+            stream.write(b"\n")
+        stream.write(writer._entry_to_bibtex(rec).encode("utf8"))
 
 
-def merge_bibtex_with_aux(auxpath, mainpath, extradir, parse=get_bibtex_dict, allow_missing=False):
+def merge_bibtex_with_aux(
+    auxpath, mainpath, extradir, parse=get_bibtex_dict, allow_missing=False
+):
     """Merge multiple BibTeX files into a single homogeneously-formatted output,
     using a LaTeX .aux file to know which records are worth paying attention
     to.
@@ -141,10 +147,10 @@ def merge_bibtex_with_aux(auxpath, mainpath, extradir, parse=get_bibtex_dict, al
     mainpath = Path(mainpath)
     extradir = Path(extradir)
 
-    with auxpath.open('rt') as aux:
+    with auxpath.open("rt") as aux:
         citednames = sorted(cited_names_from_aux_file(aux))
 
-    main = mainpath.try_open(mode='rt')
+    main = mainpath.try_open(mode="rt")
     if main is None:
         maindict = {}
     else:
@@ -154,59 +160,63 @@ def merge_bibtex_with_aux(auxpath, mainpath, extradir, parse=get_bibtex_dict, al
     def gen_extra_dicts():
         # If extradir does not exist, Path.glob() will return an empty list,
         # which seems acceptable to me.
-        for item in sorted(extradir.glob('*.bib')):
-            with item.open('rt') as extra:
+        for item in sorted(extradir.glob("*.bib")):
+            with item.open("rt") as extra:
                 yield parse(extra)
 
-    merged = merge_bibtex_collections(citednames, maindict, gen_extra_dicts(),
-                                      allow_missing=allow_missing)
+    merged = merge_bibtex_collections(
+        citednames, maindict, gen_extra_dicts(), allow_missing=allow_missing
+    )
 
-    with mainpath.make_tempfile(want='handle', resolution='overwrite') as newbib:
+    with mainpath.make_tempfile(want="handle", resolution="overwrite") as newbib:
         write_bibtex_dict(newbib, six.viewvalues(merged))
 
 
 # This batch of code implements the filename-recorder-to-Makefile magic.
 
-def convert_fls_to_makefile(flspath, finalpath, prefix, replacement, work, mfpath, foreign_deps_ok):
+
+def convert_fls_to_makefile(
+    flspath, finalpath, prefix, replacement, work, mfpath, foreign_deps_ok
+):
     texpwd = None
 
-    with flspath.open('rt') as fls, mfpath.open('wt') as mf:
+    with flspath.open("rt") as fls, mfpath.open("wt") as mf:
         mf.write(six.text_type(finalpath))
-        mf.write(':')
+        mf.write(":")
 
         for line in fls:
             kind, path = line.strip().split(None, 1)
             path = Path(path)
 
-            if kind == 'PWD':
-                texpwd = path # this is always the first line
+            if kind == "PWD":
+                texpwd = path  # this is always the first line
                 if prefix is not None:
                     r_prefix = six.text_type((texpwd / prefix).resolve())
                 r_work = six.text_type((texpwd / work).resolve())
 
-            if kind != 'INPUT':
+            if kind != "INPUT":
                 continue
 
             # properly handles absolute and relative `path`:
             r_full = six.text_type((texpwd / path).resolve())
 
             if r_full.startswith(r_work):
-                continue # ignore .bbl, etc
+                continue  # ignore .bbl, etc
 
             if prefix is not None:
                 if r_full.startswith(r_prefix):
-                    r_full = r_full[len(r_prefix) + 1:]
+                    r_full = r_full[len(r_prefix) + 1 :]
 
                     if replacement is not None:
                         r_full = replacement + r_full
                 elif not foreign_deps_ok:
-                    warn('unexpected dependent file path %r' % r_full)
+                    warn("unexpected dependent file path %r" % r_full)
                     continue
 
-            mf.write(' ')
+            mf.write(" ")
             mf.write(r_full)
 
-        mf.write('\n')
+        mf.write("\n")
 
 
 # The actual command-line program
@@ -234,9 +244,7 @@ necessary, silencing chatter, and hiding intermediate files in the directory
 
 """
 
-default_args = ['-interaction', 'nonstopmode',
-                '-halt-on-error',
-                '-file-line-error']
+default_args = ["-interaction", "nonstopmode", "-halt-on-error", "-file-line-error"]
 
 max_iterations = 10
 
@@ -244,76 +252,87 @@ max_iterations = 10
 def logrun(command, boring_args, interesting_arg, logpath, quiet=False, reckless=False):
     if not quiet:
         if len(boring_args):
-            print('+', command, '...', interesting_arg)
+            print("+", command, "...", interesting_arg)
         else:
-            print('+', command, interesting_arg)
+            print("+", command, interesting_arg)
 
     argv = [command] + boring_args + [interesting_arg]
 
     try:
-        with logpath.open('wb') as f:
-            print('## running:', ' '.join(argv), file=f)
+        with logpath.open("wb") as f:
+            print("## running:", " ".join(argv), file=f)
             f.flush()
             subprocess.check_call(argv, stdout=f, stderr=f)
     except subprocess.CalledProcessError as e:
         if quiet:
-            print('ran:', ' '.join(argv), file=sys.stderr)
+            print("ran:", " ".join(argv), file=sys.stderr)
 
-        with logpath.open('rt') as f:
+        with logpath.open("rt") as f:
             for line in f:
-                print(line, end='', file=sys.stderr)
+                print(line, end="", file=sys.stderr)
         print(file=sys.stderr)
 
         if e.returncode == -signal.SIGINT:
-            raise KeyboardInterrupt() # make sure to propagate SIGINT
+            raise KeyboardInterrupt()  # make sure to propagate SIGINT
 
         if e.returncode > 0:
-            msg = 'command "%s" failed with exit status %d' % (' '.join(argv),
-                                                               e.returncode)
+            msg = 'command "%s" failed with exit status %d' % (
+                " ".join(argv),
+                e.returncode,
+            )
         else:
-            msg = 'command "%s" killed by signal %d' % (' '.join(argv),
-                                                        -e.returncode)
+            msg = 'command "%s" killed by signal %d' % (" ".join(argv), -e.returncode)
 
         if reckless:
-            warn(msg + '; ignoring')
+            warn(msg + "; ignoring")
         else:
             die(msg)
     except Exception:
         if quiet:
-            print('ran:', ' '.join(argv), file=sys.stderr)
+            print("ran:", " ".join(argv), file=sys.stderr)
         raise
 
 
-def bib_export(style, auxpath, bibpath, no_tool_ok=False, quiet=False, ignore_missing=False):
-    args = ['bib', 'btexport']
+def bib_export(
+    style, auxpath, bibpath, no_tool_ok=False, quiet=False, ignore_missing=False
+):
+    args = ["bib", "btexport"]
     if ignore_missing:
-        args += ['-i']
+        args += ["-i"]
     args += [style, str(auxpath)]
 
     if not quiet:
-        print('+', ' '.join(args), '>' + str(bibpath))
+        print("+", " ".join(args), ">" + str(bibpath))
 
     try:
-        with bibpath.open('wb') as f:
+        with bibpath.open("wb") as f:
             subprocess.check_call(args, stdout=f)
     except OSError as e:
         if e.errno == 2 and no_tool_ok:
             bibpath.try_unlink()
             return
         if quiet:
-            print('ran:', ' '.join(args), file=sys.stderr)
+            print("ran:", " ".join(args), file=sys.stderr)
         raise
     except subprocess.CalledProcessError as e:
         if quiet:
-            print('ran:', ' '.join(args), file=sys.stderr)
+            print("ran:", " ".join(args), file=sys.stderr)
         if e.returncode > 0:
-            die('command "%s >%s" failed with exit status %d',
-                ' '.join(args), bibpath, e.returncode)
+            die(
+                'command "%s >%s" failed with exit status %d',
+                " ".join(args),
+                bibpath,
+                e.returncode,
+            )
         elif e.returncode == -signal.SIGINT:
-            raise KeyboardInterrupt() # make sure to propagate SIGINT
+            raise KeyboardInterrupt()  # make sure to propagate SIGINT
         else:
-            die('command "%s >%s" killed by signal %d',
-                ' '.join(args), bibpath, -e.returncode)
+            die(
+                'command "%s >%s" killed by signal %d',
+                " ".join(args),
+                bibpath,
+                -e.returncode,
+            )
 
 
 def just_smart_bibtools(bib_style, aux, bib):
@@ -321,11 +340,17 @@ def just_smart_bibtools(bib_style, aux, bib):
     but here's a hack to keep my smart .bib file generation working.
 
     """
-    extradir = Path('.bibtex')
+    extradir = Path(".bibtex")
     extradir.ensure_dir(parents=True)
 
-    bib_export(bib_style, aux, extradir / 'ZZ_bibtools.bib',
-               no_tool_ok=True, quiet=True, ignore_missing=True)
+    bib_export(
+        bib_style,
+        aux,
+        extradir / "ZZ_bibtools.bib",
+        no_tool_ok=True,
+        quiet=True,
+        ignore_missing=True,
+    )
     merge_bibtex_with_aux(aux, bib, extradir)
 
 
@@ -335,65 +360,65 @@ def commandline(argv=None):
         propagate_sigint()
         unicode_stdio()
 
-    check_usage(usage, argv, usageifnoargs='long')
+    check_usage(usage, argv, usageifnoargs="long")
 
     bib_style = None
     makefile_prefix = None
     makefile_replacement = None
     makefile_dest = None
     engine_args = default_args
-    engine = 'pdflatex'
+    engine = "pdflatex"
 
     # Hooray hack
 
-    if argv[1] == '--just-smart-bibtools':
+    if argv[1] == "--just-smart-bibtools":
         if len(argv) == 4:
             bib_style = argv[2]
             auxpath = argv[3]
-            assert auxpath.endswith('.aux')
-            bibpath = auxpath[:-4] + '.bib'
+            assert auxpath.endswith(".aux")
+            bibpath = auxpath[:-4] + ".bib"
         elif len(argv) == 5:
             bib_style = argv[2]
             auxpath = argv[3]
             bibpath = argv[4]
         else:
-            die('--just-smart-bibtools expects exactly 2 or 3 additional arguments')
+            die("--just-smart-bibtools expects exactly 2 or 3 additional arguments")
         just_smart_bibtools(bib_style, auxpath, bibpath)
         return
 
     # I should probably start using a real arg parser.
 
-    do_bibtex = pop_option('b', argv)
-    do_smart_bibtex = pop_option('B', argv)
-    do_xetex = pop_option('x', argv)
-    do_letterpaper = pop_option('l', argv)
-    do_a4paper = pop_option('A', argv)
-    do_reckless = pop_option('R', argv)
-    do_foreign_deps = pop_option('f', argv)
-    quiet = pop_option('q', argv)
+    do_bibtex = pop_option("b", argv)
+    do_smart_bibtex = pop_option("B", argv)
+    do_xetex = pop_option("x", argv)
+    do_letterpaper = pop_option("l", argv)
+    do_a4paper = pop_option("A", argv)
+    do_reckless = pop_option("R", argv)
+    do_foreign_deps = pop_option("f", argv)
+    quiet = pop_option("q", argv)
     do_smart_bibtools = False
 
     for i in range(1, len(argv)):
-        if argv[i].startswith('-e') or argv[i].startswith('-E'):
-            do_smart_bibtools = argv[i].startswith('-E')
+        if argv[i].startswith("-e") or argv[i].startswith("-E"):
+            do_smart_bibtools = argv[i].startswith("-E")
             bib_style = argv[i][2:]
             del argv[i]
             break
 
     for i in range(1, len(argv)):
-        if argv[i].startswith('-M'):
-            pieces = argv[i][2:].split(',', 2)
+        if argv[i].startswith("-M"):
+            pieces = argv[i][2:].split(",", 2)
             if len(pieces) == 2:
                 makefile_prefix, makefile_dest = pieces
             elif len(pieces) == 3:
                 makefile_prefix, makefile_replacement, makefile_dest = pieces
             else:
-                wrong_usage(usage, 'could not parse -M argument')
+                wrong_usage(usage, "could not parse -M argument")
             del argv[i]
             break
 
     if len(argv) != 3:
-        wrong_usage(usage, 'expect exactly 2 non-option arguments')
+        wrong_usage(usage, "expect exactly 2 non-option arguments")
 
     if do_letterpaper and do_a4paper:
         wrong_usage(usage, 'only one of "-l" and "-A" may be specified')
@@ -406,13 +431,13 @@ def commandline(argv=None):
     if bib_style is not None or do_smart_bibtex:
         do_bibtex = True
     if do_xetex:
-        engine = 'xelatex'
+        engine = "xelatex"
     if do_letterpaper:
-        engine_args += ['-papersize', 'letter']
+        engine_args += ["-papersize", "letter"]
     if do_a4paper:
-        engine_args += ['-papersize', 'A4']
+        engine_args += ["-papersize", "A4"]
     if makefile_dest is not None:
-        engine_args += ['-recorder']
+        engine_args += ["-recorder"]
 
     if not input.exists():
         die('input "%s" does not exist', input)
@@ -426,45 +451,51 @@ def commandline(argv=None):
     # paths by default. I figured out how to hack the configuration, but
     # that's not a scalable solution. Instead I just create a temporary
     # symlink with an acceptable name -- good jorb security.
-    workdir = input.with_name('.latexwork')
-    workalias = input.with_name('_latexwork')
+    workdir = input.with_name(".latexwork")
+    workalias = input.with_name("_latexwork")
 
     workdir.ensure_dir(parents=True)
     workalias.rellink_to(workdir, force=True)
 
     job = workalias / base
-    tlog = workalias / (base + '.hllog')
-    blog = workalias / (base + '.hlblg')
-    engine_args += ['-jobname', str(job)]
+    tlog = workalias / (base + ".hllog")
+    blog = workalias / (base + ".hlblg")
+    engine_args += ["-jobname", str(job)]
 
     try:
         logrun(engine, engine_args, base, tlog, quiet=quiet)
 
         if do_bibtex:
-            bib = input.with_suffix('.bib')
-            aux = job.with_suffix('.aux')
+            bib = input.with_suffix(".bib")
+            aux = job.with_suffix(".aux")
 
             if do_smart_bibtex:
-                extradir = input.with_name('.bibtex')
+                extradir = input.with_name(".bibtex")
 
                 if bib_style is not None:
                     extradir.ensure_dir(parents=True)
-                    bib_export(bib_style, aux, extradir / 'ZZ_bibtools.bib',
-                               no_tool_ok=True, quiet=quiet, ignore_missing=True)
+                    bib_export(
+                        bib_style,
+                        aux,
+                        extradir / "ZZ_bibtools.bib",
+                        no_tool_ok=True,
+                        quiet=quiet,
+                        ignore_missing=True,
+                    )
 
                 if not quiet:
-                    print('+', '(generate and normalize)', bib)
+                    print("+", "(generate and normalize)", bib)
                 merge_bibtex_with_aux(aux, bib, extradir)
             elif bib_style is not None:
                 bib_export(bib_style, aux, bib, quiet=quiet)
 
-            job.with_suffix('.bib').rellink_to(bib, force=True)
-            logrun('bibtex', [], str(job), blog, reckless=do_reckless, quiet=quiet)
+            job.with_suffix(".bib").rellink_to(bib, force=True)
+            logrun("bibtex", [], str(job), blog, reckless=do_reckless, quiet=quiet)
 
-            with blog.open('rt') as f:
+            with blog.open("rt") as f:
                 for line in f:
-                    if 'Warning' in line:
-                        print(line, end='', file=sys.stderr)
+                    if "Warning" in line:
+                        print(line, end="", file=sys.stderr)
 
             # force at least one extra run:
             logrun(engine, engine_args, base, tlog, quiet=quiet)
@@ -474,11 +505,11 @@ def commandline(argv=None):
 
             # longtables seem to always tell you to rerun latex. Stripping out
             # lines containing "longtable" makes us ignore these prompts.
-            with tlog.open('rt') as f:
+            with tlog.open("rt") as f:
                 for line in f:
-                    if 'longtable' in line:
+                    if "longtable" in line:
                         continue
-                    if 'Rerun' in line:
+                    if "Rerun" in line:
                         keepgoing = True
                         break
 
@@ -490,14 +521,17 @@ def commandline(argv=None):
             # we didn't break out of the loop -- ie hit max_iterations
             die('too many iterations; check "%s"', tlog)
 
-        job.with_suffix('.pdf').rename(output)
+        job.with_suffix(".pdf").rename(output)
 
         if makefile_dest is not None:
-            convert_fls_to_makefile(job.with_suffix('.fls'), output,
-                                    Path(makefile_prefix),
-                                    makefile_replacement,
-                                    workalias,
-                                    Path(makefile_dest),
-                                    do_foreign_deps)
+            convert_fls_to_makefile(
+                job.with_suffix(".fls"),
+                output,
+                Path(makefile_prefix),
+                makefile_replacement,
+                workalias,
+                Path(makefile_dest),
+                do_foreign_deps,
+            )
     finally:
         workalias.unlink()
