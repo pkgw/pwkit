@@ -1,4 +1,4 @@
-# rc: minor bump
+# pwkit 1.1.0 (2023-06-18)
 
 A test release, after many years of inactivity, because the previous release
 won't even import noawadays due to the use of very old Numpy features that have

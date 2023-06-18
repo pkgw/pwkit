@@ -11,7 +11,7 @@ extensions = [
 ]
 
 project = "pwkit"
-release = "0.dev0"  # cranko project-version
+release = "1.1.0"  # cranko project-version
 version = ".".join(release.split(".")[:2])
 
 copyright = "2015-2023, Peter K. G. Williams and collaborators"

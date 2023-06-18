@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 
 __all__ = "Holder PKError binary_type reraise_context text_type unicode_to_str".split()
 
-__version__ = "0.dev0"  # cranko project-version
+__version__ = "1.1.0"  # cranko project-version
 
 # Simultaneous Python 2/3 compatibility through the 'six' module. I started
 # out hoping that I could do this all "in-house" without adding the dep, but
