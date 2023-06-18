@@ -8,10 +8,12 @@ calculations and conversions that come up in astronomy.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = str ('''np pi twopi halfpi R2A A2R R2D D2R R2H H2R F2S S2F J2000 angcen orientcen
+__all__ = str(
+    """np pi twopi halfpi R2A A2R R2D D2R R2H H2R F2S S2F J2000 angcen orientcen
                   fmthours fmtdeglon fmtdeglat fmtradec parsehours parsedeglat
                   parsedeglon sphdist sphbear sphofs parang gaussian_convolve
-                  gaussian_deconvolve load_skyfield_data AstrometryInfo app2abs abs2app''').split ()
+                  gaussian_deconvolve load_skyfield_data AstrometryInfo app2abs abs2app"""
+).split()
 
 import six
 from six.moves import range
@@ -28,10 +30,12 @@ from .numutil import broadcastize
 
 try:
     import builtins
-    print_ = getattr (builtins, 'print')
+
+    print_ = getattr(builtins, "print")
 except ImportError:
     import __builtin__
-    print_ = getattr (__builtin__, 'print')
+
+    print_ = getattr(__builtin__, "print")
 
 
 # Constants.
@@ -46,8 +50,8 @@ R2D = 180 / pi
 D2R = pi / 180
 R2H = 12 / pi
 H2R = pi / 12
-F2S = 1 / np.sqrt (8 * np.log (2)) # FWHM to sigma
-S2F = np.sqrt (8 * np.log (2))
+F2S = 1 / np.sqrt(8 * np.log(2))  # FWHM to sigma
+S2F = np.sqrt(8 * np.log(2))
 
 J2000 = 51544.5
 
@@ -62,33 +66,36 @@ orientcen = lambda a: (((a + halfpi) % pi) - halfpi)
 
 # Formatting/parsing of lat/long/etc
 
-def _fmtsexagesimal (base, norm, basemax, seps, precision=3):
-    if norm == 'none':
+
+def _fmtsexagesimal(base, norm, basemax, seps, precision=3):
+    if norm == "none":
         pass
-    elif norm == 'raise':
+    elif norm == "raise":
         if base > basemax or base < 0:
-            raise ValueError ('illegal coordinate of %f' % base)
-    elif norm == 'wrap':
+            raise ValueError("illegal coordinate of %f" % base)
+    elif norm == "wrap":
         base = base % basemax
     else:
-        raise ValueError ('unrecognized normalization type "%s"' % norm)
+        raise ValueError('unrecognized normalization type "%s"' % norm)
 
-    if len (seps) < 2:
+    if len(seps) < 2:
         # To ponder: we accept len(seps) > 3; seems OK.
-        raise ValueError ('there must be at least two sexagesimal separators; '
-                          'got value "%s"' % seps)
+        raise ValueError(
+            "there must be at least two sexagesimal separators; "
+            'got value "%s"' % seps
+        )
 
-    precision = max (int (precision), 0)
+    precision = max(int(precision), 0)
     if precision == 0:
         width = 2
     else:
         width = precision + 3
 
-    basewidth = len (text_type (basemax))
+    basewidth = len(text_type(basemax))
 
-    bs = int (np.floor (base))
-    min = int (np.floor ((base - bs) * 60))
-    sec = round (3600 * (base - bs - min / 60.), precision)
+    bs = int(np.floor(base))
+    min = int(np.floor((base - bs) * 60))
+    sec = round(3600 * (base - bs - min / 60.0), precision)
 
     if sec >= 60:
         # Can happen if we round up
@@ -102,16 +109,25 @@ def _fmtsexagesimal (base, norm, basemax, seps, precision=3):
             if bs >= basemax:
                 bs -= basemax
 
-    if len (seps) > 2:
+    if len(seps) > 2:
         sep2 = seps[2]
     else:
-        sep2 = ''
+        sep2 = ""
 
-    return '%0*d%s%02d%s%0*.*f%s' % \
-        (basewidth, bs, seps[0], min, seps[1], width, precision, sec, sep2)
+    return "%0*d%s%02d%s%0*.*f%s" % (
+        basewidth,
+        bs,
+        seps[0],
+        min,
+        seps[1],
+        width,
+        precision,
+        sec,
+        sep2,
+    )
 
 
-def fmthours (radians, norm='wrap', precision=3, seps='::'):
+def fmthours(radians, norm="wrap", precision=3, seps="::"):
     """Format an angle as sexagesimal hours in a string.
 
     Arguments are:
@@ -135,10 +151,10 @@ def fmthours (radians, norm='wrap', precision=3, seps='::'):
     Returns a string.
 
     """
-    return _fmtsexagesimal (radians * R2H, norm, 24, seps, precision=precision)
+    return _fmtsexagesimal(radians * R2H, norm, 24, seps, precision=precision)
 
 
-def fmtdeglon (radians, norm='wrap', precision=2, seps='::'):
+def fmtdeglon(radians, norm="wrap", precision=2, seps="::"):
     """Format a longitudinal angle as sexagesimal degrees in a string.
 
     Arguments are:
@@ -162,10 +178,10 @@ def fmtdeglon (radians, norm='wrap', precision=2, seps='::'):
     Returns a string.
 
     """
-    return _fmtsexagesimal (radians * R2D, norm, 360, seps, precision=precision)
+    return _fmtsexagesimal(radians * R2D, norm, 360, seps, precision=precision)
 
 
-def fmtdeglat (radians, norm='raise', precision=2, seps='::'):
+def fmtdeglat(radians, norm="raise", precision=2, seps="::"):
     """Format a latitudinal angle as sexagesimal degrees in a string.
 
     Arguments are:
@@ -192,26 +208,28 @@ def fmtdeglat (radians, norm='raise', precision=2, seps='::'):
     (e.g.) means.
 
     """
-    if norm == 'none':
+    if norm == "none":
         pass
-    elif norm == 'raise':
+    elif norm == "raise":
         if radians > halfpi or radians < -halfpi:
-            raise ValueError ('illegal latitude of %f radians' % radians)
-    elif norm == 'wrap':
-        radians = angcen (radians)
+            raise ValueError("illegal latitude of %f radians" % radians)
+    elif norm == "wrap":
+        radians = angcen(radians)
         if radians > halfpi:
             radians = pi - radians
         elif radians < -halfpi:
             radians = -pi - radians
     else:
-        raise ValueError ('unrecognized normalization type "%s"' % norm)
+        raise ValueError('unrecognized normalization type "%s"' % norm)
 
-    if len (seps) < 2:
+    if len(seps) < 2:
         # To ponder: we accept len(seps) > 3; seems OK.
-        raise ValueError ('there must be at least two sexagesimal separators; '
-                          'got value "%s"' % seps)
+        raise ValueError(
+            "there must be at least two sexagesimal separators; "
+            'got value "%s"' % seps
+        )
 
-    precision = max (int (precision), 0)
+    precision = max(int(precision), 0)
     if precision == 0:
         width = 2
     else:
@@ -220,14 +238,14 @@ def fmtdeglat (radians, norm='raise', precision=2, seps='::'):
     degrees = radians * R2D
 
     if degrees >= 0:
-        sgn = '+'
+        sgn = "+"
     else:
-        sgn = '-'
+        sgn = "-"
         degrees = -degrees
 
-    deg = int (np.floor (degrees))
-    amin = int (np.floor ((degrees - deg) * 60))
-    asec = round (3600 * (degrees - deg - amin / 60.), precision)
+    deg = int(np.floor(degrees))
+    amin = int(np.floor((degrees - deg) * 60))
+    asec = round(3600 * (degrees - deg - amin / 60.0), precision)
 
     if asec >= 60:
         # Can happen if we round up
@@ -238,16 +256,25 @@ def fmtdeglat (radians, norm='raise', precision=2, seps='::'):
             amin -= 60
             deg += 1
 
-    if len (seps) > 2:
+    if len(seps) > 2:
         sep2 = seps[2]
     else:
-        sep2 = ''
+        sep2 = ""
 
-    return '%s%02d%s%02d%s%0*.*f%s' % \
-        (sgn, deg, seps[0], amin, seps[1], width, precision, asec, sep2)
+    return "%s%02d%s%02d%s%0*.*f%s" % (
+        sgn,
+        deg,
+        seps[0],
+        amin,
+        seps[1],
+        width,
+        precision,
+        asec,
+        sep2,
+    )
 
 
-def fmtradec (rarad, decrad, precision=2, raseps='::', decseps='::', intersep=' '):
+def fmtradec(rarad, decrad, precision=2, raseps="::", decseps="::", intersep=" "):
     """Format equatorial coordinates in a single sexagesimal string.
 
     Returns a string of the RA/lon coordinate, formatted as sexagesimal hours,
@@ -280,43 +307,45 @@ def fmtradec (rarad, decrad, precision=2, raseps='::', decseps='::', intersep=' 
       The string separating the RA/lon and Dec/lat coordinates
 
     """
-    return (fmthours (rarad, precision=precision + 1, seps=raseps) +
-            text_type (intersep) +
-            fmtdeglat (decrad, precision=precision, seps=decseps))
-
+    return (
+        fmthours(rarad, precision=precision + 1, seps=raseps)
+        + text_type(intersep)
+        + fmtdeglat(decrad, precision=precision, seps=decseps)
+    )
 
 
 # Parsing routines are currently very lame.
 
-def _parsesexagesimal (sxgstr, desc, negok):
+
+def _parsesexagesimal(sxgstr, desc, negok):
     sxgstr_orig = sxgstr
     sgn = 1
 
-    if sxgstr[0] == '-':
+    if sxgstr[0] == "-":
         if negok:
             sgn = -1
             sxgstr = sxgstr[1:]
         else:
-            raise ValueError ('illegal negative %s expression: %s' % (desc, sxgstr_orig))
+            raise ValueError("illegal negative %s expression: %s" % (desc, sxgstr_orig))
 
     try:
         # TODO: other separators ...
-        bs, mn, sec = sxgstr.split (':')
-        bs = int (bs)
-        mn = int (mn)
-        sec = float (sec)
+        bs, mn, sec = sxgstr.split(":")
+        bs = int(bs)
+        mn = int(mn)
+        sec = float(sec)
     except Exception:
-        raise ValueError ('unable to parse as %s: %s' % (desc, sxgstr_orig))
+        raise ValueError("unable to parse as %s: %s" % (desc, sxgstr_orig))
 
-    if mn < 0 or mn > 59 or sec < 0 or sec >= 60.:
-        raise ValueError ('illegal sexagesimal %s expression: %s' % (desc, sxgstr_orig))
-    if bs < 0: # two minus signs, or something
-        raise ValueError ('illegal negative %s expression: %s' % (desc, sxgstr_orig))
+    if mn < 0 or mn > 59 or sec < 0 or sec >= 60.0:
+        raise ValueError("illegal sexagesimal %s expression: %s" % (desc, sxgstr_orig))
+    if bs < 0:  # two minus signs, or something
+        raise ValueError("illegal negative %s expression: %s" % (desc, sxgstr_orig))
 
-    return sgn * (bs + mn / 60. + sec / 3600.)
+    return sgn * (bs + mn / 60.0 + sec / 3600.0)
 
 
-def parsehours (hrstr):
+def parsehours(hrstr):
     """Parse a string formatted as sexagesimal hours into an angle.
 
     This function converts a textual representation of an angle, measured in
@@ -329,13 +358,13 @@ def parsehours (hrstr):
     negative values are.
 
     """
-    hr = _parsesexagesimal (hrstr, 'hours', False)
+    hr = _parsesexagesimal(hrstr, "hours", False)
     if hr >= 24:
-        raise ValueError ('illegal hour specification: ' + hrstr)
+        raise ValueError("illegal hour specification: " + hrstr)
     return hr * H2R
 
 
-def parsedeglat (latstr):
+def parsedeglat(latstr):
     """Parse a latitude formatted as sexagesimal degrees into an angle.
 
     This function converts a textual representation of a latitude, measured in
@@ -348,13 +377,13 @@ def parsedeglat (latstr):
     degrees are not allowed.
 
     """
-    deg = _parsesexagesimal (latstr, 'latitude', True)
-    if abs (deg) > 90:
-        raise ValueError ('illegal latitude specification: ' + latstr)
+    deg = _parsesexagesimal(latstr, "latitude", True)
+    if abs(deg) > 90:
+        raise ValueError("illegal latitude specification: " + latstr)
     return deg * D2R
 
 
-def parsedeglon (lonstr):
+def parsedeglon(lonstr):
     """Parse a longitude formatted as sexagesimal degrees into an angle.
 
     This function converts a textual representation of a longitude, measured
@@ -367,13 +396,14 @@ def parsedeglon (lonstr):
     and they are not normalized (e.g. to lie within the range [0, 2π]).
 
     """
-    return _parsesexagesimal (lonstr, 'longitude', True) * D2R
+    return _parsesexagesimal(lonstr, "longitude", True) * D2R
 
 
 # Spherical trig
 
-@broadcastize (4)
-def sphdist (lat1, lon1, lat2, lon2):
+
+@broadcastize(4)
+def sphdist(lat1, lon1, lat2, lon2):
     """Calculate the distance between two locations on a sphere.
 
     lat1
@@ -397,19 +427,19 @@ def sphdist (lat1, lon1, lat2, lon2):
     Distance.
 
     """
-    cd = np.cos (lon2 - lon1)
-    sd = np.sin (lon2 - lon1)
-    c2 = np.cos (lat2)
-    c1 = np.cos (lat1)
-    s2 = np.sin (lat2)
-    s1 = np.sin (lat1)
-    a = np.sqrt ((c2 * sd)**2 + (c1 * s2 - s1 * c2 * cd)**2)
+    cd = np.cos(lon2 - lon1)
+    sd = np.sin(lon2 - lon1)
+    c2 = np.cos(lat2)
+    c1 = np.cos(lat1)
+    s2 = np.sin(lat2)
+    s1 = np.sin(lat1)
+    a = np.sqrt((c2 * sd) ** 2 + (c1 * s2 - s1 * c2 * cd) ** 2)
     b = s1 * s2 + c1 * c2 * cd
-    return np.arctan2 (a, b)
+    return np.arctan2(a, b)
 
 
-@broadcastize (4)
-def sphbear (lat1, lon1, lat2, lon2, tol=1e-15):
+@broadcastize(4)
+def sphbear(lat1, lon1, lat2, lon2, tol=1e-15):
     """Calculate the bearing between two locations on a sphere.
 
     lat1
@@ -448,30 +478,30 @@ def sphbear (lat1, lon1, lat2, lon2, tol=1e-15):
 
     """
     # cross product on outer axis:
-    ocross = lambda a, b: np.cross (a, b, axisa=0, axisb=0, axisc=0)
+    ocross = lambda a, b: np.cross(a, b, axisa=0, axisb=0, axisc=0)
 
     # if args have shape S, this has shape (3, S)
-    v1 = np.asarray ([np.cos (lat1) * np.cos (lon1),
-                      np.cos (lat1) * np.sin (lon1),
-                      np.sin (lat1)])
+    v1 = np.asarray(
+        [np.cos(lat1) * np.cos(lon1), np.cos(lat1) * np.sin(lon1), np.sin(lat1)]
+    )
 
-    v2 = np.asarray ([np.cos (lat2) * np.cos (lon2),
-                      np.cos (lat2) * np.sin (lon2),
-                      np.sin (lat2)])
+    v2 = np.asarray(
+        [np.cos(lat2) * np.cos(lon2), np.cos(lat2) * np.sin(lon2), np.sin(lat2)]
+    )
 
-    is_bad = (v1[0]**2 + v1[1]**2) < tol
+    is_bad = (v1[0] ** 2 + v1[1] ** 2) < tol
 
-    p12 = ocross (v1, v2) # ~"perpendicular to great circle containing points"
-    p1z = np.asarray ([v1[1], -v1[0], np.zeros_like (lat1)]) # ~"perp to base and Z axis"
-    cm = np.sqrt ((ocross (p12, p1z)**2).sum (axis=0)) # ~"angle between the vectors"
-    bearing = np.arctan2 (cm, np.sum (p12 * p1z, axis=0))
-    bearing = np.where (p12[2] < 0, -bearing, bearing) # convert to [-pi/2, pi/2]
-    bearing = np.where (np.abs (bearing) < tol, 0, bearing) # clamp
-    bearing[np.where (is_bad)] = np.nan
+    p12 = ocross(v1, v2)  # ~"perpendicular to great circle containing points"
+    p1z = np.asarray([v1[1], -v1[0], np.zeros_like(lat1)])  # ~"perp to base and Z axis"
+    cm = np.sqrt((ocross(p12, p1z) ** 2).sum(axis=0))  # ~"angle between the vectors"
+    bearing = np.arctan2(cm, np.sum(p12 * p1z, axis=0))
+    bearing = np.where(p12[2] < 0, -bearing, bearing)  # convert to [-pi/2, pi/2]
+    bearing = np.where(np.abs(bearing) < tol, 0, bearing)  # clamp
+    bearing[np.where(is_bad)] = np.nan
     return bearing
 
 
-def sphofs (lat1, lon1, r, pa, tol=1e-2, rmax=None):
+def sphofs(lat1, lon1, r, pa, tol=1e-2, rmax=None):
     """Offset from one location on the sphere to another.
 
     This function is given a start location, expressed as a latitude and
@@ -525,20 +555,21 @@ def sphofs (lat1, lon1, r, pa, tol=1e-2, rmax=None):
     fractional distance error of ~3%.
 
     """
-    if rmax is not None and np.abs (r) > rmax:
-        raise ValueError ('sphofs radius value %f is too big for '
-                          'our approximation' % r)
+    if rmax is not None and np.abs(r) > rmax:
+        raise ValueError(
+            "sphofs radius value %f is too big for " "our approximation" % r
+        )
 
-    lat2 = lat1 + r * np.cos (pa)
-    lon2 = lon1 + r * np.sin (pa) / np.cos (lat2)
+    lat2 = lat1 + r * np.cos(pa)
+    lon2 = lon1 + r * np.sin(pa) / np.cos(lat2)
 
     if tol is not None:
-        s = sphdist (lat1, lon1, lat2, lon2)
-        if np.any (np.abs ((s - r) / s) > tol):
-            raise ValueError ('sphofs approximation broke down '
-                              '(%s %s %s %s %s %s %s)' % (lat1, lon1,
-                                                          lat2, lon2,
-                                                          r, s, pa))
+        s = sphdist(lat1, lon1, lat2, lon2)
+        if np.any(np.abs((s - r) / s) > tol):
+            raise ValueError(
+                "sphofs approximation broke down "
+                "(%s %s %s %s %s %s %s)" % (lat1, lon1, lat2, lon2, r, s, pa)
+            )
 
     return lat2, lon2
 
@@ -546,7 +577,8 @@ def sphofs (lat1, lon1, r, pa, tol=1e-2, rmax=None):
 # Spherical trig tools that are more astronomy-specific. Note that precise
 # positional calculations should generally use skyfield.
 
-def parang (hourangle, declination, latitude):
+
+def parang(hourangle, declination, latitude):
     """Calculate the parallactic angle of a sky position.
 
     This computes the parallactic angle of a sky position expressed in terms
@@ -563,14 +595,17 @@ def parang (hourangle, declination, latitude):
     ``parangle.pro``.
 
     """
-    return -np.arctan2 (-np.sin (hourangle),
-                        np.cos (declination) * np.tan (latitude)
-                        - np.sin (declination) * np.cos (hourangle))
+    return -np.arctan2(
+        -np.sin(hourangle),
+        np.cos(declination) * np.tan(latitude)
+        - np.sin(declination) * np.cos(hourangle),
+    )
 
 
 # 2D Gaussian (de)convolution
 
-def gaussian_convolve (maj1, min1, pa1, maj2, min2, pa2):
+
+def gaussian_convolve(maj1, min1, pa1, maj2, min2, pa2):
     """Convolve two Gaussians analytically.
 
     Given the shapes of two 2-dimensional Gaussians, this function returns
@@ -598,24 +633,24 @@ def gaussian_convolve (maj1, min1, pa1, maj2, min2, pa2):
     Implementation copied from MIRIAD’s ``gaufac``.
 
     """
-    c1 = np.cos (pa1)
-    s1 = np.sin (pa1)
-    c2 = np.cos (pa2)
-    s2 = np.sin (pa2)
+    c1 = np.cos(pa1)
+    s1 = np.sin(pa1)
+    c2 = np.cos(pa2)
+    s2 = np.sin(pa2)
 
-    a = (maj1*c1)**2 + (min1*s1)**2 + (maj2*c2)**2 + (min2*s2)**2
-    b = (maj1*s1)**2 + (min1*c1)**2 + (maj2*s2)**2 + (min2*c2)**2
+    a = (maj1 * c1) ** 2 + (min1 * s1) ** 2 + (maj2 * c2) ** 2 + (min2 * s2) ** 2
+    b = (maj1 * s1) ** 2 + (min1 * c1) ** 2 + (maj2 * s2) ** 2 + (min2 * c2) ** 2
     g = 2 * ((min1**2 - maj1**2) * s1 * c1 + (min2**2 - maj2**2) * s2 * c2)
 
     s = a + b
-    t = np.sqrt ((a - b)**2 + g**2)
-    maj3 = np.sqrt (0.5 * (s + t))
-    min3 = np.sqrt (0.5 * (s - t))
+    t = np.sqrt((a - b) ** 2 + g**2)
+    maj3 = np.sqrt(0.5 * (s + t))
+    min3 = np.sqrt(0.5 * (s - t))
 
-    if abs (g) + abs (a - b) == 0:
-        pa3 = 0.
+    if abs(g) + abs(a - b) == 0:
+        pa3 = 0.0
     else:
-        pa3 = 0.5 * np.arctan2 (-g, a - b)
+        pa3 = 0.5 * np.arctan2(-g, a - b)
 
     # "Amplitude of the resulting Gaussian":
     # f = pi / (4 * np.log (2)) * maj1 * min1 * maj2 * min2 \
@@ -624,7 +659,7 @@ def gaussian_convolve (maj1, min1, pa1, maj2, min2, pa2):
     return maj3, min3, pa3
 
 
-def gaussian_deconvolve (smaj, smin, spa, bmaj, bmin, bpa):
+def gaussian_deconvolve(smaj, smin, spa, bmaj, bmin, bpa):
     """Deconvolve two Gaussians analytically.
 
     Given the shapes of 2-dimensional “source” and “beam” Gaussians, this
@@ -679,33 +714,43 @@ def gaussian_deconvolve (smaj, smin, spa, bmaj, bmin, bpa):
     if smin < bmin:
         smin = bmin
 
-    alpha = ((smaj * cos (spa))**2 + (smin * sin (spa))**2 -
-             (bmaj * cos (bpa))**2 - (bmin * sin (bpa))**2)
-    beta = ((smaj * sin (spa))**2 + (smin * cos (spa))**2 -
-            (bmaj * sin (bpa))**2 - (bmin * cos (bpa))**2)
-    gamma = 2 * ((smin**2 - smaj**2) * sin (spa) * cos (spa) -
-                 (bmin**2 - bmaj**2) * sin (bpa) * cos (bpa))
+    alpha = (
+        (smaj * cos(spa)) ** 2
+        + (smin * sin(spa)) ** 2
+        - (bmaj * cos(bpa)) ** 2
+        - (bmin * sin(bpa)) ** 2
+    )
+    beta = (
+        (smaj * sin(spa)) ** 2
+        + (smin * cos(spa)) ** 2
+        - (bmaj * sin(bpa)) ** 2
+        - (bmin * cos(bpa)) ** 2
+    )
+    gamma = 2 * (
+        (smin**2 - smaj**2) * sin(spa) * cos(spa)
+        - (bmin**2 - bmaj**2) * sin(bpa) * cos(bpa)
+    )
 
     s = alpha + beta
-    t = sqrt ((alpha - beta)**2 + gamma**2)
-    limit = 0.5 * min ([smaj, smin, bmaj, bmin])**2
-    status = 'ok'
+    t = sqrt((alpha - beta) ** 2 + gamma**2)
+    limit = 0.5 * min([smaj, smin, bmaj, bmin]) ** 2
+    status = "ok"
 
     if alpha < 0 or beta < 0 or s < t:
         dmaj = dmin = dpa = 0
 
         if 0.5 * (s - t) < limit and alpha > -limit and beta > -limit:
-            status = 'pointlike'
+            status = "pointlike"
         else:
-            status = 'fail'
+            status = "fail"
     else:
-        dmaj = sqrt (0.5 * (s + t))
-        dmin = sqrt (0.5 * (s - t))
+        dmaj = sqrt(0.5 * (s + t))
+        dmin = sqrt(0.5 * (s - t))
 
-        if abs (gamma) + abs (alpha - beta) == 0:
+        if abs(gamma) + abs(alpha - beta) == 0:
             dpa = 0
         else:
-            dpa = 0.5 * arctan2 (-gamma, alpha - beta)
+            dpa = 0.5 * arctan2(-gamma, alpha - beta)
 
     return dmaj, dmin, dpa, status
 
@@ -735,9 +780,9 @@ def load_skyfield_data():
     from astropy.config import paths
     from skyfield.api import Loader
 
-    cache_dir = os.path.join(paths.get_cache_dir(), 'pwkit')
+    cache_dir = os.path.join(paths.get_cache_dir(), "pwkit")
     loader = Loader(cache_dir)
-    planets = loader('de421.bsp')
+    planets = loader("de421.bsp")
     ts = loader.timescale()
     return planets, ts
 
@@ -748,9 +793,14 @@ def load_skyfield_data():
 try:
     from skyfield.api import Star, T0
 except ImportError:
+
     def PromoEpochStar(**kwargs):
-        raise NotImplementedError('the "skyfield" package is required for this functionality')
+        raise NotImplementedError(
+            'the "skyfield" package is required for this functionality'
+        )
+
 else:
+
     class PromoEpochStar(Star):
         """A customized version of the Skyfield Star class that accepts a new
         epoch-of-position parameter.
@@ -758,18 +808,22 @@ else:
         Derived from the Skyfield source as of commit 49c2467b (2018 Mar 28).
 
         """
+
         def __init__(self, jd_of_position=T0, **kwargs):
             super(PromoEpochStar, self).__init__(**kwargs)
             self.jd_of_position = jd_of_position
 
         def __repr__(self):
             opts = []
-            for name in 'ra_mas_per_year dec_mas_per_year parallax_mas radial_km_per_s jd_of_position names'.split():
+            for (
+                name
+            ) in "ra_mas_per_year dec_mas_per_year parallax_mas radial_km_per_s jd_of_position names".split():
                 value = getattr(self, name)
                 if value:
-                    opts.append(', {0}={1!r}'.format(name, value))
-            return 'PromoEpochStar(ra_hours={0!r}, dec_degrees={1!r}{2})'.format(
-                self.ra.hours, self.dec.degrees, ''.join(opts))
+                    opts.append(", {0}={1!r}".format(name, value))
+            return "PromoEpochStar(ra_hours={0!r}, dec_degrees={1!r}{2})".format(
+                self.ra.hours, self.dec.degrees, "".join(opts)
+            )
 
         def _observe_from_bcrs(self, observer):
             from numpy import outer
@@ -781,7 +835,9 @@ else:
             t = observer.t
             dt = light_time_difference(position, observer.position.au)
             if t.shape:
-                position = (outer(velocity, t.tdb + dt - self.jd_of_position).T + position).T
+                position = (
+                    outer(velocity, t.tdb + dt - self.jd_of_position).T + position
+                ).T
             else:
                 position = position + velocity * (t.tdb + dt - self.jd_of_position)
             vector = position - observer.position.au
@@ -792,9 +848,10 @@ else:
     del Star, T0
 
 
-_vizurl = 'http://vizier.u-strasbg.fr/viz-bin/asu-tsv'
+_vizurl = "http://vizier.u-strasbg.fr/viz-bin/asu-tsv"
 
-def get_2mass_epoch (tmra, tmdec, debug=False):
+
+def get_2mass_epoch(tmra, tmdec, debug=False):
     """Given a 2MASS position, look up the epoch when it was observed.
 
     This function uses the CDS Vizier web service to look up information in
@@ -813,40 +870,49 @@ def get_2mass_epoch (tmra, tmdec, debug=False):
 
     """
     import codecs
+
     try:
         from urllib.request import urlopen
     except ImportError:
         from urllib2 import urlopen
-    postdata = b'''-mime=csv
+    postdata = b"""-mime=csv
 -source=2MASS
 -out=_q,JD
 -c=%.6f %.6f
--c.eq=J2000''' % (tmra * R2D, tmdec * R2D)
+-c.eq=J2000""" % (
+        tmra * R2D,
+        tmdec * R2D,
+    )
 
     jd = None
 
-    for line in codecs.getreader('utf-8')(urlopen (_vizurl, postdata)):
-        line = line.strip ()
+    for line in codecs.getreader("utf-8")(urlopen(_vizurl, postdata)):
+        line = line.strip()
         if debug:
-            print_ ('D: 2M >>', line)
+            print_("D: 2M >>", line)
 
-        if line.startswith ('1;'):
-            jd = float (line[2:])
+        if line.startswith("1;"):
+            jd = float(line[2:])
 
     if jd is None:
         import sys
-        print_ ('warning: 2MASS epoch lookup failed; astrometry could be very wrong!',
-                file=sys.stderr)
+
+        print_(
+            "warning: 2MASS epoch lookup failed; astrometry could be very wrong!",
+            file=sys.stderr,
+        )
         return J2000
 
     return jd - 2400000.5
 
 
-_simbadbase = 'http://simbad.u-strasbg.fr/simbad/sim-script?script='
-_simbaditems = ('COO(d;A) COO(d;D) COO(E) COO(B) PM(A) PM(D) PM(E) PLX(V) PLX(E) '
-                'RV(V) RV(E)').split ()
+_simbadbase = "http://simbad.u-strasbg.fr/simbad/sim-script?script="
+_simbaditems = (
+    "COO(d;A) COO(d;D) COO(E) COO(B) PM(A) PM(D) PM(E) PLX(V) PLX(E) " "RV(V) RV(E)"
+).split()
 
-def get_simbad_astrometry_info (ident, items=_simbaditems, debug=False):
+
+def get_simbad_astrometry_info(ident, items=_simbaditems, debug=False):
     """Fetch astrometric information from the Simbad web service.
 
     Given the name of a source as known to the CDS Simbad service, this
@@ -873,6 +939,7 @@ def get_simbad_astrometry_info (ident, items=_simbaditems, debug=False):
 
     """
     import codecs
+
     try:
         from urllib.parse import quote
     except ImportError:
@@ -882,37 +949,41 @@ def get_simbad_astrometry_info (ident, items=_simbaditems, debug=False):
     except ImportError:
         from urllib2 import urlopen
 
-    s = '\\n'.join ('%s %%%s' % (i, i) for i in items)
-    s = '''output console=off script=off
+    s = "\\n".join("%s %%%s" % (i, i) for i in items)
+    s = """output console=off script=off
 format object "%s"
-query id %s''' % (s, ident)
-    url = _simbadbase + quote (s)
+query id %s""" % (
+        s,
+        ident,
+    )
+    url = _simbadbase + quote(s)
     results = {}
     errtext = None
 
-    for line in codecs.getreader('utf-8')(urlopen (url)):
-        line = line.strip ()
+    for line in codecs.getreader("utf-8")(urlopen(url)):
+        line = line.strip()
         if debug:
-            print_ ('D: SA >>', line)
+            print_("D: SA >>", line)
 
         if errtext is not None:
             errtext += line
-        elif line.startswith ('::error'):
-            errtext = ''
-        elif len (line):
-            k, v = line.split (' ', 1)
+        elif line.startswith("::error"):
+            errtext = ""
+        elif len(line):
+            k, v = line.split(" ", 1)
             results[k] = v
 
     if errtext is not None:
-        raise Exception ('SIMBAD query error: ' + errtext)
+        raise Exception("SIMBAD query error: " + errtext)
     return results
 
 
-class AstrometryInfo (object):
+class AstrometryInfo(object):
     """Holds astrometric data and their uncertainties, and can predict
     positions with uncertainties.
 
     """
+
     ra = None
     "The J2000 right ascension of the object, measured in radians."
 
@@ -972,16 +1043,16 @@ class AstrometryInfo (object):
     relevant in our usage.
 
     """
-    def __init__ (self, simbadident=None, **kwargs):
+
+    def __init__(self, simbadident=None, **kwargs):
         if simbadident is not None:
-            self.fill_from_simbad (simbadident)
+            self.fill_from_simbad(simbadident)
 
-        for k, v in six.iteritems (kwargs):
-            setattr (self, k, v)
+        for k, v in six.iteritems(kwargs):
+            setattr(self, k, v)
 
-
-    def _partial_info (self, val0, *rest):
-        if not len (rest):
+    def _partial_info(self, val0, *rest):
+        if not len(rest):
             return False
 
         first = val0 is None
@@ -990,8 +1061,7 @@ class AstrometryInfo (object):
                 return True
         return False
 
-
-    def verify (self, complain=True):
+    def verify(self, complain=True):
         """Validate that the attributes are self-consistent.
 
         This function does some basic checks of the object attributes to
@@ -1005,66 +1075,80 @@ class AstrometryInfo (object):
         import sys
 
         if self.ra is None:
-            raise ValueError ('AstrometryInfo missing "ra"')
+            raise ValueError('AstrometryInfo missing "ra"')
         if self.dec is None:
-            raise ValueError ('AstrometryInfo missing "dec"')
+            raise ValueError('AstrometryInfo missing "dec"')
 
-        if self._partial_info (self.promo_ra, self.promo_dec):
-            raise ValueError ('partial proper-motion info in AstrometryInfo')
+        if self._partial_info(self.promo_ra, self.promo_dec):
+            raise ValueError("partial proper-motion info in AstrometryInfo")
 
-        if self._partial_info (self.pos_u_maj, self.pos_u_min, self.pos_u_pa):
-            raise ValueError ('partial positional uncertainty info in AstrometryInfo')
+        if self._partial_info(self.pos_u_maj, self.pos_u_min, self.pos_u_pa):
+            raise ValueError("partial positional uncertainty info in AstrometryInfo")
 
-        if self._partial_info (self.promo_u_maj, self.promo_u_min, self.promo_u_pa):
-            raise ValueError ('partial proper-motion uncertainty info in AstrometryInfo')
+        if self._partial_info(self.promo_u_maj, self.promo_u_min, self.promo_u_pa):
+            raise ValueError("partial proper-motion uncertainty info in AstrometryInfo")
 
         if self.pos_u_maj is None:
             if complain:
-                print_ ('AstrometryInfo: no positional uncertainty info', file=sys.stderr)
+                print_(
+                    "AstrometryInfo: no positional uncertainty info", file=sys.stderr
+                )
         elif self.pos_u_maj < self.pos_u_min:
             # Based on experience with PM, this may be possible
             if complain:
-                print_ ('AstrometryInfo: swapped positional uncertainty '
-                        'major/minor axes', file=sys.stderr)
+                print_(
+                    "AstrometryInfo: swapped positional uncertainty "
+                    "major/minor axes",
+                    file=sys.stderr,
+                )
             self.pos_u_maj, self.pos_u_min = self.pos_u_min, self.pos_u_maj
             self.pos_u_pa += 0.5 * np.pi
 
         if self.pos_epoch is None:
             if complain:
-                print_('AstrometryInfo: assuming epoch of position is J2000.0', file=sys.stderr)
+                print_(
+                    "AstrometryInfo: assuming epoch of position is J2000.0",
+                    file=sys.stderr,
+                )
 
         if self.promo_ra is None:
             if complain:
-                print_ ('AstrometryInfo: assuming zero proper motion', file=sys.stderr)
+                print_("AstrometryInfo: assuming zero proper motion", file=sys.stderr)
         elif self.promo_u_maj is None:
             if complain:
-                print_ ('AstrometryInfo: no uncertainty on proper motion', file=sys.stderr)
+                print_(
+                    "AstrometryInfo: no uncertainty on proper motion", file=sys.stderr
+                )
         elif self.promo_u_maj < self.promo_u_min:
             # I've seen this: V* V374 Peg
             if complain:
-                print_ ('AstrometryInfo: swapped proper motion uncertainty '
-                        'major/minor axes', file=sys.stderr)
+                print_(
+                    "AstrometryInfo: swapped proper motion uncertainty "
+                    "major/minor axes",
+                    file=sys.stderr,
+                )
             self.promo_u_maj, self.promo_u_min = self.promo_u_min, self.promo_u_maj
             self.promo_u_pa += 0.5 * np.pi
 
         if self.parallax is None:
             if complain:
-                print_ ('AstrometryInfo: assuming zero parallax', file=sys.stderr)
+                print_("AstrometryInfo: assuming zero parallax", file=sys.stderr)
         else:
-            if self.parallax < 0.:
-                raise ValueError ('negative parallax in AstrometryInfo')
+            if self.parallax < 0.0:
+                raise ValueError("negative parallax in AstrometryInfo")
             if self.u_parallax is None:
                 if complain:
-                    print_ ('AstrometryInfo: no uncertainty on parallax', file=sys.stderr)
+                    print_(
+                        "AstrometryInfo: no uncertainty on parallax", file=sys.stderr
+                    )
 
         if self.vradial is None:
-            pass # not worth complaining
+            pass  # not worth complaining
         elif self.u_vradial is None:
             if complain:
-                print_ ('AstrometryInfo: no uncertainty on v_radial', file=sys.stderr)
+                print_("AstrometryInfo: no uncertainty on v_radial", file=sys.stderr)
 
-        return self # chain-friendly
-
+        return self  # chain-friendly
 
     def predict_without_uncertainties(self, mjd, complain=True):
         """Predict the object position at a given MJD.
@@ -1083,34 +1167,33 @@ class AstrometryInfo (object):
 
         self.verify(complain=complain)
 
-        planets, ts = load_skyfield_data() # might download stuff from the internet
-        earth = planets['earth']
-        t = ts.tdb(jd = mjd + 2400000.5)
+        planets, ts = load_skyfield_data()  # might download stuff from the internet
+        earth = planets["earth"]
+        t = ts.tdb(jd=mjd + 2400000.5)
 
         # "Best" position. The implementation here is a bit weird to keep
         # parallelism with predict().
 
         args = {
-            'ra_hours': self.ra * R2H,
-            'dec_degrees': self.dec * R2D,
+            "ra_hours": self.ra * R2H,
+            "dec_degrees": self.dec * R2D,
         }
 
         if self.pos_epoch is not None:
-            args['jd_of_position'] = self.pos_epoch + 2400000.5
+            args["jd_of_position"] = self.pos_epoch + 2400000.5
 
         if self.promo_ra is not None:
-            args['ra_mas_per_year'] = self.promo_ra
-            args['dec_mas_per_year'] = self.promo_dec
+            args["ra_mas_per_year"] = self.promo_ra
+            args["dec_mas_per_year"] = self.promo_dec
         if self.parallax is not None:
-            args['parallax_mas'] = self.parallax
+            args["parallax_mas"] = self.parallax
         if self.vradial is not None:
-            args['radial_km_per_s'] = self.vradial
+            args["radial_km_per_s"] = self.vradial
 
         bestra, bestdec, _ = earth.at(t).observe(PromoEpochStar(**args)).radec()
         return bestra.radians, bestdec.radians
 
-
-    def predict (self, mjd, complain=True, n=20000):
+    def predict(self, mjd, complain=True, n=20000):
         """Predict the object position at a given MJD.
 
         The return value is a tuple ``(ra, dec, major, minor, pa)``, all in
@@ -1128,29 +1211,29 @@ class AstrometryInfo (object):
         import sys
         from . import ellipses
 
-        self.verify (complain=complain)
+        self.verify(complain=complain)
 
-        planets, ts = load_skyfield_data() # might download stuff from the internet
-        earth = planets['earth']
-        t = ts.tdb(jd = mjd + 2400000.5)
+        planets, ts = load_skyfield_data()  # might download stuff from the internet
+        earth = planets["earth"]
+        t = ts.tdb(jd=mjd + 2400000.5)
 
         # "Best" position.
 
         args = {
-            'ra_hours': self.ra * R2H,
-            'dec_degrees': self.dec * R2D,
+            "ra_hours": self.ra * R2H,
+            "dec_degrees": self.dec * R2D,
         }
 
         if self.pos_epoch is not None:
-            args['jd_of_position'] = self.pos_epoch + 2400000.5
+            args["jd_of_position"] = self.pos_epoch + 2400000.5
 
         if self.promo_ra is not None:
-            args['ra_mas_per_year'] = self.promo_ra
-            args['dec_mas_per_year'] = self.promo_dec
+            args["ra_mas_per_year"] = self.promo_ra
+            args["dec_mas_per_year"] = self.promo_dec
         if self.parallax is not None:
-            args['parallax_mas'] = self.parallax
+            args["parallax_mas"] = self.parallax
         if self.vradial is not None:
-            args['radial_km_per_s'] = self.vradial
+            args["radial_km_per_s"] = self.vradial
 
         bestra, bestdec, _ = earth.at(t).observe(PromoEpochStar(**args)).radec()
         bestra = bestra.radians
@@ -1160,65 +1243,75 @@ class AstrometryInfo (object):
         # angle convention requires that we treat declination as X and RA as
         # Y. First, we check sanity and generate randomized parameters:
 
-        if self.pos_u_maj is None and self.promo_u_maj is None and self.u_parallax is None:
+        if (
+            self.pos_u_maj is None
+            and self.promo_u_maj is None
+            and self.u_parallax is None
+        ):
             if complain:
-                print_ ('AstrometryInfo.predict(): no uncertainties '
-                        'available; cannot Monte Carlo!', file=sys.stderr)
-            return (bestra, bestdec, 0., 0., 0.)
+                print_(
+                    "AstrometryInfo.predict(): no uncertainties "
+                    "available; cannot Monte Carlo!",
+                    file=sys.stderr,
+                )
+            return (bestra, bestdec, 0.0, 0.0, 0.0)
 
         if self.pos_u_maj is not None:
-            sd, sr, cdr = ellipses.ellbiv (self.pos_u_maj, self.pos_u_min, self.pos_u_pa)
-            decs, ras = ellipses.bivrandom (self.dec, self.ra, sd, sr, cdr, n).T
+            sd, sr, cdr = ellipses.ellbiv(self.pos_u_maj, self.pos_u_min, self.pos_u_pa)
+            decs, ras = ellipses.bivrandom(self.dec, self.ra, sd, sr, cdr, n).T
         else:
-            ras = np.zeros (n) + self.ra
-            decs = np.zeros (n) + self.dec
+            ras = np.zeros(n) + self.ra
+            decs = np.zeros(n) + self.dec
 
         if self.promo_ra is None:
-            pmras = np.zeros (n)
-            pmdecs = np.zeros (n)
+            pmras = np.zeros(n)
+            pmdecs = np.zeros(n)
         elif self.promo_u_maj is not None:
-            sd, sr, cdr = ellipses.ellbiv (self.promo_u_maj, self.promo_u_min, self.promo_u_pa)
-            pmdecs, pmras = ellipses.bivrandom (self.promo_dec, self.promo_ra, sd, sr, cdr, n).T
+            sd, sr, cdr = ellipses.ellbiv(
+                self.promo_u_maj, self.promo_u_min, self.promo_u_pa
+            )
+            pmdecs, pmras = ellipses.bivrandom(
+                self.promo_dec, self.promo_ra, sd, sr, cdr, n
+            ).T
         else:
-            pmras = np.zeros (n) + self.promo_ra
-            pmdecs = np.zeros (n) + self.promo_dec
+            pmras = np.zeros(n) + self.promo_ra
+            pmdecs = np.zeros(n) + self.promo_dec
 
         if self.parallax is None:
-            parallaxes = np.zeros (n)
+            parallaxes = np.zeros(n)
         elif self.u_parallax is not None:
-            parallaxes = np.random.normal (self.parallax, self.u_parallax, n)
+            parallaxes = np.random.normal(self.parallax, self.u_parallax, n)
         else:
-            parallaxes = np.zeros (n) + self.parallax
+            parallaxes = np.zeros(n) + self.parallax
 
         if self.vradial is None:
-            vradials = np.zeros (n)
+            vradials = np.zeros(n)
         elif self.u_vradial is not None:
-            vradials = np.random.normal (self.vradial, self.u_vradial, n)
+            vradials = np.random.normal(self.vradial, self.u_vradial, n)
         else:
-            vradials = np.zeros (n) + self.vradial
+            vradials = np.zeros(n) + self.vradial
 
         # Now we compute the positions and summarize as an ellipse:
 
-        results = np.empty ((n, 2))
+        results = np.empty((n, 2))
 
-        for i in range (n):
-            args['ra_hours'] = ras[i] * R2H
-            args['dec_degrees'] = decs[i] * R2D
-            args['ra_mas_per_year'] = pmras[i]
-            args['dec_mas_per_year'] = pmdecs[i]
-            args['parallax_mas'] = parallaxes[i]
-            args['radial_km_per_s'] = vradials[i]
+        for i in range(n):
+            args["ra_hours"] = ras[i] * R2H
+            args["dec_degrees"] = decs[i] * R2D
+            args["ra_mas_per_year"] = pmras[i]
+            args["dec_mas_per_year"] = pmdecs[i]
+            args["parallax_mas"] = parallaxes[i]
+            args["radial_km_per_s"] = vradials[i]
             ara, adec, _ = earth.at(t).observe(PromoEpochStar(**args)).radec()
             results[i] = adec.radians, ara.radians
 
-        maj, min, pa = ellipses.bivell (*ellipses.databiv (results))
+        maj, min, pa = ellipses.bivell(*ellipses.databiv(results))
 
         # All done.
 
         return bestra, bestdec, maj, min, pa
 
-
-    def print_prediction (self, ptup, precision=2):
+    def print_prediction(self, ptup, precision=2):
         """Print a summary of a predicted position.
 
         The argument *ptup* is a tuple returned by :meth:`predict`. It is
@@ -1227,19 +1320,21 @@ class AstrometryInfo (object):
 
         """
         from . import ellipses
+
         bestra, bestdec, maj, min, pa = ptup
 
-        f = ellipses.sigmascale (1)
+        f = ellipses.sigmascale(1)
         maj *= R2A
         min *= R2A
         pa *= R2D
 
-        print_ ('position =', fmtradec (bestra, bestdec, precision=precision))
-        print_ ('err(1σ)  = %.*f" × %.*f" @ %.0f°' % (precision, maj * f, precision,
-                                                      min * f, pa))
+        print_("position =", fmtradec(bestra, bestdec, precision=precision))
+        print_(
+            'err(1σ)  = %.*f" × %.*f" @ %.0f°'
+            % (precision, maj * f, precision, min * f, pa)
+        )
 
-
-    def fill_from_simbad (self, ident, debug=False):
+    def fill_from_simbad(self, ident, debug=False):
         """Fill in astrometric information using the Simbad web service.
 
         This uses the CDS Simbad web service to look up astrometric
@@ -1249,44 +1344,44 @@ class AstrometryInfo (object):
         Returns *self*.
 
         """
-        info = get_simbad_astrometry_info (ident, debug=debug)
-        posref = 'unknown'
+        info = get_simbad_astrometry_info(ident, debug=debug)
+        posref = "unknown"
 
-        for k, v in six.iteritems (info):
-            if '~' in v:
-                continue # no info
+        for k, v in six.iteritems(info):
+            if "~" in v:
+                continue  # no info
 
-            if k == 'COO(d;A)':
-                self.ra = float (v) * D2R
-            elif k == 'COO(d;D)':
-                self.dec = float (v) * D2R
-            elif k == 'COO(E)':
-                a = v.split ()
-                self.pos_u_maj = float (a[0]) * A2R * 1e-3 # mas -> rad
-                self.pos_u_min = float (a[1]) * A2R * 1e-3
-                self.pos_u_pa = float (a[2]) * D2R
-            elif k == 'COO(B)':
+            if k == "COO(d;A)":
+                self.ra = float(v) * D2R
+            elif k == "COO(d;D)":
+                self.dec = float(v) * D2R
+            elif k == "COO(E)":
+                a = v.split()
+                self.pos_u_maj = float(a[0]) * A2R * 1e-3  # mas -> rad
+                self.pos_u_min = float(a[1]) * A2R * 1e-3
+                self.pos_u_pa = float(a[2]) * D2R
+            elif k == "COO(B)":
                 posref = v
-            elif k == 'PM(A)':
-                self.promo_ra = float (v) # mas/yr
-            elif k == 'PM(D)':
-                self.promo_dec = float (v) # mas/yr
-            elif k == 'PM(E)':
-                a = v.split ()
-                self.promo_u_maj = float (a[0]) # mas/yr
-                self.promo_u_min = float (a[1])
-                self.promo_u_pa = float (a[2]) * D2R # rad!
-            elif k == 'PLX(V)':
-                self.parallax = float (v) # mas
-            elif k == 'PLX(E)':
-                self.u_parallax = float (v) # mas
-            elif k == 'RV(V)':
-                self.vradial = float (v) # km/s
-            elif k == 'RV(E)':
-                self.u_vradial = float (v) #km/s
+            elif k == "PM(A)":
+                self.promo_ra = float(v)  # mas/yr
+            elif k == "PM(D)":
+                self.promo_dec = float(v)  # mas/yr
+            elif k == "PM(E)":
+                a = v.split()
+                self.promo_u_maj = float(a[0])  # mas/yr
+                self.promo_u_min = float(a[1])
+                self.promo_u_pa = float(a[2]) * D2R  # rad!
+            elif k == "PLX(V)":
+                self.parallax = float(v)  # mas
+            elif k == "PLX(E)":
+                self.u_parallax = float(v)  # mas
+            elif k == "RV(V)":
+                self.vradial = float(v)  # km/s
+            elif k == "RV(E)":
+                self.u_vradial = float(v)  # km/s
 
         if self.ra is None:
-            raise Exception ('no position returned by Simbad for "%s"' % ident)
+            raise Exception('no position returned by Simbad for "%s"' % ident)
         if self.u_parallax == 0:
             self.u_parallax = None
         if self.u_vradial == 0:
@@ -1294,15 +1389,14 @@ class AstrometryInfo (object):
 
         # Get the right epoch of position when possible
 
-        if posref == '2003yCat.2246....0C':
-            self.pos_epoch = get_2mass_epoch (self.ra, self.dec, debug)
-        elif posref == '2018yCat.1345....0G':
+        if posref == "2003yCat.2246....0C":
+            self.pos_epoch = get_2mass_epoch(self.ra, self.dec, debug)
+        elif posref == "2018yCat.1345....0G":
             self.pos_epoch = 57205.875  # J2015.5 for Gaia DR2
 
-        return self # eases chaining
+        return self  # eases chaining
 
-
-    def fill_from_allwise (self, ident, catalog_ident='II/328/allwise'):
+    def fill_from_allwise(self, ident, catalog_ident="II/328/allwise"):
         """Fill in astrometric information from the AllWISE catalog using Astroquery.
 
         This uses the :mod:`astroquery` module to query the AllWISE
@@ -1338,98 +1432,114 @@ class AstrometryInfo (object):
         # appear. Strangely, querying for an invalid identifier yields a table
         # with two rows that are filled with masked out data.
 
-        table_list = Vizier.query_constraints (catalog=catalog_ident, AllWISE=ident)
-        if not len (table_list):
-            raise PKError ('Vizier query returned no tables (catalog=%r AllWISE=%r)',
-                           catalog_ident, ident)
+        table_list = Vizier.query_constraints(catalog=catalog_ident, AllWISE=ident)
+        if not len(table_list):
+            raise PKError(
+                "Vizier query returned no tables (catalog=%r AllWISE=%r)",
+                catalog_ident,
+                ident,
+            )
 
         table = table_list[0]
-        if not len (table):
-            raise PKError ('Vizier query returned empty %s table (catalog=%r AllWISE=%r)',
-                           table.meta['name'], catalog_ident, ident)
+        if not len(table):
+            raise PKError(
+                "Vizier query returned empty %s table (catalog=%r AllWISE=%r)",
+                table.meta["name"],
+                catalog_ident,
+                ident,
+            )
 
         row = table[0]
-        if isinstance (row['_RAJ2000'], ma_core.MaskedConstant):
-            raise PKError ('Vizier query returned flagged row in %s table; your AllWISE '
-                           'identifier likely does not exist (it should be of the form '
-                           '"J112254.70+255021.9"; catalog=%r AllWISE=%r)',
-                           table.meta['name'], catalog_ident, ident)
+        if isinstance(row["_RAJ2000"], ma_core.MaskedConstant):
+            raise PKError(
+                "Vizier query returned flagged row in %s table; your AllWISE "
+                "identifier likely does not exist (it should be of the form "
+                '"J112254.70+255021.9"; catalog=%r AllWISE=%r)',
+                table.meta["name"],
+                catalog_ident,
+                ident,
+            )
 
         # OK, we can actually do this.
 
-        self.ra = row['RA_pm'] * D2R
-        self.dec = row['DE_pm'] * D2R
+        self.ra = row["RA_pm"] * D2R
+        self.dec = row["DE_pm"] * D2R
 
-        if row['e_RA_pm'] > row['e_DE_pm']:
-            self.pos_u_maj = row['e_RA_pm'] * A2R
-            self.pos_u_min = row['e_DE_pm'] * A2R
+        if row["e_RA_pm"] > row["e_DE_pm"]:
+            self.pos_u_maj = row["e_RA_pm"] * A2R
+            self.pos_u_min = row["e_DE_pm"] * A2R
             self.pos_u_pa = halfpi
         else:
-            self.pos_u_maj = row['e_DE_pm'] * A2R
-            self.pos_u_min = row['e_RA_pm'] * A2R
+            self.pos_u_maj = row["e_DE_pm"] * A2R
+            self.pos_u_min = row["e_RA_pm"] * A2R
             self.pos_u_pa = 0
 
-        self.pos_epoch = 55400. # hardcoded in the catalog
-        self.promo_ra = row['pmRA']
-        self.promo_dec = row['pmDE']
+        self.pos_epoch = 55400.0  # hardcoded in the catalog
+        self.promo_ra = row["pmRA"]
+        self.promo_dec = row["pmDE"]
 
-        if row['e_pmRA'] > row['e_pmDE']:
-            self.promo_u_maj = row['e_pmRA'] * 1.
-            self.promo_u_min = row['e_pmDE'] * 1.
+        if row["e_pmRA"] > row["e_pmDE"]:
+            self.promo_u_maj = row["e_pmRA"] * 1.0
+            self.promo_u_min = row["e_pmDE"] * 1.0
             self.promo_u_pa = halfpi
         else:
-            self.promo_u_maj = row['e_pmDE'] * 1.
-            self.promo_u_min = row['e_pmRA'] * 1.
-            self.promo_u_pa = 0.
+            self.promo_u_maj = row["e_pmDE"] * 1.0
+            self.promo_u_min = row["e_pmRA"] * 1.0
+            self.promo_u_pa = 0.0
 
-        return self # eases chaining
+        return self  # eases chaining
 
-
-    def __unicode__ (self):
-        self.verify (complain=False)
+    def __unicode__(self):
+        self.verify(complain=False)
         a = []
-        a.append (u'Position: ' + fmtradec (self.ra, self.dec))
+        a.append("Position: " + fmtradec(self.ra, self.dec))
         if self.pos_u_maj is None:
-            a.append (u'No uncertainty info for position.')
+            a.append("No uncertainty info for position.")
         else:
-            a.append (u'Pos. uncert: %.3f" × %.3f" @ %.0f°' %
-                      (self.pos_u_maj * R2A, self.pos_u_min * R2A,
-                       self.pos_u_pa * R2D))
+            a.append(
+                'Pos. uncert: %.3f" × %.3f" @ %.0f°'
+                % (self.pos_u_maj * R2A, self.pos_u_min * R2A, self.pos_u_pa * R2D)
+            )
         if self.pos_epoch is None:
-            a.append (u'No epoch of position.')
+            a.append("No epoch of position.")
         else:
-            a.append (u'Epoch of position: MJD %.3f' % self.pos_epoch)
+            a.append("Epoch of position: MJD %.3f" % self.pos_epoch)
         if self.promo_ra is None:
-            a.append (u'No proper motion.')
+            a.append("No proper motion.")
         else:
-            a.append (u'Proper motion: %.3f, %.3f mas/yr' % (self.promo_ra, self.promo_dec))
+            a.append(
+                "Proper motion: %.3f, %.3f mas/yr" % (self.promo_ra, self.promo_dec)
+            )
         if self.promo_u_maj is None:
-            a.append (u'No uncertainty info for proper motion.')
+            a.append("No uncertainty info for proper motion.")
         else:
-            a.append (u'Promo. uncert: %.1f × %.1f mas/yr @ %.0f°' %
-                      (self.promo_u_maj, self.promo_u_min,
-                       self.promo_u_pa * R2D))
+            a.append(
+                "Promo. uncert: %.1f × %.1f mas/yr @ %.0f°"
+                % (self.promo_u_maj, self.promo_u_min, self.promo_u_pa * R2D)
+            )
         if self.parallax is None:
-            a.append (u'No parallax information.')
+            a.append("No parallax information.")
         elif self.u_parallax is not None:
-            a.append (u'Parallax: %.1f ± %.1f mas' % (self.parallax, self.u_parallax))
+            a.append("Parallax: %.1f ± %.1f mas" % (self.parallax, self.u_parallax))
         else:
-            a.append (u'Parallax: %.1f mas, unknown uncert.' % self.parallax)
+            a.append("Parallax: %.1f mas, unknown uncert." % self.parallax)
         if self.vradial is None:
-            a.append (u'No radial velocity information.')
+            a.append("No radial velocity information.")
         elif self.u_vradial is not None:
-            a.append (u'Radial velocity: %.2f ± %.2f km/s' % (self.vradial, self.u_vradial))
+            a.append(
+                "Radial velocity: %.2f ± %.2f km/s" % (self.vradial, self.u_vradial)
+            )
         else:
-            a.append (u'Radial velocity: %.1f km/s, unknown uncert.' % self.vradial)
-        return u'\n'.join (a)
-
+            a.append("Radial velocity: %.1f km/s, unknown uncert." % self.vradial)
+        return "\n".join(a)
 
     __str__ = unicode_to_str
 
 
 # Other astronomical calculations
 
-def app2abs (app_mag, dist_pc):
+
+def app2abs(app_mag, dist_pc):
     """Convert an apparent magnitude to an absolute magnitude, given a source's
     (luminosity) distance in parsecs.
 
@@ -1443,10 +1553,10 @@ def app2abs (app_mag, dist_pc):
     Returns the absolute magnitude. The arguments may be vectors.
 
     """
-    return app_mag - 5 * (np.log10 (dist_pc) - 1)
+    return app_mag - 5 * (np.log10(dist_pc) - 1)
 
 
-def abs2app (abs_mag, dist_pc):
+def abs2app(abs_mag, dist_pc):
     """Convert an absolute magnitude to an apparent magnitude, given a source's
     (luminosity) distance in parsecs.
 
@@ -1460,4 +1570,4 @@ def abs2app (abs_mag, dist_pc):
     Returns the apparent magnitude. The arguments may be vectors.
 
     """
-    return abs_mag + 5 * (np.log10 (dist_pc) - 1)
+    return abs_mag + 5 * (np.log10(dist_pc) - 1)
