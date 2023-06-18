@@ -16,7 +16,7 @@ Therefore, we can safely expect that the model will be accessible as a path on
 the filesystem.
 
 Current BT-Settl models may be downloaded from a SPECTRA directory within `the
-BT-Settl download site <https://phoenix.ens-lyon.fr/Grids/BT-Settl/>`_ (see the
+BT-Settl download site ``https://phoenix.ens-lyon.fr/Grids/BT-Settl/`` (see the
 README). E.g.::
 
   https://phoenix.ens-lyon.fr/Grids/BT-Settl/CIFIST2011bc/SPECTRA/
@@ -29,7 +29,7 @@ The first three columns are wavelength in Å, log10(F_λ), and log10(B_λ), wher
 the latter is the blackbody flux for the given Teff. The fluxes can nominally
 be converted into absolute units with an offset of 8 in log space, but I doubt
 that can be trusted much. Subsequent columns are related to various spectral
-lines. See https://phoenix.ens-lyon.fr/Grids/FORMAT .
+lines. See ``https://phoenix.ens-lyon.fr/Grids/FORMAT``.
 
 The files do not come sorted!
 
