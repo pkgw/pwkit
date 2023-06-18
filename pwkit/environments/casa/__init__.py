@@ -56,7 +56,7 @@ This package provides several kinds of functionality.
 """
 from __future__ import absolute_import, division, print_function
 
-__all__ = 'CasaEnvironment CasaTool commandline'.split()
+__all__ = "CasaEnvironment CasaTool commandline".split()
 
 import glob, io, os.path
 
@@ -74,14 +74,14 @@ class CasaEnvironment(Environment):
 
         self._rootdir = os.path.abspath(rootdir)
 
-
     def _default_rootdir(self):
-        d = os.environ.get('PWKIT_CASA')
+        d = os.environ.get("PWKIT_CASA")
         if d is None:
-            raise PKError('CASA installation directory must be specified '
-                          'in the $PWKIT_CASA environment variable')
+            raise PKError(
+                "CASA installation directory must be specified "
+                "in the $PWKIT_CASA environment variable"
+            )
         return d
-
 
     def modify_environment(self, env):
         """Maintaining compatibility with different CASA versions is a pain."""
@@ -89,53 +89,54 @@ class CasaEnvironment(Environment):
         # Ugh. I don't see any way out of special-casing the RPM-based
         # installations ... which only exist on NRAO computers, AFAICT.
         # Hardcoding 64-bitness, hopefully that won't come back to bite me.
-        is_rpm_install = self._rootdir.startswith('/usr/lib64/casapy/release/')
+        is_rpm_install = self._rootdir.startswith("/usr/lib64/casapy/release/")
 
         def path(*args):
             return os.path.join(self._rootdir, *args)
 
-        env['CASAROOT'] = path()
-        env['CASAPATH'] = ' '.join([path(),
-                                    os.uname()[0].lower(),
-                                    'local',
-                                    os.uname()[1]])
+        env["CASAROOT"] = path()
+        env["CASAPATH"] = " ".join(
+            [path(), os.uname()[0].lower(), "local", os.uname()[1]]
+        )
 
         if is_rpm_install:
-            env['CASA_INSTALLATION_TYPE'] = 'rpm-installation'
-            prepend_environ_path(env, 'PATH', '/usr/lib64/casa/01/bin')
-            prepend_environ_path(env, 'PATH', path('bin'))
+            env["CASA_INSTALLATION_TYPE"] = "rpm-installation"
+            prepend_environ_path(env, "PATH", "/usr/lib64/casa/01/bin")
+            prepend_environ_path(env, "PATH", path("bin"))
         else:
-            env['CASA_INSTALLATION_TYPE'] = 'tar-installation'
+            env["CASA_INSTALLATION_TYPE"] = "tar-installation"
 
-            lib = 'lib64' if os.path.isdir(path('lib64')) else 'lib'
+            lib = "lib64" if os.path.isdir(path("lib64")) else "lib"
             # 4.3.1 comes with both python2.6 and python2.7???
-            pydir = sorted(glob.glob(path(lib, 'python2*')))[-1]
+            pydir = sorted(glob.glob(path(lib, "python2*")))[-1]
 
-            tcldir = path('share', 'tcl')
+            tcldir = path("share", "tcl")
             if os.path.isdir(tcldir):
-                env['TCL_LIBRARY'] = tcldir
+                env["TCL_LIBRARY"] = tcldir
             else:
-                tcl_versioned_dirs = glob.glob(path('share', 'tcl*'))
+                tcl_versioned_dirs = glob.glob(path("share", "tcl*"))
                 if len(tcl_versioned_dirs):
-                    env['TCL_LIBRARY'] = tcl_versioned_dirs[-1]
+                    env["TCL_LIBRARY"] = tcl_versioned_dirs[-1]
 
-            bindir = path(lib, 'casa', 'bin')
+            bindir = path(lib, "casa", "bin")
             if not os.path.isdir(bindir):
-                bindir = path(lib, 'casapy', 'bin')
-            prepend_environ_path(env, 'PATH', bindir)
+                bindir = path(lib, "casapy", "bin")
+            prepend_environ_path(env, "PATH", bindir)
 
-            env['CASA_INSTALLATION_DIRECTORY'] = env['CASAROOT']
-            env['__CASAPY_PYTHONDIR'] = pydir
-            env['MATPLOTLIBRC'] = path('share', 'matplotlib')
-            env['PYTHONHOME'] = env['CASAROOT']
-            env['TK_LIBRARY'] = path('share', 'tk')
-            env['QT_PLUGIN_PATH'] = path(lib, 'qt4', 'plugins')
+            env["CASA_INSTALLATION_DIRECTORY"] = env["CASAROOT"]
+            env["__CASAPY_PYTHONDIR"] = pydir
+            env["MATPLOTLIBRC"] = path("share", "matplotlib")
+            env["PYTHONHOME"] = env["CASAROOT"]
+            env["TK_LIBRARY"] = path("share", "tk")
+            env["QT_PLUGIN_PATH"] = path(lib, "qt4", "plugins")
 
-            prepend_environ_path(env, 'LD_LIBRARY_PATH', path(lib))
+            prepend_environ_path(env, "LD_LIBRARY_PATH", path(lib))
             # should we overwite PYTHONPATH instead?
-            prepend_environ_path(env, 'PYTHONPATH', os.path.join(pydir, 'site-packages'))
-            prepend_environ_path(env, 'PYTHONPATH', os.path.join(pydir, 'heuristics'))
-            prepend_environ_path(env, 'PYTHONPATH', pydir)
+            prepend_environ_path(
+                env, "PYTHONPATH", os.path.join(pydir, "site-packages")
+            )
+            prepend_environ_path(env, "PYTHONPATH", os.path.join(pydir, "heuristics"))
+            prepend_environ_path(env, "PYTHONPATH", pydir)
 
         return env
 
@@ -144,20 +145,25 @@ class CasaEnvironment(Environment):
 
 from .. import DefaultExecCommand, DefaultShellCommand
 
+
 class CasaTool(multitool.Multitool):
-    cli_name = 'pkenvtool casa'
-    summary = 'Run programs in the CASA environment.'
+    cli_name = "pkenvtool casa"
+    summary = "Run programs in the CASA environment."
 
     def invoke_command(self, cmd, args, **kwargs):
-        return super(CasaTool, self).invoke_command(cmd, args,
-                                                    envname='casa',
-                                                    envclass=CasaEnvironment,
-                                                    module=__package__,
-                                                    **kwargs)
+        return super(CasaTool, self).invoke_command(
+            cmd,
+            args,
+            envname="casa",
+            envclass=CasaEnvironment,
+            module=__package__,
+            **kwargs
+        )
 
 
 def commandline(argv):
     from six import itervalues
+
     tool = CasaTool()
     tool.populate(itervalues(globals()))
     tool.commandline(argv)
