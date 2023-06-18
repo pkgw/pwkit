@@ -21,10 +21,7 @@ def load_ndshow():
     try:
         from .. import ndshow_gtk3 as ndshow
     except ImportError as e:
-        try:
-            from .. import ndshow_gtk2 as ndshow
-        except ImportError as e:
-            die("cannot load graphics backend for viewing images: %s", e)
+        die("cannot load graphics backend for viewing images: %s", e)
 
     return ndshow
 

@@ -13,5 +13,4 @@ This documentation has a lot of stubs.
    pwkit/colormaps.rst
    pwkit/contours.rst
    pwkit/data_gui_helpers.rst
-   pwkit/ndshow_gtk2.rst
    pwkit/ndshow_gtk3.rst
