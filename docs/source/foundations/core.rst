@@ -84,11 +84,12 @@ Utilities for exceptions
 Abstractions between Python versions 2 and 3
 ------------------------------------------------------------------------
 
-The toplevel :mod:`pwkit` module imports the following variables from the
-:mod:`six` package that helps with Python 2/3 compatibility:
+The toplevel :mod:`pwkit` module defines the following variables as a holdover
+from the times when it was concerned with compatibility between Python 2 and
+Python 3:
 
-- :data:`~six.binary_type`
-- :data:`~six.text_type`
+- :data:`binary_type`
+- :data:`text_type`
 
 .. function:: unicode_to_str(s)
 

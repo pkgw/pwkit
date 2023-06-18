@@ -14,21 +14,18 @@ found here.
 """
 from __future__ import absolute_import, division, print_function
 
-__all__ = 'Config dftphotom dftphotom_cli'.split()
+__all__ = "Config dftphotom dftphotom_cli".split()
 
-import six, sys, os.path, numpy as np
-from six.moves import range
+import sys, os.path, numpy as np
 
-from ... import binary_type, text_type
 # Note: zany spacing so that Sphinx can parse the file correctly.
-from . ..astutil import *
-from . ..cli import check_usage, die, warn
-from . ..kwargv import ParseKeywords, Custom
+from ...astutil import *
+from ...cli import check_usage, die, warn
+from ...kwargv import ParseKeywords, Custom
 from . import util
 from .util import sanitize_unicode as b
 
-dftphotom_doc = \
-"""
+dftphotom_doc = """
 casatask dftphotom vis=MS [keywords...]
 
 Extract photometry from the visibilities in a measurement set. See the full
@@ -100,23 +97,28 @@ but see the datascale keyword, and there's no way to know if the
 data have actually been flux-calibrated or not.
 """
 
+
 class HumaneOutputFormat(object):
     def header(self, cfg):
         pass
 
     def row(self, cfg, mjd, dtmin, r_sc, ru_sc, i_sc, iu_sc, mag, umag, n):
-        print('%12.5f %6.2f %10.2f %10.2f %10.2f %10.2f %10.2f %10.2f %d' %
-              (mjd, dtmin, r_sc, ru_sc, i_sc, iu_sc, mag, umag, n),
-              file=cfg.outstream)
+        print(
+            "%12.5f %6.2f %10.2f %10.2f %10.2f %10.2f %10.2f %10.2f %d"
+            % (mjd, dtmin, r_sc, ru_sc, i_sc, iu_sc, mag, umag, n),
+            file=cfg.outstream,
+        )
 
 
 class PandasOutputFormat(object):
     def header(self, cfg):
-        print('mjd dtmin re ure im uim abs uabs nsamp'.replace(' ', '\t'),
-              file=cfg.outstream)
+        print(
+            "mjd dtmin re ure im uim abs uabs nsamp".replace(" ", "\t"),
+            file=cfg.outstream,
+        )
 
     def row(self, cfg, *args):
-        print('\t'.join(str(x) for x in args), file=cfg.outstream)
+        print("\t".join(str(x) for x in args), file=cfg.outstream)
 
 
 class Config(ParseKeywords):
@@ -124,7 +126,7 @@ class Config(ParseKeywords):
     """The path to the visibility MeasurementSet to process. No default; you
     must specify a value before calling :func:`dftphotom`."""
 
-    datacol = 'data'
+    datacol = "data"
     """A string specifying which visibility data column to process: ``data``,
     ``corrected_data``, or ``model_data``. Default ``'data'``.
 
@@ -134,12 +136,13 @@ class Config(ParseKeywords):
     describe the noise in their corresponding visibilities. Default False.
 
     """
-    @Custom(str, uiname='out')
+
+    @Custom(str, uiname="out")
     def outstream(val):
         if val is None:
             return sys.stdout
         try:
-            return open(val, 'w')
+            return open(val, "w")
         except Exception as e:
             die('cannot open path "%s" for writing', val)
 
@@ -149,15 +152,16 @@ class Config(ParseKeywords):
     microJanskys if the underlying data are calibrated to Jansky units.
 
     """
-    @Custom(str, default='humane')
+
+    @Custom(str, default="humane")
     def format(val):
-        if val is None or val == 'humane':
+        if val is None or val == "humane":
             return HumaneOutputFormat()
 
-        if val == 'pandas':
+        if val == "pandas":
             return PandasOutputFormat()
 
-        die('unrecognized output format %r', val)
+        die("unrecognized output format %r", val)
 
     @Custom([str, str], default=None)
     def rephase(val):
@@ -176,7 +180,7 @@ class Config(ParseKeywords):
     baseline = str
     field = str
     observation = str
-    polarization = 'RR,LL'
+    polarization = "RR,LL"
     scan = str
     scanintent = str
     spw = str
@@ -184,7 +188,7 @@ class Config(ParseKeywords):
     time = str
     uvdist = str
 
-    loglevel = 'warn'
+    loglevel = "warn"
 
 
 def dftphotom(cfg):
@@ -215,37 +219,43 @@ def dftphotom(cfg):
     # selectinit() is broken, but the invocation here is good because it
     # affects the results from ms.range() and friends.
 
-    if ':' in (cfg.spw or ''):
-        warn('it looks like you are attempting to select channels within one or more spws')
-        warn('this is NOT IMPLEMENTED; I will average over the whole spw instead')
+    if ":" in (cfg.spw or ""):
+        warn(
+            "it looks like you are attempting to select channels within one or more spws"
+        )
+        warn("this is NOT IMPLEMENTED; I will average over the whole spw instead")
 
     ms.open(b(cfg.vis))
     totrows = ms.nrow()
-    ms_sels = dict((n, cfg.get(n)) for n in util.msselect_keys
-                   if cfg.get(n) is not None)
+    ms_sels = dict(
+        (n, cfg.get(n)) for n in util.msselect_keys if cfg.get(n) is not None
+    )
     ms.msselect(b(ms_sels))
 
-    rangeinfo = ms.range(b'data_desc_id field_id'.split())
-    ddids = rangeinfo['data_desc_id']
-    fields = rangeinfo['field_id']
-    colnames = [cfg.datacol] + 'flag weight time axis_info'.split()
-    rephase = (cfg.rephase is not None)
+    rangeinfo = ms.range(b"data_desc_id field_id".split())
+    ddids = rangeinfo["data_desc_id"]
+    fields = rangeinfo["field_id"]
+    colnames = [cfg.datacol] + "flag weight time axis_info".split()
+    rephase = cfg.rephase is not None
 
     if fields.size != 1:
         # I feel comfortable making this a fatal error, even if we're
         # not rephasing.
-        die('selected data should contain precisely one field; got %d', fields.size)
+        die("selected data should contain precisely one field; got %d", fields.size)
 
     if rephase:
         fieldid = fields[0]
-        tb.open(b(os.path.join(cfg.vis, 'FIELD')))
-        phdirinfo = tb.getcell(b'PHASE_DIR', fieldid)
+        tb.open(b(os.path.join(cfg.vis, "FIELD")))
+        phdirinfo = tb.getcell(b"PHASE_DIR", fieldid)
         tb.close()
 
         if phdirinfo.shape[1] != 1:
-            die('trying to rephase but target field (#%d) has a '
-                'time-variable phase center, which I can\'t handle', fieldid)
-        ra0, dec0 = phdirinfo[:,0] # in radians.
+            die(
+                "trying to rephase but target field (#%d) has a "
+                "time-variable phase center, which I can't handle",
+                fieldid,
+            )
+        ra0, dec0 = phdirinfo[:, 0]  # in radians.
 
         # based on intflib/pwflux.py, which was copied from
         # hex/hex-lib-calcgainerr:
@@ -255,13 +265,13 @@ def dftphotom(cfg):
         l = np.sin(dra) * np.cos(dec)
         m = np.sin(dec) * np.cos(dec0) - np.cos(dra) * np.cos(dec) * np.sin(dec0)
         n = np.sin(dec) * np.sin(dec0) + np.cos(dra) * np.cos(dec) * np.cos(dec0)
-        n -= 1 # makes the work below easier
+        n -= 1  # makes the work below easier
         lmn = np.asarray([l, m, n])
-        colnames.append('uvw')
+        colnames.append("uvw")
 
         # Also need this although 99% of the time `ddid` and `spwid` are the same
-        tb.open(b(os.path.join(cfg.vis, 'DATA_DESCRIPTION')))
-        ddspws = np.asarray(tb.getcol(b'SPECTRAL_WINDOW_ID'))
+        tb.open(b(os.path.join(cfg.vis, "DATA_DESCRIPTION")))
+        ddspws = np.asarray(tb.getcol(b"SPECTRAL_WINDOW_ID"))
         tb.close()
 
     tbins = {}
@@ -271,12 +281,12 @@ def dftphotom(cfg):
         # Starting in CASA 4.6, selectinit(ddid) stopped actually filtering
         # your data to match the specified DDID! What garbage. Work around
         # with our own filtering.
-        ms_sels['taql'] = 'DATA_DESC_ID == %d' % ddid
+        ms_sels["taql"] = "DATA_DESC_ID == %d" % ddid
         ms.msselect(b(ms_sels))
 
         ms.selectinit(ddid)
         if cfg.polarization is not None:
-            ms.selectpolarization(b(cfg.polarization.split(',')))
+            ms.selectpolarization(b(cfg.polarization.split(",")))
         ms.iterinit(maxrows=4096)
         ms.iterorigin()
 
@@ -287,34 +297,34 @@ def dftphotom(cfg):
                 # With appropriate spw/DDID selection, `freqs` has shape
                 # (nchan, 1). Convert to m^-1 so we can multiply against UVW
                 # directly.
-                freqs = cols['axis_info']['freq_axis']['chan_freq']
-                assert freqs.shape[1] == 1, 'internal inconsistency, chan_freq??'
-                freqs = freqs[:,0] * util.INVERSE_C_MS
+                freqs = cols["axis_info"]["freq_axis"]["chan_freq"]
+                assert freqs.shape[1] == 1, "internal inconsistency, chan_freq??"
+                freqs = freqs[:, 0] * util.INVERSE_C_MS
 
-            for i in range(cols['time'].size): # all records
-                time = cols['time'][i]
+            for i in range(cols["time"].size):  # all records
+                time = cols["time"][i]
                 # get out of UTC as fast as we can! For some reason
                 # giving 'unit=s' below doesn't do what one might hope it would.
                 # CASA can convert to a variety of timescales; TAI is probably
                 # the safest conversion in terms of being helpful while remaining
                 # close to the fundamental data, but TT is possible and should
                 # be perfectly precise for standard applications.
-                mq = me.epoch(b'utc', b({'value': time / 86400., 'unit': 'd'}))
-                mjdtt = me.measure(b(mq), b'tt')['m0']['value']
+                mq = me.epoch(b"utc", b({"value": time / 86400.0, "unit": "d"}))
+                mjdtt = me.measure(b(mq), b"tt")["m0"]["value"]
 
                 tdata = tbins.get(mjdtt, None)
                 if tdata is None:
-                    tdata = tbins[mjdtt] = [0., 0., 0., 0., 0]
+                    tdata = tbins[mjdtt] = [0.0, 0.0, 0.0, 0.0, 0]
 
                 if rephase:
-                    uvw = cols['uvw'][:,i]
-                    ph = np.exp((0-2j) * np.pi * np.dot(lmn, uvw) * freqs)
+                    uvw = cols["uvw"][:, i]
+                    ph = np.exp((0 - 2j) * np.pi * np.dot(lmn, uvw) * freqs)
 
-                for j in range(cols['flag'].shape[0]): # all polns
+                for j in range(cols["flag"].shape[0]):  # all polns
                     # We just average together all polarizations right now!
                     # (Not actively, but passively by just iterating over them.)
-                    data = cols[cfg.datacol][j,:,i]
-                    flags = cols['flag'][j,:,i]
+                    data = cols[cfg.datacol][j, :, i]
+                    flags = cols["flag"][j, :, i]
 
                     # XXXXX casacore is currently (ca. 2012) broken and
                     # returns the raw weights from the dataset rather than
@@ -325,7 +335,7 @@ def dftphotom(cfg):
 
                     w = np.where(~flags)[0]
                     if not w.size:
-                        continue # all flagged
+                        continue  # all flagged
 
                     if rephase:
                         data *= ph
@@ -333,7 +343,7 @@ def dftphotom(cfg):
                     d = data[w].mean()
                     # account for flagged parts. 90% sure this is the
                     # right thing to do:
-                    wt = cols['weight'][j,i] * w.size / data.size
+                    wt = cols["weight"][j, i] * w.size / data.size
                     wd = wt * d
                     # note a little bit of a hack here to encode real^2 and
                     # imag^2 separately:
@@ -348,17 +358,17 @@ def dftphotom(cfg):
             if not ms.iternext():
                 break
 
-        ms.reset() # reset selection filter so we can get next DDID
+        ms.reset()  # reset selection filter so we can get next DDID
 
     ms.close()
 
     # Could gain some efficiency by using a better data structure than a dict().
-    smjd = sorted(six.iterkeys(tbins))
+    smjd = sorted(tbins.keys())
     cfg.format.header(cfg)
 
     for mjd in smjd:
         wd, wd2, wt, wt2, n = tbins[mjd]
-        if n < 3: # not enough data for meaningful statistics
+        if n < 3:  # not enough data for meaningful statistics
             continue
 
         dtmin = 1440 * (mjd - smjd[0])
@@ -371,9 +381,9 @@ def dftphotom(cfg):
             ru_sc = wt**-0.5 * cfg.datascale
             iu_sc = wt**-0.5 * cfg.datascale
         else:
-            rv_sc = r2_sc - r_sc**2 # variance among real/imag msmts
+            rv_sc = r2_sc - r_sc**2  # variance among real/imag msmts
             iv_sc = i2_sc - i_sc**2
-            ru_sc = np.sqrt(rv_sc * wt2) / wt # uncert in mean real/img values
+            ru_sc = np.sqrt(rv_sc * wt2) / wt  # uncert in mean real/img values
             iu_sc = np.sqrt(iv_sc * wt2) / wt
 
         mag = np.sqrt(r_sc**2 + i_sc**2)

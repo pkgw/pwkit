@@ -12,10 +12,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 __all__ = str("Progress Config spwglue spwglue_cli").split()
 
-import six
-from six.moves import range
 import numpy as np
-from ... import binary_type, text_type
 from ...kwargv import ParseKeywords, Custom
 from ...cli import check_usage, die
 from . import util
@@ -313,7 +310,7 @@ def fillsmall(path, rows):
 
     try:
         for i, data in enumerate(rows):
-            for col, val in six.iteritems(data):
+            for col, val in data.items():
                 tb.putcell(b(col), i, val)
     except Exception as e:
         raise Exception(
@@ -516,9 +513,7 @@ def _spwglue(cfg, prog, thisout, thisfield, nfields, fieldidx):
 
     for outspw in range(nout):
         q = " or ".join(
-            "DATA_DESC_ID == %d" % t[0]
-            for t in six.iteritems(indd2outdd)
-            if t[1][0] == outspw
+            "DATA_DESC_ID == %d" % t[0] for t in indd2outdd.items() if t[1][0] == outspw
         )
         if cfg.hackfield is not None:
             q = "(FIELD_ID == %s or FIELD_ID == %s) and (%s)" % (

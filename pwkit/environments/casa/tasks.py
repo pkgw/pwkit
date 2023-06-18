@@ -15,12 +15,11 @@ line program provided with :mod:`pwkit`.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import os.path, six, sys
-from six.moves import range
+import os.path, sys
 import numpy as np
 
 from . import util
-from ... import binary_type, reraise_context, text_type, PKError
+from ... import reraise_context, PKError
 from ...cli import check_usage, wrong_usage, warn, die
 from ...kwargv import ParseKeywords, Custom
 
@@ -522,7 +521,7 @@ def bpplot(cfg):
 
     # normalize phases to avoid distracting wraps
 
-    for iant, ipol in sorted(six.iterkeys(antpols)):
+    for iant, ipol in sorted(antpols.keys()):
         for ispw, isoln in antpols[iant, ipol]:
             f = flags[isoln][ipol]
             meanph = np.angle(vals[isoln][ipol, ~f].mean())
@@ -578,7 +577,7 @@ def bpplot(cfg):
 
     # plot away
 
-    for iant, ipol in sorted(six.iterkeys(antpols)):
+    for iant, ipol in sorted(antpols.keys()):
         p_am = om.RectPlot()
         p_ph = om.RectPlot()
 
@@ -844,12 +843,7 @@ def delcal(mspath):
         tb.removecols(toremove)
     tb.close()
 
-    # We want to return a `str` type, which is what we already
-    # have in Python 2 but not in 3.
-    if six.PY2:
-        return toremove
-    else:
-        return [c.decode("utf8") for c in toremove]
+    return [c.decode("utf8") for c in toremove]
 
 
 def delcal_cli(argv):
@@ -1789,7 +1783,7 @@ def gaincal(cfg):
     else:
         solkws["t"] = str(cfg.solint)
 
-    if isinstance(cfg.refant, six.string_types):
+    if isinstance(cfg.refant, str):
         solkws["refant"] = cfg.refant
     else:
         solkws["refant"] = ",".join(cfg.refant)
@@ -2633,12 +2627,10 @@ def listobs_cli(argv):
         except Exception as e:
             warn("couldn't start pager %r: %s", pager, e)
         else:
+            import codecs
+
             out = proc.stdin
-
-            if not six.PY2:
-                import codecs
-
-                out = codecs.getwriter("utf8")(out)
+            out = codecs.getwriter("utf8")(out)
 
     for line in listobs(vis):
         print(line, file=out)
@@ -4226,7 +4218,7 @@ def tsysplot(cfg):
 
     # plot away
 
-    for iant, ipol in sorted(six.iterkeys(antpols)):
+    for iant, ipol in sorted(antpols.keys()):
         p = om.RectPlot()
         p.addKeyItem("%s %s" % (antnames[iant], polnames[ipol]))
 
@@ -4462,7 +4454,7 @@ def cmdline_usage(stream, exitcode):
     print("Supported tasks:", file=stream)
     print(file=stream)
 
-    for name in sorted(six.iterkeys(globals())):
+    for name in sorted(globals().keys()):
         if name.endswith("_cli"):
             print(name[:-4], file=stream)
 
