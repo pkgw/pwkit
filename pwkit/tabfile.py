@@ -18,31 +18,30 @@ Subsequent lines are data rows.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = str ('read vizread write').split ()
+__all__ = str("read vizread write").split()
 
-import six
 from . import Holder, PKError, io, msmt, reraise_context
 
 
-def _getparser (lname):
-    a = lname.rsplit (':', 1)
-    if len (a) == 1:
-        a.append ('s')
+def _getparser(lname):
+    a = lname.rsplit(":", 1)
+    if len(a) == 1:
+        a.append("s")
     return a[0], msmt.parsers[a[1]]
 
 
-def _trimmedlines (path, **kwargs):
-    for line in io.pathlines (path, **kwargs):
-        line = line[:-1] # trailing newline
-        line = line.split ('#', 1)[0]
-        if not len (line):
+def _trimmedlines(path, **kwargs):
+    for line in io.pathlines(path, **kwargs):
+        line = line[:-1]  # trailing newline
+        line = line.split("#", 1)[0]
+        if not len(line):
             continue
-        if line.isspace ():
+        if line.isspace():
             continue
         yield line
 
 
-def read (path, tabwidth=8, **kwargs):
+def read(path, tabwidth=8, **kwargs):
     """Read a typed tabular text file into a stream of Holders.
 
     Arguments:
@@ -65,51 +64,51 @@ def read (path, tabwidth=8, **kwargs):
     datamode = False
     fixedcols = {}
 
-    for text in _trimmedlines (path, **kwargs):
-        text = text.expandtabs (tabwidth)
+    for text in _trimmedlines(path, **kwargs):
+        text = text.expandtabs(tabwidth)
 
         if datamode:
             # table row
-            h = Holder ()
-            h.set (**fixedcols)
+            h = Holder()
+            h.set(**fixedcols)
             for name, cslice, parser in info:
                 try:
-                    v = parser (text[cslice].strip ())
+                    v = parser(text[cslice].strip())
                 except:
-                    reraise_context ('while parsing "%s"', text[cslice].strip ())
-                h.set_one (name, v)
+                    reraise_context('while parsing "%s"', text[cslice].strip())
+                h.set_one(name, v)
             yield h
-        elif text[0] != '@':
+        elif text[0] != "@":
             # fixed column
-            padnamekind, padval = text.split ('=', 1)
-            name, parser = _getparser (padnamekind.strip ())
-            fixedcols[name] = parser (padval.strip ())
+            padnamekind, padval = text.split("=", 1)
+            name, parser = _getparser(padnamekind.strip())
+            fixedcols[name] = parser(padval.strip())
         else:
             # column specification
-            n = len (text)
+            n = len(text)
             assert n > 1
             start = 0
             info = []
 
             while start < n:
                 end = start + 1
-                while end < n and (not text[end].isspace ()):
+                while end < n and (not text[end].isspace()):
                     end += 1
 
                 if start == 0:
-                    namekind = text[start+1:end] # eat leading @
+                    namekind = text[start + 1 : end]  # eat leading @
                 else:
                     namekind = text[start:end]
 
-                while end < n and text[end].isspace ():
+                while end < n and text[end].isspace():
                     end += 1
 
-                name, parser = _getparser (namekind)
-                if parser is None: # allow columns to be ignored
+                name, parser = _getparser(namekind)
+                if parser is None:  # allow columns to be ignored
                     skippedlast = True
                 else:
                     skippedlast = False
-                    info.append ((name, slice (start, end), parser))
+                    info.append((name, slice(start, end), parser))
                 start = end
 
             datamode = True
@@ -120,12 +119,12 @@ def read (path, tabwidth=8, **kwargs):
                 # but if the real last column is ":x"-type, then info[-1]
                 # doesn't run up to the end of the line, so do nothing in that case.
                 lname, lslice, lparser = info[-1]
-                info[-1] = lname, slice (lslice.start, None), lparser
+                info[-1] = lname, slice(lslice.start, None), lparser
 
 
-def _tabpad (text, width, tabwidth=8):
+def _tabpad(text, width, tabwidth=8):
     # note: assumes we're starting tab-aligned
-    l = len (text)
+    l = len(text)
     assert l <= width
 
     if l == width:
@@ -134,10 +133,10 @@ def _tabpad (text, width, tabwidth=8):
     n = width - l
     ntab = n // tabwidth
     nsp = n - ntab * tabwidth
-    return ''.join ((text, ' ' * nsp, '\t' * ntab))
+    return "".join((text, " " * nsp, "\t" * ntab))
 
 
-def write (stream, items, fieldnames, tabwidth=8):
+def write(stream, items, fieldnames, tabwidth=8):
     """Write a typed tabular text file to the specified stream.
 
     Arguments:
@@ -157,27 +156,27 @@ def write (stream, items, fieldnames, tabwidth=8):
     Returns nothing.
 
     """
-    if isinstance (fieldnames, six.string_types):
-        fieldnames = fieldnames.split ()
+    if isinstance(fieldnames, str):
+        fieldnames = fieldnames.split()
 
-    maxlens = [0] * len (fieldnames)
+    maxlens = [0] * len(fieldnames)
 
     # We have to make two passes, so listify:
-    items = list (items)
+    items = list(items)
 
     # pass 1: get types and maximum lengths for each record. Pad by 1 to
     # ensure there's at least one space between all columns.
 
-    coltypes = [None] * len (fieldnames)
+    coltypes = [None] * len(fieldnames)
 
     for i in items:
-        for idx, fn in enumerate (fieldnames):
-            val = i.get (fn)
+        for idx, fn in enumerate(fieldnames):
+            val = i.get(fn)
             if val is None:
                 continue
 
-            typetag, text, inexact = msmt.fmtinfo (val)
-            maxlens[idx] = max (maxlens[idx], len (text) + 1)
+            typetag, text, inexact = msmt.fmtinfo(val)
+            maxlens[idx] = max(maxlens[idx], len(text) + 1)
 
             if coltypes[idx] is None:
                 coltypes[idx] = typetag
@@ -186,48 +185,57 @@ def write (stream, items, fieldnames, tabwidth=8):
             if coltypes[idx] == typetag:
                 continue
 
-            if coltypes[idx][-1] == 'f' and typetag[-1] == 'u':
+            if coltypes[idx][-1] == "f" and typetag[-1] == "u":
                 # Can upcast floats to uvals
                 if coltypes[idx][:-1] == typetag[:-1]:
-                    coltypes[idx] = coltypes[idx][:-1] + 'u'
+                    coltypes[idx] = coltypes[idx][:-1] + "u"
                     continue
 
-            if coltypes[idx][-1] == 'u' and typetag[-1] == 'f':
+            if coltypes[idx][-1] == "u" and typetag[-1] == "f":
                 if coltypes[idx][:-1] == typetag[:-1]:
                     continue
 
-            raise PKError ('irreconcilable column types: %s and %s', coltypes[idx], typetag)
+            raise PKError(
+                "irreconcilable column types: %s and %s", coltypes[idx], typetag
+            )
 
     # Compute column headers and their widths
 
-    headers = list (fieldnames)
-    headers[0] = '@' + headers[0]
+    headers = list(fieldnames)
+    headers[0] = "@" + headers[0]
 
-    for idx, fn in enumerate (fieldnames):
-        if coltypes[idx] != '':
-            headers[idx] += ':' + coltypes[idx]
+    for idx, fn in enumerate(fieldnames):
+        if coltypes[idx] != "":
+            headers[idx] += ":" + coltypes[idx]
 
-        maxlens[idx] = max (maxlens[idx], len (headers[idx]))
+        maxlens[idx] = max(maxlens[idx], len(headers[idx]))
 
     widths = [tabwidth * ((k + tabwidth - 1) // tabwidth) for k in maxlens]
 
     # pass 2: write out
 
-    print (''.join (_tabpad (h, widths[idx], tabwidth)
-                    for (idx, h) in enumerate (headers)), file=stream)
+    print(
+        "".join(_tabpad(h, widths[idx], tabwidth) for (idx, h) in enumerate(headers)),
+        file=stream,
+    )
 
-    def ustr (i, f):
-        v = i.get (f)
+    def ustr(i, f):
+        v = i.get(f)
         if v is None:
-            return ''
-        return msmt.fmtinfo (v)[1]
+            return ""
+        return msmt.fmtinfo(v)[1]
 
     for i in items:
-        print (''.join (_tabpad (ustr (i, fn), widths[idx], tabwidth)
-                        for (idx, fn) in enumerate (fieldnames)), file=stream)
+        print(
+            "".join(
+                _tabpad(ustr(i, fn), widths[idx], tabwidth)
+                for (idx, fn) in enumerate(fieldnames)
+            ),
+            file=stream,
+        )
 
 
-def vizread (descpath, descsection, tabpath, tabwidth=8, **kwargs):
+def vizread(descpath, descsection, tabpath, tabwidth=8, **kwargs):
     """Read a headerless tabular text file into a stream of Holders.
 
     Arguments:
@@ -261,37 +269,37 @@ def vizread (descpath, descsection, tabpath, tabwidth=8, **kwargs):
 
     cols = []
 
-    for i in iniread (descpath):
+    for i in iniread(descpath):
         if i.section != descsection:
             continue
 
-        for field, desc in six.iteritems (i.__dict__):
-            if field == 'section':
+        for field, desc in i.__dict__.items():
+            if field == "section":
                 continue
 
-            a = desc.split ()
-            idx0 = int (a[0]) - 1
+            a = desc.split()
+            idx0 = int(a[0]) - 1
 
-            if len (a) == 1:
-                cols.append ((field, slice (idx0, idx0 + 1), msmt.parsers['s']))
+            if len(a) == 1:
+                cols.append((field, slice(idx0, idx0 + 1), msmt.parsers["s"]))
                 continue
 
-            if len (a) == 2:
-                parser = msmt.parsers['s']
+            if len(a) == 2:
+                parser = msmt.parsers["s"]
             else:
                 parser = msmt.parsers[a[2]]
 
-            cols.append ((field, slice (idx0, int (a[1])), parser))
+            cols.append((field, slice(idx0, int(a[1])), parser))
 
-    for text in _trimmedlines (tabpath, **kwargs):
-        text = text.expandtabs (tabwidth)
+    for text in _trimmedlines(tabpath, **kwargs):
+        text = text.expandtabs(tabwidth)
 
-        h = Holder ()
+        h = Holder()
         for name, cslice, parser in cols:
             try:
-                v = parser (text[cslice].strip ())
+                v = parser(text[cslice].strip())
             except:
-                reraise_context ('while parsing "%s"', text[cslice].strip ())
-            h.set_one (name, v)
+                reraise_context('while parsing "%s"', text[cslice].strip())
+            h.set_one(name, v)
 
         yield h

@@ -22,34 +22,33 @@ TODO: tests!
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-__all__ = str ('kbn_conf vec_kbn_conf').split ()
+__all__ = str("kbn_conf vec_kbn_conf").split()
 
-from six.moves import range
 from numpy import exp, log, vectorize
 from scipy.special import gammaln
 from scipy.integrate import quad
 from scipy.optimize import newton
 
 
-def _cconst (N, B):
-    s = 0.
-    lnb = log (B)
+def _cconst(N, B):
+    s = 0.0
+    lnb = log(B)
 
-    for n in range (N + 1):
-        s += exp (-B + n * lnb - gammaln (n + 1))
+    for n in range(N + 1):
+        s += exp(-B + n * lnb - gammaln(n + 1))
 
-    return 1. / s
-
-
-def _fcnb (C, N, B, S):
-    return C * exp (-(S + B) + N * log (S + B) - gammaln (N + 1))
+    return 1.0 / s
 
 
-def _fnb (N, B, S):
-    return _fcnb (_cconst (N, B), N, B, S)
+def _fcnb(C, N, B, S):
+    return C * exp(-(S + B) + N * log(S + B) - gammaln(N + 1))
 
 
-def kbn_conf (N, B, CL):
+def _fnb(N, B, S):
+    return _fcnb(_cconst(N, B), N, B, S)
+
+
+def kbn_conf(N, B, CL):
     """Given a (integer) number of observed Poisson events `N` and a (real)
     expected number of background events `B` and a confidence limit `CL`
     (between 0 and 1), return the confidence interval on the source event
@@ -79,23 +78,23 @@ def kbn_conf (N, B, CL):
 
     origN = N
     try:
-        N = int (N)
+        N = int(N)
         assert N == origN
     except Exception:
-        raise ValueError ('N must be an integer')
+        raise ValueError("N must be an integer")
 
-    CL = float (CL)
-    if CL <= 0. or CL >= 1.:
-        raise ValueError ('CL must be between 0 and 1, noninclusive')
+    CL = float(CL)
+    if CL <= 0.0 or CL >= 1.0:
+        raise ValueError("CL must be between 0 and 1, noninclusive")
 
-    B = float (B)
+    B = float(B)
     if B < 0:
-        raise ValueError ('B must be nonnegative')
+        raise ValueError("B must be nonnegative")
 
     # OK, arg-checking is out of the way. Precompute some things ...
 
-    C = _cconst (N, B)
-    f = lambda s: _fcnb (C, N, B, s)
+    C = _cconst(N, B)
+    f = lambda s: _fcnb(C, N, B, s)
 
     # The goal is find Smin and Smax such that the integral of _fnb between
     # Smin and Smax is CL, and _fnb (Smin) = _fnb (Smax). Follow the
@@ -105,30 +104,34 @@ def kbn_conf (N, B, CL):
     # and to ignore the enormous typo ("local maximum at S = B + N"!) in the
     # paper!
 
-    smin = smax = max (N - B, 0.)
-    fmin = f (smin)
-    fmax = f (smax)
-    conf = 0.
+    smin = smax = max(N - B, 0.0)
+    fmin = f(smin)
+    fmax = f(smax)
+    conf = 0.0
 
     while conf < CL:
-        if smin == 0. or fmin < fmax:
-            stepsize = max (0.2 * abs (CL - conf) / CL / fmax, tol)
-            conf += quad (f, smax, smax + stepsize)[0]
+        if smin == 0.0 or fmin < fmax:
+            stepsize = max(0.2 * abs(CL - conf) / CL / fmax, tol)
+            conf += quad(f, smax, smax + stepsize)[0]
             smax += stepsize
-            fmax = f (smax)
+            fmax = f(smax)
         else:
-            stepsize = max (min (0.2 * abs (CL - conf) / CL / fmin, 0.1 * smin), tol)
+            stepsize = max(min(0.2 * abs(CL - conf) / CL / fmin, 0.1 * smin), tol)
             if smin - stepsize < tol:
-                conf += quad (f, 0, smin)[0]
-                smin = 0.
+                conf += quad(f, 0, smin)[0]
+                smin = 0.0
             else:
-                conf += quad (f, smin - stepsize, smin)[0]
+                conf += quad(f, smin - stepsize, smin)[0]
                 smin -= stepsize
-            fmin = f (smin)
+            fmin = f(smin)
 
     return smin, smax
 
 
-vec_kbn_conf = vectorize (kbn_conf, otypes=[float, float], doc="""Vectorized form of `kbn_conf`.
+vec_kbn_conf = vectorize(
+    kbn_conf,
+    otypes=[float, float],
+    doc="""Vectorized form of `kbn_conf`.
 
-All three inputs must be broadcastable to a common shape.""")
+All three inputs must be broadcastable to a common shape.""",
+)

@@ -16,7 +16,6 @@ __all__ = """broadcastize dfsmooth fits_recarray_to_data_frame make_step_lcont
            weighted_mean_df weighted_variance""".split()
 
 import functools
-from six.moves import range
 import numpy as np
 
 from .method_decorator import method_decorator
@@ -157,7 +156,6 @@ def data_frame_to_astropy_table(dataframe):
     """
     from astropy.utils import OrderedDict
     from astropy.table import Table, Column, MaskedColumn
-    from astropy.extern import six
 
     out = OrderedDict()
 
@@ -169,9 +167,7 @@ def data_frame_to_astropy_table(dataframe):
         if data.dtype.kind == "O":
             # If all elements of an object array are string-like or np.nan
             # then coerce back to a native numpy str/unicode array.
-            string_types = six.string_types
-            if six.PY3:
-                string_types += (bytes,)
+            string_types = (str, bytes)
             nan = np.nan
             if all(isinstance(x, string_types) or x is nan for x in data):
                 # Force any missing (null) values to b''.  Numpy will

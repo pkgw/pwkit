@@ -18,21 +18,21 @@ data_to_imagesurface - Turn arbitrary data values into a Cairo ImageSurface.
 """
 from __future__ import absolute_import, division, print_function
 
-__all__ = '''
+__all__ = """
 data_to_argb32
 data_to_imagesurface
 Clipper
 ColorMapper
 LazyComputer
-Stretcher'''.split()
+Stretcher""".split()
 
 import numpy as np
-from six.moves import range
 
 from . import colormaps
 
 
 DEFAULT_TILESIZE = 128
+
 
 class LazyComputer(object):
     buffer = None
@@ -43,7 +43,6 @@ class LazyComputer(object):
         self.buffer = buffer
         return self
 
-
     def alloc_buffer(self, template):
         if np.ma.is_masked(template):
             self.buffer = np.ma.empty(template.shape)
@@ -52,7 +51,6 @@ class LazyComputer(object):
             self.buffer = np.empty(template.shape)
         return self
 
-
     def set_tile_size(self, tilesize=DEFAULT_TILESIZE):
         self.tilesize = tilesize
         h, w = self.buffer.shape
@@ -60,7 +58,6 @@ class LazyComputer(object):
         nyt = (h + tilesize - 1) // tilesize
         self.valid = np.zeros((nyt, nxt))
         return self
-
 
     def ensure_region_updated(self, data, xoffset, yoffset, width, height):
         ts = self.tilesize
@@ -81,10 +78,12 @@ class LazyComputer(object):
             pxofs = tilej * ts
 
             for j in range(nxt):
-                if not valid[tyofs,txofs]:
-                    func(data[pyofs:pyofs+ts,pxofs:pxofs+ts],
-                         buf[pyofs:pyofs+ts,pxofs:pxofs+ts])
-                    valid[tyofs,txofs] = 1
+                if not valid[tyofs, txofs]:
+                    func(
+                        data[pyofs : pyofs + ts, pxofs : pxofs + ts],
+                        buf[pyofs : pyofs + ts, pxofs : pxofs + ts],
+                    )
+                    valid[tyofs, txofs] = 1
 
                 pxofs += ts
                 txofs += 1
@@ -93,10 +92,8 @@ class LazyComputer(object):
 
         return self
 
-
     def ensure_all_updated(self, data):
         return self.ensure_region_updated(data, 0, 0, data.shape[1], data.shape[0])
-
 
     def invalidate(self):
         self.valid.fill(0)
@@ -119,12 +116,12 @@ class Clipper(LazyComputer):
         self.dmax = dmax
         return self
 
-
     def _make_func(self, ismasked):
         dmin = self.dmin
-        scale = 1. / (self.dmax - dmin)
+        scale = 1.0 / (self.dmax - dmin)
 
         if ismasked:
+
             def func(src, dest):
                 # As of Numpy 1.13, the `mask` parameter gets turned into a
                 # scalar of we operate on the full MaskedArray object (e.g.,
@@ -134,7 +131,9 @@ class Clipper(LazyComputer):
                 np.multiply(dest.data, scale, dest.data)
                 np.clip(dest.data, 0, 1, dest.data)
                 dest.mask[...] = src.mask
+
         else:
+
             def func(src, dest):
                 np.subtract(src, dmin, dest)
                 np.multiply(dest, scale, dest)
@@ -158,22 +157,22 @@ class Stretcher(LazyComputer):
         preserving sign.
 
         """
-        np.subtract(src, 0.5, out=dest) # [0, 1] -> [-0.5, 0.5]
-        np.multiply(dest, 2, out=dest) # [-0.5, 0.5] => [-1, 1]
-        np.cbrt(dest, out=dest) # domain remains same
-        np.multiply(dest, 0.5, out=dest) # [-1, 1] => [-0.5, 0.5]
-        np.add(dest, 0.5, out=dest) # [-0.5, 0.5] => [0, 1]
+        np.subtract(src, 0.5, out=dest)  # [0, 1] -> [-0.5, 0.5]
+        np.multiply(dest, 2, out=dest)  # [-0.5, 0.5] => [-1, 1]
+        np.cbrt(dest, out=dest)  # domain remains same
+        np.multiply(dest, 0.5, out=dest)  # [-1, 1] => [-0.5, 0.5]
+        np.add(dest, 0.5, out=dest)  # [-0.5, 0.5] => [0, 1]
 
     modes = {
-        'linear': passthrough,
-        'offset_cbrt': offset_cbrt,
-        'sqrt': np.sqrt,
-        'square': np.square,
+        "linear": passthrough,
+        "offset_cbrt": offset_cbrt,
+        "sqrt": np.sqrt,
+        "square": np.square,
     }
 
     def __init__(self, mode):
         if mode not in self.modes:
-            raise ValueError('unrecognized Stretcher mode %r', mode)
+            raise ValueError("unrecognized Stretcher mode %r", mode)
 
         self.mode = mode
 
@@ -188,43 +187,43 @@ class ColorMapper(LazyComputer):
         if mapname is not None:
             self.mapper = colormaps.factory_map[mapname]()
 
-
     def alloc_buffer(self, template):
         self.buffer = np.empty(template.shape, dtype=np.uint32)
         self.buffer.fill(0xFF000000)
         return self
 
-
     def _make_func(self, ismasked):
         mapper = self.mapper
 
         if not ismasked:
+
             def func(src, dest):
                 mapped = mapper(src)
                 dest.fill(0xFF000000)
-                effscratch = (mapped[:,:,0] * 0xFF).astype(np.uint32)
+                effscratch = (mapped[:, :, 0] * 0xFF).astype(np.uint32)
                 np.left_shift(effscratch, 16, effscratch)
                 np.bitwise_or(dest, effscratch, dest)
-                effscratch = (mapped[:,:,1] * 0xFF).astype(np.uint32)
+                effscratch = (mapped[:, :, 1] * 0xFF).astype(np.uint32)
                 np.left_shift(effscratch, 8, effscratch)
                 np.bitwise_or(dest, effscratch, dest)
-                effscratch = (mapped[:,:,2] * 0xFF).astype(np.uint32)
+                effscratch = (mapped[:, :, 2] * 0xFF).astype(np.uint32)
                 np.bitwise_or(dest, effscratch, dest)
+
         else:
             scratch2 = np.zeros((self.tilesize, self.tilesize), dtype=np.uint32)
 
             def func(src, dest):
-                effscratch2 = scratch2[:dest.shape[0],:dest.shape[1]]
+                effscratch2 = scratch2[: dest.shape[0], : dest.shape[1]]
                 mapped = mapper(src)
 
                 dest.fill(0xFF000000)
-                effscratch = (mapped[:,:,0] * 0xFF).astype(np.uint32)
+                effscratch = (mapped[:, :, 0] * 0xFF).astype(np.uint32)
                 np.left_shift(effscratch, 16, effscratch)
                 np.bitwise_or(dest, effscratch, dest)
-                effscratch = (mapped[:,:,1] * 0xFF).astype(np.uint32)
+                effscratch = (mapped[:, :, 1] * 0xFF).astype(np.uint32)
                 np.left_shift(effscratch, 8, effscratch)
                 np.bitwise_or(dest, effscratch, dest)
-                effscratch = (mapped[:,:,2] * 0xFF).astype(np.uint32)
+                effscratch = (mapped[:, :, 2] * 0xFF).astype(np.uint32)
                 np.bitwise_or(dest, effscratch, dest)
 
                 np.invert(src.mask, effscratch2)
@@ -233,7 +232,7 @@ class ColorMapper(LazyComputer):
         return func
 
 
-def data_to_argb32(data, cmin=None, cmax=None, stretch='linear', cmap='black_to_blue'):
+def data_to_argb32(data, cmin=None, cmax=None, stretch="linear", cmap="black_to_blue"):
     """Turn arbitrary data values into ARGB32 colors.
 
     There are three steps to this process: clipping the data values to a
@@ -295,7 +294,7 @@ def data_to_imagesurface(data, **kwargs):
 
     data = np.atleast_2d(data)
     if data.ndim != 2:
-        raise ValueError('input array may not have more than 2 dimensions')
+        raise ValueError("input array may not have more than 2 dimensions")
 
     argb32 = data_to_argb32(data, **kwargs)
 
@@ -304,7 +303,6 @@ def data_to_imagesurface(data, **kwargs):
     stride = cairo.ImageSurface.format_stride_for_width(format, width)
 
     if argb32.strides[0] != stride:
-        raise ValueError('stride of data array not compatible with ARGB32')
+        raise ValueError("stride of data array not compatible with ARGB32")
 
-    return cairo.ImageSurface.create_for_data(argb32, format,
-                                              width, height, stride)
+    return cairo.ImageSurface.create_for_data(argb32, format, width, height, stride)

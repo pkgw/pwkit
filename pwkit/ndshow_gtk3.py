@@ -44,14 +44,11 @@ Added by cycler:
 
 """
 
-# TODO: very redundant with ndshow_gtk2, of course!
-
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 __all__ = str("Cycler Viewer Viewport cycle view").split()
 
-import sys, time
-from six.moves import range
+import sys
 import numpy as np
 import cairo
 

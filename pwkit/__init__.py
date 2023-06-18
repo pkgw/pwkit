@@ -11,17 +11,11 @@ __all__ = "Holder PKError binary_type reraise_context text_type unicode_to_str".
 
 __version__ = "0.dev0"  # cranko project-version
 
-# Simultaneous Python 2/3 compatibility through the 'six' module. I started
-# out hoping that I could do this all "in-house" without adding the dep, but
-# it became clear that 'six' was going to end up being helpful.
+# Archaic Python 2/3 compatibility support
 
-import six
-from six import binary_type, text_type
-
-if six.PY2:
-    unicode_to_str = lambda s: s.__unicode__().encode("utf8")
-else:
-    unicode_to_str = lambda s: s.__unicode__()
+binary_type = bytes
+text_type = str
+unicode_to_str = lambda s: s.__unicode__()
 
 
 class PKError(Exception):
@@ -44,9 +38,9 @@ class PKError(Exception):
 
     def __init__(self, fmt, *args):
         if not len(args):
-            self.args = (text_type(fmt),)
+            self.args = (str(fmt),)
         else:
-            self.args = (text_type(fmt) % args,)
+            self.args = (str(fmt) % args,)
 
     def __unicode__(self):
         return self.args[0]
@@ -100,7 +94,7 @@ def reraise_context(fmt, *args):
     if len(args):
         cstr = fmt % args
     else:
-        cstr = text_type(fmt)
+        cstr = str(fmt)
 
     ex = sys.exc_info()[1]
 
@@ -126,17 +120,13 @@ class Holder(object):
     """
 
     def __init__(self, __decorating=None, **kwargs):
-        import types
-
         if __decorating is None:
             values = kwargs
-        elif isinstance(__decorating, six.class_types):
+        elif isinstance(__decorating, type):
             # We're decorating a class definition. Transform the definition
             # into a Holder instance thusly:
             values = dict(
-                kv
-                for kv in six.iteritems(__decorating.__dict__)
-                if not kv[0].startswith("__")
+                kv for kv in __decorating.__dict__.items() if not kv[0].startswith("__")
             )
         else:
             # You could imagine allowing @Holder on a function and doing
@@ -151,21 +141,21 @@ class Holder(object):
 
     def __unicode__(self):
         d = self.__dict__
-        s = sorted(six.iterkeys(d))
+        s = sorted(d.keys())
         return "{" + ", ".join("%s=%s" % (k, d[k]) for k in s) + "}"
 
     __str__ = unicode_to_str
 
     def __repr__(self):
         d = self.__dict__
-        s = sorted(six.iterkeys(d))
+        s = sorted(d.keys())
         return "%s(%s)" % (
             self.__class__.__name__,
             ", ".join("%s=%r" % (k, d[k]) for k in s),
         )
 
     def __iter__(self):
-        return six.iteritems(self.__dict__)
+        return self.__dict__.items()
 
     def __contains__(self, key):
         return key in self.__dict__
@@ -243,7 +233,7 @@ class Holder(object):
         d = self.__dict__
         maxlen = 0
 
-        for k in six.iterkeys(d):
+        for k in d.keys():
             maxlen = max(maxlen, len(k))
 
-        return "\n".join(template % (maxlen, k, d[k]) for k in sorted(six.iterkeys(d)))
+        return "\n".join(template % (maxlen, k, d[k]) for k in sorted(d.keys()))
