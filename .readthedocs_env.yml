@@ -1,0 +1,16 @@
+name: pwkit_rtd
+channels:
+  - conda-forge
+
+dependencies:
+  - astropy
+  - mock
+  - numpydoc
+  - pandas
+  - pip
+  - python =3.10
+  - scipy
+  - setuptools
+  - sphinx
+  - sphinx_rtd_theme
+  - sphinx-automodapi
