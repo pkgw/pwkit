@@ -1,4 +1,14 @@
-# rc: minor bump
+# rc: micro bump
+
+- Fix `pwkit.parallel.SerialHelper.get_map()` for Python 3 (#22)
+- Fix `pwkit.lmmin.Problem.set_npar()` for recent Numpys (#20). I'm not sure if
+  we'll be compatible with Numpy 2.0, though.
+- Get the ReadTheDocs docs building again, and make it so that we check RTD
+  builds as part of pull request processing
+- README.md: fix some links to the documentation (@AstroGenevieve)
+
+
+# pwkit 1.2.0 (2023-06-18)
 
 - Remove the dependency on `six`
 - Remove the long-unused `pwkit.ndshow_gtk2` module

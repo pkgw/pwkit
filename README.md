@@ -9,8 +9,8 @@ This is a collection of Peter Williams’ miscellaneous Python tools.
 The online documentation contains [installation instructions]. The
 documentation is very much a work in progress but [may be found here].
 
-[installation instructions]: http://pwkit.readthedocs.org/en/latest/about/#installation
-[may be found here]: http://pwkit.readthedocs.org/en/latest/
+[installation instructions]: https://pwkit.readthedocs.io/en/latest/about.html#installation
+[may be found here]: https://pwkit.readthedocs.io/en/latest/
 
 
 ## Citation
@@ -47,7 +47,7 @@ include after your Acknowledgments section would be:
 
 See the [online documentation].
 
-[online documentation]: http://pwkit.readthedocs.org/en/latest/about/#authors
+[online documentation]: https://pwkit.readthedocs.io/en/latest/about.html#authors
 
 
 ## License

@@ -272,7 +272,7 @@ class SerialHelper(ParallelHelper):
         pass
 
     def get_map(self):
-        return VacuousContextManager(map)
+        return VacuousContextManager(lambda f, v: [f(x) for x in v])
 
     def get_ppmap(self):
         return VacuousContextManager(serial_ppmap)
