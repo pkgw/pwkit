@@ -29,7 +29,7 @@ def get_long_desc():
 For more information, including installation instructions, please visit [the
 project homepage].
 
-[the project homepage]: https://pkgw.readthedocs.io/
+[the project homepage]: https://pwkit.readthedocs.io/
 """
     )
     return "".join(lines)
