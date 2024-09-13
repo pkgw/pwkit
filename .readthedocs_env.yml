@@ -1,0 +1,20 @@
+name: pwkit_rtd
+channels:
+  - conda-forge
+
+dependencies:
+  - astropy
+  - mock
+  - numpydoc
+  - pandas
+  - pip
+  - python =3.12
+  - scipy
+  - setuptools
+  - sphinx
+  - sphinx_rtd_theme
+  # Work around an issue with v0.17 as seen in:
+  # https://github.com/WorldWideTelescope/pywwt/pull/375
+  # https://github.com/WorldWideTelescope/pywwt/commit/66480282c578353ea04d6716ca6015fec9370c44
+  # 0.18 is now available and may fix this.
+  - sphinx-automodapi=0.16

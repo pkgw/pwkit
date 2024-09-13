@@ -6,12 +6,12 @@ parameters:
   default:
 
   - name: linux_310
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-latest
     vars:
       PYTHON_SERIES: "3.10"
 
   - name: macos_310
-    vmImage: macos-11
+    vmImage: macos-latest
     vars:
       PYTHON_SERIES: "3.10"
 

@@ -37,7 +37,7 @@ project homepage].
 
 setup(
     name="pwkit",  # cranko project-name
-    version="1.2.0",  # cranko project-version
+    version="1.2.1",  # cranko project-version
     # This package actually *is* zip-safe, but I've run into issues with
     # installing it as a Zip: in particular, the install sometimes fails with
     # "bad local file header", and reloading a module after a reinstall in

@@ -1328,7 +1328,7 @@ class Problem(object):
         p[PI_F_STEP] = 0.0
         p[PI_F_MAXSTEP] = np.inf
 
-        newinfoo = p = np.ndarray((PI_NUM_O, npar), dtype=np.object)
+        newinfoo = p = np.ndarray((PI_NUM_O, npar), dtype=object)
         p[PI_O_TIEFUNC] = None
 
         newinfob = p = np.ndarray(npar, dtype=int)
