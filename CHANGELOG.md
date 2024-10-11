@@ -1,3 +1,13 @@
+# pwkit 1.2.2 (2024-10-11)
+
+- Correct fixup processing of args with non-None defaults in `pwkit.kwargv` (#24)
+- Correct the docs link in the README! (#23)
+
+The version DOI of this release is [10.5281/zenodo.13920308][vdoi].
+
+[vdoi]: https://doi.org/10.5281/zenodo.13920308
+
+
 # pwkit 1.2.1 (2024-09-13)
 
 - Fix `pwkit.parallel.SerialHelper.get_map()` for Python 3 (#22)

@@ -370,8 +370,14 @@ class ParseKeywords(Holder):
                 ki.default = None
             elif ki.repeatable:
                 ki.default = []
-            elif ki.fixupfunc is not None and ki.default is not None:
-                # kinda gross structure here, oh well.
+            elif ki.fixupfunc is not None:
+                # Make sure to process the default through the fixup, if it
+                # exists. This helps code use "interesting" defaults with types
+                # that you might prefer to use when launching a task
+                # programmatically; e.g. a default output stream that is
+                # `sys.stdout`, not "-". Note, however, that the fixup will
+                # always get called for the default value, so it shouldn't do
+                # anything too expensive.
                 ki.default = ki.fixupfunc(ki.default)
 
             kwinfos[kw] = ki
@@ -471,14 +477,6 @@ class ParseKeywords(Holder):
                     raise KwargvError(
                         'required keyword argument "%s" was not provided', kw
                     )
-
-                # If there's a fixup, process it even if the keyword wasn't
-                # provided. This lets code use "interesting" defaults with
-                # types that you might prefer to use when launching a task
-                # programmatically; e.g. a default output stream that is
-                # `sys.stdout`, not "-".
-                if ki.fixupfunc is not None:
-                    self.set_one(ki._attrname, ki.fixupfunc(None))
 
         return self  # convenience
 
