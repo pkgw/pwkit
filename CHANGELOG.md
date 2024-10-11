@@ -1,5 +1,15 @@
 # rc: micro bump
 
+- Correct fixup processing of args with non-None defaults in `pwkit.kwargv` (#24)
+- Correct the docs link in the README! (#23)
+
+The version DOI of this release is [xx.xxxx/dev-build.pwkit.version][vdoi].
+
+[vdoi]: https://doi.org/xx.xxxx/dev-build.pwkit.version
+
+
+# pwkit 1.2.1 (2024-09-13)
+
 - Fix `pwkit.parallel.SerialHelper.get_map()` for Python 3 (#22)
 - Fix `pwkit.lmmin.Problem.set_npar()` for recent Numpys (#20). I'm not sure if
   we'll be compatible with Numpy 2.0, though.
