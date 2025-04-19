@@ -348,17 +348,19 @@ def forkandlog(function, filter="INFO5", debug=False):
         # caller would have to be much more complex to be able to detect and
         # handle such output.
 
-        os.close(readfd)
+        try:
+            os.close(readfd)
 
-        if not debug:
-            f = open(os.devnull, "w")
-            os.dup2(f.fileno(), 1)
-            os.dup2(f.fileno(), 2)
+            if not debug:
+                f = open(os.devnull, "wb")
+                os.dup2(f.fileno(), 1)
+                os.dup2(f.fileno(), 2)
 
-        sink = logger(filter=filter)
-        sink.setlogfile(b"/dev/fd/%d" % writefd)
-        function(sink)
-        sys.exit(0)
+            sink = logger(filter=filter)
+            sink.setlogfile(b"/dev/fd/%d" % writefd)
+            function(sink)
+        finally:
+            os._exit(0)
 
     # Original process.
 
