@@ -53,6 +53,7 @@ gpdiagnostics_cli
 gpplot gpplot_cli GpplotConfig
 image2fits image2fits_cli
 importalma importalma_cli
+importasdm importasdm_cli
 importevla importevla_cli
 listobs listobs_cli
 listsdm listsdm_cli
@@ -2476,7 +2477,94 @@ def importalma_cli(argv):
     importalma(argv[1], argv[2])
 
 
+# importasdm
+#
+# CASA 6 only
+
+importasdm_doc = """
+casatask importasdm <ASDM> <MS>
+
+Convert a low-level ASDM dataset to Measurement Set format. This implementation
+automatically infers the value of the "tbuff" parameter.
+"""
+
+
+def importasdm(asdm, ms):
+    """Convert a low-level ASDM dataset to Measurement Set format.
+
+    asdm (str)
+      The path to the input ASDM dataset.
+    ms (str)
+      The path to the output MS dataset.
+
+    This implementation automatically infers the value of the "tbuff"
+    parameter.
+
+    Example::
+
+      from pwkit.environments.casa import tasks
+      tasks.importasdm('myvla.sdm', 'myvla.ms')
+
+    """
+    import casatasks
+
+    # Here's the best way I can figure to find the recommended value of tbuff
+    # (= 1.5 * integration time). Obviously you might have different
+    # integration times in the dataset and such, and we're just going to
+    # ignore that possibility.
+
+    bdfstem = os.listdir(os.path.join(asdm, "ASDMBinary"))[0]
+    bdf = os.path.join(asdm, "ASDMBinary", bdfstem)
+    tbuff = None
+
+    with open(bdf, "rb") as f:
+        for linenum, line in enumerate(f):
+            if linenum > 60:
+                raise PKError("cannot find integration time info in %s", bdf)
+
+            if not line.startswith(b"<sdmDataSubsetHeader"):
+                continue
+
+            try:
+                i1 = line.index(b"<interval>") + len(b"<interval>")
+                i2 = line.index(b"</interval>")
+                if i2 <= i1:
+                    raise ValueError()
+            except ValueError:
+                raise PKError("cannot parse integration time info in %s", bdf)
+
+            tbuff = float(line[i1:i2]) * 1.5e-9  # nanosecs, and want 1.5x
+            break
+
+    if tbuff is None:
+        raise PKError("found no integration time info")
+
+    print("importasdm: %s -> %s with tbuff=%.2f" % (asdm, ms, tbuff))
+
+    casatasks.importasdm(
+        asdm=asdm,
+        vis=ms,
+        ocorr_mode='co',
+        tbuff=tbuff,
+        applyflags=True,
+        flagbackup=False,
+        process_pointing=False,
+        with_pointing_correction=True,
+    )
+
+
+def importasdm_cli(argv):
+    check_usage(importasdm_doc, argv, usageifnoargs=True)
+
+    if len(argv) != 3:
+        wrong_usage(importasdm_doc, "expected exactly 2 arguments")
+
+    importasdm(argv[1], argv[2])
+
+
 # importevla
+#
+# Superseded by importasdm.
 #
 # This is a casapy script. We don't reeeallly need to be, but there's enough
 # logic in CASA's task_importevla.py that I'm not thrilled to copy/paste it
