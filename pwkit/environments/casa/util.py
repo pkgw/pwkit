@@ -191,7 +191,16 @@ def datadir(*subdirs):
         data = os.path.join(os.environ["CASAPATH"].split()[0], "data")
 
     if data is None:
-        # The Conda CASA directory layout:
+        # CASA 6
+        try:
+            import casaconfig.config
+        except ImportError:
+            pass
+        else:
+            data = casaconfig.config.measurespath
+
+    if data is None:
+        # The Conda CASA 5 directory layout:
         try:
             import casadef
         except ImportError:
@@ -392,20 +401,27 @@ class _Tools(object):
         """Returns factories, not instances."""
         # We need to make this __getattribute__, not __getattr__, only because
         # we set the builtin names in the class __dict__ to enable tab-completion.
-        import casac
+        try:
+            import casatools
+        except ImportError:
+            # CASA 5
+            import casac
 
-        if hasattr(casac, "casac"):  # casapy >= 4.0?
-            t = getattr(casac.casac, n, None)
-            if t is None:
-                raise AttributeError('tool "%s" not present' % n)
-            return t
+            if hasattr(casac, "casac"):  # casapy >= 4.0?
+                t = getattr(casac.casac, n, None)
+                if t is None:
+                    raise AttributeError('tool "%s" not present' % n)
+                return t
+            else:
+                try:
+                    return casac.homefinder.find_home_by_name(n + "Home").create
+                except Exception:
+                    # raised exception is class 'homefinder.error'; it appears unavailable
+                    # on the Python layer
+                    raise AttributeError('tool "%s" not present' % n)
         else:
-            try:
-                return casac.homefinder.find_home_by_name(n + "Home").create
-            except Exception:
-                # raised exception is class 'homefinder.error'; it appears unavailable
-                # on the Python layer
-                raise AttributeError('tool "%s" not present' % n)
+            # CASA 6
+            return getattr(casatools, n, None)
 
 
 for n in _Tools._builtinNames:

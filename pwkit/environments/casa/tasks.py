@@ -2,10 +2,12 @@
 # Copyright 2015-2017 Peter Williams <peter@newton.cx> and collaborators.
 # Licensed under the MIT License.
 
-"""The way that the official ``casapy`` code is written, it's basically
+"""The way that the official CASA 5 ``casapy`` code is written, it's basically
 impossible to import its tasks into a straight-Python environment. (Trust me,
 I've tried.) So, this module more-or-less duplicates lots of CASA code. But
 this module also tries to provide to provide saner semantics and interfaces.
+
+Fortunately, CASA 6 is way more reasonable.
 
 The goal is to make task-like functionality available in a real Python
 library, with no side effects, so that data processing can be scripted
@@ -13,8 +15,6 @@ tractably. These tasks are also accessible through the ``casatask`` command
 line program provided with :mod:`pwkit`.
 
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import os.path, sys
 import numpy as np
 
