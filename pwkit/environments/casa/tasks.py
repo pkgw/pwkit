@@ -1000,7 +1000,7 @@ def elplot(cfg):
     me = util.tools.measures()
 
     ms.open(cfg.vis, nomodify=True)
-    scans = ms.range([b"scan_number"])["scan_number"]
+    scans = ms.range(["scan_number"])["scan_number"]
 
     md = ms.metadata()
     field_names = md.namesforfields()
@@ -3407,7 +3407,7 @@ def mfsclean(cfg):
     )
     ms.open(b(cfg.vis))
     ms.msselect(b(selkws))
-    rangeinfo = ms.range(b"data_desc_id field_id".split())
+    rangeinfo = ms.range("data_desc_id field_id".split())
     ddids = rangeinfo["data_desc_id"]
     fields = rangeinfo["field_id"]
 
@@ -3460,8 +3460,8 @@ def mfsclean(cfg):
     im.defineimage(
         nx=cfg.imsize[0],
         ny=cfg.imsize[1],
-        cellx=qa.quantity(b(cfg.cell), b"arcsec"),
-        celly=qa.quantity(b(cfg.cell), b"arcsec"),
+        cellx=qa.quantity(b(cfg.cell), "arcsec"),
+        celly=qa.quantity(b(cfg.cell), "arcsec"),
         outframe=b(specframe),
         phasecenter=b(phasecenter),
         stokes=cfg.stokes,
@@ -3477,10 +3477,10 @@ def mfsclean(cfg):
 
     if cfg.weighting == "briggs":
         im.weight(
-            type=b"briggs", rmode=b"norm", robust=0.5, npixels=0
+            type="briggs", rmode="norm", robust=0.5, npixels=0
         )  # noise=, mosaic=
     elif cfg.weighting == "natural":
-        im.weight(type=b"natural", rmode=b"none")
+        im.weight(type="natural", rmode="none")
     else:
         raise ValueError('unknown weighting type "%s"' % cfg.weighting)
 
