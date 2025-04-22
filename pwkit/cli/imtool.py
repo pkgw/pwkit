@@ -333,7 +333,7 @@ class InfoCommand(multitool.ArgparsingCommand):
         if im.toworld is not None:
             latax, lonax = im._latax, im._lonax
             delta = 1e-6
-            p = 0.5 * (np.asfarray(im.shape) - 1)
+            p = 0.5 * (np.asarray(im.shape, dtype=float) - 1)
             w1 = im.toworld(p)
             p[latax] += delta
             w2 = im.toworld(p)
@@ -346,7 +346,7 @@ class InfoCommand(multitool.ArgparsingCommand):
         if im.pclat is not None:
             print("center   =", fmtradec(im.pclon, im.pclat), "# pointing")
         elif im.toworld is not None:
-            w = im.toworld(0.5 * (np.asfarray(im.shape) - 1))
+            w = im.toworld(0.5 * (np.asarray(im.shape, dtype=float) - 1))
             print("center   =", fmtradec(w[lonax], w[latax]), "# lattice")
 
         if im.shape is not None:
@@ -429,7 +429,7 @@ class InfoCommand(multitool.ArgparsingCommand):
         if im.toworld is not None:
             latax, lonax = im._latax, im._lonax
             delta = 1e-6
-            p = 0.5 * (np.asfarray(im.shape) - 1)
+            p = 0.5 * (np.asarray(im.shape, dtype=float) - 1)
             w1 = im.toworld(p)
             p[latax] += delta
             w2 = im.toworld(p)
@@ -446,7 +446,7 @@ class InfoCommand(multitool.ArgparsingCommand):
                 lon=fmthours(im.pclon),
             )
         elif im.toworld is not None:
-            w = im.toworld(0.5 * (np.asfarray(im.shape) - 1))
+            w = im.toworld(0.5 * (np.asarray(im.shape, dtype=float) - 1))
             dest_section["center"] = okeys(
                 kind="lattice",
                 lat=fmtdeglat(w[latax]),

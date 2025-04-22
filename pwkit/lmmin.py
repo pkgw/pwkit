@@ -2348,7 +2348,7 @@ def _jac_stepsizes():
 def _lmder1_test(nout, func, jac, guess):
     finfo = np.finfo(float)
     tol = np.sqrt(finfo.eps)
-    guess = np.asfarray(guess)
+    guess = np.asarray(guess, dtype=float)
 
     y = np.empty(nout)
     func(guess, y)
@@ -2374,7 +2374,7 @@ def _lmder1_driver(
 ):
     finfo = np.finfo(float)
     tol = np.sqrt(finfo.eps)
-    guess = np.asfarray(guess)
+    guess = np.asarray(guess, dtype=float)
 
     y = np.empty(nout)
     func(guess, y)
@@ -2587,7 +2587,7 @@ def _lmder1_rosenbrock():
         jac[1, 0] = 10
         jac[1, 1] = 0
 
-    guess = np.asfarray([-1.2, 1])
+    guess = np.asarray([-1.2, 1], dtype=float)
     norm1s = [0.491934955050e01, 0.134006305822e04, 0.1430000511923e06]
 
     for i in range(3):
@@ -2627,7 +2627,7 @@ def _lmder1_helical_valley():
         jac[1, 2] = 0
         jac[2, 2] = 1
 
-    guess = np.asfarray([-1, 0, 0])
+    guess = np.asarray([-1, 0, 0], dtype=float)
 
     _lmder1_driver(
         3,
@@ -2680,7 +2680,7 @@ def _lmder1_powell_singular():
         jac[3, 1] = -np.sqrt(5)
         jac[3, 3] = -jac[3, 0]
 
-    guess = np.asfarray([3, -1, 0, 1])
+    guess = np.asarray([3, -1, 0, 1], dtype=float)
 
     _lmder1_test(4, func, jac, guess)
     _lmder1_test(4, func, jac, guess * 10)
@@ -2700,7 +2700,7 @@ def _lmder1_freudenstein_roth():
         jac[1, 0] = params[1] * (10 - 3 * params[1]) - 2
         jac[1, 1] = params[1] * (2 + 3 * params[1]) - 14
 
-    guess = np.asfarray([0.5, -2])
+    guess = np.asarray([0.5, -2], dtype=float)
 
     _lmder1_driver(
         2,
@@ -2735,7 +2735,7 @@ def _lmder1_freudenstein_roth():
 def _lmder1_bard():
     """Bard function (lmder1 test #8)"""
 
-    y1 = np.asfarray(
+    y1 = np.asarray(
         [
             0.14,
             0.18,
@@ -2752,7 +2752,7 @@ def _lmder1_bard():
             1.34,
             2.10,
             4.39,
-        ]
+        ], dtype=float
     )
 
     def func(params, vec):
@@ -2782,7 +2782,7 @@ def _lmder1_bard():
             jac[1, i] = (i + 1) * tmp2 / tmp4
             jac[2, i] = (i + 1) * tmp3 / tmp4
 
-    guess = np.asfarray([1, 1, 1])
+    guess = np.asarray([1, 1, 1], dtype=float)
 
     _lmder1_driver(
         15,
@@ -2816,8 +2816,8 @@ def _lmder1_bard():
 @test
 def _lmder1_kowalik_osborne():
     """Kowalik & Osborne function (lmder1 test #9)"""
-    v = np.asfarray([4, 2, 1, 0.5, 0.25, 0.167, 0.125, 0.1, 0.0833, 0.0714, 0.0625])
-    y2 = np.asfarray(
+    v = np.asarray([4, 2, 1, 0.5, 0.25, 0.167, 0.125, 0.1, 0.0833, 0.0714, 0.0625], dtype=float)
+    y2 = np.asarray(
         [
             0.1957,
             0.1947,
@@ -2830,7 +2830,7 @@ def _lmder1_kowalik_osborne():
             0.0323,
             0.0235,
             0.0246,
-        ]
+        ], dtype=float
     )
 
     def func(params, vec):
@@ -2846,7 +2846,7 @@ def _lmder1_kowalik_osborne():
         jac[2] = jac[0] * jac[1]
         jac[3] = jac[2] / v
 
-    guess = np.asfarray([0.25, 0.39, 0.415, 0.39])
+    guess = np.asarray([0.25, 0.39, 0.415, 0.39], dtype=float)
 
     _lmder1_driver(
         11,
@@ -2925,7 +2925,7 @@ def _lmder1_meyer():
         jac[1] = params[0] * tmp2 / temp
         jac[2] = -tmp1 * jac[1]
 
-    guess = np.asfarray([0.02, 4000, 250])
+    guess = np.asarray([0.02, 4000, 250], dtype=float)
 
     _lmder1_driver(
         16,
