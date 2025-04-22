@@ -3769,12 +3769,19 @@ def plotants(vis, figfile):
       tasks.plotants('dataset.ms', 'antennas.png')
 
     """
-    from .scripting import CasapyScript
+    try:
+        import casatasks
+    except ImportError:
+        # CASA 5: need to run plotants as a script
+        from .scripting import CasapyScript
 
-    script = os.path.join(os.path.dirname(__file__), "cscript_plotants.py")
+        script = os.path.join(os.path.dirname(__file__), "cscript_plotants.py")
 
-    with CasapyScript(script, vis=vis, figfile=figfile) as cs:
-        pass
+        with CasapyScript(script, vis=vis, figfile=figfile) as cs:
+            pass
+    else:
+        # CASA 6+: can run plotants directly
+        casatasks.plotants(vis=vis, figfile=figfile)
 
 
 def plotants_cli(argv):
