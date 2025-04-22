@@ -846,7 +846,7 @@ else:
     del Star, T0
 
 
-_vizurl = "http://vizier.u-strasbg.fr/viz-bin/asu-tsv"
+_vizurl = "https://vizier.u-strasbg.fr/viz-bin/asu-tsv"
 
 
 def get_2mass_epoch(tmra, tmdec, debug=False):
