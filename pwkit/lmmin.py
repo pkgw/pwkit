@@ -1372,7 +1372,7 @@ class Problem(object):
         # Try to be clever here -- setting lower = upper
         # marks the parameter as fixed.
 
-        w = np.where(lower == upper)
+        w = np.where(np.atleast_1d(lower == upper))
         if len(w) and w[0].size:
             self.p_value(w, np.atleast_1d(lower)[w], True)
 
