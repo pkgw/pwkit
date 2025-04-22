@@ -998,16 +998,21 @@ class CasaCImage(AstroImage):
 
 
 try:
-    import casac
+    import casatools  # CASA 6
 
     CASAImage = CasaCImage
 except ImportError:
     try:
-        from pyrap.images import image
+        import casac  # CASA 5
 
-        CASAImage = PyrapImage
+        CASAImage = CasaCImage
     except ImportError:
-        CASAImage = _CasaUnsupportedImage
+        try:
+            from pyrap.images import image  # ancient history
+
+            CASAImage = PyrapImage
+        except ImportError:
+            CASAImage = _CasaUnsupportedImage
 
 
 class FITSImage(AstroImage):
