@@ -1944,16 +1944,23 @@ will print 2 values, averaged over 8 spectral windows each.
 
 
 def getopacities(ms, plotdest):
-    from .scripting import CasapyScript
+    try:
+        import casatasks
+    except ImportError:
+        # CASA 5: have to script it
+        from .scripting import CasapyScript
 
-    script = os.path.join(os.path.dirname(__file__), "cscript_getopacities.py")
+        script = os.path.join(os.path.dirname(__file__), "cscript_getopacities.py")
 
-    with CasapyScript(script, ms=ms, plotdest=plotdest) as cs:
-        try:
-            with open(os.path.join(cs.workdir, "opac.npy"), "rb") as f:
-                opac = np.load(f)
-        except Exception:
-            reraise_context("interal casapy script seemingly failed; no opac.npy")
+        with CasapyScript(script, ms=ms, plotdest=plotdest) as cs:
+            try:
+                with open(os.path.join(cs.workdir, "opac.npy"), "rb") as f:
+                    opac = np.load(f)
+            except Exception:
+                reraise_context("interal casapy script seemingly failed; no opac.npy")
+    else:
+        # CASA 6+: can invoke the code directly
+        opac = np.asarray(casatasks.plotweather(vis=ms, plotName=plotdest))
 
     return opac
 
