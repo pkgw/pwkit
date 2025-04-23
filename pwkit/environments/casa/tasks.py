@@ -76,8 +76,6 @@ commandline
 
 # Some utilities
 
-from .util import sanitize_unicode as b
-
 precal_doc = """
 **Pre-applied calibrations**
 
@@ -215,22 +213,22 @@ def applyonthefly(cb, cfg):
         cfg.gaintable, gainfields, interps, spwmaps
     ):
         cb.setapply(
-            table=b(table),
-            field=b(field),
-            interp=b(interp),
-            spwmap=b(spwmap),
+            table=table,
+            field=field,
+            interp=interp,
+            spwmap=spwmap,
             t=0.0,
             calwt=True,
         )
 
     if len(cfg.opacity):
-        cb.setapply(type=b"TOPAC", opacity=b(cfg.opacity), t=-1, calwt=True)
+        cb.setapply(type="TOPAC", opacity=cfg.opacity, t=-1, calwt=True)
 
     if cfg.gaincurve:
-        cb.setapply(type=b"GAINCURVE", t=-1, calwt=True)
+        cb.setapply(type="GAINCURVE", t=-1, calwt=True)
 
     if cfg.parang:
-        cb.setapply(type=b"P")
+        cb.setapply(type="P")
 
 
 _kwcli_cfg_class_doc_template = """\
@@ -365,7 +363,7 @@ class ApplycalConfig(ParseKeywords):
 
 def applycal(cfg):
     cb = util.tools.calibrater()
-    cb.open(filename=b(cfg.vis), compress=False, addcorr=True, addmodel=False)
+    cb.open(filename=cfg.vis, compress=False, addcorr=True, addmodel=False)
 
     selkws = extractmsselect(cfg)
     selkws["chanmode"] = "none"  # ?
@@ -373,7 +371,7 @@ def applycal(cfg):
 
     applyonthefly(cb, cfg)
 
-    cb.correct(b(cfg.applymode))
+    cb.correct(cfg.applymode)
     cb.close()
 
 
@@ -454,12 +452,12 @@ def bpplot(cfg):
     # Initial recon
 
     tb.open(cfg.caltable, nomodify=True)
-    spws = tb.getcol(b"SPECTRAL_WINDOW_ID")
-    ants = tb.getcol(b"ANTENNA1")
+    spws = tb.getcol("SPECTRAL_WINDOW_ID")
+    ants = tb.getcol("ANTENNA1")
     tb.close()
 
     tb.open(os.path.join(cfg.caltable, "ANTENNA"), nomodify=True)
-    names = tb.getcol(b"NAME")
+    names = tb.getcol("NAME")
     tb.close()
 
     nsoln = ants.size
@@ -477,8 +475,8 @@ def bpplot(cfg):
     tb.open(cfg.caltable, nomodify=True)
 
     for isoln in range(nsoln):
-        vals[isoln] = this_vals = tb.getcell(b"CPARAM", isoln)
-        flags[isoln] = this_flags = tb.getcell(b"FLAG", isoln)
+        vals[isoln] = this_vals = tb.getcell("CPARAM", isoln)
+        flags[isoln] = this_flags = tb.getcell("FLAG", isoln)
         this_spw = spws[isoln]
         this_npol, this_nchan = this_vals.shape
 
@@ -685,13 +683,13 @@ def clearcal(vis, weightonly=False):
     # cb.open() will create the tables if they're not present, so
     # if that's the case, we don't actually need to run initcalset()
 
-    tb.open(b(vis), nomodify=False)
+    tb.open(vis, nomodify=False)
     colnames = tb.colnames()
     needinit = ("MODEL_DATA" in colnames) or ("CORRECTED_DATA" in colnames)
     if "IMAGING_WEIGHT" not in colnames:
         c = dict(clearcal_imaging_col_tmpl)
-        c["shape"] = tb.getcell(b"DATA", 0).shape[-1:]
-        tb.addcols({b"IMAGING_WEIGHT": c}, clearcal_imaging_dminfo_tmpl)
+        c["shape"] = tb.getcell("DATA", 0).shape[-1:]
+        tb.addcols({"IMAGING_WEIGHT": c}, clearcal_imaging_dminfo_tmpl)
     tb.close()
 
     if not weightonly:
@@ -700,7 +698,7 @@ def clearcal(vis, weightonly=False):
         if casadef.casa_version.startswith("5."):
             cb.setvi(old=True, quiet=False)
 
-        cb.open(b(vis))
+        cb.open(vis)
         if needinit:
             cb.initcalset()
         cb.close()
@@ -719,7 +717,7 @@ def clearcal_cli(argv):
 
     util.logger()
     for vis in argv[1:]:
-        clearcal(b(vis), weightonly=weightonly)
+        clearcal(vis, weightonly=weightonly)
 
 
 # closures
@@ -773,21 +771,19 @@ def concat(invises, outvis, timesort=False):
         if not os.path.isdir(invis):
             raise RuntimeError('input "%s" does not exist' % invis)
 
-    tb.open(b(invises[0]))
-    tb.copy(b(outvis), deep=True, valuecopy=True)
+    tb.open(invises[0])
+    tb.copy(outvis, deep=True, valuecopy=True)
     tb.close()
 
-    ms.open(b(outvis), nomodify=False)
+    ms.open(outvis, nomodify=False)
 
     for invis in invises[1:]:
-        ms.concatenate(
-            msfile=b(invis), freqtol=b(concat_freqtol), dirtol=b(concat_dirtol)
-        )
+        ms.concatenate(msfile=invis, freqtol=concat_freqtol, dirtol=concat_dirtol)
 
-    ms.writehistory(message=b"taskname=tasklib.concat", origin=b"tasklib.concat")
-    ms.writehistory(message=b("vis = " + ", ".join(invises)), origin=b"tasklib.concat")
+    ms.writehistory(message="taskname=tasklib.concat", origin="tasklib.concat")
+    ms.writehistory(message="vis = " + ", ".join(invises), origin="tasklib.concat")
     ms.writehistory(
-        message=b("timesort = " + "FT"[int(timesort)]), origin=b"tasklib.concat"
+        message="timesort = " + "FT"[int(timesort)], origin="tasklib.concat"
     )
 
     if timesort:
@@ -837,14 +833,14 @@ def delcal(mspath):
     """
     wantremove = "MODEL_DATA CORRECTED_DATA".split()
     tb = util.tools.table()
-    tb.open(b(mspath), nomodify=False)
+    tb.open(mspath, nomodify=False)
     cols = frozenset(tb.colnames())
-    toremove = [b(c) for c in wantremove if c in cols]
+    toremove = [c for c in wantremove if c in cols]
     if len(toremove):
         tb.removecols(toremove)
     tb.close()
 
-    return [c.decode("utf8") for c in toremove]
+    return toremove
 
 
 def delcal_cli(argv):
@@ -898,7 +894,7 @@ def delmod_cli(argv, alter_logger=True):
     cb = util.tools.calibrater()
 
     for mspath in argv[1:]:
-        cb.open(b(mspath), addcorr=False, addmodel=False)
+        cb.open(mspath, addcorr=False, addmodel=False)
         cb.delmod(otf=True, scr=False)
         cb.close()
 
@@ -1005,7 +1001,7 @@ def elplot(cfg):
     md = ms.metadata()
     field_names = md.namesforfields()
     obs = md.observatoryposition()
-    me.doframe(b(obs))
+    me.doframe(obs)
     timetmpl = md.timerangeforobs(0)["begin"]
 
     mjd0 = int(np.floor(md.timesforscan(scans[0]).min() / 86400))
@@ -1029,8 +1025,8 @@ def elplot(cfg):
 
         for i in range(mjds.size):
             timetmpl["m0"]["value"] = mjds[i]
-            me.doframe(b(timetmpl))
-            els[i] = me.measure(b(fdir), b"AZEL")["m1"]["value"] * 180 / np.pi
+            me.doframe(timetmpl)
+            els[i] = me.measure(fdir, "AZEL")["m1"]["value"] * 180 / np.pi
 
         dsn = field_dsns.get(field)
         kt = None
@@ -1088,13 +1084,13 @@ def extractbpflags(calpath, deststream):
 
     """
     tb = util.tools.table()
-    tb.open(b(os.path.join(calpath, "ANTENNA")))
-    antnames = tb.getcol(b"NAME")
+    tb.open(os.path.join(calpath, "ANTENNA"))
+    antnames = tb.getcol("NAME")
     tb.close()
 
-    tb.open(b(calpath))
+    tb.open(calpath)
     try:
-        t = tb.getkeyword(b"VisCal")
+        t = tb.getkeyword("VisCal")
     except RuntimeError:
         raise PKError(
             'no "VisCal" keyword in %s; it doesn\'t seem to be a '
@@ -1119,9 +1115,9 @@ def extractbpflags(calpath, deststream):
         )
 
     for row in range(tb.nrows()):
-        ant = tb.getcell(b"ANTENNA1", row)
-        spw = tb.getcell(b"SPECTRAL_WINDOW_ID", row)
-        flag = tb.getcell(b"FLAG", row)
+        ant = tb.getcell("ANTENNA1", row)
+        spw = tb.getcell("SPECTRAL_WINDOW_ID", row)
+        flag = tb.getcell("FLAG", row)
 
         # This is the logical 'or' of the two polarizations: i.e., anything that
         # is flagged in either poln is flagged in this.
@@ -1236,7 +1232,7 @@ def flaglist(cfg):
         factory = util.tools.testflagger
 
     af = factory()
-    af.open(b(cfg.vis), 0.0)
+    af.open(cfg.vis, 0.0)
     af.selectdata()
 
     for row, origline in enumerate(open(cfg.inpfile)):
@@ -1279,7 +1275,7 @@ def flaglist(cfg):
 
         params.setdefault("mode", "manual")
 
-        if not af.parseagentparameters(b(params)):
+        if not af.parseagentparameters(params):
             raise Exception("cannot parse flag line: %s" % origline)
 
     af.init()
@@ -1337,7 +1333,7 @@ def flagmanager_cli(argv, alter_logger=True):
         factory = util.tools.testflagger
 
     af = factory()
-    af.open(b(ms))
+    af.open(ms)
 
     if mode == "list":
         if len(argv) != 3:
@@ -1350,17 +1346,15 @@ def flagmanager_cli(argv, alter_logger=True):
 
         name = argv[3]
         af.saveflagversion(
-            versionname=b(name),
-            merge=b"replace",
-            comment=b(
-                "created %s(casatask flagmanager)" % strftime("%Y-%m-%dT%H:%M:%SZ")
-            ),
+            versionname=name,
+            merge="replace",
+            comment="created %s(casatask flagmanager)" % strftime("%Y-%m-%dT%H:%M:%SZ"),
         )
     elif mode == "restore":
         if len(argv) != 4:
             wrong_usage(flagmanager_doc, "expect exactly two arguments in restore mode")
         name = argv[3]
-        af.restoreflagversion(versionname=b(name), merge=b"replace")
+        af.restoreflagversion(versionname=name, merge="replace")
     elif mode == "delete":
         if len(argv) != 4:
             wrong_usage(flagmanager_doc, "expect exactly two arguments in delete mode")
@@ -1372,7 +1366,7 @@ def flagmanager_cli(argv, alter_logger=True):
                 'version "%s" doesn\'t exist in "%s.flagversions"' % (name, ms)
             )
 
-        af.deleteflagversion(versionname=b(name))
+        af.deleteflagversion(versionname=name)
     else:
         wrong_usage(flagmanager_doc, 'unknown flagmanager mode "%s"' % mode)
 
@@ -1404,7 +1398,7 @@ def flagzeros(cfg):
         factory = util.tools.testflagger
 
     af = factory()
-    af.open(b(cfg.vis), 0.0)
+    af.open(cfg.vis, 0.0)
     af.selectdata()
     pars = dict(
         datacolumn=cfg.datacol.upper(),
@@ -1503,15 +1497,15 @@ def fluxscale(cfg):
     if not len(refspwmap):
         refspwmap = [-1]
 
-    cb.open(b(cfg.vis), compress=False, addcorr=False, addmodel=False)
+    cb.open(cfg.vis, compress=False, addcorr=False, addmodel=False)
     result = cb.fluxscale(
-        tablein=b(cfg.caltable),
-        tableout=b(cfg.fluxtable),
-        reference=b(reference),
-        transfer=b(transfer),
-        listfile=b(cfg.listfile or ""),
+        tablein=cfg.caltable,
+        tableout=cfg.fluxtable,
+        reference=reference,
+        transfer=transfer,
+        listfile=cfg.listfile or "",
         append=cfg.append,
-        refspwmap=b(refspwmap),
+        refspwmap=refspwmap,
     )
     # incremental=cfg.incremental)
     cb.close()
@@ -1592,25 +1586,23 @@ class FtConfig(ParseKeywords):
 def ft(cfg):
     im = util.tools.imager()
 
-    im.open(b(cfg.vis), usescratch=cfg.usescratch)
+    im.open(cfg.vis, usescratch=cfg.usescratch)
     im.selectvis(**extractmsselect(cfg, haveintent=False, taqltomsselect=False))
     nmodel = len(cfg.model)
 
     if nmodel > 1:
         ia = util.tools.image()
-        ia.open(b(cfg.model[0]))
+        ia.open(cfg.model[0])
         # This gives Hz:
-        reffreq = ia.coordsys().referencevalue(type=b"spectral")["numeric"][0]
+        reffreq = ia.coordsys().referencevalue(type="spectral")["numeric"][0]
         ia.close()
         im.settaylorterms(ntaylorterms=nmodel, reffreq=reffreq)
 
     if cfg.wprojplanes is not None:
         im.defineimage()
-        im.setoptions(ftmachine=b"wproject", wprojplanes=cfg.wprojplanes)
+        im.setoptions(ftmachine="wproject", wprojplanes=cfg.wprojplanes)
 
-    im.ft(
-        model=b(cfg.model), complist=b(cfg.complist or ""), incremental=cfg.incremental
-    )
+    im.ft(model=cfg.model, complist=cfg.complist or "", incremental=cfg.incremental)
     im.close()
 
 
@@ -1757,7 +1749,7 @@ class GaincalConfig(ParseKeywords):
 
 def gaincal(cfg):
     cb = util.tools.calibrater()
-    cb.open(filename=b(cfg.vis), compress=False, addcorr=False, addmodel=False)
+    cb.open(filename=cfg.vis, compress=False, addcorr=False, addmodel=False)
 
     selkws = extractmsselect(cfg)
     selkws["chanmode"] = "none"  # ?
@@ -1888,7 +1880,7 @@ class GencalConfig(ParseKeywords):
 
 def gencal(cfg):
     cb = util.tools.calibrater()
-    cb.open(filename=b(cfg.vis), compress=False, addcorr=False, addmodel=False)
+    cb.open(filename=cfg.vis, compress=False, addcorr=False, addmodel=False)
 
     antenna = cfg.antenna or ""
     parameter = cfg.parameter
@@ -1911,13 +1903,13 @@ def gencal(cfg):
         antenna = antenna.tostring()
 
     cb.specifycal(
-        caltable=b(cfg.caltable),
-        time=b"",
-        spw=b(cfg.spw or ""),
-        antenna=b(antenna),
-        pol=b(cfg.pol or ""),
-        caltype=b(cfg.caltype),
-        parameter=b(parameter),
+        caltable=cfg.caltable,
+        time="",
+        spw=cfg.spw or "",
+        antenna=antenna,
+        pol=cfg.pol or "",
+        caltype=cfg.caltype,
+        parameter=parameter,
     )
     cb.close()
 
@@ -2026,11 +2018,11 @@ def gpdetrend(cfg):
 
     tb.open(cfg.caltable, nomodify=False)
     # fields = tb.getcol(b'FIELD_ID')
-    spws = tb.getcol(b"SPECTRAL_WINDOW_ID")
-    ants = tb.getcol(b"ANTENNA1")
-    vals = tb.getcol(b"CPARAM")
-    flags = tb.getcol(b"FLAG")
-    times = tb.getcol(b"TIME")
+    spws = tb.getcol("SPECTRAL_WINDOW_ID")
+    ants = tb.getcol("ANTENNA1")
+    vals = tb.getcol("CPARAM")
+    flags = tb.getcol("FLAG")
+    times = tb.getcol("TIME")
 
     npol, unused, nsoln = vals.shape
     assert unused == 1, "unexpected gain table structure!"
@@ -2079,7 +2071,7 @@ def gpdetrend(cfg):
 
     # Rewrite and we're done.
 
-    tb.putcol(b"CPARAM", vals.reshape((npol, 1, nsoln)))
+    tb.putcol("CPARAM", vals.reshape((npol, 1, nsoln)))
     tb.close()
 
 
@@ -2182,16 +2174,16 @@ def gpplot(cfg):
     tb = util.tools.table()
 
     tb.open(cfg.caltable, nomodify=True)
-    fields = tb.getcol(b"FIELD_ID")
-    spws = tb.getcol(b"SPECTRAL_WINDOW_ID")
-    ants = tb.getcol(b"ANTENNA1")
-    vals = tb.getcol(b"CPARAM")
-    flags = tb.getcol(b"FLAG")
-    times = tb.getcol(b"TIME")
+    fields = tb.getcol("FIELD_ID")
+    spws = tb.getcol("SPECTRAL_WINDOW_ID")
+    ants = tb.getcol("ANTENNA1")
+    vals = tb.getcol("CPARAM")
+    flags = tb.getcol("FLAG")
+    times = tb.getcol("TIME")
     tb.close()
 
     tb.open(os.path.join(cfg.caltable, "ANTENNA"), nomodify=True)
-    names = tb.getcol(b"NAME")
+    names = tb.getcol("NAME")
     tb.close()
 
     npol, unused, nsoln = vals.shape
@@ -2410,9 +2402,9 @@ def image2fits(
 
     """
     ia = util.tools.image()
-    ia.open(b(mspath))
+    ia.open(mspath)
     ia.tofits(
-        outfile=b(fitspath),
+        outfile=fitspath,
         velocity=velocity,
         optical=optical,
         bitpix=bitpix,
@@ -2551,7 +2543,7 @@ def importasdm(asdm, ms):
     casatasks.importasdm(
         asdm=asdm,
         vis=ms,
-        ocorr_mode='co',
+        ocorr_mode="co",
         tbuff=tbuff,
         applyflags=True,
         flagbackup=False,
@@ -2687,7 +2679,7 @@ def listobs(vis):
             ms.summary(verbose=True)
             ms.close()
         except Exception as e:
-            sink.post(b"listobs failed: %s" % e, priority=b"SEVERE")
+            sink.post("listobs failed: %s" % e, priority="SEVERE")
 
     for line in util.forkandlog(inner_list):
         info = line.rstrip().split("\t", 3)  # date, priority, origin, message
@@ -2831,14 +2823,14 @@ def listsdm(sdm, file=None):
         rowstart = rownode.getElementsByTagName("startTime")
         start = int(rowstart[0].childNodes[0].nodeValue)
         startmjd = float(start) * 1.0e-9 / 86400.0
-        t = b(qa.quantity(startmjd, b"d"))
-        starttime = qa.time(t, form=b"ymd", prec=8)[0]
+        t = qa.quantity(startmjd, "d")
+        starttime = qa.time(t, form="ymd", prec=8)[0]
         startTimeShort.append(qa.time(t, prec=8)[0])
         rowend = rownode.getElementsByTagName("endTime")
         end = int(rowend[0].childNodes[0].nodeValue)
         endmjd = float(end) * 1.0e-9 / 86400.0
-        t = b(qa.quantity(endmjd, b"d"))
-        endtime = qa.time(t, form=b"ymd", prec=8)[0]
+        t = qa.quantity(endmjd, "d")
+        endtime = qa.time(t, form="ymd", prec=8)[0]
         endTimeShort.append(qa.time(t, prec=8)[0])
 
         # source name
@@ -2991,8 +2983,8 @@ def listsdm(sdm, file=None):
         DecDeg = float(coordInfo[4]) * (180.0 / np.pi)
         RAInp = {"unit": "deg", "value": RADeg}
         DecInp = {"unit": "deg", "value": DecDeg}
-        RAHMS = b(qa.formxxx(b(RAInp), format=b"hms"))
-        DecDMS = b(qa.formxxx(b(DecInp), format=b"dms"))
+        RAHMS = qa.formxxx(RAInp, format="hms")
+        DecDMS = qa.formxxx(DecInp, format="dms")
         fieldRAList.append(RAHMS)
         fieldDecList.append(DecDMS)
         fieldSrcIDList.append(int(rowSrcId[0].childNodes[0].nodeValue))
@@ -3034,14 +3026,14 @@ def listsdm(sdm, file=None):
         statIdList.append(str(rowStatId[0].childNodes[0].nodeValue))
         statNameList.append(str(rowStatName[0].childNodes[0].nodeValue))
         posInfo = string.split(str(rowStatPos[0].childNodes[0].nodeValue))
-        x = b(qa.quantity([float(posInfo[2])], b"m"))
-        y = b(qa.quantity([float(posInfo[3])], b"m"))
-        z = b(qa.quantity([float(posInfo[4])], b"m"))
-        pos = b(me.position(b"ITRF", x, y, z))
+        x = qa.quantity([float(posInfo[2])], "m")
+        y = qa.quantity([float(posInfo[3])], "m")
+        z = qa.quantity([float(posInfo[4])], "m")
+        pos = me.position("ITRF", x, y, z)
         qLon = pos["m0"]
         qLat = pos["m1"]
-        statLatList.append(qa.formxxx(qLat, b"dms", prec=0))
-        statLonList.append(qa.formxxx(qLon, b"dms", prec=0))
+        statLatList.append(qa.formxxx(qLat, "dms", prec=0))
+        statLonList.append(qa.formxxx(qLon, "dms", prec=0))
 
     # associate antennas with stations:
     assocStatList = []
@@ -3062,10 +3054,10 @@ def listsdm(sdm, file=None):
     )
     # integration time in seconds, start and end times:
     intTime = eTime - sTime
-    t = b(qa.quantity(sTime / 86400.0, b"d"))
-    obsStart = qa.time(t, form=b"ymd", prec=8)[0]
-    t = b(qa.quantity(eTime / 86400.0, b"d"))
-    obsEnd = qa.time(t, form=b"ymd", prec=8)[0]
+    t = qa.quantity(sTime / 86400.0, "d")
+    obsStart = qa.time(t, form="ymd", prec=8)[0]
+    t = qa.quantity(eTime / 86400.0, "d")
+    obsEnd = qa.time(t, form="ymd", prec=8)[0]
     # observer name and obs. info:
     observerName = str(
         rowlist[0].getElementsByTagName("observerName")[0].childNodes[0].nodeValue
@@ -3412,21 +3404,21 @@ def mfsclean(cfg):
     selkws = extractmsselect(
         cfg, havearray=False, haveintent=False, taqltomsselect=False
     )
-    ms.open(b(cfg.vis))
-    ms.msselect(b(selkws))
+    ms.open(cfg.vis)
+    ms.msselect(selkws)
     rangeinfo = ms.range("data_desc_id field_id".split())
     ddids = rangeinfo["data_desc_id"]
     fields = rangeinfo["field_id"]
 
     # Get the spectral frame from the first spw of the selected data
 
-    tb.open(b(os.path.join(cfg.vis, "DATA_DESCRIPTION")))
-    ddspws = tb.getcol(b"SPECTRAL_WINDOW_ID")
+    tb.open(os.path.join(cfg.vis, "DATA_DESCRIPTION"))
+    ddspws = tb.getcol("SPECTRAL_WINDOW_ID")
     tb.close()
     spw0 = ddspws[ddids[0]]
 
-    tb.open(b(os.path.join(cfg.vis, "SPECTRAL_WINDOW")))
-    specframe = specframenames[tb.getcell(b"MEAS_FREQ_REF", spw0)]
+    tb.open(os.path.join(cfg.vis, "SPECTRAL_WINDOW"))
+    specframe = specframenames[tb.getcell("MEAS_FREQ_REF", spw0)]
     tb.close()
 
     # Choose phase center
@@ -3460,22 +3452,22 @@ def mfsclean(cfg):
 
     # Set up all of this junk
 
-    im.open(b(cfg.vis), usescratch=False)
+    im.open(cfg.vis, usescratch=False)
     im.selectvis(
         nchan=-1, start=0, step=1, usescratch=False, writeaccess=False, **selkws
     )
     im.defineimage(
         nx=cfg.imsize[0],
         ny=cfg.imsize[1],
-        cellx=qa.quantity(b(cfg.cell), "arcsec"),
-        celly=qa.quantity(b(cfg.cell), "arcsec"),
-        outframe=b(specframe),
-        phasecenter=b(phasecenter),
+        cellx=qa.quantity(cfg.cell, "arcsec"),
+        celly=qa.quantity(cfg.cell, "arcsec"),
+        outframe=specframe,
+        phasecenter=phasecenter,
         stokes=cfg.stokes,
         spw=-1,  # to verify: selectvis(spw=) good enough?
-        restfreq=b"",
-        mode=b"mfs",
-        veltype=b"radio",
+        restfreq="",
+        mode="mfs",
+        veltype="radio",
         nchan=-1,
         start=0,
         step=1,
@@ -3483,28 +3475,26 @@ def mfsclean(cfg):
     )
 
     if cfg.weighting == "briggs":
-        im.weight(
-            type="briggs", rmode="norm", robust=0.5, npixels=0
-        )  # noise=, mosaic=
+        im.weight(type="briggs", rmode="norm", robust=0.5, npixels=0)  # noise=, mosaic=
     elif cfg.weighting == "natural":
         im.weight(type="natural", rmode="none")
     else:
         raise ValueError('unknown weighting type "%s"' % cfg.weighting)
 
     # im.filter(...)
-    im.setscales(scalemethod=b"uservector", uservector=[0])
+    im.setscales(scalemethod="uservector", uservector=[0])
     im.setsmallscalebias(0.6)
     im.setmfcontrol()
     im.setvp(dovp=True)
-    im.makeimage(type=b"pb", image=b(pb), compleximage=b"", verbose=False)
+    im.makeimage(type="pb", image=pb, compleximage="", verbose=False)
     im.setvp(dovp=False, verbose=False)
     im.setoptions(
-        ftmachine=b(cfg.ftmachine),
-        wprojplanes=b(cfg.wprojplanes),
-        freqinterp=b"linear",
+        ftmachine=cfg.ftmachine,
+        wprojplanes=cfg.wprojplanes,
+        freqinterp="linear",
         padding=1.2,
         pastep=360.0,
-        pblimit=b(cfg.minpb),
+        pblimit=cfg.minpb,
         applypointingoffsets=False,
         dopbgriddingcorrections=True,
     )
@@ -3522,18 +3512,18 @@ def mfsclean(cfg):
         maskstr = ""
     else:
         maskstr = mask
-        im.make(b(mask))
-        ia.open(b(mask))
+        im.make(mask)
+        ia.open(mask)
         maskcs = ia.coordsys()
-        maskcs.setreferencecode(b(specframe), b"spectral", True)
+        maskcs.setreferencecode(specframe, "spectral", True)
         ia.setcoordsys(maskcs.torecord())
 
         if cfg.mask is not None:
             rg = util.tools.regionmanager()
             regions = rg.fromtextfile(
-                filename=b(cfg.mask), shape=ia.shape(), csys=maskcs.torecord()
+                filename=cfg.mask, shape=ia.shape(), csys=maskcs.torecord()
             )
-            im.regiontoimagemask(mask=b(mask), region=regions)
+            im.regiontoimagemask(mask=mask, region=regions)
 
         ia.close()
 
@@ -3541,20 +3531,20 @@ def mfsclean(cfg):
     # significantly than usual here.
 
     for model in models:
-        im.make(b(model))
+        im.make(model)
 
     # Go!
 
     im.clean(
-        algorithm=b"msmfs",
+        algorithm="msmfs",
         niter=cfg.niter,
         gain=cfg.gain,
-        threshold=qa.quantity(b(cfg.threshold), b"mJy"),
-        model=b(models),
-        residual=b(resids),
-        image=b(restoreds),
-        psfimage=b(psfs),
-        mask=b(maskstr),
+        threshold=qa.quantity(cfg.threshold, "mJy"),
+        model=models,
+        residual=resids,
+        image=restoreds,
+        psfimage=psfs,
+        mask=maskstr,
         interactive=False,
     )
     im.close()
@@ -3733,7 +3723,7 @@ def mstransform(cfg):
         mtconfig["timespan"] = ",".join(cfg.timespan)
         # not implemented: maxuvwdistance
 
-    mt.config(b(mtconfig))
+    mt.config(mtconfig)
     mt.open()
     mt.run()
     mt.done()
@@ -3866,35 +3856,31 @@ def plotcal(cfg):
 
     script = os.path.join(os.path.dirname(__file__), "cscript_plotcal.py")
 
-    selectcals = b(
-        dict(
-            antenna=cfg.antenna,
-            field=cfg.field,
-            poln=cfg.poln.upper(),
-            spw=cfg.spw,
-            time=cfg.timerange,
-        )
+    selectcals = dict(
+        antenna=cfg.antenna,
+        field=cfg.field,
+        poln=cfg.poln.upper(),
+        spw=cfg.spw,
+        time=cfg.timerange,
     )
 
-    plotoptions = b(
-        dict(
-            iteration=cfg.iteration,
-            plotrange=[0.0] * 4,
-            plotsymbol=cfg.plotsymbol,
-            plotcolor=cfg.plotcolor,
-            markersize=cfg.markersize,
-            fontsize=cfg.fontsize,
-        )
+    plotoptions = dict(
+        iteration=cfg.iteration,
+        plotrange=[0.0] * 4,
+        plotsymbol=cfg.plotsymbol,
+        plotcolor=cfg.plotcolor,
+        markersize=cfg.markersize,
+        fontsize=cfg.fontsize,
     )
 
     with CasapyScript(
         script,
-        caltable=b(cfg.caltable),
+        caltable=cfg.caltable,
         selectcals=selectcals,
         plotoptions=plotoptions,
-        xaxis=b(cfg.xaxis.upper()),
-        yaxis=b(cfg.yaxis.upper()),
-        figfile=b(cfg.figfile),
+        xaxis=cfg.xaxis.upper(),
+        yaxis=cfg.yaxis.upper(),
+        figfile=cfg.figfile,
     ) as cs:
         pass
 
@@ -4031,7 +4017,7 @@ def setjy(cfg):
         kws["modimage"] = mi
 
     im = util.tools.imager()
-    im.open(b(cfg.vis), usescratch=False)  # don't think you'll ever want True?
+    im.open(cfg.vis, usescratch=False)  # don't think you'll ever want True?
     im.setjy(**kws)
     im.close()
 
@@ -4109,7 +4095,7 @@ def split(cfg):
         kws["timebin"] = str(cfg.timebin) + "s"
 
     ms = util.tools.ms()
-    ms.open(b(cfg.vis))
+    ms.open(cfg.vis)
 
     # split() will merrily overwrite an existing MS, which I think is
     # very bad behavior. We try to prevent this in two steps: 1) claim
@@ -4236,20 +4222,20 @@ def tsysplot(cfg):
     tb = util.tools.table()
 
     tb.open(cfg.caltable, nomodify=True)
-    fields = tb.getcol(b"FIELD_ID")
-    spws = tb.getcol(b"SPECTRAL_WINDOW_ID")
-    ants = tb.getcol(b"ANTENNA1")
-    vals = tb.getcol(b"FPARAM")
-    flags = tb.getcol(b"FLAG")
-    times = tb.getcol(b"TIME")
+    fields = tb.getcol("FIELD_ID")
+    spws = tb.getcol("SPECTRAL_WINDOW_ID")
+    ants = tb.getcol("ANTENNA1")
+    vals = tb.getcol("FPARAM")
+    flags = tb.getcol("FLAG")
+    times = tb.getcol("TIME")
     tb.close()
 
     tb.open(os.path.join(cfg.caltable, "ANTENNA"), nomodify=True)
-    antnames = tb.getcol(b"NAME")
+    antnames = tb.getcol("NAME")
     tb.close()
 
     tb.open(os.path.join(cfg.caltable, "FIELD"), nomodify=True)
-    fieldnames = tb.getcol(b"NAME")
+    fieldnames = tb.getcol("NAME")
     tb.close()
 
     npol, nchan, nsoln = vals.shape
@@ -4402,12 +4388,10 @@ class UvsubConfig(ParseKeywords):
 def uvsub(cfg):
     ms = util.tools.ms()
 
-    ms.open(b(cfg.vis), nomodify=False)
+    ms.open(cfg.vis, nomodify=False)
     ms.msselect(
-        b(
-            extractmsselect(
-                cfg, havearray=True, intenttoscanintent=True, taqltomsselect=False
-            )
+        extractmsselect(
+            cfg, havearray=True, intenttoscanintent=True, taqltomsselect=False
         )
     )
     ms.uvsub(reverse=cfg.reverse)
@@ -4484,9 +4468,9 @@ def xyphplot(cfg):
     # is prett simple to plot!
 
     tb.open(cfg.caltable, nomodify=True)
-    spws = tb.getcol(b"SPECTRAL_WINDOW_ID")
-    vals = tb.getcol(b"CPARAM")
-    flags = tb.getcol(b"FLAG")
+    spws = tb.getcol("SPECTRAL_WINDOW_ID")
+    vals = tb.getcol("CPARAM")
+    flags = tb.getcol("FLAG")
     tb.close()
 
     npol, nchan, nsoln = vals.shape
