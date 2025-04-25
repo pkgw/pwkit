@@ -4351,14 +4351,15 @@ uvsub_doc = (
     """
 casatask uvsub vis= [keywords]
 
-Set the CORRECTED_DATA column to the difference of DATA and MODEL_DATA.
+Subtract MODEL_DATA from CORRECTED_DATA. If CORRECTED_DATA doesn't already
+exist, it defaults to DATA, so that the effect is to set CORRECTED = DATA - MODEL.
 
 vis=
   The input data set.
 
 reverse=
-  Boolean, default false, which means to set CORRECTED = DATA - MODEL. If
-  true, CORRECTED = DATA + MODEL.
+  Boolean, default false, indicating whether we should add rather than subtract
+  MODEL.
 """
     + stdsel_doc
     + loglevel_doc
