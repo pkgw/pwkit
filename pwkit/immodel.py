@@ -199,7 +199,7 @@ def beam_volume(im):
     delta = 1e-6
     latax, lonax = im._latax, im._lonax
 
-    p = 0.5 * (np.asfarray(im.shape) - 1)
+    p = 0.5 * (np.asarray(im.shape, dtype=float) - 1)
     w1 = im.toworld(p)
     p[latax] += delta
     w2 = im.toworld(p)

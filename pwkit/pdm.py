@@ -115,10 +115,10 @@ def pdm(
     ``t.size * periods.size * nbin * nshift * (nsmc + numc + 1)``.
 
     """
-    t = np.asfarray(t)
-    x = np.asfarray(x)
-    u = np.asfarray(u)
-    periods = np.asfarray(periods)
+    t = np.asarray(t, dtype=float)
+    x = np.asarray(x, dtype=float)
+    u = np.asarray(u, dtype=float)
+    periods = np.asarray(periods, dtype=float)
     t, x, u, periods = np.atleast_1d(t, x, u, periods)
     nbin = int(nbin)
     nshift = int(nshift)
