@@ -582,8 +582,41 @@ WCS support isn't fantastic and sometimes causes crashes."""
             if no_coords:
                 toworld = None
 
+            def extra_keypress_handler(
+                viewer: "Viewer", keyname: str, modmask: "Gdk.ModifierType"
+            ) -> bool:
+                if keyname in "fp" and int(modmask) == 0:
+                    # "f" - fit a source at current cursor position
+                    # "p" - same, forcing a point source
+                    from ..immodel import fit_one_source
+
+                    x, y = viewer.viewport.get_pointer_data_coords()
+                    x = int(round(x))
+                    y = int(
+                        round(img.shape[0] - 1 - y)
+                    )  # need to account for yflip here
+                    print(f"Fitting source at initial position: (x,y) = ({x!r}, {y!r})")
+
+                    def report_func(key: str, fmt: str, value):
+                        print(key, "=", fmt % value, sep="")
+
+                    fit_one_source(
+                        img,
+                        x,
+                        y,
+                        forcepoint=keyname == "p",
+                        report_func=report_func,
+                    )
+                    return True
+
+                return False
+
             ndshow.view(
-                data, title=path + " — Array Viewer", toworld=toworld, yflip=True
+                data,
+                title=path + " — Array Viewer",
+                toworld=toworld,
+                yflip=True,
+                extra_keypress_handler=extra_keypress_handler,
             )
 
         sys.exit(int(anyfailures))
