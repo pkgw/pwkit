@@ -67,7 +67,7 @@ class PowerLawApecDemModel(XSAdditiveModel):
         if kt_array is None:
             kt_array = DEFAULT_KT_ARRAY
         else:
-            kt_array = np.atleast_1d(np.asfarray(kt_array))
+            kt_array = np.atleast_1d(np.asarray(kt_array, dtype=float))
 
         self.gfac = Parameter(name, 'gfac', 0.5, 1e-4, 1e4, 1e-6, 1e6)
         self.Abundanc = Parameter(name, 'Abundanc', 1., 0., 5., 0.0, hugeval, frozen=True)
