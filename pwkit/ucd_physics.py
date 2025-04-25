@@ -81,7 +81,7 @@ def bck_from_spt (spt):
     #
     # XXX: I've restructured the implementation; this needs testing!
 
-    spt = np.asfarray (spt) # we crash with integer inputs for some reason.
+    spt = np.asarray(spt, dtype=float) # we crash with integer inputs for some reason.
     return np.piecewise (spt,
                          [spt < 30,
                           spt < 19,
@@ -189,7 +189,7 @@ def mass_from_j (j_abs):
     j_abs = 11, which yields 0.0824 Msun.
 
     """
-    j_abs = np.asfarray (j_abs)
+    j_abs = np.asarray(j_abs, dtype=float)
     return np.piecewise (j_abs,
                          [j_abs > 11,
                           j_abs <= 11,

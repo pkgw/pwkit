@@ -30,13 +30,13 @@
     ],
     "language": "eng",
     "license": "MIT",
-    "publication_date": "2024-10-11",
-    "title": "pwkit 1.2.2",
+    "publication_date": "2025-04-25",
+    "title": "pwkit 1.3.0",
     "upload_type": "software",
-    "version": "1.2.2"
+    "version": "1.3.0"
   },
   "conceptdoi": "10.5281/zenodo.8052838",
-  "record_id": "13920308",
-  "doi": "10.5281/zenodo.13920308",
-  "bucket_link": "https://zenodo.org/api/files/0d206d5e-7361-4515-a15f-c30195b93dbb"
+  "record_id": "15283107",
+  "doi": "10.5281/zenodo.15283107",
+  "bucket_link": "https://zenodo.org/api/files/baf95e42-dfdc-4337-acbd-874b9931721b"
 }

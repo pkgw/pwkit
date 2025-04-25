@@ -72,8 +72,7 @@ Making functions that auto-broadcast their arguments
    array of the same shape as the argument(s).
 
    If *force_float* is true (the default), the input arrays will be converted to
-   floating-point types if necessary (with :func:`numpy.asfarray`) before being
-   passed to the function.
+   floating-point types if necessary before being passed to the function.
 
    Example::
 

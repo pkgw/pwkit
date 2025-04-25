@@ -58,7 +58,7 @@ class _Broadcaster(method_decorator):
 
         bc_raw = np.broadcast_arrays(*args[:n_arr])
         if force_float:
-            bc_raw = tuple(np.asfarray(a) for a in bc_raw)
+            bc_raw = tuple(np.asarray(a, dtype=float) for a in bc_raw)
         bc_1d = tuple(np.atleast_1d(a) for a in bc_raw)
         rest = args[n_arr:]
         result = super(_Broadcaster, self).__call__(*(bc_1d + rest), **kwargs)

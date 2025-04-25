@@ -44,11 +44,11 @@ Added by cycler:
 
 """
 
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 __all__ = str("Cycler Viewer Viewport cycle view").split()
 
 import sys
+from typing import Callable, Optional
+
 import numpy as np
 import cairo
 
@@ -408,6 +408,11 @@ class Viewport(Gtk.DrawingArea):
 
 
 class Viewer(object):
+    viewport: Viewport
+    win: Gtk.Window
+    status_label: Gtk.Label
+    _extra_keypress_handler: Optional[Callable] = None
+
     def __init__(
         self,
         title="Array Viewer",
@@ -456,7 +461,11 @@ class Viewer(object):
         self.viewport.set_overlay_drawer(drawoverlay)
         return self
 
-    def _on_key_press(self, widget, event):
+    def set_extra_keypress_handler(self, handler: Optional[Callable]):
+        self._extra_keypress_handler = handler
+        return self
+
+    def _on_key_press(self, _widget, event):
         kn = Gdk.keyval_name(event.keyval)
         modmask = Gtk.accelerator_get_default_mod_mask()
         isctrl = (event.state & modmask) == Gdk.ModifierType.CONTROL_MASK
@@ -509,6 +518,9 @@ class Viewer(object):
             self.viewport.queue_draw()
             return True
 
+        if self._extra_keypress_handler is not None:
+            return self._extra_keypress_handler(self, kn, event.state & modmask)
+
         return False
 
 
@@ -521,6 +533,7 @@ def view(
     yflip=False,
     tostatus=None,
     run_main=True,
+    extra_keypress_handler=None,
 ):
     if toworld is not None and tostatus is not None:
         raise ValueError('only one of "toworld" and "tostatus" may be given')
@@ -602,6 +615,10 @@ def view(
     viewer.set_surface_getter(getsurface)
     viewer.set_status_formatter(fmtstatus)
     viewer.set_overlay_drawer(drawoverlay)
+
+    if extra_keypress_handler is not None:
+        viewer.set_extra_keypress_handler(extra_keypress_handler)
+
     viewer.win.show_all()
 
     if run_main:
@@ -796,6 +813,7 @@ def cycle(
     tostatuses=None,
     run_main=True,
     save_after_viewing=None,
+    extra_keypress_handler=None,
 ):
     """Interactively display a series of 2D data arrays.
 
@@ -946,7 +964,7 @@ def cycle(
             s += " " + tostatuses[i](np.array([y, x]))
         return s
 
-    cycler = Cycler()
+    cycler = Cycler(cadence=cadence)
     cycler.set_n_getter(getn)
     cycler.set_shape_getter(getshapei)
     cycler.set_desc_getter(getdesci)
@@ -954,6 +972,10 @@ def cycle(
     cycler.set_surface_getter(getsurfacei)
     cycler.set_status_formatter(fmtstatusi)
     cycler.set_overlay_drawer(drawoverlay)
+
+    if extra_keypress_handler is not None:
+        cycler.set_extra_keypress_handler(extra_keypress_handler)
+
     cycler.win.show_all()
 
     if run_main:

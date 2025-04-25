@@ -1,3 +1,21 @@
+# pwkit 1.3.0 (2025-04-25)
+
+- Add support for CASA 6! (#25, @pkgw). It's still incomplete, and there
+  may be some lingering bugs, but I am currently able to run most of my
+  processing pipeline on real VLA data.
+- In `imtool show`, pressing `f` or `p` will now fit a source at the position of
+  the mouse cursor. The `f` key will fit either a point or a Gaussian, depending
+  on what fits better; `p` will force a point-source fit.
+- Fix `pwkit.astutil.get_2mass_epoch` to use HTTPS to contact the Vizier API
+- More Numpy 2 compatibility fixes, including the use of `np.asarray` with a
+  `float` dtype instead of `np.asfarray`. This could potentially reduce
+  efficiency if the input was a `float32` and we're upgrading it to a `float64`.
+
+The DOI of this release is [10.5281/zenodo.15283107][vdoi].
+
+[vdoi]: https://doi.org/10.5281/zenodo.15283107
+
+
 # pwkit 1.2.2 (2024-10-11)
 
 - Correct fixup processing of args with non-None defaults in `pwkit.kwargv` (#24)
