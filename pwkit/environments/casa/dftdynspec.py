@@ -1,5 +1,4 @@
-# -*- mode: python; coding: utf-8 -*-
-# Copyright 2013, 2016-2018 Peter Williams <peter@newton.cx> and collaborators
+# Copyright Peter Williams <peter@newton.cx> and collaborators
 # Licensed under the MIT License.
 
 # NB. This is super-redundant with both dftphotom and dftspect; things are
@@ -23,7 +22,6 @@ from ...cli import check_usage, die
 from ...io import get_stdout_bytes
 from ...kwargv import ParseKeywords, Custom
 from . import util
-from .util import sanitize_unicode as b
 
 dftdynspec_doc = """
 casatask dftdynspec vis=<MS> [keywords...]
@@ -147,14 +145,14 @@ def dftdynspec(cfg):
         )
         warn("this is NOT IMPLEMENTED; I will process the whole spw instead")
 
-    ms.open(b(cfg.vis))
+    ms.open(cfg.vis)
     totrows = ms.nrow()
     ms_sels = dict(
         (n, cfg.get(n)) for n in util.msselect_keys if cfg.get(n) is not None
     )
-    ms.msselect(b(ms_sels))
+    ms.msselect(ms_sels)
 
-    rangeinfo = ms.range(b"data_desc_id field_id".split())
+    rangeinfo = ms.range("data_desc_id field_id".split())
     ddids = rangeinfo["data_desc_id"]
     fields = rangeinfo["field_id"]
     colnames = [cfg.datacol] + "flag weight time axis_info".split()
@@ -165,19 +163,19 @@ def dftdynspec(cfg):
         # not rephasing.
         die("selected data should contain precisely one field; got %d", fields.size)
 
-    tb.open(b(os.path.join(cfg.vis, "DATA_DESCRIPTION")))
-    ddspws = tb.getcol(b"SPECTRAL_WINDOW_ID")
+    tb.open(os.path.join(cfg.vis, "DATA_DESCRIPTION"))
+    ddspws = tb.getcol("SPECTRAL_WINDOW_ID")
     tb.close()
 
     # Get frequencies and precompute merged, sorted frequency array
     # FIXME: below we get 'freqs' on the fly; should honor that.
     # But then mapping and data storage get super inefficient.
 
-    tb.open(b(os.path.join(cfg.vis, "SPECTRAL_WINDOW")))
+    tb.open(os.path.join(cfg.vis, "SPECTRAL_WINDOW"))
     nspw = tb.nrows()
     spwfreqs = []
     for i in range(nspw):
-        spwfreqs.append(tb.getcell(b"CHAN_FREQ", i) * 1e-9)  # -> GHz
+        spwfreqs.append(tb.getcell("CHAN_FREQ", i) * 1e-9)  # -> GHz
     tb.close()
 
     allfreqs = set()
@@ -192,8 +190,8 @@ def dftdynspec(cfg):
 
     if rephase:
         fieldid = fields[0]
-        tb.open(b(os.path.join(cfg.vis, "FIELD")))
-        phdirinfo = tb.getcell(b"PHASE_DIR", fieldid)
+        tb.open(os.path.join(cfg.vis, "FIELD"))
+        phdirinfo = tb.getcell("PHASE_DIR", fieldid)
         tb.close()
 
         if phdirinfo.shape[1] != 1:
@@ -217,18 +215,17 @@ def dftdynspec(cfg):
         colnames.append("uvw")
 
     tbins = {}
-    colnames = b(colnames)
 
     for ddindex, ddid in enumerate(ddids):
         # Starting in CASA 4.6, selectinit(ddid) stopped actually filtering
         # your data to match the specified DDID! What garbage. Work around
         # with our own filtering.
         ms_sels["taql"] = "DATA_DESC_ID == %d" % ddid
-        ms.msselect(b(ms_sels))
+        ms.msselect(ms_sels)
 
         ms.selectinit(ddid)
         if cfg.polarization is not None:
-            ms.selectpolarization(b(cfg.polarization.split(",")))
+            ms.selectpolarization(cfg.polarization.split(","))
         ms.iterinit(maxrows=4096)
         ms.iterorigin()
 
@@ -253,8 +250,8 @@ def dftdynspec(cfg):
                 # the safest conversion in terms of being helpful while remaining
                 # close to the fundamental data, but TT is possible and should
                 # be perfectly precise for standard applications.
-                mq = me.epoch(b"utc", b({"value": time / 86400.0, "unit": "d"}))
-                mjdtt = me.measure(b(mq), b"tt")["m0"]["value"]
+                mq = me.epoch("utc", {"value": time / 86400.0, "unit": "d"})
+                mjdtt = me.measure(mq, "tt")["m0"]["value"]
 
                 tdata = tbins.get(mjdtt)
                 if tdata is None:
