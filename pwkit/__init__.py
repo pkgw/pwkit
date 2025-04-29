@@ -11,6 +11,9 @@ __all__ = "Holder PKError binary_type reraise_context text_type unicode_to_str".
 
 __version__ = "0.dev0"  # cranko project-version
 
+# This will be filled in during the release process by Cranko.
+__version_doi__ = "xx.xxxx/dev-build.pwkit.version"
+
 # Archaic Python 2/3 compatibility support
 
 binary_type = bytes

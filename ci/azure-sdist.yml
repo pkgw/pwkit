@@ -29,7 +29,7 @@ jobs:
   - bash: cranko release-workflow apply-versions
     displayName: Apply Cranko versions
 
-  - bash: cranko zenodo preregister --metadata=ci/zenodo.json5 pwkit CHANGELOG.md
+  - bash: cranko zenodo preregister --metadata=ci/zenodo.json5 pwkit CHANGELOG.md pwkit/__init__.py
     displayName: "Preregister Zenodo DOI"
     ${{ if and(eq(variables['Build.SourceBranchName'], 'rc'), ne(variables['build.reason'], 'PullRequest')) }}:
       env:

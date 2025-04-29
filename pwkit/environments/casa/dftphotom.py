@@ -1,5 +1,4 @@
-# -*- mode: python; coding: utf-8 -*-
-# Copyright 2012-2015 Peter Williams <peter@newton.cx> and collaborators.
+# Copyright Peter Williams <peter@newton.cx> and collaborators.
 # Licensed under the MIT License.
 
 """This module implements an algorithm to compute light curves for point
@@ -12,7 +11,6 @@ also describe some of the parameters below in more detail than is currently
 found here.
 
 """
-from __future__ import absolute_import, division, print_function
 
 __all__ = "Config dftphotom dftphotom_cli".split()
 
@@ -23,7 +21,6 @@ from ...astutil import *
 from ...cli import check_usage, die, warn
 from ...kwargv import ParseKeywords, Custom
 from . import util
-from .util import sanitize_unicode as b
 
 dftphotom_doc = """
 casatask dftphotom vis=MS [keywords...]
@@ -141,6 +138,7 @@ class Config(ParseKeywords):
     def outstream(val):
         if val is None:
             return sys.stdout
+
         try:
             return open(val, "w")
         except Exception as e:
@@ -225,14 +223,14 @@ def dftphotom(cfg):
         )
         warn("this is NOT IMPLEMENTED; I will average over the whole spw instead")
 
-    ms.open(b(cfg.vis))
+    ms.open(cfg.vis)
     totrows = ms.nrow()
     ms_sels = dict(
         (n, cfg.get(n)) for n in util.msselect_keys if cfg.get(n) is not None
     )
-    ms.msselect(b(ms_sels))
+    ms.msselect(ms_sels)
 
-    rangeinfo = ms.range(b"data_desc_id field_id".split())
+    rangeinfo = ms.range("data_desc_id field_id".split())
     ddids = rangeinfo["data_desc_id"]
     fields = rangeinfo["field_id"]
     colnames = [cfg.datacol] + "flag weight time axis_info".split()
@@ -245,8 +243,8 @@ def dftphotom(cfg):
 
     if rephase:
         fieldid = fields[0]
-        tb.open(b(os.path.join(cfg.vis, "FIELD")))
-        phdirinfo = tb.getcell(b"PHASE_DIR", fieldid)
+        tb.open(os.path.join(cfg.vis, "FIELD"))
+        phdirinfo = tb.getcell("PHASE_DIR", fieldid)
         tb.close()
 
         if phdirinfo.shape[1] != 1:
@@ -269,24 +267,18 @@ def dftphotom(cfg):
         lmn = np.asarray([l, m, n])
         colnames.append("uvw")
 
-        # Also need this although 99% of the time `ddid` and `spwid` are the same
-        tb.open(b(os.path.join(cfg.vis, "DATA_DESCRIPTION")))
-        ddspws = np.asarray(tb.getcol(b"SPECTRAL_WINDOW_ID"))
-        tb.close()
-
     tbins = {}
-    colnames = b(colnames)
 
     for ddindex, ddid in enumerate(ddids):
         # Starting in CASA 4.6, selectinit(ddid) stopped actually filtering
         # your data to match the specified DDID! What garbage. Work around
         # with our own filtering.
         ms_sels["taql"] = "DATA_DESC_ID == %d" % ddid
-        ms.msselect(b(ms_sels))
+        ms.msselect(ms_sels)
 
         ms.selectinit(ddid)
         if cfg.polarization is not None:
-            ms.selectpolarization(b(cfg.polarization.split(",")))
+            ms.selectpolarization(cfg.polarization.split(","))
         ms.iterinit(maxrows=4096)
         ms.iterorigin()
 
@@ -309,8 +301,8 @@ def dftphotom(cfg):
                 # the safest conversion in terms of being helpful while remaining
                 # close to the fundamental data, but TT is possible and should
                 # be perfectly precise for standard applications.
-                mq = me.epoch(b"utc", b({"value": time / 86400.0, "unit": "d"}))
-                mjdtt = me.measure(b(mq), b"tt")["m0"]["value"]
+                mq = me.epoch("utc", {"value": time / 86400.0, "unit": "d"})
+                mjdtt = me.measure(mq, "tt")["m0"]["value"]
 
                 tdata = tbins.get(mjdtt, None)
                 if tdata is None:
