@@ -846,7 +846,7 @@ else:
     del Star, T0
 
 
-_vizurl = "https://vizier.u-strasbg.fr/viz-bin/asu-tsv"
+_vizurl = "http://vizier.cds.unistra.fr/viz-bin/asu-tsv"
 
 
 def get_2mass_epoch(tmra, tmdec, debug=False):
@@ -867,24 +867,21 @@ def get_2mass_epoch(tmra, tmdec, debug=False):
     be returned.
 
     """
+    from urllib.parse import urlencode
+    from urllib.request import urlopen
     import codecs
 
-    try:
-        from urllib.request import urlopen
-    except ImportError:
-        from urllib2 import urlopen
-    postdata = b"""-mime=csv
--source=2MASS
--out=_q,JD
--c=%.6f %.6f
--c.eq=J2000""" % (
-        tmra * R2D,
-        tmdec * R2D,
-    )
-
+    postdata = {
+        "-mime": "csv",
+        "-source": "2MASS",
+        "-out": "_q,JD",
+        "-c": f"{tmra * R2D:.6f} {tmdec * R2D:.6f}",
+        "-c.eq": "J2000",
+    }
+    url = f"{_vizurl}?{urlencode(postdata)}"
     jd = None
 
-    for line in codecs.getreader("utf-8")(urlopen(_vizurl, postdata)):
+    for line in codecs.getreader("utf-8")(urlopen(url)):
         line = line.strip()
         if debug:
             print_("D: 2M >>", line)

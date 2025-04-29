@@ -1,4 +1,15 @@
-# rc: minor bump
+# rc: micro bump
+
+- *Actually* fix `pwkit.astutil.get_2mass_epoch` (#26, @pkgw)
+- In CASA, update `dftphotom`, `dftdynspec`, and `dftspect` to
+  work with CASA 6.
+
+The DOI of this release is [xx.xxxx/dev-build.pwkit.version][vdoi].
+
+[vdoi]: https://doi.org/xx.xxxx/dev-build.pwkit.version
+
+
+# pwkit 1.3.0 (2025-04-25)
 
 - Add support for CASA 6! (#25, @pkgw). It's still incomplete, and there
   may be some lingering bugs, but I am currently able to run most of my
@@ -11,9 +22,9 @@
   `float` dtype instead of `np.asfarray`. This could potentially reduce
   efficiency if the input was a `float32` and we're upgrading it to a `float64`.
 
-The DOI of this release is [xx.xxxx/dev-build.pwkit.version][vdoi].
+The DOI of this release is [10.5281/zenodo.15283107][vdoi].
 
-[vdoi]: https://doi.org/xx.xxxx/dev-build.pwkit.version
+[vdoi]: https://doi.org/10.5281/zenodo.15283107
 
 
 # pwkit 1.2.2 (2024-10-11)
