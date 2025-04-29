@@ -1,5 +1,4 @@
-# -*- mode: python; coding: utf-8 -*-
-# Copyright 2012, 2016, 2018 Peter Williams <peter@newton.cx> and collaborators.
+# Copyright Peter Williams <peter@newton.cx> and collaborators.
 # Licensed under the MIT License.
 
 # NB. This is super-redundant with msphotom but it seems impractical
@@ -20,7 +19,6 @@ from ...astutil import *
 from ...cli import die
 from ...kwargv import ParseKeywords, Custom
 from . import util
-from .util import sanitize_unicode as b
 
 dftspect_doc = """
 casatask dftspect vis=<MS> [keywords...]
@@ -184,13 +182,13 @@ def dftspect(cfg):
     # selectinit() is broken, but the invocation here is good because it
     # affects the results from ms.range() and friends.
 
-    ms.open(b(cfg.vis))
+    ms.open(cfg.vis)
     ms_sels = dict(
         (n, cfg.get(n)) for n in util.msselect_keys if cfg.get(n) is not None
     )
-    ms.msselect(b(ms_sels))
+    ms.msselect(ms_sels)
 
-    rangeinfo = ms.range(b"data_desc_id field_id".split())
+    rangeinfo = ms.range("data_desc_id field_id".split())
     ddids = rangeinfo["data_desc_id"]
     fields = rangeinfo["field_id"]
     colnames = [cfg.datacol] + "flag weight axis_info".split()
@@ -201,20 +199,20 @@ def dftspect(cfg):
         # not rephasing.
         die("selected data should contain precisely one field; got %d", fields.size)
 
-    tb.open(b(os.path.join(cfg.vis, "DATA_DESCRIPTION")))
-    ddspws = tb.getcol(b"SPECTRAL_WINDOW_ID")
+    tb.open(os.path.join(cfg.vis, "DATA_DESCRIPTION"))
+    ddspws = tb.getcol("SPECTRAL_WINDOW_ID")
     tb.close()
 
-    tb.open(b(os.path.join(cfg.vis, "SPECTRAL_WINDOW")))
+    tb.open(os.path.join(cfg.vis, "SPECTRAL_WINDOW"))
     spwmfreqs = np.zeros(tb.nrows())
     for i in range(spwmfreqs.size):
-        spwmfreqs[i] = tb.getcell(b"CHAN_FREQ", i).mean() * 1e-9  # -> GHz
+        spwmfreqs[i] = tb.getcell("CHAN_FREQ", i).mean() * 1e-9  # -> GHz
     tb.close()
 
     if rephase:
         fieldid = fields[0]
-        tb.open(b(os.path.join(cfg.vis, "FIELD")))
-        phdirinfo = tb.getcell(b"PHASE_DIR", fieldid)
+        tb.open(os.path.join(cfg.vis, "FIELD"))
+        phdirinfo = tb.getcell("PHASE_DIR", fieldid)
         tb.close()
 
         if phdirinfo.shape[1] != 1:
@@ -238,18 +236,17 @@ def dftspect(cfg):
         colnames.append("uvw")
 
     spwbins = {}
-    colnames = b(colnames)
 
     for ddid in ddids:
         # Starting in CASA 4.6, selectinit(ddid) stopped actually filtering
         # your data to match the specified DDID! What garbage. Work around
         # with our own filtering.
         ms_sels["taql"] = "DATA_DESC_ID == %d" % ddid
-        ms.msselect(b(ms_sels))
+        ms.msselect(ms_sels)
 
         ms.selectinit(ddid)
         if cfg.polarization is not None:
-            ms.selectpolarization(b(cfg.polarization.split(",")))
+            ms.selectpolarization(cfg.polarization.split(","))
         ms.iterinit()
         ms.iterorigin()
 

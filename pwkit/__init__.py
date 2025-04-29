@@ -9,7 +9,10 @@ from __future__ import absolute_import, division, print_function
 
 __all__ = "Holder PKError binary_type reraise_context text_type unicode_to_str".split()
 
-__version__ = "1.3.0"  # cranko project-version
+__version__ = "1.3.1"  # cranko project-version
+
+# This will be filled in during the release process by Cranko.
+__version_doi__ = "10.5281/zenodo.15306716"
 
 # Archaic Python 2/3 compatibility support
 

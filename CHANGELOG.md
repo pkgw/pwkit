@@ -1,3 +1,14 @@
+# pwkit 1.3.1 (2025-04-29)
+
+- *Actually* fix `pwkit.astutil.get_2mass_epoch` (#26, @pkgw)
+- In CASA, update `dftphotom`, `dftdynspec`, and `dftspect` to
+  work with CASA 6.
+
+The DOI of this release is [10.5281/zenodo.15306716][vdoi].
+
+[vdoi]: https://doi.org/10.5281/zenodo.15306716
+
+
 # pwkit 1.3.0 (2025-04-25)
 
 - Add support for CASA 6! (#25, @pkgw). It's still incomplete, and there
